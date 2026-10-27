@@ -42,6 +42,9 @@ as the work lands.
 |---|---|---|
 | Day-1 probe: SAM 3.1 ink tracking and Muse Spark path marking on video | `harness/probes/` | done 27 Oct |
 | Secret scan before every push | `scripts/secret_scan.py` | done 27 Oct |
+| Meta Model API client: chat (OpenAI-shaped), Files, SAM 3.1 video, Muse Spark video reading, cost per call | `witness/src/witness_meta.erl` | done 27 Oct |
+| SAM 3.1 answer parser: records, tracks, order of appearance | `witness/src/witness_sam.erl` | done 27 Oct |
+| Live check through the Erlang client | `harness/live_check.escript` | done 27 Oct |
 
 ## What existed before (not in this repository)
 
