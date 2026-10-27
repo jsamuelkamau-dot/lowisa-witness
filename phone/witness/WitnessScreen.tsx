@@ -171,6 +171,14 @@ function Mine({papers, onOpen}: {papers: Paper[] | null; onOpen(p: Paper): void}
   );
 }
 
+/** What a failed build says here: the builder's own lines name its own button ("Build my path"); the wall's words stay. */
+export function failedWords(reason: string | undefined, text: string): string {
+  if (reason === 'no-credits' || reason === 'full') return text;
+  if (reason === 'no-network' || reason === 'no-auth') return 'No connection right now. Try again when you are back online.';
+  if (reason === 'timeout') return 'That took too long. Tap Start my mastery level to try again.';
+  return 'Your level could not be made just now. Tap Start my mastery level to try again in a moment.';
+}
+
 function PaperView({paper, env, storage, onOpenPath}: {paper: Paper; env: CustomEnv & WitnessEnv; storage: MirrorStorage; onOpenPath?(pathId: string): void}): React.JSX.Element {
   const qs = (paper.result && paper.result.questions) || [];
   const got = qs.reduce((a, q) => a + marksOf(q), 0);
@@ -199,7 +207,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
     const made = await buildMastery(env, storage, paper, q);
     off(); setBuilding('');
     if (made.ok && made.pathId) { setPath(made.pathId); if (onOpenPath) onOpenPath(made.pathId); }
-    else setSaid(made.text);
+    else setSaid(failedWords(made.reason, made.text));
   };
   return (
     <View style={[s.card, next ? s.next : null]} testID={'witness-q-' + q.n}>
