@@ -314,7 +314,8 @@
     var m = q.mastery || { status: 'not_started' };
     var asks = m.asks || {};
     var thread = (m.thread || []).map(function (t) {
-      return '<div class="wd-sub" style="margin:4px 0"><b>' + (t.from === 'teacher' ? 'You' : esc(S.paper.student || 'Student')) + ':</b> ' + esc(t.text) + '</div>';
+      return '<div class="wd-sub" style="margin:4px 0"><b>' + (t.from === 'teacher' ? 'You' : esc(S.paper.student || 'Student')) + ':</b> ' + esc(t.text) +
+        (t.where ? '<div class="wd-sub" style="margin-left:12px">Asked from ' + esc(t.where) + '</div>' : '') + '</div>';
     }).join('');
     var ex = m.explain || {};
     var lo = ex.lo ? '<div class="wd-card"><b>Explained to Lo</b><div>' + esc(ex.lo.text) + '</div>' +

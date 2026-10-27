@@ -243,7 +243,8 @@ after_release_the_teacher_chooses_and_issues_the_badge_test() ->
         <<"check">> => #{<<"passes">> => false, <<"problems">> => [<<"lesson 2: the checks are all lucky cancels">>, 7]}}),
     ?assertMatch(#{status := <<"ready">>, path := <<"custom-topic-x">>}, Built),
     ?assertNot(maps:is_key(check, Built)),                                 %% the self-check is the teacher's to read
-    {200, _} = M(<<"stud">>, 3, <<"ask">>, #{<<"text">> => <<"Why does 12/24 not work?">>}),
+    {200, #{mastery := #{thread := [#{where := <<"Lesson 2, step 3: I typed 1/2">>}]}}} =
+        M(<<"stud">>, 3, <<"ask">>, #{<<"text">> => <<"Why does 12/24 not work?">>, <<"where">> => <<"Lesson 2, step 3: I typed 1/2">>}),
     {200, #{mastery := #{thread := [_, #{from := teacher}]}}} = M(<<"teacher">>, 3, <<"reply">>, #{<<"text">> => <<"Try dividing both by 12.">>}),
     {200, #{mastery := #{status := <<"completed">>}}} = M(<<"stud">>, 3, <<"event">>, #{<<"event">> => <<"completed">>}),
     %% verification only when the teacher asks for it, and only what they asked

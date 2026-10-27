@@ -22,7 +22,7 @@
 %%% saving and checking who may do what.
 %%%-------------------------------------------------------------------
 -module(witness_mastery).
--export([event/3, approve/2, verify/2, explain/4, ask/3, reply/3, badge/3, view/2, needs/1, judge_prompt/2, judge/1, fresh_started/3, fresh_marked/3]).
+-export([event/3, approve/2, ask/4, verify/2, explain/4, ask/3, reply/3, badge/3, view/2, needs/1, judge_prompt/2, judge/1, fresh_started/3, fresh_marked/3]).
 
 -define(MAX_TEXT, 2000).
 -define(MAX_THREAD, 60).
@@ -117,6 +117,14 @@ explain(Q, To, Text0, #{at := At} = Ctx) ->
 
 %% Ask my teacher, from any step; the teacher answers in the same thread.
 ask(Q, Text, At) -> say(Q, student, Text, At).
+%% 28 Oct audit (the plan: "a button on every step, with the exact moment attached"): asked from inside the level, the
+%% question carries where (the lesson, the step and what the student answered there).
+ask(Q, Text, At, Where) ->
+    case {ask(Q, Text, At), clean(Where)} of
+        {{error, _} = E, _} -> E;
+        {Q1, <<>>} -> Q1;
+        {Q1, W} -> M = m(Q1), [Last | Rest] = lists:reverse(maps:get(thread, M)), put_m(Q1, M#{thread => lists:reverse([Last#{where => W} | Rest])})
+    end.
 reply(Q, Text, At) -> say(Q, teacher, Text, At).
 
 say(Q, Who, Text0, At) ->

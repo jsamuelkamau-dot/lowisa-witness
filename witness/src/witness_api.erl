@@ -402,7 +402,8 @@ mastery_step(student, <<"explain">>, Q, B, Host) ->
         _ -> undefined
     end,
     witness_mastery:explain(Q, To, Text, #{at => now_ms(), verdict => Verdict});
-mastery_step(student, <<"ask">>, Q, B, _Host) -> witness_mastery:ask(Q, maps:get(<<"text">>, B, <<>>), now_ms());
+mastery_step(student, <<"ask">>, Q, B, _Host) ->
+    witness_mastery:ask(Q, maps:get(<<"text">>, B, <<>>), now_ms(), case maps:get(<<"where">>, B, <<>>) of W when is_binary(W) -> W; _ -> <<>> end);
 mastery_step(teacher, <<"verify">>, Q, B, _Host) -> witness_mastery:verify(Q, B);
 mastery_step(teacher, <<"reply">>, Q, B, _Host) -> witness_mastery:reply(Q, maps:get(<<"text">>, B, <<>>), now_ms());
 mastery_step(teacher, <<"badge">>, Q, B, _Host) ->

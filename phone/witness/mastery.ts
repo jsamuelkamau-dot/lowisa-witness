@@ -29,6 +29,19 @@ export function masteryPath(storage: MirrorStorage, paperId: string, n: number):
   catch (e) { return null; }
 }
 
+/** The paper and question a mastery level was built for, from its path (the lesson player's "Ask my teacher"). */
+export function masteryOfPath(storage: MirrorStorage, pathId: string): {paperId: string; n: number} | null {
+  try {
+    const m = JSON.parse(storage.getItem(MASTERY_KEY) || '{}') || {};
+    for (const k of Object.keys(m)) {
+      if (m[k] !== pathId) continue;
+      const at = k.lastIndexOf('#'); const n = Number(k.slice(at + 1));
+      if (at > 0 && Number.isInteger(n)) return {paperId: k.slice(0, at), n};
+    }
+  } catch (e) { /* nothing remembered */ }
+  return null;
+}
+
 function remember(storage: MirrorStorage, paperId: string, n: number, pathId: string): void {
   let m: Record<string, string> = {};
   try { m = JSON.parse(storage.getItem(MASTERY_KEY) || '{}') || {}; } catch (e) { m = {}; }
