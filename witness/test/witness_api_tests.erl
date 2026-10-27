@@ -215,6 +215,7 @@ after_release_the_teacher_chooses_and_issues_the_badge_test() ->
     {200, #{mastery := #{asks := #{lo := true, paper := false, teacher := true}}}} = M(<<"teacher">>, 3, <<"verify">>, #{<<"lo">> => true, <<"teacher">> => true}),
     {200, #{mastery := StudentView}} = M(<<"stud">>, 3, <<"explain">>, #{<<"to">> => <<"lo">>, <<"text">> => <<"You divide top and bottom by a common factor, digits are not numbers.">>}),
     ?assertEqual([lo], maps:get(explained, StudentView)),
+    ?assertNot(maps:is_key(lo_next, StudentView)),                         %% understood: Lo asks nothing more
     ?assertNot(maps:is_key(explain, StudentView)),                         %% the verdict is the teacher's to read
     [{judged, 3, _}] = [E || E = {judged, _, _} <- events()],
     {200, _} = M(<<"stud">>, 3, <<"explain">>, #{<<"to">> => <<"teacher">>, <<"text">> => <<"I know now.">>}),

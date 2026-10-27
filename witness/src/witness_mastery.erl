@@ -99,7 +99,11 @@ view(Q, teacher) -> m(Q);
 view(Q, student) ->
     M = m(Q),
     Explain = maps:map(fun(_, E) -> maps:without([verdict], E) end, maps:get(explain, M, #{})),
-    (maps:with([status, path, asks, thread, badge], M))#{explained => maps:keys(Explain)}.
+    LoNext = case maps:get(explain, M, #{}) of
+        #{lo := #{verdict := #{understood := false, next := Next}}} when Next =/= <<>> -> #{lo_next => Next};
+        _ -> #{}
+    end,
+    maps:merge((maps:with([status, path, asks, thread, badge], M))#{explained => maps:keys(Explain)}, LoNext).
 
 %% Spark judges an explanation back to Lo against the diagnosis: the idea in the student's own words, not the lesson's.
 judge_prompt(Q, Text) ->

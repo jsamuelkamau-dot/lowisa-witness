@@ -9,6 +9,7 @@
  * running in a real-world setting first), and Meta's Muse Spark as the model of every design call.
  */
 import type {MirrorStorage} from '../state/storage';
+import {readCourseStore} from '../course/store';
 import {createCustomCourse, CustomCourseResult, CustomEnv, MasteryLevelText} from '../paths/custom/course';
 import type {Paper, Question, WitnessEnv} from './net';
 import {resultOf, witness} from './net';
@@ -33,6 +34,11 @@ function remember(storage: MirrorStorage, paperId: string, n: number, pathId: st
   try { m = JSON.parse(storage.getItem(MASTERY_KEY) || '{}') || {}; } catch (e) { m = {}; }
   m[masteryKey(paperId, n)] = pathId;
   storage.setItem(MASTERY_KEY, JSON.stringify(m));
+}
+
+/** A mastery level (a one-level course) is done once the course record counts its level complete. */
+export function masteryDone(storage: MirrorStorage, pathId: string): boolean {
+  try { const p = readCourseStore(storage).courses[pathId]; return !!p && Number(p.completed) >= 1; } catch (e) { return false; }
 }
 
 /** What the build is asked (the composer's line) and its material (pure, for tests). */

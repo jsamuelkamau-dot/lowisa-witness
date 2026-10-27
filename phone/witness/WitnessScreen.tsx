@@ -20,7 +20,8 @@ import {marksOf, Paper, Question, RESULT_WORDS, resultOf, toMaster, typedCode, w
 import type {MirrorStorage} from '../state/storage';
 import type {CustomEnv} from '../paths/custom/course';
 import {onBuildProgress} from '../paths/custom/course';
-import {buildMastery, masteryPath} from './mastery';
+import {buildMastery, masteryDone, masteryPath} from './mastery';
+import type {Mastery} from './net';
 
 /** The camera app is told to stop here: SAM 3.1 follows up to about ten minutes of video in one go. */
 export const RECORD_SECONDS = 600;
@@ -197,7 +198,17 @@ function PaperView({paper, env, storage, onOpenPath}: {paper: Paper; env: Custom
 function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper: Paper; env: CustomEnv & WitnessEnv; storage: MirrorStorage; onOpenPath?(pathId: string): void}): React.JSX.Element {
   const r = resultOf(q);
   const next = r === 'not_yet' || r === 'right_answer_wrong_thinking';
-  const [path, setPath] = useState<string | null>(() => masteryPath(storage, paper.id, q.n));
+  const [path, setPath] = useState<string | null>(() => masteryPath(storage, paper.id, q.n) || (q.mastery && q.mastery.path) || null);
+  const [m, setM] = useState<Mastery | undefined>(q.mastery);
+  const act = async (action: 'event' | 'explain' | 'ask', body: Record<string, unknown>) => {
+    const r = await witness.mastery(env, paper.id, q.n, action, body);
+    if (r.ok) setM(r.value.mastery); else setSaid(r.error);
+    return r.ok;
+  };
+  // a level played to the end on this phone tells the teacher once
+  useEffect(() => {
+    if (path && masteryDone(storage, path) && (!m || (m.status !== 'completed' && m.status !== 'badge' && m.status !== 'not_yet'))) { void act('event', {event: 'completed'}); }
+  }, [path]); // eslint-disable-line react-hooks/exhaustive-deps
   const [building, setBuilding] = useState('');
   const [said, setSaid] = useState('');
   const start = async () => {
@@ -206,7 +217,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
     const off = onBuildProgress(st => setBuilding(st.stage === 'write' ? 'Writing your lessons…' : st.stage === 'review' ? 'Playing it through as you, to be sure it teaches this…' : st.stage === 'redesign' ? 'Making it sharper…' : 'Planning your level…'));
     const made = await buildMastery(env, storage, paper, q);
     off(); setBuilding('');
-    if (made.ok && made.pathId) { setPath(made.pathId); if (onOpenPath) onOpenPath(made.pathId); }
+    if (made.ok && made.pathId) { setPath(made.pathId); await act('event', {event: 'built', path: made.pathId}); if (onOpenPath) onOpenPath(made.pathId); }
     else setSaid(failedWords(made.reason, made.text));
   };
   return (
@@ -225,8 +236,46 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
           {building ? <View style={s.buildRow}><ActivityIndicator /><Text style={s.small}> {building}</Text></View>
             : <Btn label={path ? 'Open my mastery level' : 'Start my mastery level'} onPress={start} primary testID={'witness-master-' + q.n} />}
           {said ? <Text style={s.error}>{said}</Text> : null}
+          <AfterLevel m={m} act={act} />
         </View>
       ) : null}
+    </View>
+  );
+}
+
+/** After the level: the badge or the teacher's word, only the checks the teacher asked for, and ask my teacher. */
+function AfterLevel({m, act}: {m?: Mastery; act(action: 'explain' | 'ask', body: Record<string, unknown>): Promise<boolean>}): React.JSX.Element | null {
+  const [toLo, setToLo] = useState('');
+  const [toTeacher, setToTeacher] = useState('');
+  const [question, setQuestion] = useState('');
+  const asks = (m && m.asks) || {};
+  const told = (m && m.explained) || [];
+  return (
+    <View style={{marginTop: 12}}>
+      {m && m.status === 'badge' ? <Text style={s.badge} testID="witness-badge">Turned around{m.badge && m.badge.note ? ' · ' + m.badge.note : ''}</Text> : null}
+      {m && m.status === 'not_yet' ? <Text style={s.diag}>Your teacher says not yet{m.badge && m.badge.note ? ': ' + m.badge.note : '.'}</Text> : null}
+      {m && m.status === 'completed' ? <Text style={s.small}>Level done. Your teacher will look at your work.</Text> : null}
+      {asks.lo && (told.indexOf('lo') < 0 || m?.lo_next) ? (
+        <View style={{marginTop: 10}}>
+          <Text style={s.rowTitle}>Explain it back to Lo</Text>
+          {m && m.lo_next ? <Text style={s.sub}>Lo: {m.lo_next}</Text> : <Text style={s.sub}>In your own words: what went wrong, and what is right?</Text>}
+          <TextInput value={toLo} onChangeText={setToLo} multiline style={s.input} accessibilityLabel="Your explanation for Lo" testID="witness-explain-lo" />
+          <Btn label="Tell Lo" onPress={async () => { if (await act('explain', {to: 'lo', text: toLo})) setToLo(''); }} small />
+        </View>
+      ) : null}
+      {asks.teacher && told.indexOf('teacher') < 0 ? (
+        <View style={{marginTop: 10}}>
+          <Text style={s.rowTitle}>Explain it back to your teacher</Text>
+          <TextInput value={toTeacher} onChangeText={setToTeacher} multiline style={s.input} accessibilityLabel="Your explanation for your teacher" testID="witness-explain-teacher" />
+          <Btn label="Send to my teacher" onPress={async () => { if (await act('explain', {to: 'teacher', text: toTeacher})) setToTeacher(''); }} small />
+        </View>
+      ) : null}
+      {asks.paper ? <Text style={s.small}>Your teacher would like a fresh question on paper. They'll give it to you.</Text> : null}
+      <View style={{marginTop: 10}}>
+        {(m && m.thread || []).map((t, i) => <Text key={i} style={s.sub}>{t.from === 'teacher' ? 'Your teacher: ' : 'You: '}{t.text}</Text>)}
+        <TextInput value={question} onChangeText={setQuestion} placeholder="Stuck? Ask your teacher" style={s.input} accessibilityLabel="Ask your teacher" testID="witness-ask" />
+        <Btn label="Ask my teacher" onPress={async () => { if (question.trim() && await act('ask', {text: question})) setQuestion(''); }} small />
+      </View>
     </View>
   );
 }
@@ -253,5 +302,6 @@ const s = StyleSheet.create({
   step: {fontSize: 15, color: '#1f1e1c', fontFamily: 'monospace', marginTop: 4},
   crossed: {textDecorationLine: 'line-through', color: '#8a8984'},
   buildRow: {flexDirection: 'row', alignItems: 'center'},
+  badge: {fontSize: 15, fontWeight: '700', color: '#2e7d32', padding: 10, borderRadius: 8, backgroundColor: '#eaf3de', overflow: 'hidden'},
   diag: {fontSize: 14, color: '#1f1e1c', marginTop: 10, padding: 10, borderRadius: 8, backgroundColor: '#faeeda'},
 });
