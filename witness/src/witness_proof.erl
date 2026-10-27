@@ -25,8 +25,18 @@ record(Id, Row, Pile, Viewer) ->
       marks => lists:sum([num(maps:get(marks, Q, 0)) || Q <- Qs]), out_of => lists:sum([num(maps:get(out_of, Q, 0)) || Q <- Qs]),
       pauses => maps:get(pauses, R, []), lines => length(maps:get(lines, R, [])),
       video => <<"deleted once the paper was marked">>, engine => maps:get(engine, R, <<"muse-spark-1.3">>),
-      read_by => [<<"SAM 3.1 (the ink, line by line)">>, <<"Muse Spark (the marking)">>, <<"Muse Wonder (the examiner)">>,
-                  <<"Muse Voice Transcribe (spoken answers)">>]}.
+      read_by => read_by(R, Qs, Asks)}.
+
+%% The models that did something for this paper, and only those (28 Oct, the demo record named Voice Transcribe on a
+%% paper where nothing was said out loud): a record that is proof never claims a reading that did not happen.
+read_by(R, Qs, Asks) ->
+    Open = maps:get(engine, R, <<"muse-spark-1.3">>) =/= <<"muse-spark-1.3">>,
+    [W || {true, W} <- [{maps:get(lines, R, []) =/= [], <<"SAM 3.1 (the ink, line by line)">>},
+                        {not Open, <<"Muse Spark (the marking)">>},
+                        {Open, <<"Muse Spark Open on open weights (the marking)">>},
+                        {Asks =/= [], <<"Muse Wonder (the examiner)">>},
+                        {lists:any(fun(#{answer := #{spoken := true}}) -> true; (_) -> false end, Asks), <<"Muse Voice Transcribe (spoken answers)">>},
+                        {lists:any(fun(Q) -> maps:is_key(drawn, Q) end, Qs), <<"Muse Image (the corrected step)">>}]].
 
 question(Q, Texts, Stills) ->
     N = maps:get(n, Q, 0),

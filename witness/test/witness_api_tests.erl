@@ -492,3 +492,17 @@ the_examiner_is_tried_again_when_meta_is_busy_test() ->
     ?assertMatch({200, #{status := <<"marked">>, examiner := #{status := <<"failed">>}}}, r(<<"GET">>, [<<"sitting">>, Id2], #{}, <<"u1">>)),
     persistent_term:erase({witness_api_on, examiner}).
 
+%% 28 Oct, the demo record named Muse Voice Transcribe on a paper where nothing was said out loud
+the_record_names_only_the_models_that_read_this_paper_test() ->
+    Pile = #{title => <<"T">>, questions => []},
+    Plain = #{result => #{questions => [#{n => 1, result => <<"mastered">>}], lines => []}},
+    ?assertEqual([<<"Muse Spark (the marking)">>], maps:get(read_by, witness_proof:record(<<"s">>, Plain, Pile, teacher))),
+    Full = #{result => #{questions => [#{n => 1, result => <<"not_yet">>, drawn => #{status => <<"done">>, asset => <<"a">>, lines => [], changed => 1}}],
+                         lines => [#{id => 1}]},
+             examiner => #{asks => [#{k => 1, n => 1, ask => <<"Why?">>, answer => #{text => <<"Because">>, spoken => true}}]}},
+    ?assertEqual([<<"SAM 3.1 (the ink, line by line)">>, <<"Muse Spark (the marking)">>, <<"Muse Wonder (the examiner)">>,
+                  <<"Muse Voice Transcribe (spoken answers)">>, <<"Muse Image (the corrected step)">>],
+                 maps:get(read_by, witness_proof:record(<<"s">>, Full, Pile, teacher))),
+    Open = #{result => #{questions => [], lines => [], engine => <<"muse-spark-open">>}},
+    ?assertEqual([<<"Muse Spark Open on open weights (the marking)">>], maps:get(read_by, witness_proof:record(<<"s">>, Open, Pile, student))).
+
