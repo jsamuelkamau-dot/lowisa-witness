@@ -42,7 +42,7 @@ finish({ok, Text, Usage}, SamRes, Times) ->
     case witness_mark:parse(Text) of
         {ok, #{questions := Qs, pauses := Ps}} ->
             {Lines, Frames} = case SamRes of
-                {ok, SamText, F} -> {witness_timeline:lines(witness_sam:records(SamText), Times), F};
+                {ok, SamText, F} -> {witness_timeline:lines(witness_sam:records(SamText), witness_mp4:sam_times(Times, F)), F};
                 _ -> {[], 0}
             end,
             PerQ = witness_timeline:merge_all([maps:get(steps, Q) || Q <- Qs], Lines),

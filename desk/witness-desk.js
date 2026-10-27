@@ -298,14 +298,14 @@
     return '<div class="wd-card"><div class="wd-row" style="cursor:default;padding:0"><span class="wd-grow"><h3 style="margin:0">Mastery</h3></span>' +
       '<span class="wd-chip ' + (done ? 'ok' : '') + '">' + esc(STATUS[m.status] || m.status) + '</span></div>' + chk +
       (thread ? '<div style="margin-top:8px"><b style="font-size:12px">Questions to you</b>' + thread + '</div>' : '') +
-      '<label for="wdReply">Answer in the thread</label><input id="wdReply" data-f="reply" placeholder="Try dividing both by 12.">' +
+      '<label for="wdReply">Answer in the thread</label><input id="wdReply" data-f="reply" placeholder="Your answer to their question">' +
       '<div style="margin-top:6px"><button class="wd-btn" data-act="reply">Send</button></div>' +
       '<div style="margin-top:12px"><b style="font-size:12px">Ask for a check (only if you want one)</b>' +
       box('lo', 'Explain it back to Lo') + box('paper', 'A fresh question on paper, watched again') +
-      '<input id="wdFresh" data-f="fresh" value="' + esc(S.draft.fresh != null ? S.draft.fresh : (asks.fresh || '')) + '" placeholder="The fresh question, e.g. Simplify 12/48" aria-label="The fresh question">' +
+      '<input id="wdFresh" data-f="fresh" value="' + esc(S.draft.fresh != null ? S.draft.fresh : (asks.fresh || '')) + '" placeholder="The fresh question, for the same idea" aria-label="The fresh question">' +
       box('teacher', 'Explain it back to me') +
       '<button class="wd-btn" data-act="verify" style="margin-top:6px">Save checks</button></div>' + lo + toMe + fresh +
-      '<label for="wdBadgeNote">A note with your decision</label><input id="wdBadgeNote" data-f="badgeNote" placeholder="Well done, you found why digits are not numbers.">' +
+      '<label for="wdBadgeNote">A note with your decision</label><input id="wdBadgeNote" data-f="badgeNote" placeholder="Well done: you found the reason, not only the answer.">' +
       '<div style="margin-top:8px;display:flex;gap:8px">' + (done ? '<span class="wd-chip ok">Badge issued</span>' :
         '<button class="wd-btn wd-main" data-act="badge">Issue Turned around</button><button class="wd-btn" data-act="notyet">Not yet</button>') + '</div></div>';
   }

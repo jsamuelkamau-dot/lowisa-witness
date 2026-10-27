@@ -18,6 +18,14 @@ frame_times_test() ->
     ?assertEqual(0.8, witness_mp4:at(T, 99)),
     ?assertMatch({error, _}, witness_mp4:frame_times(<<"not a clip">>)).
 
+%% SAM numbers its own sampled frames: frame I of N sampled is the clip's frame I * Real / N
+sam_times_test() ->
+    {ok, T} = witness_mp4:frame_times(mp4()),            %% [0.0, 0.1, 0.2, 0.3, 0.8]
+    ?assertEqual(T, witness_mp4:sam_times(T, 5)),
+    ?assertEqual([0.0, 0.2, 0.3], witness_mp4:sam_times(T, 3)),
+    ?assertEqual({fps, 30}, witness_mp4:sam_times({fps, 30}, 3)),
+    ?assertEqual(T, witness_mp4:sam_times(T, 0)).
+
 %% the same table read in byte ranges, from a clip whose media comes first (a 64-bit mdat header) as phones write them
 frame_times_ranged_test() ->
     <<Ftyp:12/binary, Moov/binary>> = mp4(),

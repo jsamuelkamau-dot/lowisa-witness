@@ -12,7 +12,7 @@
 %%%       of 127 frames; the clip's own table put them where the ink was written.
 %%%-------------------------------------------------------------------
 -module(witness_mp4).
--export([frame_times/1, frame_times_ranged/1, at/2]).
+-export([frame_times/1, frame_times_ranged/1, at/2, sam_times/2]).
 
 -define(MAX_MOOV, 64 * 1024 * 1024).
 -define(MAX_HOPS, 16).
@@ -48,6 +48,15 @@ read_moov(Get, Off, Size) ->
         {ok, _} -> {error, short_read};
         E -> E
     end.
+
+%% sam_times(Times, N): SAM numbers the frames it sampled (N, its video_frames_processed), not the clip's own: a 28 s
+%% phone clip of 127 frames came back as 105, the desk clip of 314 as 285. Its frame I is the clip's frame I * Real / N.
+%% Live, 27 Oct, against the recording itself: lines began at 13.7 s and 21.6 s this way (on screen ~13 s and ~21 s);
+%% the clip's table unscaled said 10.7 s and 18.0 s, a guessed 30 fps 1.8 s and 2.8 s.
+sam_times(Times, N) when is_list(Times), is_integer(N), N > 0, length(Times) =/= N ->
+    Real = length(Times),
+    [at(Times, min(Real - 1, round(I * Real / N))) || I <- lists:seq(0, N - 1)];
+sam_times(Times, _) -> Times.
 
 %% at(Times, Frame) -> seconds of a SAM frame number (the last time when the number runs past the table).
 %% Times may also be {fps, N} for a clip recorded at a steady rate (a phone camera), when its bytes are not at hand.
