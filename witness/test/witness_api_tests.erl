@@ -2,7 +2,7 @@
 -include_lib("eunit/include/eunit.hrl").
 -behaviour(witness_host).
 -export([meta_key/0, put_url/4, get_url/2, drop_clip/2, save/3, load/2, list/2, spend/3, run/1, marker/0, checker/0, design/2, judger/0,
-         put_asset/4, asset_url/2, stiller/0, examiner/0, answer_judge/0, drawer/0, hearer/0, open_engine/0, open_marker/0, retry_waits/0]).
+         put_asset/4, asset_url/2, stiller/0, examiner/0, answer_judge/0, drawer/0, hearer/0, open_engine/0, open_marker/0, retry_waits/0, cropper/0]).
 
 %% An in-memory host: rows and events in an ets table, marking run at once, a canned marker.
 meta_key() -> <<"test-key">>.
@@ -47,6 +47,7 @@ asset_url(Uid, Name) -> case ets:lookup(witness_api_t, {asset, Uid, Name}) of [_
 
 %% The new seams stay off unless a test turns them on, so the older tests' event lists are unchanged.
 on(K) -> persistent_term:get({witness_api_on, K}, false).
+cropper() -> fun(Url, T, Box) -> case on(stills) of true -> ev({cropped, Url, T, Box}), {ok, <<255, 216, "step">>}; false -> {error, off} end end.
 stiller() -> fun(Url, T) -> case on(stills) of true -> ev({still, Url, T}), {ok, <<255, 216, "jpeg">>}; false -> {error, off} end end.
 examiner() ->
     fun(<<"test-key">>, Sitting, Qs) ->
@@ -537,4 +538,17 @@ the_teacher_can_look_at_each_level_first_test() ->
     {200, _} = r(<<"POST">>, [<<"pile">>, maps:get(pile, element(2, load(<<"teacher">>, {sitting, S2}))), <<"release">>], #{}, <<"teacher">>),
     ?assertMatch({200, #{mastery := #{status := <<"ready">>}}},
                  r(<<"POST">>, [<<"mastery">>, S2, <<"3">>, <<"event">>], #{<<"event">> => <<"built">>, <<"path">> => <<"p2">>}, <<"stud">>)).
+
+%% 28 Oct audit: the plan's first look opens on the student's own handwriting; it is cut from the frame by SAM's box
+the_students_own_step_is_cut_from_the_page_test() ->
+    setup(), persistent_term:put({witness_api_on, stills}, true),
+    Box = #{x1 => 100, y1 => 200, x2 => 400, y2 => 240, w => 720, h => 1280},
+    persistent_term:put(witness_api_result, #{questions => [#{n => 3, result => <<"right_answer_wrong_thinking">>, moment_s => 35, confidence => 0.9,
+        marks => 0, out_of => 2, steps => [#{t => 33, wrote => <<"16/64">>, box => Box}, #{t => 38, wrote => <<"= 1/4">>}]}], pauses => [], lines => [], cost_usd => 0.0}),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10}, <<"u1">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"u1">>),
+    ?assertMatch([{cropped, _, 34.5, Box}], [E || E = {cropped, _, _, _} <- events()]),
+    {200, #{result := #{stills := [#{n := 3, asset := <<"still-3.jpg">>, step := <<"step-3.jpg">>}]}}} = r(<<"GET">>, [<<"sitting">>, S], #{}, <<"u1">>),
+    ?assertMatch({200, #{url := _}}, r(<<"GET">>, [<<"sitting">>, S, <<"asset">>, <<"step-3.jpg">>], #{}, <<"u1">>)),
+    persistent_term:erase({witness_api_on, stills}).
 

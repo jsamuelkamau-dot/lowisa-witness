@@ -10,7 +10,7 @@
 %%% ffmpeg runs as a program with its arguments (no shell); it must be on the PATH. available/0 says whether it is.
 %%%-------------------------------------------------------------------
 -module(witness_media).
--export([wav/1, still/2, last/1, frames/3, available/0]).
+-export([step/3, wav/1, still/2, last/1, frames/3, available/0]).
 
 -define(TIMEOUT_MS, 60000).
 -define(MAX_AUDIO, 25 * 1024 * 1024).
@@ -42,6 +42,26 @@ still(Url, Seconds) when is_number(Seconds), Seconds >= 0 ->
         _ = file:delete(Out)
     end;
 still(_, _) -> {error, bad_time}.
+
+%% step(Url, Seconds, Box) -> {ok, Jpeg}: the student's own written step, cut from the frame by SAM's box for its line
+%% (source pixels; w and h the frame), with room around it (28 Oct audit: the plan's first look opens on the student's
+%% own handwriting).
+step(Url, Seconds, #{x1 := X1, y1 := Y1, x2 := X2, y2 := Y2, w := W, h := H}) when is_number(Seconds), X2 > X1, Y2 > Y1 ->
+    PadX = (X2 - X1) * 0.08 + 12, PadY = (Y2 - Y1) * 0.6 + 12,
+    L = max(0, round(X1 - PadX)), T = max(0, round(Y1 - PadY)),
+    R = min(W, round(X2 + PadX)), B = min(H, round(Y2 + PadY)),
+    Crop = io_lib:format("crop=~b:~b:~b:~b,scale='min(900,iw)':-2", [R - L, B - T, L, T]),
+    Out = tmp(".jpg"),
+    try
+        At = float_to_list(float(Seconds), [{decimals, 2}]),
+        case run(["-v", "error", "-y", "-ss", At, "-i", str(Url), "-frames:v", "1", "-vf", lists:flatten(Crop), "-q:v", "3", Out]) of
+            ok -> file:read_file(Out);
+            E -> E
+        end
+    after
+        _ = file:delete(Out)
+    end;
+step(_, _, _) -> {error, no_box}.
 
 %% last(Url) -> {ok, Jpeg}: the clip's final frame (the finished page, whatever the frame rate).
 last(Url) ->

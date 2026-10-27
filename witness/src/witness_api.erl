@@ -270,7 +270,8 @@ route(<<"POST">>, [<<"sitting">>, Id, <<"voice">>], B, Uid, Host) ->
 route(<<"GET">>, [<<"sitting">>, Id, <<"asset">>, File], _B, Uid, Host) ->
     Owner = owner_of(Uid, Id, Host),
     Safe = binary:match(File, [<<"/">>, <<"\\">>, <<"..">>]) =:= nomatch andalso
-           (binary:longest_common_prefix([File, <<"still-">>]) =:= 6 orelse binary:longest_common_prefix([File, <<"drawn-">>]) =:= 6),
+           (binary:longest_common_prefix([File, <<"still-">>]) =:= 6 orelse binary:longest_common_prefix([File, <<"drawn-">>]) =:= 6
+            orelse binary:longest_common_prefix([File, <<"step-">>]) =:= 5),
     case {Safe, Host:load(Owner, {sitting, Id})} of
         {true, {ok, Row}} when Owner =:= Uid; map_get(status, Row) =:= <<"released">> ->
             case Host:asset_url(Owner, <<Id/binary, "/", File/binary>>) of
@@ -453,11 +454,32 @@ stills(Uid, Id, Url, Result, Host) ->
                       {ok, Jpeg} ->
                           File = <<"still-", (integer_to_binary(N))/binary, ".jpg">>,
                           case Host:put_asset(Uid, <<Id/binary, "/", File/binary>>, Jpeg, <<"image/jpeg">>) of
-                              ok -> [#{n => N, t => T, asset => File}];
+                              ok -> [maps:merge(#{n => N, t => T, asset => File}, own_step(Uid, Id, Url, N, Result, Host))];
                               _ -> []
                           end;
                       _ -> []
                   end || {N, T} <- Moments]).
+
+%% The student's own written step for a question, cut from the frame once its ink is finished (the step at the moment
+%% the thinking went wrong, else its last placed step), kept as step-N.jpg beside the still.
+own_step(Uid, Id, Url, N, Result, Host) ->
+    Q = hd([X || X = #{n := Xn} <- maps:get(questions, Result, []), Xn =:= N] ++ [#{}]),
+    Placed = [S || S = #{box := B, t := St} <- maps:get(steps, Q, []), is_map(B), is_number(St)],
+    Pick = case {maps:get(moment_s, Q, null), Placed} of
+        {_, []} -> none;
+        {M, _} when is_number(M) -> hd(lists:sort(fun(A, B) -> abs(maps:get(t, A) - M) =< abs(maps:get(t, B) - M) end, Placed));
+        _ -> lists:last(Placed)
+    end,
+    case Pick of
+        none -> #{};
+        #{t := At, box := Box} ->
+            case catch (cropper(Host))(Url, At + 1.5, Box) of
+                {ok, Jpeg} ->
+                    File = <<"step-", (integer_to_binary(N))/binary, ".jpg">>,
+                    case Host:put_asset(Uid, <<Id/binary, "/", File/binary>>, Jpeg, <<"image/jpeg">>) of ok -> #{step => File}; _ -> #{} end;
+                _ -> #{}
+            end
+    end.
 
 moment(#{moment_s := M}) when is_number(M) -> M;
 moment(Q) -> case [T || #{t := T} <- maps:get(steps, Q, []), is_number(T)] of [] -> null; Ts -> lists:max(Ts) end.
@@ -525,6 +547,7 @@ seam(Host, Name, Default) ->
 
 open_engine(Host) -> _ = code:ensure_loaded(Host), case erlang:function_exported(Host, open_engine, 0) of true -> Host:open_engine(); false -> undefined end.
 open_marker(Host) -> seam(Host, open_marker, fun witness_open:mark/3).
+cropper(Host) -> seam(Host, cropper, case witness_media:available() of true -> fun witness_media:step/3; false -> fun(_, _, _) -> {error, no_ffmpeg} end end).
 stiller(Host) -> seam(Host, stiller, case witness_media:available() of true -> fun witness_media:still/2; false -> fun(_, _) -> {error, no_ffmpeg} end end).
 examiner(Host) -> seam(Host, examiner, fun witness_examiner:run/3).
 answer_judge(Host) -> seam(Host, answer_judge, fun witness_examiner:judge_run/4).
