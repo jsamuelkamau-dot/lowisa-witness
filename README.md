@@ -57,6 +57,7 @@ as the work lands.
 | The phone: join code, record the desk (up to ten minutes) or choose a video, signed upload, marking, "my papers" in words that never say failed | `phone/witness/net.ts`, `phone/witness/WitnessScreen.tsx` | done 27 Oct |
 | The Mastery Plan: one level per question not mastered, built by LoWisa's existing level builder in a one-level mastery mode, every design call on Muse Spark, from the student's own working, the diagnosis and the teacher's focus note | `phone/witness/mastery.ts` (the builder's mastery mode is LoWisa's, named in docs/existed-before.md) | done 27 Oct |
 | The self-check: Muse Wonder plays each mastery level as the student who still holds the misconception and as one who has it right; a level passes only when the first is caught and the second clears, else it names what to change and the level is written again | `witness/src/witness_check.erl`, `phone/witness/mastery.ts` | done 27 Oct |
+| After release: the level's progress, ask-my-teacher threads, verification only when the teacher asks (explain back to Lo, judged by Muse Spark; a fresh paper; explain back to the teacher), and the teacher-issued "Turned around" badge | `witness/src/witness_mastery.erl`, `witness/src/witness_api.erl` | done 27 Oct |
 | The Exam Desk (desktop): exams, papers, the review queue, a replay of how each answer was written, the diagnosis at its moment, the teacher's result, marks and focus note, release | `desk/witness-desk.js`, `scripts/sync_desk.sh` | done 27 Oct |
 
 ## What existed before (not in this repository)

@@ -1,7 +1,7 @@
 -module(witness_api_tests).
 -include_lib("eunit/include/eunit.hrl").
 -behaviour(witness_host).
--export([meta_key/0, put_url/4, get_url/2, drop_clip/2, save/3, load/2, list/2, spend/3, run/1, marker/0, checker/0, design/2]).
+-export([meta_key/0, put_url/4, get_url/2, drop_clip/2, save/3, load/2, list/2, spend/3, run/1, marker/0, checker/0, design/2, judger/0]).
 
 %% An in-memory host: rows and events in an ets table, marking run at once, a canned marker.
 meta_key() -> <<"test-key">>.
@@ -24,6 +24,9 @@ marker() ->
 
 design(<<"broke">>, _) -> {gate, 402, #{success => false, code => <<"credits_exhausted">>}};
 design(Uid, Req) -> ev({design, Uid, Req}), {ok, <<"{\"title\":\"Common factors\"}">>}.
+
+judger() ->
+    fun(<<"test-key">>, #{n := N}, Text) -> ev({judged, N, Text}), {ok, #{understood => binary:match(Text, <<"factor">>) =/= nomatch, why => <<"w">>, next => <<"n">>}} end.
 
 checker() ->
     fun(<<"test-key">>, In) ->
@@ -189,3 +192,39 @@ design_door_passes_one_call_and_the_wall_test() ->
     %% an unknown effort or size falls back to the safe ones
     {200, _} = r(<<"POST">>, [<<"design">>], B#{<<"reasoningEffort">> => <<"max">>, <<"maxOutputTokens">> => 999999}, <<"stud">>),
     ?assertMatch([_, {design, _, #{effort := <<"low">>, max_tokens := 8000}}], [E || E = {design, _, _} <- events()]).
+
+after_release_the_teacher_chooses_and_issues_the_badge_test() ->
+    setup(),
+    {201, #{code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions">>}, <<"teacher">>),
+    persistent_term:put(witness_api_result, #{questions => [q(1, <<"mastered">>, 0.9), q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amara">>}, <<"stud">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"stud">>),
+    M = fun(Who, N, Action, Body) -> r(<<"POST">>, [<<"mastery">>, S, integer_to_binary(N), Action], Body, Who) end,
+    %% nothing before release; nobody else at all
+    ?assertMatch({409, #{code := <<"not_released">>}}, M(<<"stud">>, 3, <<"event">>, #{<<"event">> => <<"built">>})),
+    ?assertMatch({404, _}, M(<<"other">>, 3, <<"ask">>, #{<<"text">> => <<"hi">>})),
+    {200, _} = r(<<"POST">>, [<<"pile">>, maps:get(pile, element(2, load(<<"teacher">>, {sitting, S}))), <<"release">>], #{}, <<"teacher">>),
+    %% the student builds and plays the level; asks the teacher from a step; the teacher answers
+    {200, #{mastery := #{status := <<"ready">>, path := <<"custom-topic-x">>}}} = M(<<"stud">>, 3, <<"event">>, #{<<"event">> => <<"built">>, <<"path">> => <<"custom-topic-x">>}),
+    {200, _} = M(<<"stud">>, 3, <<"ask">>, #{<<"text">> => <<"Why does 12/24 not work?">>}),
+    {200, #{mastery := #{thread := [_, #{from := teacher}]}}} = M(<<"teacher">>, 3, <<"reply">>, #{<<"text">> => <<"Try dividing both by 12.">>}),
+    {200, #{mastery := #{status := <<"completed">>}}} = M(<<"stud">>, 3, <<"event">>, #{<<"event">> => <<"completed">>}),
+    %% verification only when the teacher asks for it, and only what they asked
+    ?assertMatch({400, #{code := <<"not_asked">>}}, M(<<"stud">>, 3, <<"explain">>, #{<<"to">> => <<"lo">>, <<"text">> => <<"common factor">>})),
+    ?assertMatch({403, _}, M(<<"stud">>, 3, <<"verify">>, #{<<"lo">> => true})),
+    {200, #{mastery := #{asks := #{lo := true, paper := false, teacher := true}}}} = M(<<"teacher">>, 3, <<"verify">>, #{<<"lo">> => true, <<"teacher">> => true}),
+    {200, #{mastery := StudentView}} = M(<<"stud">>, 3, <<"explain">>, #{<<"to">> => <<"lo">>, <<"text">> => <<"You divide top and bottom by a common factor, digits are not numbers.">>}),
+    ?assertEqual([lo], maps:get(explained, StudentView)),
+    ?assertNot(maps:is_key(explain, StudentView)),                         %% the verdict is the teacher's to read
+    [{judged, 3, _}] = [E || E = {judged, _, _} <- events()],
+    {200, _} = M(<<"stud">>, 3, <<"explain">>, #{<<"to">> => <<"teacher">>, <<"text">> => <<"I know now.">>}),
+    {200, #{result := #{questions := [_, Q3]}}} = r(<<"GET">>, [<<"sitting">>, S], #{}, <<"teacher">>),
+    ?assertMatch(#{mastery := #{explain := #{lo := #{verdict := #{understood := true}}, teacher := #{text := <<"I know now.">>}}}}, Q3),
+    %% the badge is the teacher's alone, and only for a question that was to master
+    ?assertMatch({403, _}, M(<<"stud">>, 3, <<"badge">>, #{<<"issue">> => true})),
+    ?assertMatch({400, #{code := <<"not_to_master">>}}, M(<<"teacher">>, 1, <<"badge">>, #{<<"issue">> => true})),
+    {200, #{mastery := #{status := <<"badge">>, badge := #{issued := true, note := <<"Turned around">>}}}} = M(<<"teacher">>, 3, <<"badge">>, #{<<"issue">> => true, <<"note">> => <<"Turned around">>}),
+    %% the student's own list shows the badge and the thread, not the verdict
+    {200, #{papers := [#{result := #{questions := [_, Mine3]}}]}} = r(<<"GET">>, [<<"mine">>], #{}, <<"stud">>),
+    ?assertMatch(#{mastery := #{status := <<"badge">>, badge := #{issued := true}, thread := [_, _]}}, Mine3),
+    ?assertNot(maps:is_key(explain, maps:get(mastery, Mine3))).

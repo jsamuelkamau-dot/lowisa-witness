@@ -21,6 +21,9 @@
 %%%   POST check                    {question, working, diagnosis, focus?, level: {title, lessons: [{title, beats}]}}
 %%%                                 -> 202 {id}   Muse Wonder plays a mastery level as both students (witness_check)
 %%%   GET  check/<id>               -> 200 {status: "checking" | "done" | "failed", verdict?}
+%%%   POST mastery/<sitting>/<n>/<action>   one question's life after release (witness_mastery):
+%%%        student: event {event: built|completed, path?}, explain {to: lo|teacher, text}, ask {text}
+%%%        teacher: verify {lo, paper, teacher}, reply {text}, badge {issue, note}
 %%%   POST design                   {requestId, messages: [system, user], reasoningEffort?, maxOutputTokens?}
 %%%                                 -> 200 {success, text}   one design call of a mastery level, on Muse Spark, paid by
 %%%                                 the learner through the host (a credit wall answers as the host's wall)
@@ -159,6 +162,31 @@ route(<<"GET">>, [<<"sitting">>, Id], _B, Uid, Host) ->
         none -> refuse(404, <<"no_sitting">>, <<"That sitting isn't here.">>);
         {ok, Row} -> {200, view(Id, Row)}
     end;
+%% ---------------------------------------------------------------- a question after release
+route(<<"POST">>, [<<"mastery">>, Sid, NBin, Action], B, Uid, Host) ->
+    N = try binary_to_integer(NBin) catch _:_ -> -1 end,
+    Owner = owner_of(Uid, Sid, Host),
+    case Host:load(Owner, {sitting, Sid}) of
+        none -> refuse(404, <<"no_sitting">>, <<"That paper isn't here.">>);
+        {ok, Row} ->
+            Role = if Owner =:= Uid -> teacher; true -> case maps:get(student_uid, Row, undefined) of Uid -> student; _ -> none end end,
+            Released = maps:get(status, Row) =:= <<"released">>,
+            Qs = case Row of #{result := #{questions := L}} -> L; _ -> [] end,
+            case {Role, Released, [Q || Q = #{n := Qn} <- Qs, Qn =:= N]} of
+                {none, _, _} -> refuse(404, <<"no_sitting">>, <<"That paper isn't here.">>);
+                {student, false, _} -> refuse(409, <<"not_released">>, <<"Your teacher hasn't released this paper yet.">>);
+                {_, _, []} -> refuse(404, <<"no_question">>, <<"That question isn't on this paper.">>);
+                {_, _, [Q | _]} ->
+                    case mastery_step(Role, Action, Q, B, Host) of
+                        {error, Code} -> refuse(case Code of forbidden -> 403; _ -> 400 end, atom_to_binary(Code), mastery_words(Code));
+                        Q1 ->
+                            R = maps:get(result, Row),
+                            ok = Host:save(Owner, {sitting, Sid}, Row#{result => R#{questions => [case X of #{n := N} -> Q1; _ -> X end || X <- Qs]}}),
+                            {200, #{ok => true, n => N, mastery => witness_mastery:view(Q1, Role)}}
+                    end
+            end
+    end;
+
 %% ---------------------------------------------------------------- a mastery level's design calls
 route(<<"POST">>, [<<"design">>], B, Uid, Host) ->
     Msgs = [#{role => R, content => C} || #{<<"role">> := R, <<"content">> := C} <- list(maps:get(<<"messages">>, B, [])),
@@ -218,6 +246,47 @@ checker(Host) ->
         false -> fun witness_check:run/2
     end.
 
+mastery_step(student, <<"event">>, Q, B, _Host) ->
+    witness_mastery:event(Q, maps:get(<<"event">>, B, <<>>), #{path => clean(maps:get(<<"path">>, B, <<>>), 200), at => now_ms()});
+mastery_step(student, <<"explain">>, Q, B, Host) ->
+    To = maps:get(<<"to">>, B, <<>>),
+    Text = clean(maps:get(<<"text">>, B, <<>>), 2000),
+    %% explaining back to Lo is judged at once against the diagnosis (Muse Spark); to the teacher it waits for them
+    %% (only when the teacher asked for it: an explanation that is refused is never sent to a model)
+    AskedLo = maps:get(lo, maps:get(asks, maps:get(mastery, Q, #{}), #{}), false) =:= true,
+    Verdict = case {To, Text, AskedLo andalso Host:meta_key()} of
+        {<<"lo">>, T, K} when T =/= <<>>, is_binary(K) orelse is_list(K) -> case (judger(Host))(K, Q, T) of {ok, V} -> V; _ -> undefined end;
+        _ -> undefined
+    end,
+    witness_mastery:explain(Q, To, Text, #{at => now_ms(), verdict => Verdict});
+mastery_step(student, <<"ask">>, Q, B, _Host) -> witness_mastery:ask(Q, maps:get(<<"text">>, B, <<>>), now_ms());
+mastery_step(teacher, <<"verify">>, Q, B, _Host) -> witness_mastery:verify(Q, B);
+mastery_step(teacher, <<"reply">>, Q, B, _Host) -> witness_mastery:reply(Q, maps:get(<<"text">>, B, <<>>), now_ms());
+mastery_step(teacher, <<"badge">>, Q, B, _Host) ->
+    witness_mastery:badge(Q, maps:get(<<"issue">>, B, false) =:= true, #{note => maps:get(<<"note">>, B, <<>>), at => now_ms()});
+mastery_step(_, _, _, _, _) -> {error, forbidden}.
+
+mastery_words(forbidden) -> <<"That isn't yours to do on this paper.">>;
+mastery_words(not_asked) -> <<"Your teacher hasn't asked for that.">>;
+mastery_words(empty) -> <<"Write something first.">>;
+mastery_words(not_to_master) -> <<"This question was mastered already.">>;
+mastery_words(_) -> <<"That can't be done here.">>.
+
+judger(Host) ->
+    _ = code:ensure_loaded(Host),
+    case erlang:function_exported(Host, judger, 0) of
+        true -> Host:judger();
+        false -> fun spark_judge/3
+    end.
+
+spark_judge(Key, Q, Text) ->
+    Req = #{model => <<"muse-spark-1.3">>, reasoning => #{effort => <<"low">>}, max_output_tokens => 3000,
+            input => [#{type => message, role => user, content => [#{type => input_text, text => witness_mastery:judge_prompt(Q, Text)}]}]},
+    case witness_meta:responses(Key, Req) of
+        {ok, R} -> witness_mastery:judge(witness_meta:text_of(R));
+        E -> E
+    end.
+
 %% A student's paper in a teacher's exam is the teacher's row; the student reaches it through their pointer.
 owner_of(Uid, Id, Host) ->
     case Host:load(Uid, {sitting, Id}) of
@@ -230,7 +299,10 @@ mine_view(Id, #{owner := O}, Host) ->
     case Host:load(O, {sitting, Id}) of
         {ok, #{status := <<"released">>} = R} ->
             Title = case Host:load(O, {pile, maps:get(pile, R, <<>>)}) of {ok, P} -> maps:get(title, P); none -> <<>> end,
-            (view(Id, R))#{title => Title};
+            V = view(Id, R),
+            Qs = [case Q of #{mastery := _} -> Q#{mastery => witness_mastery:view(Q, student)}; _ -> Q end
+                  || Q <- maps:get(questions, maps:get(result, V))],
+            V#{title => Title, result => (maps:get(result, V))#{questions => Qs}};
         {ok, R} -> #{id => Id, status => case maps:get(status, R) of <<"failed">> -> <<"failed">>; <<"uploading">> -> <<"uploading">>; _ -> <<"with_teacher">> end};
         none -> none
     end;
