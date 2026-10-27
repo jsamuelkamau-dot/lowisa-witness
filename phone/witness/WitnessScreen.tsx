@@ -40,7 +40,7 @@ type Stage =
   | {kind: 'proof'; paper: Paper}
   | {kind: 'paper'; paper: Paper};
 
-interface Native { uploadFile?(uri: string, url: string, contentType: string): Promise<number>; takeVideo?(maxSeconds: number): Promise<VideoFile | null>; smallVideo?(uri: string): Promise<VideoFile | null>; lastClip?(sinceMs: number): Promise<VideoFile | null> }
+interface Native { uploadPart?(uri: string, url: string, offset: number, length: number): Promise<number>; uploadFile?(uri: string, url: string, contentType: string): Promise<number>; takeVideo?(maxSeconds: number): Promise<VideoFile | null>; smallVideo?(uri: string): Promise<VideoFile | null>; lastClip?(sinceMs: number): Promise<VideoFile | null> }
 const docs = () => (NativeModules as Record<string, unknown>).LoWisaDocuments as Native | undefined;
 
 /**
@@ -71,6 +71,35 @@ export async function sendClip(uri: string, put: string, mime: string, wait = (m
   }
   return status;
 }
+
+/**
+ * A long video in parts (2026-10-28, the plan: "in chunks, resumable, so a bad connection loses nothing"): each part
+ * from its own offset on its own link, three tries each like sendClip. True when every part given went up; a part that
+ * still fails stops it, and the parts already up stay up for the next try.
+ */
+export async function sendParts(uri: string, total: number, partSize: number, urls: Array<{n: number; url: string}>, onPart?: (done: number) => void,
+                                wait = (ms: number) => new Promise<void>(r => setTimeout(r, ms))): Promise<boolean> {
+  const up = docs();
+  if (!up || !up.uploadPart) return false;
+  let done = 0;
+  for (const {n, url} of urls) {
+    const offset = (n - 1) * partSize;
+    const length = Math.min(partSize, total - offset);
+    let status = 0;
+    for (let i = 0; i < 3; i++) {
+      try { status = await up.uploadPart(uri, url, offset, length); } catch (e) { status = 0; }
+      if ((status >= 200 && status < 300) || (status >= 400 && status < 500)) break;
+      if (i < 2) await wait(i === 0 ? 2000 : 6000);
+    }
+    if (status < 200 || status >= 300) return false;
+    done++;
+    if (onPart) onPart(done);
+  }
+  return true;
+}
+
+/** Whether this phone can send a video in parts (a phone without the native part upload sends it whole). */
+export function canSendParts(): boolean { const up = docs(); return !!(up && up.uploadPart); }
 
 /**
  * The exam a camera recording is being made for, kept until the paper is sent. Android stops the app when a camera
@@ -106,6 +135,8 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
   const [busy, setBusy] = useState(false);
   // a recording that did not go up stays here: a weak connection costs a second try, not the paper sat again
   const [unsent, setUnsent] = useState<VideoFile | null>(null);
+  // a video in parts that did not finish: its sitting, so "send again" sends only the parts that did not arrive
+  const [resumeOf, setResumeOf] = useState<{id: string; uri: string} | null>(null);
   const [notice, setNotice] = useState('');
 
   // a recording the camera app made while Android stopped this app (PENDING_KEY): offered as soon as Witness opens
@@ -163,21 +194,47 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
     setStage({kind: 'sending', title, line: 'Making the video smaller to send…'});
     const file = await smaller(picked, p => setStage({kind: 'sending', title, line: `Making the video smaller to send… ${p}%`}));
     const mime = doorMime(file.mime, file.name)!;
-    setStage({kind: 'sending', title, line: 'Getting the upload ready…'});
-    const started = await witness.start(env, Math.round(file.size), mime, stage.code, name.trim());
-    if (!started.ok) { again(started.error, file); return; }
-    setStage({kind: 'sending', title, line: 'Sending your paper…'});
-    const status = await sendClip(file.uri, started.value.put, mime);
-    if (status < 200 || status >= 300) {
-      again('The video did not go up. It is kept on this phone: send it again when the connection is better, on Wi-Fi if you can.', file);
-      return;
+    const kept = 'The video did not go up. It is kept on this phone: send it again when the connection is better, on Wi-Fi if you can.';
+    const total = Math.round(file.size);
+    // the parts that did not arrive last time are all that is sent again, on the same sitting
+    let id = resumeOf && resumeOf.uri === file.uri ? resumeOf.id : '';
+    let urls: Array<{n: number; url: string}> = []; let partSize = 0;
+    if (id) {
+      const left = await witness.parts(env, id);
+      if (left.ok && left.value.urls.length) { urls = left.value.urls; partSize = left.value.size; }
+      else if (!left.ok || left.value.status) id = '';
     }
+    if (!id) {
+      setStage({kind: 'sending', title, line: 'Getting the upload ready…'});
+      const started = await witness.start(env, total, mime, stage.code, name.trim(), canSendParts());
+      if (!started.ok) { again(started.error, file); return; }
+      id = started.value.id;
+      if (started.value.parts) { urls = started.value.parts.urls; partSize = started.value.parts.size; }
+      else {
+        setStage({kind: 'sending', title, line: 'Sending your paper…'});
+        const status = await sendClip(file.uri, started.value.put || '', mime);
+        if (status < 200 || status >= 300) { again(kept, file); return; }
+      }
+    }
+    if (urls.length) {
+      const count = Math.ceil(total / partSize);
+      const base = count - urls.length;
+      setStage({kind: 'sending', title, line: 'Sending your paper… ' + Math.round(base / count * 100) + '%'});
+      const ok = await sendParts(file.uri, total, partSize, urls, d => setStage({kind: 'sending', title, line: 'Sending your paper… ' + Math.round((base + d) / count * 100) + '%'}));
+      if (!ok) { setResumeOf({id, uri: file.uri}); again(kept, file); return; }
+    }
+    setResumeOf(null);
     setUnsent(null);
     storage.removeItem(PENDING_KEY);
     setStage({kind: 'sending', title, line: 'Witness is reading how you worked…'});
-    const marked = await witness.mark(env, started.value.id, PHONE_FPS);
+    let marked = await witness.mark(env, id, PHONE_FPS);
+    if (!marked.ok && marked.code === 'parts_missing') {
+      // a part the store does not have yet (it answered, then lost it): sent once more before giving up
+      const left = await witness.parts(env, id);
+      if (left.ok && left.value.urls.length && await sendParts(file.uri, total, left.value.size, left.value.urls)) marked = await witness.mark(env, id, PHONE_FPS);
+    }
     if (!marked.ok) { setStage({kind: 'joined', code: stage.code, title, level: stage.level}); setError(marked.error); return; }
-    setStage({kind: 'sent', title, id: started.value.id});
+    setStage({kind: 'sent', title, id});
     loadMine();
   };
 

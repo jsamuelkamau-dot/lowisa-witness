@@ -43,6 +43,9 @@ export interface Question {
   n: number; result: Result; teacher_result?: Result; marks: number; teacher_marks?: number; out_of: number;
   final_answer: string; steps: Step[]; diagnosis: string; moment_s: number | null; confidence: number; focus?: string;
 }
+/** A long video goes up in parts (2026-10-28): each part on its own link, so a dropped connection costs one part. */
+export interface PartUrl { n: number; url: string }
+export interface Parts { size: number; count: number; urls: PartUrl[] }
 /** A "Turned around" badge: the question, what was turned around, and the days from going wrong to mastered. */
 export interface Badge { question: string; fixed: string; exam: string; wrong_at: number | null; turned_at: number; note: string }
 export interface Paper { id: string; status: string; unseen?: boolean; title?: string; student?: string; result?: {questions: Question[]; stills?: Still[]}; examiner?: Examiner }
@@ -109,8 +112,10 @@ export const witness = {
   mine: (env: WitnessEnv) => door<{papers: Paper[]}>(env, 'GET', 'mine'),
   badges: (env: WitnessEnv) => door<{badges: Badge[]}>(env, 'GET', 'badges'),
   join: (env: WitnessEnv, code: string) => door<{pile: {title: string; level: string}}>(env, 'POST', 'join', {code}),
-  start: (env: WitnessEnv, size: number, mime: string, code?: string, student?: string) =>
-    door<{id: string; put: string; headers: Record<string, string>}>(env, 'POST', 'sitting/start', {size, mime, ...(code ? {code} : {}), ...(student ? {student} : {})}),
+  start: (env: WitnessEnv, size: number, mime: string, code?: string, student?: string, parts?: boolean) =>
+    door<{id: string; put?: string; headers?: Record<string, string>; parts?: Parts}>(env, 'POST', 'sitting/start', {size, mime, ...(code ? {code} : {}), ...(student ? {student} : {}), ...(parts ? {parts: true} : {})}),
+  /** a video in parts: which arrived, and fresh links for the rest */
+  parts: (env: WitnessEnv, id: string) => door<{status?: string; size: number; count: number; done: number[]; urls: PartUrl[]}>(env, 'GET', 'sitting/' + id + '/parts'),
   mark: (env: WitnessEnv, id: string, fps: number) => door<{status: string}>(env, 'POST', 'sitting/' + id + '/mark', {fps}),
   paper: (env: WitnessEnv, id: string) => door<Paper>(env, 'GET', 'sitting/' + id),
   mastery: (env: WitnessEnv, paperId: string, n: number, action: 'event' | 'explain' | 'ask' | 'fresh', body: Record<string, unknown>) =>
