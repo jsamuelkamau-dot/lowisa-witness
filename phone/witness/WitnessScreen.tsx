@@ -40,8 +40,18 @@ type Stage =
   | {kind: 'proof'; paper: Paper}
   | {kind: 'paper'; paper: Paper};
 
-interface Native { uploadFile?(uri: string, url: string, contentType: string): Promise<number>; takeVideo?(maxSeconds: number): Promise<VideoFile | null> }
+interface Native { uploadFile?(uri: string, url: string, contentType: string): Promise<number>; takeVideo?(maxSeconds: number): Promise<VideoFile | null>; smallVideo?(uri: string): Promise<VideoFile | null> }
 const docs = () => (NativeModules as Record<string, unknown>).LoWisaDocuments as Native | undefined;
+
+/**
+ * A desk video made small enough to send on a phone's data: 720p, ten frames a second, about 8 MB a minute where the
+ * camera made some 120 (27 Oct). The original goes when it is small already, or when this phone cannot make it smaller.
+ */
+export async function smaller(file: VideoFile): Promise<VideoFile> {
+  const n = docs();
+  if (!n || !n.smallVideo) return file;
+  try { return (await n.smallVideo(file.uri)) || file; } catch (e) { return file; }
+}
 
 export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessEnv & CustomEnv; storage: MirrorStorage; onBack(): void; onOpenPath?(pathId: string): void}): React.JSX.Element {
   const [stage, setStage] = useState<Stage>({kind: 'home'});
@@ -76,9 +86,11 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
     try { const n = docs(); file = source === 'camera' && n && n.takeVideo ? await n.takeVideo(RECORD_SECONDS) : await chooseVideo(source); }
     catch (e) { setError('The camera could not start. Try choosing a video you already recorded.'); return; }
     if (!file) return;
-    const mime = doorMime(file.mime, file.name);
-    if (!mime) { setError('Witness reads MP4 and MOV videos. Record it again with the camera here.'); return; }
+    if (!doorMime(file.mime, file.name)) { setError('Witness reads MP4 and MOV videos. Record it again with the camera here.'); return; }
     const title = stage.title;
+    setStage({kind: 'sending', title, line: 'Making the video smaller to send…'});
+    file = await smaller(file);
+    const mime = doorMime(file.mime, file.name)!;
     setStage({kind: 'sending', title, line: 'Getting the upload ready…'});
     const started = await witness.start(env, Math.round(file.size), mime, stage.code, name.trim());
     if (!started.ok) { setStage({kind: 'joined', code: stage.code, title, level: stage.level}); setError(started.error); return; }
@@ -256,8 +268,10 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
     try { const n = docs(); file = source === 'camera' && n && n.takeVideo ? await n.takeVideo(RECORD_SECONDS) : await chooseVideo(source); }
     catch (e) { setSaid('The camera could not start. Try choosing a video you already recorded.'); return; }
     if (!file) return;
-    const mime = doorMime(file.mime, file.name);
-    if (!mime) { setSaid('Witness reads MP4 and MOV videos. Record it again with the camera here.'); return; }
+    if (!doorMime(file.mime, file.name)) { setSaid('Witness reads MP4 and MOV videos. Record it again with the camera here.'); return; }
+    setFilming('Making the video smaller to send…');
+    file = await smaller(file);
+    const mime = doorMime(file.mime, file.name)!;
     setFilming('Getting the upload ready…');
     const r = await witness.mastery(env, paper.id, q.n, 'fresh', {mime, size: Math.round(file.size)});
     if (!r.ok || !r.value.fresh) { setFilming(''); setSaid(r.ok ? 'Try again in a moment.' : r.error); return; }
