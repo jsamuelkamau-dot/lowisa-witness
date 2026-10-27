@@ -36,7 +36,9 @@ prompt(Sitting) ->
         "You are marking a student's paper from a video of their desk while they worked (", Level, ").\n",
         Qs, "\n", Scheme, "\n\n",
         "Watch the whole video. For every question, judge the THINKING as well as the final answer:\n"
-        "- read every step in the order it was written, with the second it was finished, and note crossings-out;\n"
+        "- read every step in the order it was written, with the second it was finished; \"wrote\" is the ink exactly as\n"
+        "  written (copy it, never describe it: \"16/64 = 1/4\", not \"cancelled the 6s\"); crossed_out is true only for a\n"
+        "  step the student struck out to replace it, never for marks drawn as part of the working;\n"
         "- a right final answer reached by a wrong method is \"right_answer_wrong_thinking\" (for example cancelling\n"
         "  digits that are not common factors, or two mistakes that cancel each other out);\n"
         "- \"mastered\" is right with right thinking (a slip the student corrected themselves still counts as mastered);\n"

@@ -45,7 +45,7 @@
     if (typeof window.__lowisaRegisterCommand === 'function') {
       window.__lowisaRegisterCommand({ id: 'witness.open', title: 'Exam Desk: Open', category: 'Exam Desk', run: function () { open(); } });
     }
-    window.__lowisaWitnessDesk = { open: open, close: close };
+    window.__lowisaWitnessDesk = { open: open, close: close, show: show };
   }
 
   // ---------------------------------------------------------------- the panel
@@ -104,6 +104,15 @@
     panelEl();
     document.addEventListener('keydown', onKey, true);
     await loadPiles();
+    render();
+    return true;
+  }
+  // show({pile, paper, n}): open straight on an exam or one paper's question (the demo page's links)
+  async function show(where) {
+    if (!(await open())) return false;
+    where = where || {};
+    if (where.pile && await loadPile(where.pile)) S.view = 'pile';
+    if (where.paper && await loadPaper(where.paper)) { S.view = 'paper'; S.n = where.n != null ? Number(where.n) : null; stopPoll(); }
     render();
     return true;
   }
@@ -169,7 +178,7 @@
       return '<div class="wd-row" data-pile="' + esc(x.id) + '"><span class="wd-grow"><b>' + esc(x.title) + '</b></span>' +
         (x.code ? '<span class="wd-sub">Code ' + esc(x.code) + '</span>' : '') +
         '<span class="wd-sub">' + x.papers + ' paper' + (x.papers === 1 ? '' : 's') + '</span>' +
-        (x.released ? '<span class="wd-chip ok">Released</span>' : '<span class="wd-chip">Marking</span>') + '</div>';
+        (x.released ? '<span class="wd-chip ok">Released</span>' : '<span class="wd-chip">Open</span>') + '</div>';
     }).join('');
     return '<div class="wd-card"><div class="wd-row" style="cursor:default"><span class="wd-grow"><h3 style="margin:0">Your exams</h3>' +
       '<div class="wd-sub">Each exam holds its papers. Students sit on paper; a phone over the desk records how each answer was written.</div></span>' +
@@ -212,7 +221,7 @@
     var code = j.pile && j.pile.code ? '<div class="wd-card"><b>Join code: <span style="font-size:18px;letter-spacing:3px">' + esc(j.pile.code) + '</span></b>' +
       '<div class="wd-sub">Students enter it in the LoWisa phone app, then record their own paper. Or record each paper yourself.</div></div>' : '';
     return code + nums + '<div class="wd-cols"><div class="wd-card"><h3>Papers</h3>' + papers + '</div>' +
-      '<div class="wd-card"><h3>Review, least certain first</h3>' + queue + '</div></div>' +
+      '<div class="wd-card"><h3>To review: what needs you first</h3>' + queue + '</div></div>' +
       '<div style="margin-top:6px">' + (released ? '<span class="wd-chip ok">Released to students</span>' :
         '<button class="wd-btn wd-main" data-act="release">Release marks</button> <span class="wd-sub">Students see their marks; every question they didn\'t master becomes their next mastery level.</span>') + '</div>';
   }

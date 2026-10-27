@@ -237,15 +237,16 @@ summary(Id, Row) ->
       marks => Marks, out_of => OutOf, to_master => length([Q || Q <- Qs, needs_level(Q)]),
       to_review => length([Q || Q <- Qs, not maps:get(reviewed, Q, false)])}.
 
-%% queue(Sittings): every question not yet reviewed, the ones that most need a teacher first: the result the model
-%% is least sure of, and among equals wrong thinking, then "not yet", then part way, then mastered.
+%% queue(Sittings): every question not yet reviewed, the ones that most need a teacher first: anything not mastered
+%% above anything mastered (27 Oct, the live desk: a "mastered, 90% sure" sat above a right answer reached by wrong
+%% thinking at 95%), then the result the model is least sure of, then wrong thinking, "not yet", part way.
 queue(Ss) ->
     Items = [#{sitting => Id, student => maps:get(student, R, <<>>), n => maps:get(n, Q), result => maps:get(result, Q),
                confidence => maps:get(confidence, Q, 0.0), diagnosis => maps:get(diagnosis, Q, <<>>), moment_s => maps:get(moment_s, Q, null)}
              || {Id, R = #{result := #{questions := Qs}}} <- Ss, Q <- Qs, not maps:get(reviewed, Q, false)],
     lists:sort(fun(A, B) -> rank(A) =< rank(B) end, Items).
 
-rank(#{confidence := C, result := R}) -> {round(num(C) * 20), order(R)}.
+rank(#{confidence := C, result := R}) -> {case R of <<"mastered">> -> 1; _ -> 0 end, round(num(C) * 20), order(R)}.
 order(<<"right_answer_wrong_thinking">>) -> 0;
 order(<<"not_yet">>) -> 1;
 order(<<"part_way">>) -> 2;

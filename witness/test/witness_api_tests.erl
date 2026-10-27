@@ -97,8 +97,11 @@ pile_queue_review_release_test() ->
     ?assertMatch(#{title := <<"Fractions quiz">>, id := P}, Pile),
     ?assertMatch([#{id := SA, student := <<"Amara">>, marks := 2, out_of := 4, to_master := 1},
                   #{id := SB, student := <<"Ben">>, to_master := 1}], Ss),
-    %% least certain first; among equals wrong thinking before part way before mastered
+    %% anything not mastered first, least certain first among them; mastered last
     ?assertEqual([{SB, 1}, {SA, 2}, {SB, 2}, {SA, 1}], [{maps:get(sitting, I), maps:get(n, I)} || I <- Queue]),
+    %% a mastered answer the model is unsure of still comes after every answer that needs teaching
+    ?assertEqual([<<"not_yet">>, <<"mastered">>], [maps:get(result, I) || I <- witness_api:queue([
+        {<<"x">>, #{result => #{questions => [#{n => 1, result => <<"mastered">>, confidence => 0.5}, #{n => 2, result => <<"not_yet">>, confidence => 0.99}]}}}])]),
     %% the teacher's word beside the model's, and the focus note
     {200, #{question := Rq}} = r(<<"POST">>, [<<"sitting">>, SB, <<"review">>], #{<<"n">> => 1, <<"result">> => <<"part_way">>, <<"marks">> => 1,
                                                                                 <<"focus">> => <<" Why only the divisor flips ">>}, <<"t1">>),

@@ -35,10 +35,17 @@ window.__lowisaWitnessIpc = {
   },
 };
 document.getElementById('open').onclick = () => window.__lowisaWitnessDesk && window.__lowisaWitnessDesk.open();
+// ?pile=<id>&paper=<id>&n=<question> opens the desk straight there
+const q = new URLSearchParams(location.search);
+if (q.has('pile') || q.has('paper') || q.has('open')) {
+  const go = async () => { const d = window.__lowisaWitnessDesk; if (!d || !(await d.show({pile: q.get('pile'), paper: q.get('paper'), n: q.get('n')}))) setTimeout(go, 300); };
+  setTimeout(go, 200);
+}
 </script><script src="/witness-desk.js"></script></body></html>`;
 
 http.createServer((req, res) => {
-  if (req.url === '/' || req.url === '/index.html') { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); return res.end(PAGE); }
+  const route = (req.url || '').split('?')[0];
+  if (route === '/' || route === '/index.html') { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); return res.end(PAGE); }
   if (req.url === '/witness-desk.js') { res.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8' }); return res.end(fs.readFileSync(DESK)); }
   if (!/^\/api\/witness\/[a-z0-9/]+$/.test(req.url || '')) { res.writeHead(404); return res.end(); }
   let body = '';
