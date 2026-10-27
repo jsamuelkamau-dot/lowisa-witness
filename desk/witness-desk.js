@@ -261,7 +261,40 @@
       '<label for="wdFocus">What should this student\'s mastery level focus on?</label>' +
       '<textarea id="wdFocus" data-f="focus" rows="3" placeholder="Make them see why only the divisor flips. They like cooking.">' + esc(q.focus || '') + '</textarea>' +
       '<div class="wd-sub">Witness builds one level for each question a student didn\'t master, from their own working and your note.</div>' +
-      '<div style="margin-top:10px"><button class="wd-btn wd-main" data-act="save">Save</button></div></div>';
+      '<div style="margin-top:10px"><button class="wd-btn wd-main" data-act="save">Save</button></div></div>' +
+      masteryCard(q);
+  }
+
+  // After release: the student's level, their questions to the teacher, the checks the teacher chooses (none needed),
+  // what they explained, and the badge. Only for a question that was to master.
+  var STATUS = { not_started: 'Level not started yet', building: 'Level being made', ready: 'Level ready on their phone',
+                 completed: 'Level played to the end', badge: 'Turned around', not_yet: 'Not yet' };
+  function masteryCard(q) {
+    var released = S.paper && S.paper.status === 'released';
+    var res = q.teacher_result || q.result;
+    if (!released || !(res === 'not_yet' || res === 'right_answer_wrong_thinking')) return '';
+    var m = q.mastery || { status: 'not_started' };
+    var asks = m.asks || {};
+    var thread = (m.thread || []).map(function (t) {
+      return '<div class="wd-sub" style="margin:4px 0"><b>' + (t.from === 'teacher' ? 'You' : esc(S.paper.student || 'Student')) + ':</b> ' + esc(t.text) + '</div>';
+    }).join('');
+    var ex = m.explain || {};
+    var lo = ex.lo ? '<div class="wd-card"><b>Explained to Lo</b><div>' + esc(ex.lo.text) + '</div>' +
+      (ex.lo.verdict ? '<div class="wd-sub">' + (ex.lo.verdict.understood ? 'Lo: understood. ' : 'Lo: not yet understood. ') + esc(ex.lo.verdict.why || '') + '</div>' : '') + '</div>' : '';
+    var toMe = ex.teacher ? '<div class="wd-card"><b>Explained to you</b><div>' + esc(ex.teacher.text) + '</div></div>' : '';
+    var box = function (k, label) { return '<label style="display:flex;gap:6px;align-items:center;color:var(--tx)"><input type="checkbox" data-ask="' + k + '"' + (asks[k] ? ' checked' : '') + ' style="width:auto"> ' + label + '</label>'; };
+    var done = m.status === 'badge';
+    return '<div class="wd-card"><div class="wd-row" style="cursor:default;padding:0"><span class="wd-grow"><h3 style="margin:0">Mastery</h3></span>' +
+      '<span class="wd-chip ' + (done ? 'ok' : '') + '">' + esc(STATUS[m.status] || m.status) + '</span></div>' +
+      (thread ? '<div style="margin-top:8px"><b style="font-size:12px">Questions to you</b>' + thread + '</div>' : '') +
+      '<label for="wdReply">Answer in the thread</label><input id="wdReply" data-f="reply" placeholder="Try dividing both by 12.">' +
+      '<div style="margin-top:6px"><button class="wd-btn" data-act="reply">Send</button></div>' +
+      '<div style="margin-top:12px"><b style="font-size:12px">Ask for a check (only if you want one)</b>' +
+      box('lo', 'Explain it back to Lo') + box('paper', 'A fresh question on paper, watched again') + box('teacher', 'Explain it back to me') +
+      '<button class="wd-btn" data-act="verify" style="margin-top:6px">Save checks</button></div>' + lo + toMe +
+      '<label for="wdBadgeNote">A note with your decision</label><input id="wdBadgeNote" data-f="badgeNote" placeholder="Well done, you found why digits are not numbers.">' +
+      '<div style="margin-top:8px;display:flex;gap:8px">' + (done ? '<span class="wd-chip ok">Badge issued</span>' :
+        '<button class="wd-btn wd-main" data-act="badge">Issue Turned around</button><button class="wd-btn" data-act="notyet">Not yet</button>') + '</div></div>';
   }
 
   // the step written when the thinking went wrong: the last step finished at or before that second
@@ -307,6 +340,10 @@
     if (act === 'release') return release();
     if (act === 'save') return save();
     if (act === 'replay') return runPlay();
+    if (act === 'verify') return masteryDo('verify', checks());
+    if (act === 'reply') return masteryDo('reply', { text: S.draft.reply || '' });
+    if (act === 'badge') return masteryDo('badge', { issue: true, note: S.draft.badgeNote || '' });
+    if (act === 'notyet') return masteryDo('badge', { issue: false, note: S.draft.badgeNote || '' });
     if (t.hasAttribute('data-pile')) { if (await loadPile(t.getAttribute('data-pile'))) { S.view = 'pile'; } return render(); }
     if (t.hasAttribute('data-paper')) {
       var n = t.getAttribute('data-n');
@@ -314,6 +351,24 @@
       return render();
     }
     if (t.hasAttribute('data-q')) { S.n = Number(t.getAttribute('data-q')); S.draft = {}; S.play = { pending: true }; return render(); }
+  }
+
+  function checks() {
+    var out = { lo: false, paper: false, teacher: false };
+    var p = document.getElementById('lowisaWitnessDesk');
+    if (p) p.querySelectorAll('[data-ask]').forEach(function (el) { out[el.getAttribute('data-ask')] = !!el.checked; });
+    return out;
+  }
+  async function masteryDo(action, body) {
+    if (S.n == null) return;
+    S.busy = true;
+    var j = await api('POST', '/api/witness/mastery/' + S.sid + '/' + S.n + '/' + action, body);
+    S.busy = false;
+    if (!j.ok) { say(errText(j), 'err'); return render(); }
+    await loadPaper(S.sid);
+    S.draft = {};
+    say(action === 'badge' ? (body.issue ? 'Badge issued: Turned around.' : 'Marked not yet, with your note.') : action === 'verify' ? 'Checks saved. The student sees only these.' : 'Sent.');
+    render();
   }
 
   // "1. 3/4 ÷ 1/2 (2)" -> {n: 1, text: "3/4 ÷ 1/2", marks: 2}
