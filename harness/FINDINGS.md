@@ -23,3 +23,4 @@
 - Muse Spark caught the right answer reached by wrong thinking on every run, with the moment at 33–36 s. Q1's crossed-out 3/8 was read on every run.
 - **SAM "word" tracked forward finds the written lines in writing order**: 6 of 6 on one run, 5 of 6 on another. Tracked both ways, first sightings came earlier than the ink.
 - SAM sees a line once it reads as a word, a few seconds after the ink, so steps are placed by page order and time, with a penalty for leaving one of SAM's lines empty, all questions in one pass.
+- **SAM 3.1 and Muse Spark both read a clip from a signed S3 link** (`input_video` with `video_url`), so the phone uploads straight to storage and the server never holds a video. The same marking came back: 6 lines, wrong thinking caught, $0.08.

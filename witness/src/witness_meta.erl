@@ -14,7 +14,7 @@
 %%% Keys come from the host (witness_host); nothing here reads configuration.
 %%%-------------------------------------------------------------------
 -module(witness_meta).
--export([chat_request/3, ssl_opts/0, upload/4, sam_video/3, sam_video/4, read_video/5, responses/2, text_of/1, cost/2, multipart/4]).
+-export([chat_request/3, ssl_opts/0, upload/4, sam_video/3, sam_video/4, read_video/5, video/1, responses/2, text_of/1, cost/2, multipart/4]).
 
 -define(API, "https://api.meta.ai/v1").
 -define(TIMEOUT_MS, 300000).
@@ -64,7 +64,7 @@ sam_video(Key, FileId, Prompt, Opts) ->
     Meta = case maps:get(direction, Opts, both) of both -> Meta0; D -> Meta0#{propagation_direction => atom_to_binary(D)} end,
     Req = #{model => <<"sam-3.1">>, metadata => Meta,
             input => [#{type => message, role => user, content => [
-                #{type => input_text, text => Prompt}, #{type => input_video, file_id => FileId}]}]},
+                #{type => input_text, text => Prompt}, video(FileId)]}]},
     case responses(Key, Req) of
         {ok, R} -> {ok, text_of(R), maps:get(<<"video_frames_processed">>, maps:get(<<"usage">>, R, #{}), 0)};
         E -> E
@@ -76,11 +76,16 @@ read_video(Key, Model, FileId, Prompt, Opts) ->
     Req = #{model => Model, reasoning => #{effort => maps:get(effort, Opts, <<"medium">>)},
             max_output_tokens => maps:get(max_output_tokens, Opts, 6000),
             input => [#{type => message, role => user, content => [
-                #{type => input_text, text => Prompt}, #{type => input_file, file_id => FileId}]}]},
+                #{type => input_text, text => Prompt}, video(FileId)]}]},
     case responses(Key, Req) of
         {ok, R} -> {ok, text_of(R), maps:get(<<"usage">>, R, #{})};
         E -> E
     end.
+
+%% video(Ref): a clip is either a Files API id or {url, SignedUrl}. Both SAM 3.1 and Muse Spark read a signed S3 link
+%% (27 Oct, live), so a host can hand Meta the stored clip without ever holding its bytes.
+video({url, Url}) -> #{type => input_video, video_url => Url};
+video(FileId) -> #{type => input_video, file_id => FileId}.
 
 responses(Key, Req) -> http(Key, "/responses", "application/json", iolist_to_binary(json:encode(Req))).
 

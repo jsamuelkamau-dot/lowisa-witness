@@ -2,7 +2,9 @@
 %%% witness_sitting — one sitting, start to finish (hackathon, 2026-10-27).
 %%%
 %%%   mark(Key, Clip, Sitting) -> {ok, Result} | {error, Why}
-%%%       Clip = #{name, bytes}; Sitting as witness_mark:prompt/1
+%%%       Clip = #{name, bytes}    uploaded to Meta's Files API, frame times read from the clip
+%%%            | #{url, fps}       a signed link Meta reads directly (the host never holds the bytes)
+%%%       Sitting as witness_mark:prompt/1
 %%%       Result = #{questions => [Q with steps placed on the page], pauses, lines, cost_usd, frames}
 %%%
 %%% The clip is uploaded once; SAM 3.1 (written lines, tracked forward) and Muse Spark (the marking) read it
@@ -14,17 +16,22 @@
 
 -define(SPARK, <<"muse-spark-1.3">>).
 
+mark(Key, #{url := Url} = Clip, Sitting) ->
+    read(Key, {url, Url}, {fps, maps:get(fps, Clip, 30)}, Sitting);
 mark(Key, #{name := Name, bytes := Bytes}, Sitting) ->
     case witness_meta:upload(Key, Name, <<"video/mp4">>, Bytes) of
         {ok, Fid} ->
             Times = case witness_mp4:frame_times(Bytes) of {ok, T} when T =/= [] -> T; _ -> [0.0] end,
-            Self = self(),
-            Sam = spawn_link(fun() -> Self ! {sam, self(), witness_meta:sam_video(Key, Fid, <<"word">>, #{direction => forward})} end),
-            Spark = witness_meta:read_video(Key, ?SPARK, Fid, witness_mark:prompt(Sitting), #{effort => <<"medium">>}),
-            SamRes = receive {sam, Sam, R} -> R after 300000 -> {error, sam_timeout} end,
-            finish(Spark, SamRes, Times);
+            read(Key, Fid, Times, Sitting);
         E -> E
     end.
+
+read(Key, Video, Times, Sitting) ->
+    Self = self(),
+    Sam = spawn_link(fun() -> Self ! {sam, self(), witness_meta:sam_video(Key, Video, <<"word">>, #{direction => forward})} end),
+    Spark = witness_meta:read_video(Key, ?SPARK, Video, witness_mark:prompt(Sitting), #{effort => <<"medium">>}),
+    SamRes = receive {sam, Sam, R} -> R after 300000 -> {error, sam_timeout} end,
+    finish(Spark, SamRes, Times).
 
 finish({ok, Text, Usage}, SamRes, Times) ->
     case witness_mark:parse(Text) of

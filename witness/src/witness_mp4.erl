@@ -21,7 +21,9 @@ frame_times(Bin) ->
     catch _:Why -> {error, Why}
     end.
 
-%% at(Times, Frame) -> seconds of a SAM frame number (the last time when the number runs past the table)
+%% at(Times, Frame) -> seconds of a SAM frame number (the last time when the number runs past the table).
+%% Times may also be {fps, N} for a clip recorded at a steady rate (a phone camera), when its bytes are not at hand.
+at({fps, Fps}, F) when is_number(Fps), Fps > 0 -> F / Fps;
 at(Times, F) when F >= 0, F < length(Times) -> lists:nth(F + 1, Times);
 at(Times, _) -> lists:last(Times).
 
