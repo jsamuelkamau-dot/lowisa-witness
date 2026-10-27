@@ -74,6 +74,10 @@ prompt(Sitting) ->
         "  digits that are not common factors, or two mistakes that cancel each other out);\n"
         "- \"mastered\" is right with right thinking (a slip the student corrected themselves still counts as mastered);\n"
         "- \"part_way\" is a right start that did not reach the answer; \"not_yet\" is a wrong answer or a wrong method;\n"
+        "- an answer written with no working, where the question needs working (a calculation, a conversion, a method),\n"
+        "  is \"part_way\" even when it is right: the thinking was never seen; the diagnosis says only the answer was\n"
+        "  written, so the teacher asks how it was found;\n"
+        "- \"mastered\" always has full marks; when a mark is missing it is not mastered;\n"
         "- the diagnosis is ONE plain sentence naming the exact misconception, never just \"wrong\"; empty when mastered;\n"
         "- moment_s is the second the thinking went wrong (null when mastered);\n"
         "- confidence is how sure you are of the result, 0 to 1.\n"
@@ -94,20 +98,32 @@ parse(Text) ->
 
 question(Q) ->
     Result0 = maps:get(<<"result">>, Q, <<>>),
-    Result = case lists:member(Result0, results()) of true -> Result0; false -> <<"not_yet">> end,
-    Diagnosis = str(maps:get(<<"diagnosis">>, Q, <<>>)),
+    Marks = num(maps:get(<<"marks">>, Q, 0)), OutOf = num(maps:get(<<"out_of">>, Q, 1)),
+    %% "mastered" with a mark missing says two things at once (27 Oct benchmark: three answers written with no
+    %% working came back mastered at 1 of 2): it is not mastered, and the teacher looks at it first
+    Torn = Result0 =:= <<"mastered">> andalso maps:is_key(<<"marks">>, Q) andalso is_number(Marks) andalso is_number(OutOf)
+               andalso Marks < OutOf,
+    Result = case {lists:member(Result0, results()), Torn} of {_, true} -> <<"part_way">>; {true, _} -> Result0; _ -> <<"not_yet">> end,
+    Diagnosis = case {str(maps:get(<<"diagnosis">>, Q, <<>>)), Torn} of
+        {<<>>, true} -> <<"Not every mark was earned: the working needs a look.">>;
+        {D, _} -> D
+    end,
     #{n => num(maps:get(<<"n">>, Q, maps:get(<<"q">>, Q, 0))),
       final_answer => str(maps:get(<<"final_answer">>, Q, <<>>)),
       steps => [#{t => num(maps:get(<<"t">>, S, null)), wrote => str(maps:get(<<"wrote">>, S, <<>>)),
                   crossed_out => maps:get(<<"crossed_out">>, S, false) =:= true}
                 || S <- list(maps:get(<<"steps">>, Q, [])), is_map(S)],
       result => Result,
-      marks => num(maps:get(<<"marks">>, Q, 0)),
-      out_of => num(maps:get(<<"out_of">>, Q, 1)),
+      marks => Marks,
+      out_of => OutOf,
       diagnosis => case Result of <<"mastered">> -> <<>>; _ -> Diagnosis end,
       moment_s => case Result of <<"mastered">> -> null; _ -> num(maps:get(<<"moment_s">>, Q, null)) end,
       %% an unknown result is never trusted: it goes to the top of the teacher's queue
-      confidence => case Result =:= Result0 of true -> clamp(num(maps:get(<<"confidence">>, Q, 0))); false -> 0.0 end}.
+      confidence => case {Result =:= Result0, Torn} of
+          {true, _} -> clamp(num(maps:get(<<"confidence">>, Q, 0)));
+          {false, true} -> min(0.5, clamp(num(maps:get(<<"confidence">>, Q, 0))));
+          {false, false} -> 0.0
+      end}.
 
 needs_level(#{result := R}) -> R =:= <<"not_yet">> orelse R =:= <<"right_answer_wrong_thinking">>.
 

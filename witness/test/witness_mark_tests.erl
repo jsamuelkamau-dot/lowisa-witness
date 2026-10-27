@@ -47,3 +47,13 @@ prompt_is_utf8_in_any_script_test() ->
     ?assertEqual(P, unicode:characters_to_binary(P)),
     [?assertNotEqual(nomatch, binary:match(P, T)) || T <- [<<"3/4 ÷ 1/2"/utf8>>, <<"हल करें"/utf8>>, <<"x²"/utf8>>, <<"√ ½ ∑"/utf8>>]],
     ?assert(is_binary(iolist_to_binary(json:encode(#{input => P})))).
+
+%% 27 Oct benchmark: answers written with no working came back "mastered" at 1 of 2 marks
+mastered_with_a_missing_mark_is_not_mastered_test() ->
+    {ok, #{questions := [A, B]}} = witness_mark:parse(<<"{\"questions\":[{\"n\":1,\"result\":\"mastered\",\"marks\":1,\"out_of\":2,\"confidence\":0.95},"
+                                                         "{\"n\":2,\"result\":\"mastered\",\"marks\":2,\"out_of\":2,\"confidence\":0.95}]}">>),
+    ?assertMatch(#{result := <<"part_way">>, confidence := 0.5, diagnosis := <<"Not every mark was earned", _/binary>>}, A),
+    ?assertMatch(#{result := <<"mastered">>, confidence := 0.95, diagnosis := <<>>}, B),
+    P = witness_mark:prompt(#{}),
+    ?assertNotEqual(nomatch, binary:match(P, <<"an answer written with no working">>)),
+    ?assertNotEqual(nomatch, binary:match(P, <<"\"mastered\" always has full marks">>)).
