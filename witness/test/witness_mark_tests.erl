@@ -72,3 +72,19 @@ a_video_that_does_not_show_the_paper_is_not_marked_test() ->
     ?assertNotEqual(nomatch, binary:match(witness_mark:prompt(#{}), <<"\"readable\":false">>)),
     ?assertNotEqual(nomatch, binary:match(witness_mark:prompt(#{}), <<"left\nempty IS readable">>)),
     ?assertNotEqual(nomatch, binary:match(witness_mark:prompt(#{kind => <<"practical">>}), <<"\"readable\":false">>)).
+
+%% 28 Oct, the live demo run: three 2-mark questions came back out of 1 (the reply template said "out_of":1)
+each_question_is_scored_out_of_its_own_worth_test() ->
+    Sitting = #{questions => [#{n => 1, marks => 2}, #{n => 2, marks => 2}, #{n => 3, marks => 4}]},
+    Qs = [#{n => 1, result => <<"right_answer_wrong_thinking">>, marks => 0, out_of => 1},
+          #{n => 2, result => <<"mastered">>, marks => 1, out_of => 1},
+          #{n => 3, result => <<"part_way">>, marks => 1, out_of => 2},
+          #{n => 4, result => <<"not_yet">>, marks => 0, out_of => 3}],
+    ?assertMatch([#{marks := 0, out_of := 2}, #{marks := 2, out_of := 2}, #{marks := 2, out_of := 4}, #{marks := 0, out_of := 3}],
+                 witness_mark:fit(Qs, Sitting)),
+    %% questions read off the paper (none given) keep the model's own scale
+    ?assertEqual(Qs, witness_mark:fit(Qs, #{})),
+    P = witness_mark:prompt(#{questions => [#{n => 1, text => <<"Simplify 16/64">>, marks => 2}]}),
+    ?assertNotEqual(nomatch, binary:match(P, <<"out_of is what the question is worth">>)),
+    ?assertEqual(nomatch, binary:match(P, <<"\"out_of\":1">>)).
+

@@ -30,7 +30,7 @@ mark(#{url := Base, key := Key, model := Model}, #{url := Clip}, Sitting) ->
                 {ok, #{<<"choices">> := [#{<<"message">> := #{<<"content">> := Text}} | _]} = R} ->
                     case witness_mark:parse(Text) of
                         {ok, #{questions := Qs, pauses := Ps}} ->
-                            {ok, #{questions => Qs, pauses => Ps, lines => [], frames => length(Frames), engine => Model,
+                            {ok, #{questions => witness_mark:fit(Qs, Sitting), pauses => Ps, lines => [], frames => length(Frames), engine => Model,
                                    cost_usd => witness_meta:cost({tokens, Model}, maps:get(<<"usage">>, R, #{}))}};
                         E -> E
                     end;

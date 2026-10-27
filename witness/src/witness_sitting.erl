@@ -40,7 +40,10 @@ read(Key, Video, Times, Sitting) ->
                                                      catch C:R -> {error, {sam_crashed, C, R}} end} end),
     Spark = witness_meta:read_video(Key, ?SPARK, Video, witness_mark:prompt(Sitting), #{effort => <<"medium">>}),
     SamRes = receive {sam, Sam, R} -> R after 300000 -> {error, sam_timeout} end,
-    finish(Spark, SamRes, Times).
+    case finish(Spark, SamRes, Times) of
+        {ok, #{questions := Qs} = Marked} -> {ok, Marked#{questions => witness_mark:fit(Qs, Sitting)}};
+        E -> E
+    end.
 
 finish({ok, Text, Usage}, SamRes, Times) ->
     case witness_mark:parse(Text) of

@@ -16,7 +16,7 @@
 %%%   needs_level(Q) -> boolean              a mastery level is offered for "not yet" and "wrong thinking"
 %%%-------------------------------------------------------------------
 -module(witness_mark).
--export([prompt/1, parse/1, needs_level/1, results/0]).
+-export([fit/2, prompt/1, parse/1, needs_level/1, results/0]).
 
 %% 27 Oct, emulator: a video of no paper at all (the camera pointed at a picture) was marked "to master" on every
 %% question at 20% sure, so each would have become a mastery level for a paper nobody filmed. A video that does not
@@ -60,7 +60,7 @@ prompt(#{kind := <<"practical">>} = Sitting) ->
         "  step's result (a reading, an outcome), or empty.\n"
         "Return JSON only:\n"
         "{\"questions\":[{\"n\":1,\"final_answer\":\"...\",\"steps\":[{\"t\":0,\"wrote\":\"...\",\"crossed_out\":false}],"
-        "\"result\":\"mastered|right_answer_wrong_thinking|part_way|not_yet\",\"marks\":0,\"out_of\":1,"
+        "\"result\":\"mastered|right_answer_wrong_thinking|part_way|not_yet\",\"marks\":0,\"out_of\":2,"
         "\"diagnosis\":\"...\",\"moment_s\":null,\"confidence\":0.9}],\"pauses\":[{\"from_s\":0,\"to_s\":0}]}\n"
         "List a pause only when nothing happened for 5 seconds or more."]);
 prompt(Sitting) ->
@@ -95,12 +95,13 @@ prompt(Sitting) ->
         "  found. A line that shows its own calculation IS working (\"0.4 x 0.3 = 0.12\", \"3 / 8 = 0.375\"), and a\n"
         "  one-step answer that is itself the method (expanding \"4(x - 3)\" to \"4x - 12\") is judged on its own;\n"
         "- \"mastered\" always has full marks; when a mark is missing it is not mastered;\n"
+        "- out_of is what the question is worth as listed (\"(2 marks)\" is out_of 2); marks is how many of those were earned;\n"
         "- the diagnosis is ONE plain sentence naming the exact misconception, never just \"wrong\"; empty when mastered;\n"
         "- moment_s is the second the thinking went wrong (null when mastered);\n"
         "- confidence is how sure you are of the result, 0 to 1.\n"
         "Return JSON only:\n"
         "{\"questions\":[{\"n\":1,\"final_answer\":\"...\",\"steps\":[{\"t\":0,\"wrote\":\"...\",\"crossed_out\":false}],"
-        "\"result\":\"mastered|right_answer_wrong_thinking|part_way|not_yet\",\"marks\":0,\"out_of\":1,"
+        "\"result\":\"mastered|right_answer_wrong_thinking|part_way|not_yet\",\"marks\":0,\"out_of\":2,"
         "\"diagnosis\":\"...\",\"moment_s\":null,\"confidence\":0.9}],\"pauses\":[{\"from_s\":0,\"to_s\":0}]}\n"
         "List a pause only when nothing was written for 5 seconds or more."]).
 
@@ -167,3 +168,18 @@ str(N) when is_number(N) -> iolist_to_binary(io_lib:format("~p", [N]));
 str(_) -> <<>>.
 clamp(N) when is_number(N) -> max(0.0, min(1.0, N / 1));
 clamp(_) -> 0.0.
+
+%% fit(Questions, Sitting) -> Questions: each question scored out of what the teacher said it is worth. The model's own
+%% scale is never kept (28 Oct, live: three 2-mark questions came back out of 1, and the desk showed 1 of 3, not 2 of 6);
+%% a question with no given worth (read off the paper) keeps the model's.
+fit(Qs, Sitting) ->
+    Worth = maps:from_list([{N, M} || #{n := N} = Q <- maps:get(questions, Sitting, []), M <- [maps:get(marks, Q, undefined)],
+                                      is_integer(M), M > 0]),
+    [case {Q, maps:get(maps:get(n, Q, x), Worth, undefined)} of
+         {_, undefined} -> Q;
+         {#{result := <<"mastered">>}, M} -> Q#{marks => M, out_of => M};
+         {#{marks := K, out_of := O}, M} when is_number(K), is_number(O), O > 0 ->
+             Q#{marks => min(M, max(0, round(K * M / O))), out_of => M};
+         {_, M} -> Q#{marks => 0, out_of => M}
+     end || Q <- Qs].
+
