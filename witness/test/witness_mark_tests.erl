@@ -57,3 +57,9 @@ mastered_with_a_missing_mark_is_not_mastered_test() ->
     P = witness_mark:prompt(#{}),
     ?assertNotEqual(nomatch, binary:match(P, <<"an answer written with no working">>)),
     ?assertNotEqual(nomatch, binary:match(P, <<"\"mastered\" always has full marks">>)).
+
+%% 27 Oct, 10-question benchmark: one-line calculations ("0.4 x 0.3 = 0.12") came back part way as "only the answer"
+no_working_means_only_the_final_value_test() ->
+    P = witness_mark:prompt(#{}),
+    ?assertNotEqual(nomatch, binary:match(P, <<"ONLY the final\n  value">>)),
+    ?assertNotEqual(nomatch, binary:match(P, <<"A line that shows its own calculation IS working">>)).
