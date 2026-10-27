@@ -53,6 +53,22 @@ export async function smaller(file: VideoFile): Promise<VideoFile> {
   try { return (await n.smallVideo(file.uri)) || file; } catch (e) { return file; }
 }
 
+/**
+ * The upload, tried three times: on a weak connection one try often drops and the next goes through (27 Oct). The
+ * status of the last try; 0 when nothing answered. A refused link (4xx) is not tried again.
+ */
+export async function sendClip(uri: string, put: string, mime: string, wait = (ms: number) => new Promise<void>(r => setTimeout(r, ms))): Promise<number> {
+  const up = docs();
+  if (!up || !up.uploadFile) return 0;
+  let status = 0;
+  for (let i = 0; i < 3; i++) {
+    try { status = await up.uploadFile(uri, put, mime); } catch (e) { status = 0; }
+    if ((status >= 200 && status < 300) || (status >= 400 && status < 500)) return status;
+    if (i < 2) await wait(i === 0 ? 2000 : 6000);
+  }
+  return status;
+}
+
 export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessEnv & CustomEnv; storage: MirrorStorage; onBack(): void; onOpenPath?(pathId: string): void}): React.JSX.Element {
   const [stage, setStage] = useState<Stage>({kind: 'home'});
   const [code, setCode] = useState('');
@@ -60,6 +76,8 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
   const [error, setError] = useState('');
   const [papers, setPapers] = useState<Paper[] | null>(null);
   const [busy, setBusy] = useState(false);
+  // a recording that did not go up stays here: a weak connection costs a second try, not the paper sat again
+  const [unsent, setUnsent] = useState<VideoFile | null>(null);
 
   const loadMine = useCallback(async () => {
     const r = await witness.mine(env);
@@ -87,22 +105,28 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
     catch (e) { setError('The camera could not start. Try choosing a video you already recorded.'); return; }
     if (!file) return;
     if (!doorMime(file.mime, file.name)) { setError('Witness reads MP4 and MOV videos. Record it again with the camera here.'); return; }
-    const title = stage.title;
+    await send(file);
+  };
+
+  const send = async (picked: VideoFile) => {
+    if (stage.kind !== 'joined') return;
+    setError('');
+    if (!name.trim()) { setError('Write your name as your teacher knows it.'); return; }
+    const {title} = stage;
+    const again = (why: string, file: VideoFile) => { setStage({kind: 'joined', code: stage.code, title, level: stage.level}); setUnsent(file); setError(why); };
     setStage({kind: 'sending', title, line: 'Making the video smaller to send…'});
-    file = await smaller(file);
+    const file = await smaller(picked);
     const mime = doorMime(file.mime, file.name)!;
     setStage({kind: 'sending', title, line: 'Getting the upload ready…'});
     const started = await witness.start(env, Math.round(file.size), mime, stage.code, name.trim());
-    if (!started.ok) { setStage({kind: 'joined', code: stage.code, title, level: stage.level}); setError(started.error); return; }
+    if (!started.ok) { again(started.error, file); return; }
     setStage({kind: 'sending', title, line: 'Sending your paper…'});
-    const up = docs();
-    let status = 0;
-    try { status = up && up.uploadFile ? await up.uploadFile(file.uri, started.value.put, mime) : 0; } catch (e) { status = 0; }
+    const status = await sendClip(file.uri, started.value.put, mime);
     if (status < 200 || status >= 300) {
-      setStage({kind: 'joined', code: stage.code, title, level: stage.level});
-      setError('The video did not go up. Check your connection, on Wi-Fi if you can, and try again.');
+      again('The video did not go up. It is kept on this phone: send it again when the connection is better, on Wi-Fi if you can.', file);
       return;
     }
+    setUnsent(null);
     setStage({kind: 'sending', title, line: 'Witness is reading how you worked…'});
     const marked = await witness.mark(env, started.value.id, PHONE_FPS);
     if (!marked.ok) { setStage({kind: 'joined', code: stage.code, title, level: stage.level}); setError(marked.error); return; }
@@ -159,7 +183,13 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
             <TextInput value={name} onChangeText={setName} placeholder="Your name, as your teacher knows it" maxLength={80}
               style={s.input} accessibilityLabel="Your name" testID="witness-name" />
             <Text style={s.how}>Prop your phone above the desk so it sees the whole page and your hand. Keep faces out of view. Then work through the paper and stop the recording when you finish.</Text>
-            <Btn label="Record my paper" onPress={() => sit('camera')} primary testID="witness-record" />
+            {unsent ? (
+              <>
+                <Btn label="Send my recording again" onPress={() => send(unsent)} primary testID="witness-resend" />
+                <View style={{height: 8}} />
+              </>
+            ) : null}
+            <Btn label="Record my paper" onPress={() => sit('camera')} primary={!unsent} testID="witness-record" />
             <View style={{height: 8}} />
             <Btn label="Choose a video I recorded" onPress={() => sit('gallery')} testID="witness-pick" />
             <Text style={s.small}>The video is deleted once your paper is marked.</Text>
@@ -277,8 +307,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
     if (!r.ok || !r.value.fresh) { setFilming(''); setSaid(r.ok ? 'Try again in a moment.' : r.error); return; }
     setM(r.value.mastery);
     setFilming('Sending your answer…');
-    let status = 0;
-    try { const up = docs(); status = up && up.uploadFile ? await up.uploadFile(file.uri, r.value.fresh.put, mime) : 0; } catch (e) { status = 0; }
+    const status = await sendClip(file.uri, r.value.fresh.put, mime);
     if (status < 200 || status >= 300) { setFilming(''); setSaid('The video did not go up. Check your connection, on Wi-Fi if you can, and try again.'); return; }
     setFilming('Witness is reading how you worked…');
     const marked = await witness.mark(env, r.value.fresh.id, PHONE_FPS);
