@@ -44,4 +44,9 @@
 -callback open_engine() -> #{url := string() | binary(), key := string() | binary(), model := binary()} | undefined.
 %% Optional: a line for the host's own log when something off the request failed (a drawing, the examiner).
 -callback report(Event :: binary(), Why :: term()) -> any().
--optional_callbacks([open_engine/0, report/2]).
+%% 2026-10-28: a long video in parts (S3 multipart), so a dropped connection resends only what did not arrive.
+-callback parts_start(Uid :: binary(), Id :: binary(), Mime :: binary()) -> {ok, UploadId :: binary()} | {error, term()}.
+-callback part_url(Uid :: binary(), Id :: binary(), UploadId :: binary(), N :: pos_integer()) -> {ok, Url :: binary()} | {error, term()}.
+-callback parts_done(Uid :: binary(), Id :: binary(), UploadId :: binary()) -> {ok, [{pos_integer(), binary(), non_neg_integer()}]} | {error, term()}.
+-callback parts_finish(Uid :: binary(), Id :: binary(), UploadId :: binary(), Parts :: list()) -> ok | {error, term()}.
+-optional_callbacks([open_engine/0, report/2, parts_start/3, part_url/4, parts_done/3, parts_finish/4]).

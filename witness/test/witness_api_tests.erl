@@ -2,7 +2,7 @@
 -include_lib("eunit/include/eunit.hrl").
 -behaviour(witness_host).
 -export([meta_key/0, put_url/4, get_url/2, drop_clip/2, save/3, load/2, list/2, spend/3, run/1, marker/0, checker/0, design/2, judger/0,
-         put_asset/4, asset_url/2, stiller/0, examiner/0, answer_judge/0, drawer/0, hearer/0, open_engine/0, open_marker/0, retry_waits/0, cropper/0, painter/0]).
+         put_asset/4, asset_url/2, stiller/0, examiner/0, answer_judge/0, drawer/0, hearer/0, open_engine/0, open_marker/0, retry_waits/0, cropper/0, painter/0, parts_start/3, part_url/4, parts_done/3, parts_finish/4]).
 
 %% An in-memory host: rows and events in an ets table, marking run at once, a canned marker.
 meta_key() -> <<"test-key">>.
@@ -15,6 +15,12 @@ list(Uid, Kind) -> [{Id, R} || {{row, U, {K, Id}}, R} <- ets:tab2list(witness_ap
 spend(Uid, F, Usd) -> ev({spend, Uid, F, Usd}), ok.
 run(Fun) -> Fun(), ok.
 retry_waits() -> [0, 0].
+%% a video in parts: which parts arrived is kept in the table; parts_arrived(Id, [N]) is the test's phone
+parts_start(_Uid, Id, _Mime) -> ev({parts_start, Id}), {ok, <<"up-", Id/binary>>}.
+part_url(_Uid, Id, U, N) -> {ok, <<"https://store.example.com/", Id/binary, "?partNumber=", (integer_to_binary(N))/binary, "&uploadId=", U/binary>>}.
+parts_done(_Uid, Id, _U) -> {ok, [{N, <<"etag", (integer_to_binary(N))/binary>>, 8388608} || {{arrived, I, N}} <- ets:tab2list(witness_api_t), I =:= Id]}.
+parts_finish(_Uid, Id, U, Ps) -> ev({parts_finish, Id, U, [N || {N, _, _} <- Ps]}), ok.
+parts_arrived(Id, Ns) -> [ets:insert(witness_api_t, {{arrived, Id, N}}) || N <- Ns], ok.
 marker() ->
     fun(<<"test-key">>, #{url := Url, fps := Fps}, Sitting) ->
         ev({marked, Url, Fps, Sitting}),
@@ -571,4 +577,32 @@ a_built_level_gets_a_picture_of_its_world_test() ->
     {200, _} = r(<<"POST">>, [<<"mastery">>, S, <<"3">>, <<"event">>], #{<<"event">> => <<"built">>, <<"path">> => <<"p1">>, <<"level">> => Level}, <<"stud">>),
     ?assertEqual(1, length([E || E = {painted, _} <- events()])),
     ?assertMatch({200, #{url := _}}, r(<<"GET">>, [<<"sitting">>, S, <<"asset">>, <<"world-3.webp">>], #{}, <<"stud">>)).
+
+%% 28 Oct audit (the plan: upload in parts, resumable, so a bad connection loses nothing)
+a_long_video_goes_up_in_parts_and_resumes_test() ->
+    setup(),
+    Size = 3 * 8388608 + 1000,
+    %% an old phone (no parts asked) still gets one link
+    ?assertMatch({201, #{put := _}}, r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => Size}, <<"u1">>)),
+    %% one part's worth goes up whole
+    ?assertMatch({201, #{put := _}}, r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 1000, <<"parts">> => true}, <<"u1">>)),
+    {201, #{id := Id, parts := #{size := 8388608, count := 4, urls := Urls}} = Started} =
+        r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => Size, <<"parts">> => true}, <<"u1">>),
+    ?assertNot(maps:is_key(put, Started)),
+    ?assertEqual([1, 2, 3, 4], [N || #{n := N} <- Urls]),
+    %% the connection drops after two parts: nothing is marked, and the phone learns what is missing
+    ok = parts_arrived(Id, [1, 2]),
+    ?assertMatch({409, #{code := <<"parts_missing">>, missing := [3, 4]}}, r(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], #{}, <<"u1">>)),
+    {200, #{done := [1, 2], urls := Rest}} = r(<<"GET">>, [<<"sitting">>, Id, <<"parts">>], #{}, <<"u1">>),
+    ?assertEqual([3, 4], [N || #{n := N} <- Rest]),
+    %% the rest arrive: joined, then marked
+    ok = parts_arrived(Id, [3, 4]),
+    ?assertMatch({202, _}, r(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], #{}, <<"u1">>)),
+    ?assert(lists:member({parts_finish, Id, <<"up-", Id/binary>>, [1, 2, 3, 4]}, events())),
+    ?assertMatch({200, #{status := <<"marked">>}}, r(<<"GET">>, [<<"sitting">>, Id], #{}, <<"u1">>)),
+    %% a video in parts is not dropped as a lapsed upload after 20 minutes
+    {201, #{id := Id2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => Size, <<"parts">> => true}, <<"u1">>),
+    {ok, Row} = load(<<"u1">>, {sitting, Id2}),
+    save(<<"u1">>, {sitting, Id2}, Row#{created_ms => maps:get(created_ms, Row) - 1300000}),
+    ?assertMatch({200, #{status := <<"uploading">>}}, r(<<"GET">>, [<<"sitting">>, Id2], #{}, <<"u1">>)).
 

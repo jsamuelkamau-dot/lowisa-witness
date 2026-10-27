@@ -56,6 +56,8 @@
 -define(KEEP_MS, 86400000).
 %% Longer than every try and wait together (three marking calls of up to 5 minutes each, SAM's wait after them).
 -define(STUCK_MS, 2700000).
+%% A video over one part goes up in parts of this size (S3's least is 5 MB), when the phone asks for parts.
+-define(PART_BYTES, 8388608).
 -define(MIMES, [<<"video/mp4">>, <<"video/quicktime">>]).
 -define(MAX_PILE, 200).
 -define(CODES, <<"witness-codes">>).
@@ -137,7 +139,12 @@ route(<<"POST">>, [<<"sitting">>, <<"start">>], B, Uid0, Host) ->
             refuse(400, <<"pile_full">>, <<"This exam already holds 200 papers. Start another one.">>);
         _ ->
             Id = new_id(),
-            case Host:put_url(Uid, Id, Mime, Size) of
+            Count = (Size + ?PART_BYTES - 1) div ?PART_BYTES,
+            Upload = case maps:get(<<"parts">>, B, false) =:= true andalso Count > 1 andalso has(Host, parts_start, 3) of
+                true -> case Host:parts_start(Uid, Id, Mime) of {ok, U} -> {parts, U}; _ -> single end;
+                false -> single
+            end,
+            case case Upload of single -> Host:put_url(Uid, Id, Mime, Size); {parts, _} -> {ok, parts, #{}} end of
                 {ok, Url, Headers} ->
                     Row0 = #{status => <<"uploading">>, mime => Mime, size => Size, created_ms => now_ms(),
                              student => clean(maps:get(<<"student">>, B, <<>>), 80)},
@@ -152,15 +159,47 @@ route(<<"POST">>, [<<"sitting">>, <<"start">>], B, Uid0, Host) ->
                         {Sid, _} -> ok = Host:save(Sid, {mine, Id}, #{owner => Uid, pile => PileId, created_ms => now_ms()}), Row1#{student_uid => Sid};
                         none -> Row1
                     end,
-                    ok = Host:save(Uid, {sitting, Id}, Row),
-                    {201, #{ok => true, id => Id, put => Url, headers => Headers, expiresIn => 900}};
+                    case Upload of
+                        single ->
+                            ok = Host:save(Uid, {sitting, Id}, Row),
+                            {201, #{ok => true, id => Id, put => Url, headers => Headers, expiresIn => 900}};
+                        {parts, UploadId} ->
+                            ok = Host:save(Uid, {sitting, Id}, Row#{upload => UploadId, parts => Count}),
+                            {201, #{ok => true, id => Id, expiresIn => 900,
+                                    parts => #{size => ?PART_BYTES, count => Count, urls => part_urls(Uid, Id, UploadId, lists:seq(1, Count), Host)}}}
+                    end;
                 {error, _} -> refuse(503, <<"storage">>, <<"Couldn't get the upload ready. Try again in a moment.">>)
             end
+    end;
+%% Which parts of a video in parts arrived, and fresh links for the rest (a resumed upload asks before it goes on).
+route(<<"GET">>, [<<"sitting">>, Id, <<"parts">>], _B, Uid0, Host) ->
+    Uid = owner_of(Uid0, Id, Host),
+    case Host:load(Uid, {sitting, Id}) of
+        {ok, #{status := <<"uploading">>, upload := U, parts := Count}} ->
+            Done = case Host:parts_done(Uid, Id, U) of {ok, Ps} -> lists:usort([N || {N, _, _} <- Ps]); _ -> [] end,
+            {200, #{ok => true, size => ?PART_BYTES, count => Count, done => Done,
+                    urls => part_urls(Uid, Id, U, lists:seq(1, Count) -- Done, Host)}};
+        {ok, #{status := S}} -> {200, #{ok => true, status => S, done => [], urls => []}};
+        none -> refuse(404, <<"no_sitting">>, <<"That sitting isn't here.">>)
     end;
 route(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], B, Uid0, Host) ->
     Uid = owner_of(Uid0, Id, Host),
     case Host:load(Uid, {sitting, Id}) of
         none -> refuse(404, <<"no_sitting">>, <<"That sitting isn't here.">>);
+        %% a video in parts is joined first, once every part arrived; until then nothing is marked
+        {ok, #{status := <<"uploading">>, upload := U, parts := Count} = Row} ->
+            case Host:parts_done(Uid, Id, U) of
+                {ok, Ps} ->
+                    case lists:seq(1, Count) -- [N || {N, _, _} <- Ps] of
+                        [] ->
+                            case Host:parts_finish(Uid, Id, U, lists:keysort(1, Ps)) of
+                                ok -> start_marking(Uid, Id, maps:without([upload, parts], Row), B, Host);
+                                _ -> refuse(503, <<"storage">>, <<"Couldn't put the video together. Try again in a moment.">>)
+                            end;
+                        Missing -> refuse(409, <<"parts_missing">>, <<"Part of the video hasn't arrived yet. Send it again.">>, #{missing => Missing})
+                    end;
+                _ -> refuse(503, <<"storage">>, <<"Couldn't check the upload. Try again in a moment.">>)
+            end;
         {ok, #{status := <<"uploading">>} = Row} -> start_marking(Uid, Id, Row, B, Host);
         %% a clip kept because Meta could not mark it, or a marking that never came back, is marked again
         {ok, #{status := S0} = Row0} when S0 =:= <<"failed">>; S0 =:= <<"marking">> ->
@@ -862,6 +901,12 @@ num(N) when is_number(N) -> N;
 num(_) -> 0.
 
 refuse(Code, Kind, Msg) -> {Code, #{ok => false, code => Kind, error => Msg}}.
+refuse(Code, Kind, Msg, Extra) -> {Code, maps:merge(Extra, #{ok => false, code => Kind, error => Msg})}.
+
+has(Host, F, A) -> _ = code:ensure_loaded(Host), erlang:function_exported(Host, F, A).
+
+part_urls(Uid, Id, U, Ns, Host) ->
+    [#{n => N, url => Url} || N <- Ns, {ok, Url} <- [Host:part_url(Uid, Id, U, N)]].
 
 new_id() -> binary:encode_hex(crypto:strong_rand_bytes(8), lowercase).
 
@@ -869,6 +914,8 @@ now_ms() -> erlang:system_time(millisecond).
 
 %% An upload still waiting after its signed link ran out (15 minutes, plus five for a slow last byte) never arrives:
 %% a dropped connection left one on the teacher's desk as "Uploading" for good (27 Oct, emulator).
+%% a video in parts can be resumed (fresh links each time it asks), so it waits as long as a kept clip
+lapsed(#{status := <<"uploading">>, upload := _, created_ms := C}) -> now_ms() - C > ?KEEP_MS;
 lapsed(#{status := <<"uploading">>, created_ms := C}) -> now_ms() - C > ?LINK_MS + 300000;
 lapsed(_) -> false.
 
