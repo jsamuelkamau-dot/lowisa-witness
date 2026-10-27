@@ -23,7 +23,7 @@ record(Id, Row, Pile, Viewer) ->
       sat_ms => maps:get(created_ms, Row, null), marked_ms => maps:get(marked_ms, Row, null), released_ms => maps:get(released_ms, Row, null),
       questions => Qs, examiner => Asks,
       marks => lists:sum([num(maps:get(marks, Q, 0)) || Q <- Qs]), out_of => lists:sum([num(maps:get(out_of, Q, 0)) || Q <- Qs]),
-      pauses => maps:get(pauses, R, []), lines => length(maps:get(lines, R, [])),
+      pauses => maps:get(pauses, R, []), returns => maps:get(returns, R, []), lines => length(maps:get(lines, R, [])),
       video => <<"deleted once the paper was marked">>, engine => maps:get(engine, R, <<"muse-spark-1.3">>),
       read_by => read_by(R, Qs, Asks)}.
 

@@ -716,7 +716,7 @@ marker(Host) ->
 %% What the phone and the desk see of a sitting (never the reason a model call failed).
 view(Id, #{status := S, result := R} = Row) when S =:= <<"marked">>; S =:= <<"released">> ->
     V = #{ok => true, id => Id, status => S, student => maps:get(student, Row, <<>>),
-          result => #{questions => maps:get(questions, R, []), pauses => maps:get(pauses, R, []), lines => maps:get(lines, R, []),
+          result => #{questions => maps:get(questions, R, []), pauses => maps:get(pauses, R, []), returns => maps:get(returns, R, []), lines => maps:get(lines, R, []),
                       stills => maps:get(stills, R, []), engine => maps:get(engine, R, <<"muse-spark-1.3">>)}},
     case maps:get(examiner, Row, undefined) of undefined -> V; Ex -> V#{examiner => examiner_view(Ex, teacher)} end;
 view(Id, #{status := <<"failed">>, unreadable := W}) ->

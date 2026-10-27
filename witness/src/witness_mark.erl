@@ -16,7 +16,7 @@
 %%%   needs_level(Q) -> boolean              a mastery level is offered for "not yet" and "wrong thinking"
 %%%-------------------------------------------------------------------
 -module(witness_mark).
--export([fit/2, prompt/1, parse/1, needs_level/1, results/0]).
+-export([fit/2, unsure/1, reconcile/2, prompt/1, parse/1, needs_level/1, results/0]).
 
 %% 27 Oct, emulator: a video of no paper at all (the camera pointed at a picture) was marked "to master" on every
 %% question at 20% sure, so each would have become a mastery level for a paper nobody filmed. A video that does not
@@ -102,8 +102,11 @@ prompt(Sitting) ->
         "Return JSON only:\n"
         "{\"questions\":[{\"n\":1,\"final_answer\":\"...\",\"steps\":[{\"t\":0,\"wrote\":\"...\",\"crossed_out\":false}],"
         "\"result\":\"mastered|right_answer_wrong_thinking|part_way|not_yet\",\"marks\":0,\"out_of\":2,"
-        "\"diagnosis\":\"...\",\"moment_s\":null,\"confidence\":0.9}],\"pauses\":[{\"from_s\":0,\"to_s\":0}]}\n"
-        "List a pause only when nothing was written for 5 seconds or more."]).
+        "\"diagnosis\":\"...\",\"moment_s\":null,\"confidence\":0.9}],\"pauses\":[{\"from_s\":0,\"to_s\":0}],"
+        "\"returns\":[{\"to_q\":1,\"from_q\":2,\"at_s\":0}]}\n"
+        "List a pause only when nothing was written for 5 seconds or more. List a return only when the student went back "
+        "to write on an earlier question after starting a later one (to_q the earlier question, from_q the one they "
+        "left, at_s the second they went back); none is an empty list."]).
 
 parse(Text) ->
     case decode(Text) of
@@ -111,7 +114,13 @@ parse(Text) ->
         #{<<"questions">> := Qs} = M when is_list(Qs) ->
             {ok, #{questions => [question(Q) || Q <- Qs, is_map(Q)],
                    pauses => [#{from_s => num(maps:get(<<"from_s">>, P, 0)), to_s => num(maps:get(<<"to_s">>, P, 0))}
-                              || P <- list(maps:get(<<"pauses">>, M, [])), is_map(P)]}};
+                              || P <- list(maps:get(<<"pauses">>, M, [])), is_map(P)],
+                   %% going back to an earlier question (28 Oct audit: in the plan's timeline, never built)
+                   returns => [#{to_q => num(maps:get(<<"to_q">>, R, 0)), from_q => num(maps:get(<<"from_q">>, R, 0)),
+                                 at_s => num(maps:get(<<"at_s">>, R, 0))}
+                               || R <- list(maps:get(<<"returns">>, M, [])), is_map(R),
+                                  is_integer(maps:get(<<"to_q">>, R, x)), is_integer(maps:get(<<"from_q">>, R, x)),
+                                  maps:get(<<"to_q">>, R) < maps:get(<<"from_q">>, R)]}};
         _ -> {error, no_marking}
     end.
 
@@ -182,4 +191,28 @@ fit(Qs, Sitting) ->
              Q#{marks => min(M, max(0, round(K * M / O))), out_of => M};
          {_, M} -> Q#{marks => 0, out_of => M}
      end || Q <- Qs].
+
+%% A second reading (the plan's calibration): when Muse Spark is unsure of any question, the paper is read again at
+%% high effort. unsure(Qs) says whether it is needed; reconcile(First, Second) keeps each sure question as it is and,
+%% for an unsure one, takes the agreed result at the surer confidence, or, when the two readings differ, the more
+%% cautious result (never "mastered" on a split) at low confidence, first in the teacher's queue.
+-define(UNSURE, 0.7).
+unsure(Qs) -> lists:any(fun(Q) -> num(maps:get(confidence, Q, 1.0)) < ?UNSURE end, Qs).
+
+reconcile(First, Second) ->
+    ByN = maps:from_list([{maps:get(n, Q), Q} || Q <- Second]),
+    [case {num(maps:get(confidence, Q, 1.0)) < ?UNSURE, maps:get(maps:get(n, Q), ByN, undefined)} of
+         {false, _} -> Q;
+         {true, undefined} -> Q;
+         {true, #{result := R} = Q2} when R =:= map_get(result, Q) ->
+             Q#{confidence => max(num(maps:get(confidence, Q, 0)), num(maps:get(confidence, Q2, 0))), read_twice => true};
+         {true, Q2} ->
+             %% the first reading's steps stay: they carry SAM's places on the page
+             Cautious = case {maps:get(result, Q), maps:get(result, Q2)} of {<<"mastered">>, _} -> Q2#{steps => maps:get(steps, Q, [])}; _ -> Q end,
+             Cautious#{confidence => min(0.4, num(maps:get(confidence, Cautious, 0))), read_twice => true,
+                       diagnosis => case maps:get(diagnosis, Cautious, <<>>) of
+                                        <<>> -> <<"Two readings of the video disagreed: the teacher decides.">>;
+                                        D -> <<D/binary, " (Two readings of the video disagreed: the teacher decides.)">>
+                                    end}
+     end || Q <- First].
 

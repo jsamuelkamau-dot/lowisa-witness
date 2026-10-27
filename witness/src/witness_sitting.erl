@@ -41,13 +41,31 @@ read(Key, Video, Times, Sitting) ->
     Spark = witness_meta:read_video(Key, ?SPARK, Video, witness_mark:prompt(Sitting), #{effort => <<"medium">>}),
     SamRes = receive {sam, Sam, R} -> R after 300000 -> {error, sam_timeout} end,
     case finish(Spark, SamRes, Times) of
-        {ok, #{questions := Qs} = Marked} -> {ok, Marked#{questions => witness_mark:fit(Qs, Sitting)}};
+        {ok, #{questions := Qs} = Marked} -> {ok, second_reading(Key, Video, Sitting, Marked#{questions => witness_mark:fit(Qs, Sitting)})};
         E -> E
+    end.
+
+%% When Spark is unsure of a question, the paper is read once more at high effort (witness_mark:reconcile/2); a second
+%% reading that fails leaves the first as it was.
+second_reading(Key, Video, Sitting, #{questions := Qs} = Marked) ->
+    case witness_mark:unsure(Qs) of
+        false -> Marked;
+        true ->
+            case witness_meta:read_video(Key, ?SPARK, Video, witness_mark:prompt(Sitting), #{effort => <<"high">>}) of
+                {ok, Text, Usage} ->
+                    case witness_mark:parse(Text) of
+                        {ok, #{questions := Qs2}} ->
+                            Marked#{questions => witness_mark:reconcile(Qs, witness_mark:fit(Qs2, Sitting)), read_twice => true,
+                                    cost_usd => maps:get(cost_usd, Marked, 0.0) + witness_meta:cost({tokens, ?SPARK}, Usage)};
+                        _ -> Marked
+                    end;
+                _ -> Marked
+            end
     end.
 
 finish({ok, Text, Usage}, SamRes, Times) ->
     case witness_mark:parse(Text) of
-        {ok, #{questions := Qs, pauses := Ps}} ->
+        {ok, #{questions := Qs, pauses := Ps} = M} ->
             {Lines, Frames} = case SamRes of
                 {ok, SamText, F} -> {try witness_timeline:lines(witness_sam:records(SamText), witness_mp4:sam_times(Times, F))
                                      catch _:_ -> [] end, F};
@@ -56,7 +74,7 @@ finish({ok, Text, Usage}, SamRes, Times) ->
             PerQ = witness_timeline:merge_all([maps:get(steps, Q) || Q <- Qs], Lines),
             Placed = [Q#{steps => S} || {Q, S} <- lists:zip(Qs, PerQ)],
             Cost = witness_meta:cost({tokens, ?SPARK}, Usage) + case Frames of 0 -> 0.0; _ -> witness_meta:cost(sam_video, Frames) end,
-            {ok, #{questions => Placed, pauses => Ps, lines => Lines, frames => Frames, cost_usd => Cost}};
+            {ok, #{questions => Placed, pauses => Ps, returns => maps:get(returns, M, []), lines => Lines, frames => Frames, cost_usd => Cost}};
         E -> E
     end;
 finish(E, _, _) -> E.

@@ -29,8 +29,8 @@ mark(#{url := Base, key := Key, model := Model}, #{url := Clip}, Sitting) ->
             case post(Base, Key, Body) of
                 {ok, #{<<"choices">> := [#{<<"message">> := #{<<"content">> := Text}} | _]} = R} ->
                     case witness_mark:parse(Text) of
-                        {ok, #{questions := Qs, pauses := Ps}} ->
-                            {ok, #{questions => witness_mark:fit(Qs, Sitting), pauses => Ps, lines => [], frames => length(Frames), engine => Model,
+                        {ok, #{questions := Qs, pauses := Ps} = M} ->
+                            {ok, #{questions => witness_mark:fit(Qs, Sitting), pauses => Ps, returns => maps:get(returns, M, []), lines => [], frames => length(Frames), engine => Model,
                                    cost_usd => witness_meta:cost({tokens, Model}, maps:get(<<"usage">>, R, #{}))}};
                         E -> E
                     end;

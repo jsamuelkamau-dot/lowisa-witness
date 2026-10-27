@@ -38,9 +38,12 @@ prompt(In) ->
         "3. Does lesson 1 run the student's own step in a real-world setting, does the level end with a REAL TASK done at work ",
         "with this idea (so the student leaves able to do it, not only answer it), and does it stay on this one idea? ",
         "Does it follow the teacher's note?\n",
-        "The level passes only when caught and cleared are both true and 3 holds. When it does not pass, name what to ",
-        "change, lesson by lesson, so a writer can fix it in one pass.\n",
-        "Return JSON only: {\"caught\":true,\"cleared\":true,\"on_idea\":true,\"why\":\"one sentence\",",
+        "4. Is LESSON 3 a real task someone does at work with this idea (pricing a sale, fixing a stock order, sizing a part, ",
+        "checking a report), done in the lesson, with a title that names that task? An exercise, a worked example, a ",
+        "counterexample, a quiz or a review is not a work task. That is \"work_task\".\n",
+        "The level passes only when caught, cleared and work_task are all true and 3 holds. When it does not pass, name ",
+        "what to change, lesson by lesson, so a writer can fix it in one pass.\n",
+        "Return JSON only: {\"caught\":true,\"cleared\":true,\"on_idea\":true,\"work_task\":true,\"why\":\"one sentence\",",
         "\"problems\":[{\"lesson\":1,\"fix\":\"what to change\"}]}"]).
 
 parse(Text) ->
@@ -49,11 +52,14 @@ parse(Text) ->
             Caught = maps:get(<<"caught">>, M, false) =:= true,
             Cleared = maps:get(<<"cleared">>, M, false) =:= true,
             OnIdea = maps:get(<<"on_idea">>, M, true) =/= false,
+            %% 28 Oct audit: a fractions level passed with lesson 3 "Digit Cancel Counterexample"; the work task is its
+            %% own answer now, and a verdict that does not give it does not pass
+            WorkTask = maps:get(<<"work_task">>, M, false) =:= true,
             Problems = [#{lesson => case maps:get(<<"lesson">>, P, null) of N when is_integer(N) -> N; _ -> null end,
                           fix => str(maps:get(<<"fix">>, P, <<>>))}
                         || P <- list(maps:get(<<"problems">>, M, [])), is_map(P), str(maps:get(<<"fix">>, P, <<>>)) =/= <<>>],
-            Passes = Caught andalso Cleared andalso OnIdea,
-            {ok, #{passes => Passes, caught => Caught, cleared => Cleared, on_idea => OnIdea, why => str(maps:get(<<"why">>, M, <<>>)),
+            Passes = Caught andalso Cleared andalso OnIdea andalso WorkTask,
+            {ok, #{passes => Passes, caught => Caught, cleared => Cleared, on_idea => OnIdea, work_task => WorkTask, why => str(maps:get(<<"why">>, M, <<>>)),
                    %% a level that fails with nothing named to change still gets one thing to change
                    problems => case {Passes, Problems} of
                                    {false, []} -> [#{lesson => null, fix => <<"Make the level's checks catch the misconception and let the right idea pass.">>}];

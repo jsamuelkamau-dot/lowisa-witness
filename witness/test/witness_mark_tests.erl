@@ -88,3 +88,30 @@ each_question_is_scored_out_of_its_own_worth_test() ->
     ?assertNotEqual(nomatch, binary:match(P, <<"out_of is what the question is worth">>)),
     ?assertEqual(nomatch, binary:match(P, <<"\"out_of\":1">>)).
 
+%% 28 Oct audit: the plan's second reading when Spark is unsure was never built
+an_unsure_question_is_read_twice_test() ->
+    Sure = #{n => 1, result => <<"mastered">>, confidence => 0.95, steps => [a]},
+    Unsure = #{n => 2, result => <<"mastered">>, confidence => 0.5, steps => [placed], diagnosis => <<>>},
+    Agree = #{n => 3, result => <<"not_yet">>, confidence => 0.6, steps => [p3], diagnosis => <<"d">>},
+    ?assertNot(witness_mark:unsure([Sure])),
+    ?assert(witness_mark:unsure([Sure, Unsure])),
+    Second = [Sure#{result => <<"not_yet">>, confidence => 0.9},                          %% a sure first reading is never changed
+              #{n => 2, result => <<"part_way">>, confidence => 0.8, steps => [unplaced], diagnosis => <<"Skipped a step.">>},
+              #{n => 3, result => <<"not_yet">>, confidence => 0.85}],
+    [A, B, C] = witness_mark:reconcile([Sure, Unsure, Agree], Second),
+    ?assertEqual(Sure, A),
+    %% split: never mastered, low confidence, the teacher decides, steps still placed on the page
+    ?assertMatch(#{result := <<"part_way">>, confidence := 0.4, steps := [placed], read_twice := true}, B),
+    ?assertNotEqual(nomatch, binary:match(maps:get(diagnosis, B), <<"Two readings of the video disagreed">>)),
+    %% agreed: the surer confidence
+    ?assertMatch(#{result := <<"not_yet">>, confidence := 0.85, steps := [p3], read_twice := true}, C).
+
+%% 28 Oct audit: the plan's timeline listed going back to an earlier question; never built
+going_back_to_an_earlier_question_is_kept_test() ->
+    T = <<"{\"questions\":[{\"n\":1,\"result\":\"mastered\"}],\"pauses\":[],\"returns\":[{\"to_q\":1,\"from_q\":3,\"at_s\":63},"
+          "{\"to_q\":3,\"from_q\":2,\"at_s\":70},{\"to_q\":\"one\",\"from_q\":2,\"at_s\":5}]}">>,
+    %% only a real move backwards, with question numbers, is kept
+    ?assertMatch({ok, #{returns := [#{to_q := 1, from_q := 3, at_s := 63}]}}, witness_mark:parse(T)),
+    ?assertMatch({ok, #{returns := []}}, witness_mark:parse(<<"{\"questions\":[]}">>)),
+    ?assertNotEqual(nomatch, binary:match(witness_mark:prompt(#{}), <<"List a return only when the student went back">>)).
+

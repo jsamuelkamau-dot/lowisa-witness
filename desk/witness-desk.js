@@ -258,6 +258,7 @@
     var q = qs.filter(function (x) { return x.n === S.n; })[0] || qs[0];
     S.n = q.n;
     return '<div class="wd-cols"><div><div class="wd-card"><h3>' + (practical() ? 'The procedure' : 'Questions') + '</h3>' + list +
+      returnsLine((j.result && j.result.returns) || []) +
       '<div style="margin-top:10px"><button class="wd-btn" data-act="proof">Proof of Thinking</button></div></div>' + examinerCard(j) + '</div><div>' + questionCard(q) + '</div></div>';
   }
 
@@ -343,6 +344,13 @@
     return i === at;
   }
   function chip(r) { return '<span class="wd-chip ' + (TONE[r] || '') + '">' + esc(RESULT[r] || r || '') + '</span>'; }
+  // going back to an earlier question after starting a later one, in the order it happened (28 Oct)
+  function returnsLine(rs) {
+    if (!rs.length) return '';
+    return '<div class="wd-sub" style="margin-top:8px">' + rs.map(function (r) {
+      return 'At ' + fmtT(r.at_s) + ' went back to ' + unit().toLowerCase() + ' ' + esc(r.to_q) + ' from ' + unit().toLowerCase() + ' ' + esc(r.from_q) + '.';
+    }).join(' ') + '</div>';
+  }
   function fmtT(t) { t = Math.max(0, Math.round(Number(t) || 0)); return Math.floor(t / 60) + ':' + ('0' + (t % 60)).slice(-2); }
   function num(n) { var x = Math.round((Number(n) || 0) * 10) / 10; return String(x); }
 
@@ -527,6 +535,7 @@
       '<div class="wd-sub">' + esc(p.exam || '') + (p.level ? ' · ' + esc(p.level) : '') + ' · ' + esc(p.student || '') + ' · sat ' + esc(day(p.sat_ms)) + ' · ' + num(p.marks) + ' of ' + num(p.out_of) + ' marks</div></span>' +
       '<button class="wd-btn" data-act="print">Print</button></div></div>' + qs +
       (asks ? '<div class="wd-card"><h3>The examiner\'s questions</h3>' + asks + '</div>' : '') +
+      returnsLine(p.returns || []) +
       '<div class="wd-sub" style="margin:8px 2px">Marked by ' + esc(p.engine || '') + '. Read by ' + esc((p.read_by || []).join(', ')) + '. The video was ' + esc(p.video || '') + '.</div>';
   }
   function measured() {
