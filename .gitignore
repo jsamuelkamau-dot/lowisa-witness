@@ -1,0 +1,10 @@
+# never commit keys, local clips or model responses
+.env
+*.env
+*.mp4
+*.mov
+*.out
+probe-out/
+node_modules/
+_build/
+*.beam
