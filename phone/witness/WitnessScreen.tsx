@@ -15,7 +15,7 @@ import {ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, V
 import {Page} from '../ui/Page';
 import {Btn} from '../exam/print/ui';
 import {chooseVideo, doorMime, VideoFile} from '../community/video';
-import {NativeModules} from 'react-native';
+import {DeviceEventEmitter, NativeModules} from 'react-native';
 import {marksOf, Paper, Question, RESULT_WORDS, resultOf, toMaster, typedCode, witness, WitnessEnv} from './net';
 import type {MirrorStorage} from '../state/storage';
 import type {CustomEnv} from '../paths/custom/course';
@@ -47,10 +47,13 @@ const docs = () => (NativeModules as Record<string, unknown>).LoWisaDocuments as
  * A desk video made small enough to send on a phone's data: 720p, ten frames a second, about 8 MB a minute where the
  * camera made some 120 (27 Oct). The original goes when it is small already, or when this phone cannot make it smaller.
  */
-export async function smaller(file: VideoFile): Promise<VideoFile> {
+export async function smaller(file: VideoFile, onPercent?: (percent: number) => void): Promise<VideoFile> {
   const n = docs();
   if (!n || !n.smallVideo) return file;
-  try { return (await n.smallVideo(file.uri)) || file; } catch (e) { return file; }
+  const sub = onPercent ? DeviceEventEmitter.addListener('lowisaSmallVideo', (e: {percent?: number}) => {
+    if (typeof e?.percent === 'number') onPercent(Math.max(0, Math.min(100, Math.round(e.percent))));
+  }) : null;
+  try { return (await n.smallVideo(file.uri)) || file; } catch (e) { return file; } finally { sub?.remove(); }
 }
 
 /**
@@ -115,7 +118,7 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
     const {title} = stage;
     const again = (why: string, file: VideoFile) => { setStage({kind: 'joined', code: stage.code, title, level: stage.level}); setUnsent(file); setError(why); };
     setStage({kind: 'sending', title, line: 'Making the video smaller to send…'});
-    const file = await smaller(picked);
+    const file = await smaller(picked, p => setStage({kind: 'sending', title, line: `Making the video smaller to send… ${p}%`}));
     const mime = doorMime(file.mime, file.name)!;
     setStage({kind: 'sending', title, line: 'Getting the upload ready…'});
     const started = await witness.start(env, Math.round(file.size), mime, stage.code, name.trim());
@@ -300,7 +303,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
     if (!file) return;
     if (!doorMime(file.mime, file.name)) { setSaid('Witness reads MP4 and MOV videos. Record it again with the camera here.'); return; }
     setFilming('Making the video smaller to send…');
-    file = await smaller(file);
+    file = await smaller(file, p => setFilming(`Making the video smaller to send… ${p}%`));
     const mime = doorMime(file.mime, file.name)!;
     setFilming('Getting the upload ready…');
     const r = await witness.mastery(env, paper.id, q.n, 'fresh', {mime, size: Math.round(file.size)});
