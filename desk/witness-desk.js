@@ -223,7 +223,7 @@
     var papers = ss.map(function (s) {
       var st = s.status === 'marked' ? '<span class="wd-sub">' + num(s.marks) + ' / ' + num(s.out_of) + '</span>' :
         s.status === 'released' ? '<span class="wd-chip ok">Released</span>' :
-        s.status === 'failed' ? '<span class="wd-chip err">Record again</span>' : '<span class="wd-chip">' + (s.status === 'uploading' ? 'Uploading' : 'Marking') + '</span>';
+        s.status === 'failed' ? '<span class="wd-chip err">' + (s.unreadable ? 'Paper not in view: film again' : 'Record again') + '</span>' : '<span class="wd-chip">' + (s.status === 'uploading' ? 'Uploading' : 'Marking') + '</span>';
       return '<div class="wd-row" data-paper="' + esc(s.id) + '"><span class="wd-grow">' + esc(s.student || 'Paper') + '</span>' + st +
         (s.to_master ? '<span class="wd-chip err">' + s.to_master + ' to master</span>' : '') + '</div>';
     }).join('') || '<div class="wd-sub">No papers yet. Record them from the LoWisa phone app under this exam.</div>';
@@ -243,7 +243,8 @@
 
   function viewPaper() {
     var j = S.paper || {}; var qs = (j.result && j.result.questions) || [];
-    if (j.status === 'failed') return '<div class="wd-card">' + esc(j.error || 'This paper could not be marked.') + '</div>';
+    if (j.status === 'failed') return '<div class="wd-card">' + esc(j.error || 'This paper could not be marked.') +
+      (j.unreadable ? '<div class="wd-sub">What the camera showed: ' + esc(j.unreadable) + '</div>' : '') + '</div>';
     if (!qs.length) return '<div class="wd-card wd-sub">This paper is still being marked.</div>';
     var list = qs.map(function (q) {
       var res = q.teacher_result || q.result;

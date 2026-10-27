@@ -19,6 +19,7 @@ marker() ->
         ev({marked, Url, Fps, Sitting}),
         case persistent_term:get(witness_api_fail, false) of
             true -> {error, boom};
+            {unreadable, _} = U -> {error, U};
             false -> {ok, persistent_term:get(witness_api_result, #{questions => [#{n => 1, result => <<"mastered">>}], pauses => [], lines => [], cost_usd => 0.08})}
         end
     end.
@@ -385,3 +386,18 @@ an_upload_whose_link_ran_out_leaves_the_exam_test() ->
     ?assertMatch({200, #{papers := [#{id := Sent}]}}, r(<<"GET">>, [<<"mine">>], #{}, <<"stud">>)),
     %% the row itself is kept
     ?assertMatch({ok, #{status := <<"uploading">>}}, load(<<"teacher">>, {sitting, Lost})).
+
+%% 27 Oct, emulator: a video of no paper was marked "to master" on every question at 20% sure
+a_video_without_the_paper_is_not_marked_test() ->
+    setup(), persistent_term:put(witness_api_fail, {unreadable, <<"A picture of a house; no paper.">>}),
+    {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions check">>}, <<"teacher">>),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amina">>}, <<"stud">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"stud">>),
+    ?assertMatch({200, #{status := <<"failed">>, unreadable := <<"A picture of a house; no paper.">>, error := <<"Witness couldn't see the paper", _/binary>>}},
+                 r(<<"GET">>, [<<"sitting">>, S], #{}, <<"teacher">>)),
+    {200, #{sittings := [Row], queue := Queue}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>),
+    ?assertMatch(#{status := <<"failed">>, unreadable := _, to_master := 0}, Row),
+    ?assertEqual([], Queue),
+    ?assertMatch({200, #{papers := [#{status := <<"failed">>}]}}, r(<<"GET">>, [<<"mine">>], #{}, <<"stud">>)),
+    ?assertNot(lists:keymember(spend, 1, events())),
+    persistent_term:put(witness_api_fail, false).

@@ -63,3 +63,12 @@ no_working_means_only_the_final_value_test() ->
     P = witness_mark:prompt(#{}),
     ?assertNotEqual(nomatch, binary:match(P, <<"ONLY the final\n  value">>)),
     ?assertNotEqual(nomatch, binary:match(P, <<"A line that shows its own calculation IS working">>)).
+
+%% 27 Oct, emulator: a video of no paper was marked "to master" on every question; now nothing is marked
+a_video_that_does_not_show_the_paper_is_not_marked_test() ->
+    ?assertEqual({error, {unreadable, <<"A cartoon house; no paper.">>}},
+                 witness_mark:parse(<<"{\"readable\":false,\"why\":\"A cartoon house; no paper.\"}">>)),
+    ?assertMatch({ok, #{questions := [_]}}, witness_mark:parse(<<"{\"readable\":true,\"questions\":[{\"n\":1,\"result\":\"not_yet\"}]}">>)),
+    ?assertNotEqual(nomatch, binary:match(witness_mark:prompt(#{}), <<"\"readable\":false">>)),
+    ?assertNotEqual(nomatch, binary:match(witness_mark:prompt(#{}), <<"left\nempty IS readable">>)),
+    ?assertNotEqual(nomatch, binary:match(witness_mark:prompt(#{kind => <<"practical">>}), <<"\"readable\":false">>)).

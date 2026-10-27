@@ -18,6 +18,19 @@
 -module(witness_mark).
 -export([prompt/1, parse/1, needs_level/1, results/0]).
 
+%% 27 Oct, emulator: a video of no paper at all (the camera pointed at a picture) was marked "to master" on every
+%% question at 20% sure, so each would have become a mastery level for a paper nobody filmed. A video that does not
+%% show the work is not marked: the student is asked to film it again. A page left empty is still marked.
+-define(UNSEEN_PAPER,
+        "First check the video shows the paper. If no page of the student's work can be read anywhere in it (no paper\n"
+        "in view, too dark or blurred to read, the camera pointed elsewhere), mark nothing and return ONLY\n"
+        "{\"readable\":false,\"why\":\"one plain sentence of what the camera shows\"}. A page that is in view but left\n"
+        "empty IS readable: its questions are not_yet, with the diagnosis that it was left blank.\n\n").
+-define(UNSEEN_PRACTICAL,
+        "First check the video shows the task. If the hands and the apparatus cannot be seen doing it anywhere in it\n"
+        "(pointed elsewhere, too dark or blurred), mark nothing and return ONLY\n"
+        "{\"readable\":false,\"why\":\"one plain sentence of what the camera shows\"}.\n\n").
+
 results() -> [<<"mastered">>, <<"right_answer_wrong_thinking">>, <<"part_way">>, <<"not_yet">>].
 
 %% Practical mode: the same engine on a practical task (a science practical, a technical or workplace task). The
@@ -34,6 +47,7 @@ prompt(#{kind := <<"practical">>} = Sitting) ->
         "You are assessing a student doing a practical task, from a video of their bench or desk (",
         maps:get(level, Sitting, <<"any level">>), "). Only their hands and the apparatus are in view.\n",
         Steps, "\n", Scheme, "\n\n",
+        ?UNSEEN_PRACTICAL,
         "Watch the whole video. For every procedure step judge what they DID, in order, as well as the result:\n"
         "- \"steps\" are what you saw, each with the second it was finished: an action (\"poured 50 ml into the beaker\")\n"
         "  or a reading they wrote or said (\"thermometer 21 °C\"); crossed_out is true for an action they undid or\n"
@@ -64,6 +78,7 @@ prompt(Sitting) ->
     iolist_to_binary([
         "You are marking a student's paper from a video of their desk while they worked (", Level, ").\n",
         Qs, "\n", Scheme, "\n\n",
+        ?UNSEEN_PAPER,
         "Watch the whole video. For every question, judge the THINKING as well as the final answer:\n"
         "- read every step in the order it was written, with the second it was finished; \"wrote\" is the ink exactly as\n"
         "  written (copy it, never describe it: \"16/64 = 1/4\", not \"cancelled the 6s\"); crossed_out is true only for a\n"
@@ -91,6 +106,7 @@ prompt(Sitting) ->
 
 parse(Text) ->
     case decode(Text) of
+        #{<<"readable">> := false} = M -> {error, {unreadable, str(maps:get(<<"why">>, M, <<>>))}};
         #{<<"questions">> := Qs} = M when is_list(Qs) ->
             {ok, #{questions => [question(Q) || Q <- Qs, is_map(Q)],
                    pauses => [#{from_s => num(maps:get(<<"from_s">>, P, 0)), to_s => num(maps:get(<<"to_s">>, P, 0))}

@@ -624,7 +624,9 @@ mark(Uid, Id, Key, Fps, Sitting, Host) ->
                 false -> examine(Uid, Id, Key, Sitting, maps:get(questions, Result, []), Host)
             end;
         {error, Why} ->
-            ok = Host:save(Uid, {sitting, Id}, Row#{status => <<"failed">>, reason => iolist_to_binary(io_lib:format("~0p", [Why])), marked_ms => now_ms()}),
+            %% a video that does not show the work is not marked (witness_mark ?UNSEEN_PAPER): it says what it saw
+            Seen = case Why of {unreadable, W} when is_binary(W) -> #{unreadable => W}; _ -> #{} end,
+            ok = Host:save(Uid, {sitting, Id}, maps:merge(Row#{status => <<"failed">>, reason => iolist_to_binary(io_lib:format("~0p", [Why])), marked_ms => now_ms()}, Seen)),
             link_fresh(Uid, Row, <<"failed">>, #{}, Host)
     end.
 
@@ -641,6 +643,9 @@ view(Id, #{status := S, result := R} = Row) when S =:= <<"marked">>; S =:= <<"re
           result => #{questions => maps:get(questions, R, []), pauses => maps:get(pauses, R, []), lines => maps:get(lines, R, []),
                       stills => maps:get(stills, R, []), engine => maps:get(engine, R, <<"muse-spark-1.3">>)}},
     case maps:get(examiner, Row, undefined) of undefined -> V; Ex -> V#{examiner => examiner_view(Ex, teacher)} end;
+view(Id, #{status := <<"failed">>, unreadable := W}) ->
+    #{ok => true, id => Id, status => <<"failed">>, unreadable => W,
+      error => <<"Witness couldn't see the paper in this video, so nothing was marked. Ask for it to be filmed again.">>};
 view(Id, #{status := <<"failed">>}) ->
     #{ok => true, id => Id, status => <<"failed">>, error => <<"This sitting couldn't be marked. Record it again.">>};
 view(Id, #{status := S}) -> #{ok => true, id => Id, status => S}.
@@ -650,7 +655,8 @@ summary(Id, Row) ->
     Qs = case Row of #{result := #{questions := L}} -> L; _ -> [] end,
     Marks = lists:sum([num(maps:get(teacher_marks, Q, maps:get(marks, Q, 0))) || Q <- Qs]),
     OutOf = lists:sum([num(maps:get(out_of, Q, 0)) || Q <- Qs]),
-    #{id => Id, student => maps:get(student, Row, <<>>), status => maps:get(status, Row),
+    Seen = case Row of #{unreadable := W} -> #{unreadable => W}; _ -> #{} end,
+    Seen#{id => Id, student => maps:get(student, Row, <<>>), status => maps:get(status, Row),
       marks => Marks, out_of => OutOf, to_master => length([Q || Q <- Qs, needs_level(Q)]),
       to_review => length([Q || Q <- Qs, not maps:get(reviewed, Q, false)])}.
 
