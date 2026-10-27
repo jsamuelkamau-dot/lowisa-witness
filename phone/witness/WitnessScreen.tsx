@@ -17,6 +17,10 @@ import {Btn} from '../exam/print/ui';
 import {chooseVideo, doorMime, VideoFile} from '../community/video';
 import {NativeModules} from 'react-native';
 import {marksOf, Paper, Question, RESULT_WORDS, resultOf, toMaster, typedCode, witness, WitnessEnv} from './net';
+import type {MirrorStorage} from '../state/storage';
+import type {CustomEnv} from '../paths/custom/course';
+import {onBuildProgress} from '../paths/custom/course';
+import {buildMastery, masteryPath} from './mastery';
 
 /** The camera app is told to stop here: SAM 3.1 follows up to about ten minutes of video in one go. */
 export const RECORD_SECONDS = 600;
@@ -33,7 +37,7 @@ type Stage =
 interface Native { uploadFile?(uri: string, url: string, contentType: string): Promise<number>; takeVideo?(maxSeconds: number): Promise<VideoFile | null> }
 const docs = () => (NativeModules as Record<string, unknown>).LoWisaDocuments as Native | undefined;
 
-export function WitnessScreen({env, onBack}: {env: WitnessEnv; onBack(): void}): React.JSX.Element {
+export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessEnv & CustomEnv; storage: MirrorStorage; onBack(): void; onOpenPath?(pathId: string): void}): React.JSX.Element {
   const [stage, setStage] = useState<Stage>({kind: 'home'});
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
@@ -141,7 +145,7 @@ export function WitnessScreen({env, onBack}: {env: WitnessEnv; onBack(): void}):
           </View>
         ) : null}
 
-        {stage.kind === 'paper' ? <PaperView paper={stage.paper} /> : null}
+        {stage.kind === 'paper' ? <PaperView paper={stage.paper} env={env} storage={storage} onOpenPath={onOpenPath} /> : null}
       </ScrollView>
     </Page>
   );
@@ -167,7 +171,7 @@ function Mine({papers, onOpen}: {papers: Paper[] | null; onOpen(p: Paper): void}
   );
 }
 
-function PaperView({paper}: {paper: Paper}): React.JSX.Element {
+function PaperView({paper, env, storage, onOpenPath}: {paper: Paper; env: CustomEnv; storage: MirrorStorage; onOpenPath?(pathId: string): void}): React.JSX.Element {
   const qs = (paper.result && paper.result.questions) || [];
   const got = qs.reduce((a, q) => a + marksOf(q), 0);
   const of = qs.reduce((a, q) => a + (q.out_of || 0), 0);
@@ -177,14 +181,26 @@ function PaperView({paper}: {paper: Paper}): React.JSX.Element {
         <Text style={s.h}>{paper.title || 'Your paper'}</Text>
         <Text style={s.sub}>{got} of {of} marks · {toMaster(paper).length} to master next</Text>
       </View>
-      {qs.map(q => <QuestionCard key={q.n} q={q} />)}
+      {qs.map(q => <QuestionCard key={q.n} q={q} paper={paper} env={env} storage={storage} onOpenPath={onOpenPath} />)}
     </>
   );
 }
 
-function QuestionCard({q}: {q: Question}): React.JSX.Element {
+function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper: Paper; env: CustomEnv; storage: MirrorStorage; onOpenPath?(pathId: string): void}): React.JSX.Element {
   const r = resultOf(q);
   const next = r === 'not_yet' || r === 'right_answer_wrong_thinking';
+  const [path, setPath] = useState<string | null>(() => masteryPath(storage, paper.id, q.n));
+  const [building, setBuilding] = useState('');
+  const [said, setSaid] = useState('');
+  const start = async () => {
+    if (path) { if (onOpenPath) onOpenPath(path); return; }
+    setSaid(''); setBuilding('Planning your level…');
+    const off = onBuildProgress(st => setBuilding(st.stage === 'write' ? 'Writing your lessons…' : st.stage === 'review' ? 'Checking it teaches this one idea…' : 'Planning your level…'));
+    const made = await buildMastery(env, storage, paper, q);
+    off(); setBuilding('');
+    if (made.ok && made.pathId) { setPath(made.pathId); if (onOpenPath) onOpenPath(made.pathId); }
+    else setSaid(made.text);
+  };
   return (
     <View style={[s.card, next ? s.next : null]} testID={'witness-q-' + q.n}>
       <View style={s.rowTop}>
@@ -196,7 +212,13 @@ function QuestionCard({q}: {q: Question}): React.JSX.Element {
         <Text key={i} style={[s.step, st.crossed_out ? s.crossed : null]}>{st.wrote}</Text>
       ))}
       {next && q.diagnosis ? <Text style={s.diag}>{q.diagnosis}</Text> : null}
-      {next ? <Text style={s.small}>Your mastery level for this question is on its way.</Text> : null}
+      {next ? (
+        <View style={{marginTop: 10}}>
+          {building ? <View style={s.buildRow}><ActivityIndicator /><Text style={s.small}> {building}</Text></View>
+            : <Btn label={path ? 'Open my mastery level' : 'Start my mastery level'} onPress={start} primary testID={'witness-master-' + q.n} />}
+          {said ? <Text style={s.error}>{said}</Text> : null}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -222,5 +244,6 @@ const s = StyleSheet.create({
   chipNext: {color: '#8a5300', backgroundColor: '#faeeda'},
   step: {fontSize: 15, color: '#1f1e1c', fontFamily: 'monospace', marginTop: 4},
   crossed: {textDecorationLine: 'line-through', color: '#8a8984'},
+  buildRow: {flexDirection: 'row', alignItems: 'center'},
   diag: {fontSize: 14, color: '#1f1e1c', marginTop: 10, padding: 10, borderRadius: 8, backgroundColor: '#faeeda'},
 });
