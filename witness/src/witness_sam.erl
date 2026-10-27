@@ -36,9 +36,20 @@ objects(Body) ->
     end,
     [{binary_to_integer(Id), box(Fields)} || [Id, Fields] <- Ms].
 
+%% Only the box's own fields, as fixed atoms: a field name from the model never becomes a new atom (27 Oct, live: a
+%% row holding atoms one node had never made could not be read back on that node).
 box(Fields) ->
-    maps:from_list([{binary_to_atom(K), number(V)} || F <- binary:split(Fields, <<";">>, [global]),
-                                                   [K, V] <- [binary:split(F, <<"=">>)]]).
+    maps:from_list([{A, number(V)} || F <- binary:split(Fields, <<";">>, [global]),
+                                      [K, V] <- [binary:split(F, <<"=">>)], A <- field(K)]).
+
+field(<<"x1">>) -> [x1];
+field(<<"y1">>) -> [y1];
+field(<<"x2">>) -> [x2];
+field(<<"y2">>) -> [y2];
+field(<<"w">>) -> [w];
+field(<<"h">>) -> [h];
+field(<<"c">>) -> [c];
+field(_) -> [].
 
 number(V) ->
     case string:to_integer(V) of

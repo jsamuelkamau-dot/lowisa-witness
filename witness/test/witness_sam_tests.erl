@@ -24,3 +24,8 @@ empty_answer_test() ->
 out_of_order_frames_keep_first_box_test() ->
     T = witness_sam:tracks([{9, 4, #{x1 => 9}}, {3, 4, #{x1 => 3}}]),
     ?assertMatch(#{4 := #{first := 3, last := 9, box := #{x1 := 3}}}, T).
+
+unknown_fields_never_become_atoms_test() ->
+    [{0, 3, B}] = witness_sam:records(<<"<0f>3<|box;x1=1;y1=2;x2=3;y2=4;w=9;h=9;zz_never_an_atom_7731=5|>">>),
+    ?assertEqual(#{x1 => 1, y1 => 2, x2 => 3, y2 => 4, w => 9, h => 9}, B),
+    ?assertError(badarg, binary_to_existing_atom(<<"zz_never_an_atom_7731">>)).
