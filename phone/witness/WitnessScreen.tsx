@@ -171,7 +171,7 @@ function Mine({papers, onOpen}: {papers: Paper[] | null; onOpen(p: Paper): void}
   );
 }
 
-function PaperView({paper, env, storage, onOpenPath}: {paper: Paper; env: CustomEnv; storage: MirrorStorage; onOpenPath?(pathId: string): void}): React.JSX.Element {
+function PaperView({paper, env, storage, onOpenPath}: {paper: Paper; env: CustomEnv & WitnessEnv; storage: MirrorStorage; onOpenPath?(pathId: string): void}): React.JSX.Element {
   const qs = (paper.result && paper.result.questions) || [];
   const got = qs.reduce((a, q) => a + marksOf(q), 0);
   const of = qs.reduce((a, q) => a + (q.out_of || 0), 0);
@@ -186,7 +186,7 @@ function PaperView({paper, env, storage, onOpenPath}: {paper: Paper; env: Custom
   );
 }
 
-function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper: Paper; env: CustomEnv; storage: MirrorStorage; onOpenPath?(pathId: string): void}): React.JSX.Element {
+function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper: Paper; env: CustomEnv & WitnessEnv; storage: MirrorStorage; onOpenPath?(pathId: string): void}): React.JSX.Element {
   const r = resultOf(q);
   const next = r === 'not_yet' || r === 'right_answer_wrong_thinking';
   const [path, setPath] = useState<string | null>(() => masteryPath(storage, paper.id, q.n));
@@ -195,7 +195,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
   const start = async () => {
     if (path) { if (onOpenPath) onOpenPath(path); return; }
     setSaid(''); setBuilding('Planning your level…');
-    const off = onBuildProgress(st => setBuilding(st.stage === 'write' ? 'Writing your lessons…' : st.stage === 'review' ? 'Checking it teaches this one idea…' : 'Planning your level…'));
+    const off = onBuildProgress(st => setBuilding(st.stage === 'write' ? 'Writing your lessons…' : st.stage === 'review' ? 'Playing it through as you, to be sure it teaches this…' : st.stage === 'redesign' ? 'Making it sharper…' : 'Planning your level…'));
     const made = await buildMastery(env, storage, paper, q);
     off(); setBuilding('');
     if (made.ok && made.pathId) { setPath(made.pathId); if (onOpenPath) onOpenPath(made.pathId); }

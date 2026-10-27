@@ -9,9 +9,9 @@
  * running in a real-world setting first), and Meta's Muse Spark as the model of every design call.
  */
 import type {MirrorStorage} from '../state/storage';
-import {createCustomCourse, CustomCourseResult, CustomEnv} from '../paths/custom/course';
-import type {Paper, Question} from './net';
-import {resultOf} from './net';
+import {createCustomCourse, CustomCourseResult, CustomEnv, MasteryLevelText} from '../paths/custom/course';
+import type {Paper, Question, WitnessEnv} from './net';
+import {resultOf, witness} from './net';
 
 /** The model of every design call of a mastery level (the edge's house-only Meta row, open to Witness accounts). */
 export const MASTERY_MODEL = 'muse-spark-1-3';
@@ -49,10 +49,32 @@ export function masteryBrief(paper: Paper, q: Question, level?: string): {input:
   return {input, context};
 }
 
-/** Builds the level with the Master any topic build and remembers it for the question. */
-export async function buildMastery(env: CustomEnv, storage: MirrorStorage, paper: Paper, q: Question, level?: string): Promise<CustomCourseResult> {
+/** The self-check waits at most this long for Muse Wonder's verdict, then the level is kept as written. */
+export const CHECK_WAIT_MS = 120000;
+
+/** Muse Wonder plays the written level as both students (the edge's POST check, then its verdict). */
+export function selfCheck(env: WitnessEnv, paper: Paper, q: Question, wait: (ms: number) => Promise<void> = ms => new Promise(r => setTimeout(r, ms))) {
+  return async (level: MasteryLevelText): Promise<{passes: boolean; problems: string[]} | null> => {
+    const working = (q.steps || []).map(s => (s.crossed_out ? '(crossed out) ' : '') + s.wrote).join('\n');
+    const asked = await witness.check(env, {question: 'Question ' + q.n + (paper.title ? ' of ' + paper.title : ''), working, diagnosis: q.diagnosis || '', focus: q.focus || '', level});
+    if (!asked.ok) return null;
+    for (let waited = 0; waited < CHECK_WAIT_MS; waited += 4000) {
+      await wait(4000);
+      const r = await witness.checked(env, asked.value.id);
+      if (!r.ok || r.value.status === 'failed') return null;
+      if (r.value.status === 'done' && r.value.verdict) {
+        const v = r.value.verdict;
+        return {passes: v.passes === true, problems: (v.problems || []).map(p => (p.lesson ? 'lesson ' + p.lesson + ': ' : '') + p.fix)};
+      }
+    }
+    return null;
+  };
+}
+
+/** Builds the level with the Master any topic build, checks it as both students, and remembers it for the question. */
+export async function buildMastery(env: CustomEnv & WitnessEnv, storage: MirrorStorage, paper: Paper, q: Question, level?: string): Promise<CustomCourseResult> {
   const {input, context} = masteryBrief(paper, q, level);
-  const made = await createCustomCourse({...env, designModel: MASTERY_MODEL, mastery: true}, storage, 'topic', input, {context});
+  const made = await createCustomCourse({...env, designModel: MASTERY_MODEL, mastery: true, masteryCheck: selfCheck(env, paper, q)}, storage, 'topic', input, {context});
   if (made.ok && made.pathId) remember(storage, paper.id, q.n, made.pathId);
   return made;
 }

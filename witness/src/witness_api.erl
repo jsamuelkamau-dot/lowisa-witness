@@ -18,6 +18,9 @@
 %%%   POST sitting/<id>/review      {n, result?, marks?, focus?}  -> 200 {question}   the teacher's word, kept beside
 %%%        the model's (never over it), and the focus note for that question's mastery level
 %%%   GET  sitting/<id>             -> 200 {id, status, result?}
+%%%   POST check                    {question, working, diagnosis, focus?, level: {title, lessons: [{title, beats}]}}
+%%%                                 -> 202 {id}   Muse Wonder plays a mastery level as both students (witness_check)
+%%%   GET  check/<id>               -> 200 {status: "checking" | "done" | "failed", verdict?}
 %%%
 %%% route(Method, PathParts, Body, Uid, Host) -> {Status, Map}. Host implements witness_host; the caller has
 %%% already checked the account may use Witness. An optional Host:marker/0 replaces the model calls in tests.
@@ -153,7 +156,45 @@ route(<<"GET">>, [<<"sitting">>, Id], _B, Uid, Host) ->
         none -> refuse(404, <<"no_sitting">>, <<"That sitting isn't here.">>);
         {ok, Row} -> {200, view(Id, Row)}
     end;
+%% ---------------------------------------------------------------- the level's self-check
+route(<<"POST">>, [<<"check">>], B, Uid, Host) ->
+    Level = maps:get(<<"level">>, B, null),
+    Lessons = case Level of #{<<"lessons">> := Ls} when is_list(Ls) -> Ls; _ -> [] end,
+    case {Lessons, Host:meta_key()} of
+        {[], _} -> refuse(400, <<"no_level">>, <<"There is no level to check.">>);
+        {_, undefined} -> refuse(503, <<"not_configured">>, <<"Checking isn't available right now.">>);
+        {_, Key} ->
+            In = #{question => clean(maps:get(<<"question">>, B, <<>>), 1000), working => clean(maps:get(<<"working">>, B, <<>>), 3000),
+                   diagnosis => clean(maps:get(<<"diagnosis">>, B, <<>>), 600), focus => clean(maps:get(<<"focus">>, B, <<>>), 600),
+                   level => #{title => clean(maps:get(<<"title">>, Level, <<>>), 160),
+                              lessons => [#{title => clean(maps:get(<<"title">>, L, <<>>), 160),
+                                            beats => [clean(Bt, 1500) || Bt <- lists:sublist(list(maps:get(<<"beats">>, L, [])), 12), is_binary(Bt)]}
+                                          || L <- lists:sublist(Lessons, 6), is_map(L)]}},
+            Id = new_id(),
+            ok = Host:save(Uid, {check, Id}, #{status => <<"checking">>, created_ms => now_ms()}),
+            ok = Host:run(fun() ->
+                Out = try (checker(Host))(Key, In) catch C:R -> {error, {C, R}} end,
+                case Out of
+                    {ok, V, Cost} -> ok = Host:save(Uid, {check, Id}, #{status => <<"done">>, verdict => V}), Host:spend(Uid, <<"witness_check">>, Cost);
+                    {error, Why} -> ok = Host:save(Uid, {check, Id}, #{status => <<"failed">>, reason => iolist_to_binary(io_lib:format("~0p", [Why]))})
+                end
+            end),
+            {202, #{ok => true, id => Id, status => <<"checking">>}}
+    end;
+route(<<"GET">>, [<<"check">>, Id], _B, Uid, Host) ->
+    case Host:load(Uid, {check, Id}) of
+        none -> refuse(404, <<"no_check">>, <<"That check isn't here.">>);
+        {ok, #{status := <<"done">>, verdict := V}} -> {200, #{ok => true, id => Id, status => <<"done">>, verdict => V}};
+        {ok, #{status := S}} -> {200, #{ok => true, id => Id, status => S}}
+    end;
 route(_, _, _, _, _) -> refuse(404, <<"not_found">>, <<"No such Witness route.">>).
+
+checker(Host) ->
+    _ = code:ensure_loaded(Host),
+    case erlang:function_exported(Host, checker, 0) of
+        true -> Host:checker();
+        false -> fun witness_check:run/2
+    end.
 
 %% A student's paper in a teacher's exam is the teacher's row; the student reaches it through their pointer.
 owner_of(Uid, Id, Host) ->

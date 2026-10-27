@@ -1,7 +1,7 @@
 -module(witness_api_tests).
 -include_lib("eunit/include/eunit.hrl").
 -behaviour(witness_host).
--export([meta_key/0, put_url/4, get_url/2, drop_clip/2, save/3, load/2, list/2, spend/3, run/1, marker/0]).
+-export([meta_key/0, put_url/4, get_url/2, drop_clip/2, save/3, load/2, list/2, spend/3, run/1, marker/0, checker/0]).
 
 %% An in-memory host: rows and events in an ets table, marking run at once, a canned marker.
 meta_key() -> <<"test-key">>.
@@ -20,6 +20,13 @@ marker() ->
             true -> {error, boom};
             false -> {ok, persistent_term:get(witness_api_result, #{questions => [#{n => 1, result => <<"mastered">>}], pauses => [], lines => [], cost_usd => 0.08})}
         end
+    end.
+
+checker() ->
+    fun(<<"test-key">>, In) ->
+        ev({checked, In}),
+        {ok, #{passes => false, caught => false, cleared => true, on_idea => true, why => <<"the checks let digit-cancelling pass">>,
+               problems => [#{lesson => 3, fix => <<"use 19/95, where cancelling the 9s gives 1/5, not 1/5... make it fail">>}]}, 0.04}
     end.
 
 ev(E) -> ets:insert(witness_api_t, {erlang:unique_integer([monotonic]), E}).
@@ -150,3 +157,16 @@ join_code_puts_the_students_paper_in_the_teachers_pile_test() ->
     ?assertMatch({200, #{papers := []}}, r(<<"GET">>, [<<"mine">>], #{}, <<"other">>)),
     ?assertMatch({404, _}, r(<<"GET">>, [<<"pile">>, P], #{}, <<"stud">>)),
     ?assertMatch({404, _}, r(<<"POST">>, [<<"sitting">>, S, <<"review">>], #{<<"n">> => 1}, <<"stud">>)).
+
+self_check_runs_off_the_request_test() ->
+    setup(),
+    ?assertMatch({400, #{code := <<"no_level">>}}, r(<<"POST">>, [<<"check">>], #{}, <<"stud">>)),
+    Body = #{<<"question">> => <<"Simplify 16/64">>, <<"working">> => <<"16/64 = 1/4">>, <<"diagnosis">> => <<"Cancelled the 6s.">>,
+             <<"focus">> => <<"football">>,
+             <<"level">> => #{<<"title">> => <<"Common factors">>, <<"lessons">> => [#{<<"title">> => <<"Your step, at the stadium">>, <<"beats">> => [<<"a">>, 7, <<"b">>]}]}},
+    {202, #{id := Id, status := <<"checking">>}} = r(<<"POST">>, [<<"check">>], Body, <<"stud">>),
+    [{checked, In}] = [E || E = {checked, _} <- events()],
+    ?assertMatch(#{diagnosis := <<"Cancelled the 6s.">>, focus := <<"football">>, level := #{lessons := [#{beats := [<<"a">>, <<"b">>]}]}}, In),
+    ?assertMatch({200, #{status := <<"done">>, verdict := #{passes := false, problems := [#{lesson := 3}]}}}, r(<<"GET">>, [<<"check">>, Id], #{}, <<"stud">>)),
+    ?assert(lists:member({spend, <<"stud">>, <<"witness_check">>, 0.04}, events())),
+    ?assertMatch({404, _}, r(<<"GET">>, [<<"check">>, Id], #{}, <<"other">>)).

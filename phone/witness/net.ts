@@ -84,4 +84,6 @@ export const witness = {
     door<{id: string; put: string; headers: Record<string, string>}>(env, 'POST', 'sitting/start', {size, mime, ...(code ? {code} : {}), ...(student ? {student} : {})}),
   mark: (env: WitnessEnv, id: string, fps: number) => door<{status: string}>(env, 'POST', 'sitting/' + id + '/mark', {fps}),
   paper: (env: WitnessEnv, id: string) => door<Paper>(env, 'GET', 'sitting/' + id),
+  check: (env: WitnessEnv, body: Record<string, unknown>) => door<{id: string}>(env, 'POST', 'check', body),
+  checked: (env: WitnessEnv, id: string) => door<{status: string; verdict?: {passes: boolean; problems: Array<{lesson: number | null; fix: string}>}}>(env, 'GET', 'check/' + id),
 };

@@ -24,3 +24,15 @@
 - **SAM "word" tracked forward finds the written lines in writing order**: 6 of 6 on one run, 5 of 6 on another. Tracked both ways, first sightings came earlier than the ink.
 - SAM sees a line once it reads as a word, a few seconds after the ink, so steps are placed by page order and time, with a penalty for leaving one of SAM's lines empty, all questions in one pass.
 - **SAM 3.1 and Muse Spark both read a clip from a signed S3 link** (`input_video` with `video_url`), so the phone uploads straight to storage and the server never holds a video. The same marking came back: 6 lines, wrong thinking caught, $0.08.
+
+## 27 Oct: the self-check (`witness_check`, Muse Wonder)
+
+- A weak level, whose every check was a fraction where cancelling digits happens to work (19/95, 26/65, 49/98), was **failed**: "the misconception student passes". Wonder named a fix per lesson, each a fraction where cancelling fails (14/42 → 1/2 against 1/3, 14/24, 18/28).
+- A good level (12/24 at the stadium, 13/39 ≠ 1/9) **passed**. Both checks together took 33 s and cost about $0.08.
+- At 4,000 output tokens Wonder spent 3,998 on reasoning and returned no verdict (status incomplete). It now runs at medium effort with 16,000 tokens.
+
+## 27 Oct: the emulator, live (test60 on vb1027e)
+
+- The Witness tile shows only for the pilot account. The join code found the exam; "choose a video" sent the desk clip in 6 s; it was marked live.
+- The exam's question held "÷", which had failed every paper before the UTF-8 fix; it now marks.
+- After the teacher's focus note and release, the phone showed 5 of 6, the crossed-out first try, and "Right answer, thinking to fix" with the diagnosis.

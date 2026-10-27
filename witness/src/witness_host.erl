@@ -7,11 +7,12 @@
 %%% so the host never handles a video's bytes and drops the clip as soon as the sitting is marked.
 %%%
 %%% Rows are keyed {Kind, Id} under an owner: {pile, Id} one exam, {sitting, Id} one paper, {mine, Id} a student's
-%%% pointer to a paper they sat in a teacher's exam, and {code, Code} (under the owner <<"witness-codes">>) a join code.
+%%% pointer to a paper they sat in a teacher's exam, {code, Code} (under the owner <<"witness-codes">>) a join code,
+%%% and {check, Id} one mastery level's self-check.
 %%%-------------------------------------------------------------------
 -module(witness_host).
 
--type key() :: {pile | sitting | mine | code, binary()}.
+-type key() :: {pile | sitting | mine | code | check, binary()}.
 -export_type([key/0]).
 
 %% Meta Model API key, or undefined when Witness is not configured.
