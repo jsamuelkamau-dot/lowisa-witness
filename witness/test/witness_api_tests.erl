@@ -368,3 +368,20 @@ open_weights_engine_test() ->
     ?assertEqual(<<"https://store.example.com/", S2/binary, "?signed">>, Url),
     ?assertMatch({200, #{result := #{engine := <<"muse-spark-open">>}}}, r(<<"GET">>, [<<"sitting">>, S2], #{}, <<"teacher">>)),
     ?assertMatch({200, #{engine := <<"muse-spark-open">>}}, r(<<"GET">>, [<<"sitting">>, S2, <<"proof">>], #{}, <<"teacher">>)).
+
+%% 27 Oct, emulator: a dropped upload stayed on the teacher's desk as "Uploading" for good, and counted as a paper
+an_upload_whose_link_ran_out_leaves_the_exam_test() ->
+    setup(),
+    {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions check">>}, <<"teacher">>),
+    {201, #{id := Lost}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Tom">>}, <<"stud">>),
+    {201, #{id := Sent}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Tom">>}, <<"stud">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, Sent, <<"mark">>], #{}, <<"stud">>),
+    %% a fresh upload still shows: its link is good for fifteen minutes
+    {200, #{sittings := [_, _]}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>),
+    {ok, Row} = load(<<"teacher">>, {sitting, Lost}),
+    ok = save(<<"teacher">>, {sitting, Lost}, Row#{created_ms => erlang:system_time(millisecond) - 21 * 60000}),
+    ?assertMatch({200, #{sittings := [#{id := Sent}]}}, r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>)),
+    ?assertMatch({200, #{piles := [#{papers := 1}]}}, r(<<"GET">>, [<<"piles">>], #{}, <<"teacher">>)),
+    ?assertMatch({200, #{papers := [#{id := Sent}]}}, r(<<"GET">>, [<<"mine">>], #{}, <<"stud">>)),
+    %% the row itself is kept
+    ?assertMatch({ok, #{status := <<"uploading">>}}, load(<<"teacher">>, {sitting, Lost})).

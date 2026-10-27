@@ -49,6 +49,8 @@
 -export([route/5, view/2, sitting_of/1, queue/1, summary/2]).
 
 -define(MAX_BYTES, 500 * 1024 * 1024).
+%% How long a signed upload link lasts (expiresIn below is the same, in seconds).
+-define(LINK_MS, 900000).
 -define(MIMES, [<<"video/mp4">>, <<"video/quicktime">>]).
 -define(MAX_PILE, 200).
 -define(CODES, <<"witness-codes">>).
@@ -72,7 +74,11 @@ route(<<"GET">>, [<<"pile">>, Id], _B, Uid, Host) ->
     case Host:load(Uid, {pile, Id}) of
         none -> refuse(404, <<"no_pile">>, <<"That exam isn't here.">>);
         {ok, P} ->
-            Ss = [{S, R} || S <- maps:get(sittings, P, []), {ok, R} <- [Host:load(Uid, {sitting, S})]],
+            All = [{S, Host:load(Uid, {sitting, S})} || S <- maps:get(sittings, P, [])],
+            %% an upload whose link ran out can never arrive: it leaves the exam (and its paper count), the row stays
+            Gone = [S || {S, {ok, R}} <- All, lapsed(R)],
+            Gone =:= [] orelse Host:save(Uid, {pile, Id}, P#{sittings => maps:get(sittings, P, []) -- Gone}),
+            Ss = [{S, R} || {S, {ok, R}} <- All, not lists:member(S, Gone)],
             {200, #{ok => true, pile => maps:without([sittings], P#{id => Id}),
                     sittings => [summary(S, R) || {S, R} <- Ss], queue => queue(Ss)}}
     end;
@@ -545,7 +551,7 @@ owner_of(Uid, Id, Host) ->
 %% What a student sees of their own paper: its status, and the marks only once the teacher released them.
 mine_view(_, #{fresh := true}, _) -> none;     %% a fresh question shows on the question it checks, not as a paper
 mine_view(Id, #{owner := O}, Host) ->
-    case Host:load(O, {sitting, Id}) of
+    case live(Host:load(O, {sitting, Id})) of
         {ok, #{status := <<"released">>} = R} ->
             Title = case Host:load(O, {pile, maps:get(pile, R, <<>>)}) of {ok, P} -> maps:get(title, P); none -> <<>> end,
             V = view(Id, R),
@@ -692,3 +698,11 @@ refuse(Code, Kind, Msg) -> {Code, #{ok => false, code => Kind, error => Msg}}.
 new_id() -> binary:encode_hex(crypto:strong_rand_bytes(8), lowercase).
 
 now_ms() -> erlang:system_time(millisecond).
+
+%% An upload still waiting after its signed link ran out (15 minutes, plus five for a slow last byte) never arrives:
+%% a dropped connection left one on the teacher's desk as "Uploading" for good (27 Oct, emulator).
+lapsed(#{status := <<"uploading">>, created_ms := C}) -> now_ms() - C > ?LINK_MS + 300000;
+lapsed(_) -> false.
+
+live({ok, R}) -> case lapsed(R) of true -> none; false -> {ok, R} end;
+live(Other) -> Other.
