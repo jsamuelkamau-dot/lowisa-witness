@@ -21,6 +21,9 @@
 %%%   POST check                    {question, working, diagnosis, focus?, level: {title, lessons: [{title, beats}]}}
 %%%                                 -> 202 {id}   Muse Wonder plays a mastery level as both students (witness_check)
 %%%   GET  check/<id>               -> 200 {status: "checking" | "done" | "failed", verdict?}
+%%%   POST design                   {requestId, messages: [system, user], reasoningEffort?, maxOutputTokens?}
+%%%                                 -> 200 {success, text}   one design call of a mastery level, on Muse Spark, paid by
+%%%                                 the learner through the host (a credit wall answers as the host's wall)
 %%%
 %%% route(Method, PathParts, Body, Uid, Host) -> {Status, Map}. Host implements witness_host; the caller has
 %%% already checked the account may use Witness. An optional Host:marker/0 replaces the model calls in tests.
@@ -156,6 +159,25 @@ route(<<"GET">>, [<<"sitting">>, Id], _B, Uid, Host) ->
         none -> refuse(404, <<"no_sitting">>, <<"That sitting isn't here.">>);
         {ok, Row} -> {200, view(Id, Row)}
     end;
+%% ---------------------------------------------------------------- a mastery level's design calls
+route(<<"POST">>, [<<"design">>], B, Uid, Host) ->
+    Msgs = [#{role => R, content => C} || #{<<"role">> := R, <<"content">> := C} <- list(maps:get(<<"messages">>, B, [])),
+                                         lists:member(R, [<<"system">>, <<"user">>]), is_binary(C)],
+    Size = lists:sum([byte_size(C) || #{content := C} <- Msgs]),
+    case {Msgs, Size =< 200000} of
+        {[], _} -> {400, #{success => false, error => <<"Nothing to design.">>}};
+        {_, false} -> {413, #{success => false, error => <<"That is too much to send at once.">>}};
+        _ ->
+            Req = #{request_id => clean(maps:get(<<"requestId">>, B, <<>>), 120), messages => Msgs,
+                    effort => case maps:get(<<"reasoningEffort">>, B, null) of E when E =:= <<"low">>; E =:= <<"medium">>; E =:= <<"high">> -> E; _ -> <<"low">> end,
+                    max_tokens => case maps:get(<<"maxOutputTokens">>, B, null) of N when is_integer(N), N >= 1024, N =< 16000 -> N; _ -> 8000 end},
+            case Host:design(Uid, Req) of
+                {ok, Text} -> {200, #{success => true, text => Text}};
+                {gate, Status, Body} -> {Status, Body};
+                {error, _} -> {502, #{success => false, error => <<"The design call did not come back. Try again in a moment.">>}}
+            end
+    end;
+
 %% ---------------------------------------------------------------- the level's self-check
 route(<<"POST">>, [<<"check">>], B, Uid, Host) ->
     Level = maps:get(<<"level">>, B, null),

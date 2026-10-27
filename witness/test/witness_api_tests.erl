@@ -1,7 +1,7 @@
 -module(witness_api_tests).
 -include_lib("eunit/include/eunit.hrl").
 -behaviour(witness_host).
--export([meta_key/0, put_url/4, get_url/2, drop_clip/2, save/3, load/2, list/2, spend/3, run/1, marker/0, checker/0]).
+-export([meta_key/0, put_url/4, get_url/2, drop_clip/2, save/3, load/2, list/2, spend/3, run/1, marker/0, checker/0, design/2]).
 
 %% An in-memory host: rows and events in an ets table, marking run at once, a canned marker.
 meta_key() -> <<"test-key">>.
@@ -21,6 +21,9 @@ marker() ->
             false -> {ok, persistent_term:get(witness_api_result, #{questions => [#{n => 1, result => <<"mastered">>}], pauses => [], lines => [], cost_usd => 0.08})}
         end
     end.
+
+design(<<"broke">>, _) -> {gate, 402, #{success => false, code => <<"credits_exhausted">>}};
+design(Uid, Req) -> ev({design, Uid, Req}), {ok, <<"{\"title\":\"Common factors\"}">>}.
 
 checker() ->
     fun(<<"test-key">>, In) ->
@@ -170,3 +173,19 @@ self_check_runs_off_the_request_test() ->
     ?assertMatch({200, #{status := <<"done">>, verdict := #{passes := false, problems := [#{lesson := 3}]}}}, r(<<"GET">>, [<<"check">>, Id], #{}, <<"stud">>)),
     ?assert(lists:member({spend, <<"stud">>, <<"witness_check">>, 0.04}, events())),
     ?assertMatch({404, _}, r(<<"GET">>, [<<"check">>, Id], #{}, <<"other">>)).
+
+design_door_passes_one_call_and_the_wall_test() ->
+    setup(),
+    B = #{<<"requestId">> => <<"mob-course-1-s">>, <<"reasoningEffort">> => <<"medium">>, <<"maxOutputTokens">> => 12000,
+          <<"messages">> => [#{<<"role">> => <<"system">>, <<"content">> => <<"Design.">>}, #{<<"role">> => <<"user">>, <<"content">> => <<"One level">>},
+                             #{<<"role">> => <<"assistant">>, <<"content">> => <<"dropped">>}]},
+    ?assertMatch({200, #{success := true, text := <<"{\"title\":\"Common factors\"}">>}}, r(<<"POST">>, [<<"design">>], B, <<"stud">>)),
+    [{design, <<"stud">>, Req}] = [E || E = {design, _, _} <- events()],
+    ?assertMatch(#{request_id := <<"mob-course-1-s">>, effort := <<"medium">>, max_tokens := 12000,
+                   messages := [#{role := <<"system">>}, #{role := <<"user">>}]}, Req),
+    %% the learner with no credits meets the host's own wall, as from any paid call
+    ?assertMatch({402, #{code := <<"credits_exhausted">>}}, r(<<"POST">>, [<<"design">>], B, <<"broke">>)),
+    ?assertMatch({400, _}, r(<<"POST">>, [<<"design">>], #{}, <<"stud">>)),
+    %% an unknown effort or size falls back to the safe ones
+    {200, _} = r(<<"POST">>, [<<"design">>], B#{<<"reasoningEffort">> => <<"max">>, <<"maxOutputTokens">> => 999999}, <<"stud">>),
+    ?assertMatch([_, {design, _, #{effort := <<"low">>, max_tokens := 8000}}], [E || E = {design, _, _} <- events()]).

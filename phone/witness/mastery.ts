@@ -15,6 +15,8 @@ import {resultOf, witness} from './net';
 
 /** The model of every design call of a mastery level (the edge's house-only Meta row, open to Witness accounts). */
 export const MASTERY_MODEL = 'muse-spark-1-3';
+/** Where a mastery level's design calls go: the edge's own metered call on Muse Spark (behind the Witness switch). */
+export const MASTERY_DESIGN_PATH = '/api/witness/design';
 /** Which course each question's level became: {"<paper>#<n>": pathId}. */
 export const MASTERY_KEY = 'lowisa-witness-mastery-v1';
 
@@ -74,7 +76,7 @@ export function selfCheck(env: WitnessEnv, paper: Paper, q: Question, wait: (ms:
 /** Builds the level with the Master any topic build, checks it as both students, and remembers it for the question. */
 export async function buildMastery(env: CustomEnv & WitnessEnv, storage: MirrorStorage, paper: Paper, q: Question, level?: string): Promise<CustomCourseResult> {
   const {input, context} = masteryBrief(paper, q, level);
-  const made = await createCustomCourse({...env, designModel: MASTERY_MODEL, mastery: true, masteryCheck: selfCheck(env, paper, q)}, storage, 'topic', input, {context});
+  const made = await createCustomCourse({...env, designModel: MASTERY_MODEL, designPath: MASTERY_DESIGN_PATH, mastery: true, masteryCheck: selfCheck(env, paper, q)}, storage, 'topic', input, {context});
   if (made.ok && made.pathId) remember(storage, paper.id, q.n, made.pathId);
   return made;
 }
