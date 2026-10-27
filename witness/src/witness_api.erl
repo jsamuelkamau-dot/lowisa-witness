@@ -22,8 +22,10 @@
 %%%                                 -> 202 {id}   Muse Wonder plays a mastery level as both students (witness_check)
 %%%   GET  check/<id>               -> 200 {status: "checking" | "done" | "failed", verdict?}
 %%%   POST mastery/<sitting>/<n>/<action>   one question's life after release (witness_mastery):
-%%%        student: event {event: built|completed, path?, check?: {passes, problems}}, explain {to: lo|teacher, text}, ask {text}
-%%%        teacher: verify {lo, paper, teacher}, reply {text}, badge {issue, note}
+%%%        student: event {event: built|completed, path?, check?: {passes, problems}}, explain {to: lo|teacher, text}, ask {text},
+%%%                 fresh {mime, size} -> {fresh: {id, put, headers}}: the teacher's fresh question on paper, watched again
+%%%                 (a one-question sitting the teacher owns; marked with sitting/<id>/mark, it comes back onto the question)
+%%%        teacher: verify {lo, paper, teacher, fresh?}, reply {text}, badge {issue, note}
 %%%   POST design                   {requestId, messages: [system, user], reasoningEffort?, maxOutputTokens?}
 %%%                                 -> 200 {success, text}   one design call of a mastery level, on Muse Spark, paid by
 %%%                                 the learner through the host (a credit wall answers as the host's wall)
@@ -132,9 +134,10 @@ route(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], B, Uid0, Host) ->
             case Host:meta_key() of
                 undefined -> refuse(503, <<"not_configured">>, <<"Marking isn't available right now.">>);
                 Key ->
-                    Sitting = case maps:get(pile, Row, undefined) of
-                        undefined -> sitting_of(B);
-                        PileId -> case Host:load(Uid, {pile, PileId}) of {ok, P} -> maps:with([questions, scheme, level], P); none -> sitting_of(B) end
+                    Sitting = case {maps:get(sitting_in, Row, undefined), maps:get(pile, Row, undefined)} of
+                        {#{} = In, _} -> In;                                   %% a fresh question carries its own
+                        {_, undefined} -> sitting_of(B);
+                        {_, PileId} -> case Host:load(Uid, {pile, PileId}) of {ok, P} -> maps:with([questions, scheme, level], P); none -> sitting_of(B) end
                     end,
                     Fps = case maps:get(<<"fps">>, B, 30) of F when is_number(F), F > 0, F =< 240 -> F; _ -> 30 end,
                     ok = Host:save(Uid, {sitting, Id}, Row#{status => <<"marking">>, started_ms => now_ms()}),
@@ -177,12 +180,17 @@ route(<<"POST">>, [<<"mastery">>, Sid, NBin, Action], B, Uid, Host) ->
                 {student, false, _} -> refuse(409, <<"not_released">>, <<"Your teacher hasn't released this paper yet.">>);
                 {_, _, []} -> refuse(404, <<"no_question">>, <<"That question isn't on this paper.">>);
                 {_, _, [Q | _]} ->
-                    case mastery_step(Role, Action, Q, B, Host) of
-                        {error, Code} -> refuse(case Code of forbidden -> 403; _ -> 400 end, atom_to_binary(Code), mastery_words(Code));
-                        Q1 ->
+                    Step = case {Role, Action} of
+                        {student, <<"fresh">>} -> fresh_start(Q, B, #{owner => Owner, sid => Sid, n => N, uid => Uid, row => Row}, Host);
+                        _ -> mastery_step(Role, Action, Q, B, Host)
+                    end,
+                    case Step of
+                        {error, Code} -> refuse(case Code of forbidden -> 403; storage -> 503; _ -> 400 end, atom_to_binary(Code), mastery_words(Code));
+                        _ ->
+                            {Q1, Extra} = case Step of {#{} = Qx, #{} = E} -> {Qx, E}; Qx -> {Qx, #{}} end,
                             R = maps:get(result, Row),
                             ok = Host:save(Owner, {sitting, Sid}, Row#{result => R#{questions => [case X of #{n := N} -> Q1; _ -> X end || X <- Qs]}}),
-                            {200, #{ok => true, n => N, mastery => witness_mastery:view(Q1, Role)}}
+                            {200, maps:merge(#{ok => true, n => N, mastery => witness_mastery:view(Q1, Role)}, Extra)}
                     end
             end
     end;
@@ -268,10 +276,49 @@ mastery_step(teacher, <<"badge">>, Q, B, _Host) ->
 mastery_step(_, _, _, _, _) -> {error, forbidden}.
 
 mastery_words(forbidden) -> <<"That isn't yours to do on this paper.">>;
+mastery_words(bad_type) -> <<"Record it as an MP4 or MOV video, under an hour.">>;
+mastery_words(storage) -> <<"Couldn't get the upload ready. Try again in a moment.">>;
 mastery_words(not_asked) -> <<"Your teacher hasn't asked for that.">>;
 mastery_words(empty) -> <<"Write something first.">>;
 mastery_words(not_to_master) -> <<"This question was mastered already.">>;
 mastery_words(_) -> <<"That can't be done here.">>.
+
+%% The fresh question on paper: a sitting of one question in the teacher's store, pointing back at the question it
+%% checks; the student's pointer to it is marked fresh so it never shows as a paper of its own.
+fresh_start(Q, B, #{owner := O, sid := Sid, n := N, uid := U, row := Row}, Host) ->
+    Mime = maps:get(<<"mime">>, B, <<"video/mp4">>),
+    Size = maps:get(<<"size">>, B, 0),
+    Id = new_id(),
+    case {lists:member(Mime, ?MIMES) andalso is_integer(Size) andalso Size > 0 andalso Size =< ?MAX_BYTES,
+          witness_mastery:fresh_started(Q, Id, now_ms())} of
+        {_, {error, _} = E} -> E;
+        {false, _} -> {error, bad_type};
+        {true, Q1} ->
+            case Host:put_url(O, Id, Mime, Size) of
+                {ok, Url, Headers} ->
+                    Level = case Host:load(O, {pile, maps:get(pile, Row, <<>>)}) of {ok, P} -> maps:get(level, P, <<"any level">>); none -> <<"any level">> end,
+                    Text = maps:get(fresh, maps:get(asks, maps:get(mastery, Q1))),
+                    ok = Host:save(O, {sitting, Id}, #{status => <<"uploading">>, mime => Mime, size => Size, created_ms => now_ms(),
+                        student => maps:get(student, Row, <<>>), student_uid => U, for => #{sitting => Sid, n => N},
+                        sitting_in => #{questions => [#{n => 1, text => Text, marks => marks(maps:get(out_of, Q, 2))}], level => Level,
+                                        scheme => iolist_to_binary([<<"A fresh question the teacher set to check one idea the student had wrong: ">>,
+                                                                    maps:get(diagnosis, Q, <<>>), <<" Judge the method as well as the answer.">>])}}),
+                    ok = Host:save(U, {mine, Id}, #{owner => O, fresh => true, created_ms => now_ms()}),
+                    {Q1, #{fresh => #{id => Id, put => Url, headers => Headers, expiresIn => 900}}};
+                {error, _} -> {error, storage}
+            end
+    end.
+
+%% A fresh question's marking goes back onto the question it checks.
+link_fresh(Uid, #{for := #{sitting := Sid, n := N}}, Status, Result, Host) ->
+    case Host:load(Uid, {sitting, Sid}) of
+        {ok, #{result := #{questions := Qs} = R} = Row} ->
+            Marked = case Result of #{questions := [F | _]} -> F; _ -> #{} end,
+            Qs1 = [case X of #{n := N} -> witness_mastery:fresh_marked(X, Status, Marked); _ -> X end || X <- Qs],
+            ok = Host:save(Uid, {sitting, Sid}, Row#{result => R#{questions => Qs1}});
+        _ -> ok
+    end;
+link_fresh(_, _, _, _, _) -> ok.
 
 judger(Host) ->
     _ = code:ensure_loaded(Host),
@@ -296,6 +343,7 @@ owner_of(Uid, Id, Host) ->
     end.
 
 %% What a student sees of their own paper: its status, and the marks only once the teacher released them.
+mine_view(_, #{fresh := true}, _) -> none;     %% a fresh question shows on the question it checks, not as a paper
 mine_view(Id, #{owner := O}, Host) ->
     case Host:load(O, {sitting, Id}) of
         {ok, #{status := <<"released">>} = R} ->
@@ -344,9 +392,11 @@ mark(Uid, Id, Key, Fps, Sitting, Host) ->
     case Outcome of
         {ok, Result} ->
             ok = Host:save(Uid, {sitting, Id}, Row#{status => <<"marked">>, result => Result, marked_ms => now_ms()}),
+            link_fresh(Uid, Row, <<"marked">>, Result, Host),
             Host:spend(Uid, <<"witness_sitting">>, maps:get(cost_usd, Result, 0.0));
         {error, Why} ->
-            ok = Host:save(Uid, {sitting, Id}, Row#{status => <<"failed">>, reason => iolist_to_binary(io_lib:format("~0p", [Why])), marked_ms => now_ms()})
+            ok = Host:save(Uid, {sitting, Id}, Row#{status => <<"failed">>, reason => iolist_to_binary(io_lib:format("~0p", [Why])), marked_ms => now_ms()}),
+            link_fresh(Uid, Row, <<"failed">>, #{}, Host)
     end.
 
 marker(Host) ->

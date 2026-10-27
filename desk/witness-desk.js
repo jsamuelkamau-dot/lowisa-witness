@@ -282,6 +282,13 @@
     var lo = ex.lo ? '<div class="wd-card"><b>Explained to Lo</b><div>' + esc(ex.lo.text) + '</div>' +
       (ex.lo.verdict ? '<div class="wd-sub">' + (ex.lo.verdict.understood ? 'Lo: understood. ' : 'Lo: not yet understood. ') + esc(ex.lo.verdict.why || '') + '</div>' : '') + '</div>' : '';
     var toMe = ex.teacher ? '<div class="wd-card"><b>Explained to you</b><div>' + esc(ex.teacher.text) + '</div></div>' : '';
+    // the fresh question on paper, watched again: how it was worked, beside the result
+    var fr = m.fresh || null, fq = fr && fr.question;
+    var fresh = !fr ? '' : '<div class="wd-card"><b>The fresh question on paper</b>' +
+      (fr.status === 'marked' && fq ? ' ' + chip(fq.result) + '<div class="wd-sub">' + esc(asks.fresh || '') + '</div>' +
+        (fq.steps || []).map(function (st) { return '<div class="wd-step' + (st.crossed_out ? ' slip' : '') + '" style="opacity:1">' + esc(st.wrote) + '</div>'; }).join('') +
+        (fq.diagnosis ? '<div class="wd-sub">' + esc(fq.diagnosis) + '</div>' : '')
+      : '<div class="wd-sub">' + (fr.status === 'failed' ? 'The video could not be read. The student can film it again.' : fr.status === 'uploading' ? 'Not sent yet.' : 'Witness is reading it.') + '</div>') + '</div>';
     var box = function (k, label) { return '<label style="display:flex;gap:6px;align-items:center;color:var(--tx)"><input type="checkbox" data-ask="' + k + '"' + (asks[k] ? ' checked' : '') + ' style="width:auto"> ' + label + '</label>'; };
     var done = m.status === 'badge';
     // the level's own self-check (Muse Wonder played it as both students); a level that still fails is the teacher's to know
@@ -294,8 +301,10 @@
       '<label for="wdReply">Answer in the thread</label><input id="wdReply" data-f="reply" placeholder="Try dividing both by 12.">' +
       '<div style="margin-top:6px"><button class="wd-btn" data-act="reply">Send</button></div>' +
       '<div style="margin-top:12px"><b style="font-size:12px">Ask for a check (only if you want one)</b>' +
-      box('lo', 'Explain it back to Lo') + box('paper', 'A fresh question on paper, watched again') + box('teacher', 'Explain it back to me') +
-      '<button class="wd-btn" data-act="verify" style="margin-top:6px">Save checks</button></div>' + lo + toMe +
+      box('lo', 'Explain it back to Lo') + box('paper', 'A fresh question on paper, watched again') +
+      '<input id="wdFresh" data-f="fresh" value="' + esc(S.draft.fresh != null ? S.draft.fresh : (asks.fresh || '')) + '" placeholder="The fresh question, e.g. Simplify 12/48" aria-label="The fresh question">' +
+      box('teacher', 'Explain it back to me') +
+      '<button class="wd-btn" data-act="verify" style="margin-top:6px">Save checks</button></div>' + lo + toMe + fresh +
       '<label for="wdBadgeNote">A note with your decision</label><input id="wdBadgeNote" data-f="badgeNote" placeholder="Well done, you found why digits are not numbers.">' +
       '<div style="margin-top:8px;display:flex;gap:8px">' + (done ? '<span class="wd-chip ok">Badge issued</span>' :
         '<button class="wd-btn wd-main" data-act="badge">Issue Turned around</button><button class="wd-btn" data-act="notyet">Not yet</button>') + '</div></div>';
@@ -361,6 +370,8 @@
     var out = { lo: false, paper: false, teacher: false };
     var p = document.getElementById('lowisaWitnessDesk');
     if (p) p.querySelectorAll('[data-ask]').forEach(function (el) { out[el.getAttribute('data-ask')] = !!el.checked; });
+    var f = document.getElementById('wdFresh');
+    if (out.paper && f && f.value.trim()) out.fresh = f.value.trim();
     return out;
   }
   async function masteryDo(action, body) {

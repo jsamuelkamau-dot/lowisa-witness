@@ -222,6 +222,17 @@ after_release_the_teacher_chooses_and_issues_the_badge_test() ->
     ?assertNot(maps:is_key(explain, StudentView)),                         %% the verdict is the teacher's to read
     [{judged, 3, _}] = [E || E = {judged, _, _} <- events()],
     {200, _} = M(<<"stud">>, 3, <<"explain">>, #{<<"to">> => <<"teacher">>, <<"text">> => <<"I know now.">>}),
+    %% a fresh question on paper, watched again: only once the teacher set one; its marking comes back onto question 3
+    Clip = #{<<"mime">> => <<"video/mp4">>, <<"size">> => 10},
+    ?assertMatch({400, #{code := <<"not_asked">>}}, M(<<"stud">>, 3, <<"fresh">>, Clip)),
+    {200, #{mastery := #{asks := #{paper := true, fresh := <<"Simplify 12/48">>}}}} =
+        M(<<"teacher">>, 3, <<"verify">>, #{<<"lo">> => true, <<"teacher">> => true, <<"paper">> => true, <<"fresh">> => <<"Simplify 12/48">>}),
+    ?assertMatch({403, _}, M(<<"teacher">>, 3, <<"fresh">>, Clip)),
+    ?assertMatch({400, #{code := <<"bad_type">>}}, M(<<"stud">>, 3, <<"fresh">>, Clip#{<<"mime">> => <<"image/png">>})),
+    {200, #{fresh := #{id := F, put := _}, mastery := #{fresh := #{status := <<"uploading">>}}}} = M(<<"stud">>, 3, <<"fresh">>, Clip),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, F, <<"mark">>], #{}, <<"stud">>),
+    {200, #{result := #{questions := [_, QF]}}} = r(<<"GET">>, [<<"sitting">>, S], #{}, <<"teacher">>),
+    ?assertMatch(#{mastery := #{fresh := #{sitting := F, status := <<"marked">>, question := #{n := _}}}}, QF),
     {200, #{result := #{questions := [_, Q3]}}} = r(<<"GET">>, [<<"sitting">>, S], #{}, <<"teacher">>),
     ?assertMatch(#{mastery := #{explain := #{lo := #{verdict := #{understood := true}}, teacher := #{text := <<"I know now.">>}}}}, Q3),
     ?assertMatch(#{mastery := #{check := #{passes := false, problems := [<<"lesson 2: the checks are all lucky cancels">>]}}}, Q3),
@@ -232,4 +243,5 @@ after_release_the_teacher_chooses_and_issues_the_badge_test() ->
     %% the student's own list shows the badge and the thread, not the verdict
     {200, #{papers := [#{result := #{questions := [_, Mine3]}}]}} = r(<<"GET">>, [<<"mine">>], #{}, <<"stud">>),
     ?assertMatch(#{mastery := #{status := <<"badge">>, badge := #{issued := true}, thread := [_, _]}}, Mine3),
-    ?assertNot(maps:is_key(explain, maps:get(mastery, Mine3))).
+    ?assertNot(maps:is_key(explain, maps:get(mastery, Mine3))),
+    ?assertEqual(#{status => <<"marked">>}, maps:get(fresh, maps:get(mastery, Mine3))).   %% the fresh marks are the teacher's

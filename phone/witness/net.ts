@@ -25,7 +25,8 @@ export type Result = 'mastered' | 'right_answer_wrong_thinking' | 'part_way' | '
 export interface Step { t: number | null; wrote: string; crossed_out: boolean; line?: number }
 export interface Mastery {
   status: 'not_started' | 'building' | 'ready' | 'completed' | 'badge' | 'not_yet';
-  path?: string; asks?: {lo?: boolean; paper?: boolean; teacher?: boolean}; explained?: string[]; lo_next?: string;
+  path?: string; asks?: {lo?: boolean; paper?: boolean; teacher?: boolean; fresh?: string}; explained?: string[]; lo_next?: string;
+  fresh?: {status: 'uploading' | 'marking' | 'marked' | 'failed'};
   thread?: Array<{from: 'student' | 'teacher'; text: string; at: number}>; badge?: {issued: boolean; note: string; at: number};
 }
 export interface Question {
@@ -90,8 +91,8 @@ export const witness = {
     door<{id: string; put: string; headers: Record<string, string>}>(env, 'POST', 'sitting/start', {size, mime, ...(code ? {code} : {}), ...(student ? {student} : {})}),
   mark: (env: WitnessEnv, id: string, fps: number) => door<{status: string}>(env, 'POST', 'sitting/' + id + '/mark', {fps}),
   paper: (env: WitnessEnv, id: string) => door<Paper>(env, 'GET', 'sitting/' + id),
-  mastery: (env: WitnessEnv, paperId: string, n: number, action: 'event' | 'explain' | 'ask', body: Record<string, unknown>) =>
-    door<{mastery: Mastery}>(env, 'POST', 'mastery/' + paperId + '/' + n + '/' + action, body),
+  mastery: (env: WitnessEnv, paperId: string, n: number, action: 'event' | 'explain' | 'ask' | 'fresh', body: Record<string, unknown>) =>
+    door<{mastery: Mastery; fresh?: {id: string; put: string}}>(env, 'POST', 'mastery/' + paperId + '/' + n + '/' + action, body),
   check: (env: WitnessEnv, body: Record<string, unknown>) => door<{id: string}>(env, 'POST', 'check', body),
   checked: (env: WitnessEnv, id: string) => door<{status: string; verdict?: {passes: boolean; problems: Array<{lesson: number | null; fix: string}>}}>(env, 'GET', 'check/' + id),
 };

@@ -211,6 +211,30 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
   }, [path]); // eslint-disable-line react-hooks/exhaustive-deps
   const [building, setBuilding] = useState('');
   const [said, setSaid] = useState('');
+  // the fresh question the teacher set, worked on paper and filmed like the exam
+  const [filming, setFilming] = useState('');
+  const film = async (source: 'camera' | 'gallery') => {
+    setSaid('');
+    let file: VideoFile | null = null;
+    try { const n = docs(); file = source === 'camera' && n && n.takeVideo ? await n.takeVideo(RECORD_SECONDS) : await chooseVideo(source); }
+    catch (e) { setSaid('The camera could not start. Try choosing a video you already recorded.'); return; }
+    if (!file) return;
+    const mime = doorMime(file.mime, file.name);
+    if (!mime) { setSaid('Witness reads MP4 and MOV videos. Record it again with the camera here.'); return; }
+    setFilming('Getting the upload ready…');
+    const r = await witness.mastery(env, paper.id, q.n, 'fresh', {mime, size: Math.round(file.size)});
+    if (!r.ok || !r.value.fresh) { setFilming(''); setSaid(r.ok ? 'Try again in a moment.' : r.error); return; }
+    setM(r.value.mastery);
+    setFilming('Sending your answer…');
+    let status = 0;
+    try { const up = docs(); status = up && up.uploadFile ? await up.uploadFile(file.uri, r.value.fresh.put, mime) : 0; } catch (e) { status = 0; }
+    if (status < 200 || status >= 300) { setFilming(''); setSaid('The video did not go up. Check your connection, on Wi-Fi if you can, and try again.'); return; }
+    setFilming('Witness is reading how you worked…');
+    const marked = await witness.mark(env, r.value.fresh.id, PHONE_FPS);
+    setFilming('');
+    if (!marked.ok) { setSaid(marked.error); return; }
+    setM(prev => (prev ? {...prev, fresh: {status: 'marking'}} : prev));
+  };
   const start = async () => {
     if (path) { if (onOpenPath) onOpenPath(path); return; }
     setSaid(''); setBuilding('Planning your level…');
@@ -236,7 +260,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
           {building ? <View style={s.buildRow}><ActivityIndicator /><Text style={s.small}> {building}</Text></View>
             : <Btn label={path ? 'Open my mastery level' : 'Start my mastery level'} onPress={start} primary testID={'witness-master-' + q.n} />}
           {said ? <Text style={s.error}>{said}</Text> : null}
-          <AfterLevel m={m} act={act} />
+          <AfterLevel m={m} act={act} film={film} filming={filming} />
         </View>
       ) : null}
     </View>
@@ -244,7 +268,13 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
 }
 
 /** After the level: the badge or the teacher's word, only the checks the teacher asked for, and ask my teacher. */
-function AfterLevel({m, act}: {m?: Mastery; act(action: 'explain' | 'ask', body: Record<string, unknown>): Promise<boolean>}): React.JSX.Element | null {
+const FRESH_WORDS: Record<string, string> = {
+  marking: 'Witness is reading it. Your teacher will see how you worked.',
+  marked: 'Sent. Your teacher has your answer.',
+  failed: 'Witness could not read that video. Film it again.',
+};
+
+function AfterLevel({m, act, film, filming}: {m?: Mastery; act(action: 'explain' | 'ask', body: Record<string, unknown>): Promise<boolean>; film(source: 'camera' | 'gallery'): void; filming: string}): React.JSX.Element | null {
   const [toLo, setToLo] = useState('');
   const [toTeacher, setToTeacher] = useState('');
   const [question, setQuestion] = useState('');
@@ -270,7 +300,21 @@ function AfterLevel({m, act}: {m?: Mastery; act(action: 'explain' | 'ask', body:
           <Btn label="Send to my teacher" onPress={async () => { if (await act('explain', {to: 'teacher', text: toTeacher})) setToTeacher(''); }} small />
         </View>
       ) : null}
-      {asks.paper ? <Text style={s.small}>Your teacher would like a fresh question on paper. They'll give it to you.</Text> : null}
+      {asks.paper && asks.fresh ? (
+        <View style={{marginTop: 10}} testID="witness-fresh">
+          <Text style={s.rowTitle}>A fresh question from your teacher</Text>
+          <Text style={s.step}>{asks.fresh}</Text>
+          {m && m.fresh && FRESH_WORDS[m.fresh.status] ? <Text style={s.sub}>{FRESH_WORDS[m.fresh.status]}</Text> : null}
+          {filming ? <View style={s.buildRow}><ActivityIndicator /><Text style={s.small}> {filming}</Text></View>
+            : !m || !m.fresh || m.fresh.status === 'uploading' || m.fresh.status === 'failed' ? (
+              <View>
+                <Text style={s.sub}>Work it on paper and film your hand as you write, like the exam.</Text>
+                <Btn label="Film my answer" onPress={() => film('camera')} small testID="witness-fresh-film" />
+                <Btn label="Choose a video" onPress={() => film('gallery')} small testID="witness-fresh-pick" />
+              </View>
+            ) : null}
+        </View>
+      ) : asks.paper ? <Text style={s.small}>Your teacher would like a fresh question on paper. They'll give it to you.</Text> : null}
       <View style={{marginTop: 10}}>
         {(m && m.thread || []).map((t, i) => <Text key={i} style={s.sub}>{t.from === 'teacher' ? 'Your teacher: ' : 'You: '}{t.text}</Text>)}
         <TextInput value={question} onChangeText={setQuestion} placeholder="Stuck? Ask your teacher" style={s.input} accessibilityLabel="Ask your teacher" testID="witness-ask" />

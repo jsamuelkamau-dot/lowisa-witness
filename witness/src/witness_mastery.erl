@@ -12,7 +12,8 @@
 %%%   #{status => building | ready | completed | badge | not_yet,
 %%%     path, built_ms, completed_ms,
 %%%     check => #{passes, problems} (the kept level's own self-check; the teacher sees it, the student does not),
-%%%     asks => #{lo, paper, teacher} (booleans, the teacher's),
+%%%     asks => #{lo, paper, teacher} (booleans, the teacher's), and fresh => the fresh question's text when paper,
+%%%     fresh => #{sitting, status => uploading | marked | failed, at, question} (the paper watched again),
 %%%     explain => #{lo => #{text, verdict, at}, teacher => #{text, at}},
 %%%     thread => [#{from => student | teacher, text, at}],
 %%%     badge => #{issued, note, at}}
@@ -21,7 +22,7 @@
 %%% saving and checking who may do what.
 %%%-------------------------------------------------------------------
 -module(witness_mastery).
--export([event/3, verify/2, explain/4, ask/3, reply/3, badge/3, view/2, needs/1, judge_prompt/2, judge/1]).
+-export([event/3, verify/2, explain/4, ask/3, reply/3, badge/3, view/2, needs/1, judge_prompt/2, judge/1, fresh_started/3, fresh_marked/3]).
 
 -define(MAX_TEXT, 2000).
 -define(MAX_THREAD, 60).
@@ -58,9 +59,24 @@ keep(_, New) -> New.
 
 %% The teacher: which checks they want, if any.
 verify(Q, Asks) ->
-    A = #{lo => maps:get(<<"lo">>, Asks, false) =:= true, paper => maps:get(<<"paper">>, Asks, false) =:= true,
-          teacher => maps:get(<<"teacher">>, Asks, false) =:= true},
+    Paper = maps:get(<<"paper">>, Asks, false) =:= true,
+    A0 = #{lo => maps:get(<<"lo">>, Asks, false) =:= true, paper => Paper, teacher => maps:get(<<"teacher">>, Asks, false) =:= true},
+    A = case {Paper, clean(maps:get(<<"fresh">>, Asks, <<>>))} of {true, F} when F =/= <<>> -> A0#{fresh => F}; _ -> A0 end,
     put_m(Q, (m(Q))#{asks => A}).
+
+%% The student films the fresh question the teacher set (only when the teacher asked for one and wrote it).
+fresh_started(Q, Sitting, At) ->
+    M = m(Q),
+    case maps:get(asks, M, #{}) of
+        #{paper := true, fresh := F} when F =/= <<>> -> put_m(Q, M#{fresh => #{sitting => Sitting, status => <<"uploading">>, at => At}});
+        _ -> {error, not_asked}
+    end.
+
+%% Its marking comes back onto the question it checks: the status, and the marked question for the teacher.
+fresh_marked(Q, Status, Marked) ->
+    M = m(Q),
+    F = maps:get(fresh, M, #{}),
+    put_m(Q, M#{fresh => case Marked of #{} = X when map_size(X) > 0 -> F#{status => Status, question => X}; _ -> F#{status => Status} end}).
 
 %% The student: explain back, only to whom the teacher asked. Explaining to Lo carries Spark's verdict (judge/1).
 explain(Q, To, Text0, #{at := At} = Ctx) ->
@@ -115,7 +131,8 @@ view(Q, student) ->
         #{lo := #{verdict := #{understood := false, next := Next}}} when Next =/= <<>> -> #{lo_next => Next};
         _ -> #{}
     end,
-    maps:merge((maps:with([status, path, asks, thread, badge], M))#{explained => maps:keys(Explain)}, LoNext).
+    Fresh = case M of #{fresh := #{status := FS}} -> #{fresh => #{status => FS}}; _ -> #{} end,     %% the marks are the teacher's to give
+    maps:merge(maps:merge((maps:with([status, path, asks, thread, badge], M))#{explained => maps:keys(Explain)}, LoNext), Fresh).
 
 %% Spark judges an explanation back to Lo against the diagnosis: the idea in the student's own words, not the lesson's.
 judge_prompt(Q, Text) ->
