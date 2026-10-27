@@ -2,7 +2,7 @@
 -include_lib("eunit/include/eunit.hrl").
 -behaviour(witness_host).
 -export([meta_key/0, put_url/4, get_url/2, drop_clip/2, save/3, load/2, list/2, spend/3, run/1, marker/0, checker/0, design/2, judger/0,
-         put_asset/4, asset_url/2, stiller/0, examiner/0, answer_judge/0, drawer/0, hearer/0, open_engine/0, open_marker/0, retry_waits/0, cropper/0]).
+         put_asset/4, asset_url/2, stiller/0, examiner/0, answer_judge/0, drawer/0, hearer/0, open_engine/0, open_marker/0, retry_waits/0, cropper/0, painter/0]).
 
 %% An in-memory host: rows and events in an ets table, marking run at once, a canned marker.
 meta_key() -> <<"test-key">>.
@@ -47,6 +47,7 @@ asset_url(Uid, Name) -> case ets:lookup(witness_api_t, {asset, Uid, Name}) of [_
 
 %% The new seams stay off unless a test turns them on, so the older tests' event lists are unchanged.
 on(K) -> persistent_term:get({witness_api_on, K}, false).
+painter() -> fun(<<"test-key">>, Prompt) -> case on(world) of true -> ev({painted, Prompt}), {ok, <<"RIFFworld">>, <<"webp">>}; false -> {error, off} end end.
 cropper() -> fun(Url, T, Box) -> case on(stills) of true -> ev({cropped, Url, T, Box}), {ok, <<255, 216, "step">>}; false -> {error, off} end end.
 stiller() -> fun(Url, T) -> case on(stills) of true -> ev({still, Url, T}), {ok, <<255, 216, "jpeg">>}; false -> {error, off} end end.
 examiner() ->
@@ -71,7 +72,7 @@ ev(E) -> ets:insert(witness_api_t, {erlang:unique_integer([monotonic]), E}).
 events() -> [E || {K, E} <- lists:sort(ets:tab2list(witness_api_t)), is_integer(K)].
 
 setup() -> case ets:whereis(witness_api_t) of undefined -> ok; _ -> ets:delete(witness_api_t) end, ets:new(witness_api_t, [named_table, public]), persistent_term:put(witness_api_fail, false), persistent_term:erase(witness_api_result),
-           [persistent_term:erase({witness_api_on, K}) || K <- [stills, examiner, open]], persistent_term:erase(witness_api_exbusy).
+           [persistent_term:erase({witness_api_on, K}) || K <- [stills, examiner, open, world]], persistent_term:erase(witness_api_exbusy).
 
 r(M, P, B, Uid) -> witness_api:route(M, P, B, Uid, ?MODULE).
 
@@ -551,4 +552,23 @@ the_students_own_step_is_cut_from_the_page_test() ->
     {200, #{result := #{stills := [#{n := 3, asset := <<"still-3.jpg">>, step := <<"step-3.jpg">>}]}}} = r(<<"GET">>, [<<"sitting">>, S], #{}, <<"u1">>),
     ?assertMatch({200, #{url := _}}, r(<<"GET">>, [<<"sitting">>, S, <<"asset">>, <<"step-3.jpg">>], #{}, <<"u1">>)),
     persistent_term:erase({witness_api_on, stills}).
+
+%% 28 Oct audit (the plan: Muse Image art for the world): a built level gets one picture of its real-world place
+a_built_level_gets_a_picture_of_its_world_test() ->
+    setup(), persistent_term:put({witness_api_on, world}, true),
+    {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions">>}, <<"teacher">>),
+    persistent_term:put(witness_api_result, #{questions => [q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code}, <<"stud">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"stud">>),
+    {200, _} = r(<<"POST">>, [<<"pile">>, P, <<"release">>], #{}, <<"teacher">>),
+    Level = #{<<"title">> => <<"Cancel Factors Right">>, <<"lessons">> => [#{<<"title">> => <<"The sports shop sale">>, <<"beats">> => [<<"Boots at 16/64 off">>]}]},
+    {200, _} = r(<<"POST">>, [<<"mastery">>, S, <<"3">>, <<"event">>], #{<<"event">> => <<"built">>, <<"path">> => <<"p1">>, <<"level">> => Level}, <<"stud">>),
+    [{painted, Prompt}] = [E || E = {painted, _} <- events()],
+    [?assertNotEqual(nomatch, binary:match(Prompt, W)) || W <- [<<"The sports shop sale">>, <<"No words, letters or numbers">>]],
+    {200, #{papers := [#{result := #{questions := [#{mastery := #{world := <<"world-3.webp">>}}]}}]}} = r(<<"GET">>, [<<"mine">>], #{}, <<"stud">>),
+    ?assert(lists:member({spend, <<"teacher">>, <<"witness_world">>, 0.01}, events())),
+    %% built again: drawn once only
+    {200, _} = r(<<"POST">>, [<<"mastery">>, S, <<"3">>, <<"event">>], #{<<"event">> => <<"built">>, <<"path">> => <<"p1">>, <<"level">> => Level}, <<"stud">>),
+    ?assertEqual(1, length([E || E = {painted, _} <- events()])),
+    ?assertMatch({200, #{url := _}}, r(<<"GET">>, [<<"sitting">>, S, <<"asset">>, <<"world-3.webp">>], #{}, <<"stud">>)).
 

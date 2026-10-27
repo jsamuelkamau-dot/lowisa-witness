@@ -158,7 +158,7 @@ view(Q, student) ->
         _ -> #{}
     end,
     Fresh = case M of #{fresh := #{status := FS}} -> #{fresh => #{status => FS}}; _ -> #{} end,     %% the marks are the teacher's to give
-    maps:merge(maps:merge((maps:with([status, path, asks, thread, badge], M))#{explained => maps:keys(Explain)}, LoNext), Fresh).
+    maps:merge(maps:merge((maps:with([status, path, asks, thread, badge, world], M))#{explained => maps:keys(Explain)}, LoNext), Fresh).
 
 %% Spark judges an explanation back to Lo against the diagnosis: the idea in the student's own words, not the lesson's.
 judge_prompt(Q, Text) ->

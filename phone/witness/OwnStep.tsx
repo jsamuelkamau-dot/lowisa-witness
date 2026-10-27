@@ -10,9 +10,12 @@ import {witness, WitnessEnv} from './net';
 
 export function OwnStep({env, paperId, n, onGo}: {env: WitnessEnv; paperId: string; n: number; onGo(): void}): React.JSX.Element {
   const [url, setUrl] = useState<string | null>(null);
+  // the real-world place the level happens in, drawn by Muse Image when the level was built (none: nothing shows)
+  const [world, setWorld] = useState<string | null>(null);
   useEffect(() => {
     let live = true;
     witness.asset(env, paperId, 'step-' + n + '.jpg').then(r => { if (!live) return; if (r.ok) setUrl(r.value.url); else onGo(); }).catch(() => { if (live) onGo(); });
+    witness.asset(env, paperId, 'world-' + n + '.webp').then(r => { if (live && r.ok) setWorld(r.value.url); }).catch(() => undefined);
     return () => { live = false; };
   }, [env, paperId, n]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!url) return <View style={s.wrap}><ActivityIndicator /></View>;
@@ -21,6 +24,7 @@ export function OwnStep({env, paperId, n, onGo}: {env: WitnessEnv; paperId: stri
       <Text style={s.eyebrow}>YOUR STEP, AS YOU WROTE IT</Text>
       <Image source={{uri: url}} style={s.picture} resizeMode="contain" accessibilityLabel="Your own written step, from your paper" />
       <Text style={s.sub}>Now watch it run in the real world.</Text>
+      {world ? <Image source={{uri: world}} style={s.world} resizeMode="cover" accessibilityLabel="Where your step runs next" testID="witness-own-step-world" /> : null}
       <Pressable style={s.go} onPress={onGo} accessibilityRole="button" testID="witness-own-step-go"><Text style={s.goText}>Watch it run</Text></Pressable>
     </View>
   );
@@ -31,6 +35,7 @@ const s = StyleSheet.create({
   eyebrow: {fontSize: 13, fontWeight: '800', letterSpacing: 1, color: '#1d4ed8', marginBottom: 12},
   picture: {width: '100%', height: 220, borderRadius: 12, backgroundColor: '#ffffff'},
   sub: {fontSize: 16, color: '#0f172a', marginTop: 14},
+  world: {width: '100%', height: 180, borderRadius: 12, marginTop: 10},
   go: {marginTop: 18, backgroundColor: '#1d4ed8', borderRadius: 14, paddingVertical: 14, alignItems: 'center'},
   goText: {color: '#ffffff', fontSize: 17, fontWeight: '700'},
 });

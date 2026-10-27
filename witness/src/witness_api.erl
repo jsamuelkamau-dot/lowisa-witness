@@ -271,7 +271,7 @@ route(<<"GET">>, [<<"sitting">>, Id, <<"asset">>, File], _B, Uid, Host) ->
     Owner = owner_of(Uid, Id, Host),
     Safe = binary:match(File, [<<"/">>, <<"\\">>, <<"..">>]) =:= nomatch andalso
            (binary:longest_common_prefix([File, <<"still-">>]) =:= 6 orelse binary:longest_common_prefix([File, <<"drawn-">>]) =:= 6
-            orelse binary:longest_common_prefix([File, <<"step-">>]) =:= 5),
+            orelse binary:longest_common_prefix([File, <<"step-">>]) =:= 5 orelse binary:longest_common_prefix([File, <<"world-">>]) =:= 6),
     case {Safe, Host:load(Owner, {sitting, Id})} of
         {true, {ok, Row}} when Owner =:= Uid; map_get(status, Row) =:= <<"released">> ->
             case Host:asset_url(Owner, <<Id/binary, "/", File/binary>>) of
@@ -328,6 +328,7 @@ route(<<"POST">>, [<<"mastery">>, Sid, NBin, Action], B, Uid, Host) ->
                             {Q1, Extra} = case Step of {#{} = Qx, #{} = E} -> {Qx, E}; Qx -> {Qx, #{}} end,
                             R = maps:get(result, Row),
                             ok = Host:save(Owner, {sitting, Sid}, Row#{result => R#{questions => [case X of #{n := N} -> Q1; _ -> X end || X <- Qs]}}),
+                            ok = world(Owner, Sid, N, Q1, Host),
                             {200, maps:merge(#{ok => true, n => N, mastery => witness_mastery:view(Q1, Role)}, Extra)}
                     end
             end
@@ -460,6 +461,39 @@ stills(Uid, Id, Url, Result, Host) ->
                       _ -> []
                   end || {N, T} <- Moments]).
 
+%% 28 Oct audit (the plan: "Muse Image art for the world"): once a level is built, Muse Image draws the real-world
+%% place its first lesson happens in, once (world-N.webp); the student sees it beside their own step, the teacher with
+%% the level. Off the request; a picture that does not come back leaves the level as it is.
+world(Owner, Sid, N, #{mastery := #{level := L} = M}, Host) when not is_map_key(world, M) ->
+    case Host:meta_key() of
+        undefined -> ok;
+        Key ->
+            Host:run(fun() ->
+                case again(Host, fun() -> (painter(Host))(Key, world_prompt(L)) end) of
+                    {ok, Bytes, Fmt} ->
+                        File = <<"world-", (integer_to_binary(N))/binary, ".", (str(Fmt))/binary>>,
+                        case Host:put_asset(Owner, <<Sid/binary, "/", File/binary>>, Bytes, <<"image/", (str(Fmt))/binary>>) of
+                            ok ->
+                                Host:spend(Owner, <<"witness_world">>, witness_meta:cost(image, 1)),
+                                put_q(Owner, Sid, N, fun(X) -> X#{mastery => (maps:get(mastery, X, #{}))#{world => File}} end, Host);
+                            _ -> ok
+                        end;
+                    Why -> report(Host, <<"witness.world_failed">>, Why)
+                end
+            end)
+    end;
+world(_, _, _, _, _) -> ok.
+
+world_prompt(#{title := T, lessons := Ls}) ->
+    First = case Ls of [#{title := L1, beats := Bs} | _] -> [L1, ": ", lists:join(" ", lists:sublist(Bs, 3))]; _ -> [] end,
+    unicode:characters_to_binary(["A bright, clear, friendly flat illustration of the real-world place where this lesson happens, ",
+        "with the objects in it: ", T, ". ", First, ". No words, letters or numbers anywhere in the picture, no recognisable faces, ",
+        "nothing medical or frightening."]).
+
+str(B) when is_binary(B) -> B;
+str(A) when is_atom(A) -> atom_to_binary(A);
+str(L) when is_list(L) -> unicode:characters_to_binary(L).
+
 %% The student's own written step for a question, cut from the frame once its ink is finished (the step at the moment
 %% the thinking went wrong, else its last placed step), kept as step-N.jpg beside the still.
 own_step(Uid, Id, Url, N, Result, Host) ->
@@ -547,6 +581,7 @@ seam(Host, Name, Default) ->
 
 open_engine(Host) -> _ = code:ensure_loaded(Host), case erlang:function_exported(Host, open_engine, 0) of true -> Host:open_engine(); false -> undefined end.
 open_marker(Host) -> seam(Host, open_marker, fun witness_open:mark/3).
+painter(Host) -> seam(Host, painter, fun witness_meta:image/2).
 cropper(Host) -> seam(Host, cropper, case witness_media:available() of true -> fun witness_media:step/3; false -> fun(_, _, _) -> {error, no_ffmpeg} end end).
 stiller(Host) -> seam(Host, stiller, case witness_media:available() of true -> fun witness_media:still/2; false -> fun(_, _) -> {error, no_ffmpeg} end end).
 examiner(Host) -> seam(Host, examiner, fun witness_examiner:run/3).
