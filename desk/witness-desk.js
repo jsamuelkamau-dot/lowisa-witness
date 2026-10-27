@@ -284,8 +284,12 @@
     var toMe = ex.teacher ? '<div class="wd-card"><b>Explained to you</b><div>' + esc(ex.teacher.text) + '</div></div>' : '';
     var box = function (k, label) { return '<label style="display:flex;gap:6px;align-items:center;color:var(--tx)"><input type="checkbox" data-ask="' + k + '"' + (asks[k] ? ' checked' : '') + ' style="width:auto"> ' + label + '</label>'; };
     var done = m.status === 'badge';
+    // the level's own self-check (Muse Wonder played it as both students); a level that still fails is the teacher's to know
+    var chk = m.check ? (m.check.passes ? '<div class="wd-sub" style="margin-top:6px">Self-check: passed. Wonder played the level as both students.</div>' :
+      '<div class="wd-card" style="margin-top:8px;border-color:var(--warn,#b26a00)"><b>Self-check: still not right</b><div class="wd-sub">After its rewrites the level still had these. Look before you rely on it, or answer them in the thread.</div>' +
+      (m.check.problems || []).map(function (p) { return '<div class="wd-sub" style="margin:3px 0">· ' + esc(p) + '</div>'; }).join('') + '</div>') : '';
     return '<div class="wd-card"><div class="wd-row" style="cursor:default;padding:0"><span class="wd-grow"><h3 style="margin:0">Mastery</h3></span>' +
-      '<span class="wd-chip ' + (done ? 'ok' : '') + '">' + esc(STATUS[m.status] || m.status) + '</span></div>' +
+      '<span class="wd-chip ' + (done ? 'ok' : '') + '">' + esc(STATUS[m.status] || m.status) + '</span></div>' + chk +
       (thread ? '<div style="margin-top:8px"><b style="font-size:12px">Questions to you</b>' + thread + '</div>' : '') +
       '<label for="wdReply">Answer in the thread</label><input id="wdReply" data-f="reply" placeholder="Try dividing both by 12.">' +
       '<div style="margin-top:6px"><button class="wd-btn" data-act="reply">Send</button></div>' +

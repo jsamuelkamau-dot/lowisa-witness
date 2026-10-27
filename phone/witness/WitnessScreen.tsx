@@ -217,7 +217,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
     const off = onBuildProgress(st => setBuilding(st.stage === 'write' ? 'Writing your lessons…' : st.stage === 'check' ? 'Playing it through as you, to be sure it teaches this…' : st.stage === 'review' ? 'Checking the plan…' : st.stage === 'redesign' ? 'Making it sharper…' : 'Planning your level…'));
     const made = await buildMastery(env, storage, paper, q);
     off(); setBuilding('');
-    if (made.ok && made.pathId) { setPath(made.pathId); await act('event', {event: 'built', path: made.pathId}); if (onOpenPath) onOpenPath(made.pathId); }
+    if (made.ok && made.pathId) { setPath(made.pathId); await act('event', {event: 'built', path: made.pathId, check: made.checked}); if (onOpenPath) onOpenPath(made.pathId); }
     else setSaid(failedWords(made.reason, made.text));
   };
   return (

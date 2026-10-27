@@ -22,7 +22,7 @@
 %%%                                 -> 202 {id}   Muse Wonder plays a mastery level as both students (witness_check)
 %%%   GET  check/<id>               -> 200 {status: "checking" | "done" | "failed", verdict?}
 %%%   POST mastery/<sitting>/<n>/<action>   one question's life after release (witness_mastery):
-%%%        student: event {event: built|completed, path?}, explain {to: lo|teacher, text}, ask {text}
+%%%        student: event {event: built|completed, path?, check?: {passes, problems}}, explain {to: lo|teacher, text}, ask {text}
 %%%        teacher: verify {lo, paper, teacher}, reply {text}, badge {issue, note}
 %%%   POST design                   {requestId, messages: [system, user], reasoningEffort?, maxOutputTokens?}
 %%%                                 -> 200 {success, text}   one design call of a mastery level, on Muse Spark, paid by
@@ -247,7 +247,8 @@ checker(Host) ->
     end.
 
 mastery_step(student, <<"event">>, Q, B, _Host) ->
-    witness_mastery:event(Q, maps:get(<<"event">>, B, <<>>), #{path => clean(maps:get(<<"path">>, B, <<>>), 200), at => now_ms()});
+    witness_mastery:event(Q, maps:get(<<"event">>, B, <<>>), #{path => clean(maps:get(<<"path">>, B, <<>>), 200), at => now_ms(),
+                                                             check => maps:get(<<"check">>, B, null)});
 mastery_step(student, <<"explain">>, Q, B, Host) ->
     To = maps:get(<<"to">>, B, <<>>),
     Text = clean(maps:get(<<"text">>, B, <<>>), 2000),

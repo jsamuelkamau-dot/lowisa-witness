@@ -11,6 +11,7 @@
 %%% Each question of a released paper may carry `mastery`:
 %%%   #{status => building | ready | completed | badge | not_yet,
 %%%     path, built_ms, completed_ms,
+%%%     check => #{passes, problems} (the kept level's own self-check; the teacher sees it, the student does not),
 %%%     asks => #{lo, paper, teacher} (booleans, the teacher's),
 %%%     explain => #{lo => #{text, verdict, at}, teacher => #{text, at}},
 %%%     thread => [#{from => student | teacher, text, at}],
@@ -31,7 +32,10 @@ m(Q) -> maps:get(mastery, Q, #{status => <<"not_started">>}).
 put_m(Q, M) -> Q#{mastery => M}.
 
 %% The student's phone: the level was built (with its path on that phone) or played to the end.
-event(Q, <<"built">>, #{path := Path, at := At}) -> put_m(Q, (m(Q))#{status => keep(m(Q), <<"ready">>), path => Path, built_ms => At});
+event(Q, <<"built">>, #{path := Path, at := At} = Ctx) ->
+    M = maps:remove(check, m(Q)),
+    Check = case check(maps:get(check, Ctx, null)) of none -> #{}; C -> #{check => C} end,
+    put_m(Q, maps:merge(M#{status => keep(M, <<"ready">>), path => Path, built_ms => At}, Check));
 event(Q, <<"completed">>, #{at := At}) ->
     M = m(Q),
     case maps:get(status, M) of
@@ -39,6 +43,14 @@ event(Q, <<"completed">>, #{at := At}) ->
         _ -> put_m(Q, M#{status => <<"completed">>, completed_ms => At})
     end;
 event(_, _, _) -> {error, bad_event}.
+
+%% the phone's verdict on the level it kept: passes, and what Wonder still found (a few short lines)
+check(#{<<"passes">> := P} = C) when is_boolean(P) ->
+    Problems = [clean(X) || X <- lists:sublist(listy(maps:get(<<"problems">>, C, [])), 6), is_binary(X)],
+    #{passes => P, problems => [X || X <- Problems, X =/= <<>>]};
+check(_) -> none.
+listy(L) when is_list(L) -> L;
+listy(_) -> [].
 
 %% a level built again never takes back a badge or a completion
 keep(#{status := S}, _) when S =:= <<"completed">>; S =:= <<"badge">>; S =:= <<"not_yet">> -> S;

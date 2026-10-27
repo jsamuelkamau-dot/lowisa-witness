@@ -80,9 +80,16 @@ export function selfCheck(env: WitnessEnv, paper: Paper, q: Question, wait: (ms:
 }
 
 /** Builds the level with the Master any topic build, checks it as both students, and remembers it for the question. */
-export async function buildMastery(env: CustomEnv & WitnessEnv, storage: MirrorStorage, paper: Paper, q: Question, level?: string): Promise<CustomCourseResult> {
+export type SelfCheck = {passes: boolean; problems: string[]};
+
+/** Builds the level with the Master any topic build, checks it as both students, and remembers it for the question.
+ * `checked` is the kept level's last verdict (the build checks its final rewrite too), null when no check answered. */
+export async function buildMastery(env: CustomEnv & WitnessEnv, storage: MirrorStorage, paper: Paper, q: Question, level?: string, wait?: (ms: number) => Promise<void>): Promise<CustomCourseResult & {checked: SelfCheck | null}> {
   const {input, context} = masteryBrief(paper, q, level);
-  const made = await createCustomCourse({...env, designModel: MASTERY_MODEL, designPath: MASTERY_DESIGN_PATH, mastery: true, masteryCheck: selfCheck(env, paper, q)}, storage, 'topic', input, {context});
+  const check = selfCheck(env, paper, q, wait);
+  let checked: SelfCheck | null = null;
+  const masteryCheck = async (l: MasteryLevelText) => { checked = await check(l); return checked; };
+  const made = await createCustomCourse({...env, designModel: MASTERY_MODEL, designPath: MASTERY_DESIGN_PATH, mastery: true, masteryCheck}, storage, 'topic', input, {context});
   if (made.ok && made.pathId) remember(storage, paper.id, q.n, made.pathId);
-  return made;
+  return {...made, checked};
 }

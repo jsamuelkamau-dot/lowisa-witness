@@ -205,7 +205,10 @@ after_release_the_teacher_chooses_and_issues_the_badge_test() ->
     ?assertMatch({404, _}, M(<<"other">>, 3, <<"ask">>, #{<<"text">> => <<"hi">>})),
     {200, _} = r(<<"POST">>, [<<"pile">>, maps:get(pile, element(2, load(<<"teacher">>, {sitting, S}))), <<"release">>], #{}, <<"teacher">>),
     %% the student builds and plays the level; asks the teacher from a step; the teacher answers
-    {200, #{mastery := #{status := <<"ready">>, path := <<"custom-topic-x">>}}} = M(<<"stud">>, 3, <<"event">>, #{<<"event">> => <<"built">>, <<"path">> => <<"custom-topic-x">>}),
+    {200, #{mastery := Built}} = M(<<"stud">>, 3, <<"event">>, #{<<"event">> => <<"built">>, <<"path">> => <<"custom-topic-x">>,
+        <<"check">> => #{<<"passes">> => false, <<"problems">> => [<<"lesson 2: the checks are all lucky cancels">>, 7]}}),
+    ?assertMatch(#{status := <<"ready">>, path := <<"custom-topic-x">>}, Built),
+    ?assertNot(maps:is_key(check, Built)),                                 %% the self-check is the teacher's to read
     {200, _} = M(<<"stud">>, 3, <<"ask">>, #{<<"text">> => <<"Why does 12/24 not work?">>}),
     {200, #{mastery := #{thread := [_, #{from := teacher}]}}} = M(<<"teacher">>, 3, <<"reply">>, #{<<"text">> => <<"Try dividing both by 12.">>}),
     {200, #{mastery := #{status := <<"completed">>}}} = M(<<"stud">>, 3, <<"event">>, #{<<"event">> => <<"completed">>}),
@@ -221,6 +224,7 @@ after_release_the_teacher_chooses_and_issues_the_badge_test() ->
     {200, _} = M(<<"stud">>, 3, <<"explain">>, #{<<"to">> => <<"teacher">>, <<"text">> => <<"I know now.">>}),
     {200, #{result := #{questions := [_, Q3]}}} = r(<<"GET">>, [<<"sitting">>, S], #{}, <<"teacher">>),
     ?assertMatch(#{mastery := #{explain := #{lo := #{verdict := #{understood := true}}, teacher := #{text := <<"I know now.">>}}}}, Q3),
+    ?assertMatch(#{mastery := #{check := #{passes := false, problems := [<<"lesson 2: the checks are all lucky cancels">>]}}}, Q3),
     %% the badge is the teacher's alone, and only for a question that was to master
     ?assertMatch({403, _}, M(<<"stud">>, 3, <<"badge">>, #{<<"issue">> => true})),
     ?assertMatch({400, #{code := <<"not_to_master">>}}, M(<<"teacher">>, 1, <<"badge">>, #{<<"issue">> => true})),
