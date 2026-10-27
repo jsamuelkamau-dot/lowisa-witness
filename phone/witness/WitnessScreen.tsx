@@ -286,7 +286,7 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
             {stage.level ? <Text style={s.sub}>{stage.level}</Text> : null}
             <TextInput value={name} onChangeText={setName} placeholder="Your name, as your teacher knows it" maxLength={80}
               style={s.input} accessibilityLabel="Your name" testID="witness-name" />
-            <Text style={s.how}>Prop your phone above the desk so it sees the whole page and your hand. Keep faces out of view. Then work through the paper and stop the recording when you finish.</Text>
+            <Text style={s.how}>Prop your phone above the desk so it sees the whole page and your hand. Keep faces out of view: any face the camera catches is covered before the video leaves your phone. Then work through the paper and stop the recording when you finish.</Text>
             {notice ? <Text style={s.notice} accessibilityRole="alert" testID="witness-kept">{notice}</Text> : null}
             {unsent ? (
               <>
