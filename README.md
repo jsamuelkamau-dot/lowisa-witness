@@ -53,6 +53,7 @@ as the work lands.
 | Sitting endpoints: signed upload from the phone, marking off the request, the clip dropped after | `witness/src/witness_api.erl` | done 27 Oct |
 | The host interface (accounts, storage, money and keys stay the host's) | `witness/src/witness_host.erl` | done 27 Oct |
 | Piles for teachers: one exam's papers, the review queue (least certain first), the teacher's word beside the model's, focus notes, release | `witness/src/witness_api.erl` | done 27 Oct |
+| Join codes: a student enters the teacher's code on their phone and records their own paper into the teacher's exam; they see their marks once released | `witness/src/witness_api.erl` | done 27 Oct |
 | The Exam Desk (desktop): exams, papers, the review queue, a replay of how each answer was written, the diagnosis at its moment, the teacher's result, marks and focus note, release | `desk/witness-desk.js`, `scripts/sync_desk.sh` | done 27 Oct |
 
 ## What existed before (not in this repository)

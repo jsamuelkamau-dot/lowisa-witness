@@ -8,7 +8,10 @@
 %%%   GET  pile/<id>                -> 200 {pile, sittings: [summary], queue: [{sitting, n, ...}]}
 %%%        the queue is every question still to look at: least certain first, wrong thinking and "not yet" first
 %%%   POST pile/<id>/release        -> 200 {released}  marks go to the students; failed questions become mastery work
-%%%   POST sitting/start            {mime, size, pile?, student?}  -> 201 {id, put, headers, expiresIn}
+%%%   POST join                     {code}  -> 200 {pile: {title, level}}   a student checks the teacher's join code
+%%%   GET  mine                     -> 200 {papers: [...]}   a student's own papers in teachers' exams (marks once released)
+%%%   POST sitting/start            {mime, size, pile? | code?, student?}  -> 201 {id, put, headers, expiresIn}
+%%%        with `code` the paper is the teacher's (in their pile) and the student keeps a pointer to it
 %%%        the phone uploads the clip straight to the signed URL
 %%%   POST sitting/<id>/mark        {fps?, questions?, scheme?, level?}  -> 202 {status: "marking"}
 %%%        a sitting in a pile is marked with the pile's questions and scheme
@@ -25,6 +28,7 @@
 -define(MAX_BYTES, 500 * 1024 * 1024).
 -define(MIMES, [<<"video/mp4">>, <<"video/quicktime">>]).
 -define(MAX_PILE, 200).
+-define(CODES, <<"witness-codes">>).
 
 %% ---------------------------------------------------------------- piles
 route(<<"POST">>, [<<"pile">>], B, Uid, Host) ->
@@ -32,12 +36,14 @@ route(<<"POST">>, [<<"pile">>], B, Uid, Host) ->
         <<>> -> refuse(400, <<"no_title">>, <<"Give the exam a name.">>);
         Title ->
             Id = new_id(),
-            ok = Host:save(Uid, {pile, Id}, (sitting_of(B))#{title => Title, sittings => [], created_ms => now_ms()}),
-            {201, #{ok => true, id => Id}}
+            Code = new_code(Host),
+            ok = Host:save(?CODES, {code, Code}, #{owner => Uid, pile => Id}),
+            ok = Host:save(Uid, {pile, Id}, (sitting_of(B))#{title => Title, sittings => [], created_ms => now_ms(), code => Code}),
+            {201, #{ok => true, id => Id, code => Code}}
     end;
 route(<<"GET">>, [<<"piles">>], _B, Uid, Host) ->
     Ps = lists:sort(fun({_, A}, {_, B}) -> maps:get(created_ms, A, 0) >= maps:get(created_ms, B, 0) end, Host:list(Uid, pile)),
-    {200, #{ok => true, piles => [#{id => Id, title => maps:get(title, P), papers => length(maps:get(sittings, P, [])),
+    {200, #{ok => true, piles => [#{id => Id, title => maps:get(title, P), papers => length(maps:get(sittings, P, [])), code => maps:get(code, P, <<>>),
                                     released => maps:is_key(released_ms, P)} || {Id, P} <- Ps]}};
 route(<<"GET">>, [<<"pile">>, Id], _B, Uid, Host) ->
     case Host:load(Uid, {pile, Id}) of
@@ -58,11 +64,29 @@ route(<<"POST">>, [<<"pile">>, Id, <<"release">>], _B, Uid, Host) ->
             {200, #{ok => true, released => N}}
     end;
 
+%% ---------------------------------------------------------------- students
+route(<<"POST">>, [<<"join">>], B, _Uid, Host) ->
+    case by_code(maps:get(<<"code">>, B, null), Host) of
+        {ok, _Owner, _PileId, P} -> {200, #{ok => true, pile => #{title => maps:get(title, P), level => maps:get(level, P, <<>>)}}};
+        none -> refuse(404, <<"no_code">>, <<"That code doesn't match an exam. Check it with your teacher.">>)
+    end;
+route(<<"GET">>, [<<"mine">>], _B, Uid, Host) ->
+    Papers = [mine_view(Id, M, Host) || {Id, M} <- Host:list(Uid, mine)],
+    {200, #{ok => true, papers => [P || P <- Papers, P =/= none]}};
+
 %% ---------------------------------------------------------------- sittings
-route(<<"POST">>, [<<"sitting">>, <<"start">>], B, Uid, Host) ->
+route(<<"POST">>, [<<"sitting">>, <<"start">>], B, Uid0, Host) ->
     Mime = maps:get(<<"mime">>, B, <<"video/mp4">>),
     Size = maps:get(<<"size">>, B, 0),
-    Pile = case maps:get(<<"pile">>, B, null) of P when is_binary(P) -> Host:load(Uid, {pile, P}); _ -> no_pile end,
+    %% a join code puts the paper in the teacher's pile: the teacher owns the row, the student keeps a pointer
+    {Uid, Pile, Student} = case maps:get(<<"code">>, B, null) of
+        C when is_binary(C) ->
+            case by_code(C, Host) of
+                {ok, Owner, PileId0, PR0} -> {Owner, {ok, PR0}, {Uid0, PileId0}};
+                none -> {Uid0, none, none}
+            end;
+        _ -> {Uid0, case maps:get(<<"pile">>, B, null) of P when is_binary(P) -> Host:load(Uid0, {pile, P}); _ -> no_pile end, none}
+    end,
     case {lists:member(Mime, ?MIMES), is_integer(Size) andalso Size > 0 andalso Size =< ?MAX_BYTES, Pile} of
         {false, _, _} -> refuse(400, <<"bad_type">>, <<"Record the sitting as an MP4 or MOV video.">>);
         {_, false, _} -> refuse(400, <<"bad_size">>, <<"That recording is too long to send. Keep a sitting under an hour.">>);
@@ -75,18 +99,24 @@ route(<<"POST">>, [<<"sitting">>, <<"start">>], B, Uid, Host) ->
                 {ok, Url, Headers} ->
                     Row0 = #{status => <<"uploading">>, mime => Mime, size => Size, created_ms => now_ms(),
                              student => clean(maps:get(<<"student">>, B, <<>>), 80)},
-                    Row = case Pile of
+                    PileId = case Student of {_, PI} -> PI; none -> maps:get(<<"pile">>, B, undefined) end,
+                    Row1 = case Pile of
                         {ok, PR} ->
-                            ok = Host:save(Uid, {pile, maps:get(<<"pile">>, B)}, PR#{sittings => maps:get(sittings, PR, []) ++ [Id]}),
-                            Row0#{pile => maps:get(<<"pile">>, B)};
+                            ok = Host:save(Uid, {pile, PileId}, PR#{sittings => maps:get(sittings, PR, []) ++ [Id]}),
+                            Row0#{pile => PileId};
                         no_pile -> Row0
+                    end,
+                    Row = case Student of
+                        {Sid, _} -> ok = Host:save(Sid, {mine, Id}, #{owner => Uid, pile => PileId, created_ms => now_ms()}), Row1#{student_uid => Sid};
+                        none -> Row1
                     end,
                     ok = Host:save(Uid, {sitting, Id}, Row),
                     {201, #{ok => true, id => Id, put => Url, headers => Headers, expiresIn => 900}};
                 {error, _} -> refuse(503, <<"storage">>, <<"Couldn't get the upload ready. Try again in a moment.">>)
             end
     end;
-route(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], B, Uid, Host) ->
+route(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], B, Uid0, Host) ->
+    Uid = owner_of(Uid0, Id, Host),
     case Host:load(Uid, {sitting, Id}) of
         none -> refuse(404, <<"no_sitting">>, <<"That sitting isn't here.">>);
         {ok, #{status := <<"uploading">>} = Row} ->
@@ -124,6 +154,37 @@ route(<<"GET">>, [<<"sitting">>, Id], _B, Uid, Host) ->
         {ok, Row} -> {200, view(Id, Row)}
     end;
 route(_, _, _, _, _) -> refuse(404, <<"not_found">>, <<"No such Witness route.">>).
+
+%% A student's paper in a teacher's exam is the teacher's row; the student reaches it through their pointer.
+owner_of(Uid, Id, Host) ->
+    case Host:load(Uid, {sitting, Id}) of
+        {ok, _} -> Uid;
+        none -> case Host:load(Uid, {mine, Id}) of {ok, #{owner := O}} -> O; _ -> Uid end
+    end.
+
+%% What a student sees of their own paper: its status, and the marks only once the teacher released them.
+mine_view(Id, #{owner := O}, Host) ->
+    case Host:load(O, {sitting, Id}) of
+        {ok, #{status := <<"released">>} = R} ->
+            Title = case Host:load(O, {pile, maps:get(pile, R, <<>>)}) of {ok, P} -> maps:get(title, P); none -> <<>> end,
+            (view(Id, R))#{title => Title};
+        {ok, R} -> #{id => Id, status => case maps:get(status, R) of <<"failed">> -> <<"failed">>; <<"uploading">> -> <<"uploading">>; _ -> <<"with_teacher">> end};
+        none -> none
+    end;
+mine_view(_, _, _) -> none.
+
+by_code(C, Host) when is_binary(C) ->
+    case Host:load(?CODES, {code, string:uppercase(string:trim(C))}) of
+        {ok, #{owner := O, pile := P}} -> case Host:load(O, {pile, P}) of {ok, PR} -> {ok, O, P, PR}; none -> none end;
+        none -> none
+    end;
+by_code(_, _) -> none.
+
+%% Six letters and digits a teacher can read out loud (no 0 or O, no 1, I or L).
+new_code(Host) ->
+    A = <<"ABCDEFGHJKMNPQRSTUVWXYZ23456789">>,
+    C = << <<(binary:at(A, X rem byte_size(A)))>> || <<X>> <= crypto:strong_rand_bytes(6) >>,
+    case Host:load(?CODES, {code, C}) of none -> C; _ -> new_code(Host) end.
 
 %% The teacher's word sits beside the model's: teacher_result / teacher_marks, and a focus note for the level.
 review(Q, B) ->

@@ -6,11 +6,12 @@
 %%% The clip goes straight from the phone to the host's storage and Meta reads it from a signed link,
 %%% so the host never handles a video's bytes and drops the clip as soon as the sitting is marked.
 %%%
-%%% Rows are the caller's own, keyed {Kind, Id}: {pile, Id} for one exam's pile, {sitting, Id} for one paper.
+%%% Rows are keyed {Kind, Id} under an owner: {pile, Id} one exam, {sitting, Id} one paper, {mine, Id} a student's
+%%% pointer to a paper they sat in a teacher's exam, and {code, Code} (under the owner <<"witness-codes">>) a join code.
 %%%-------------------------------------------------------------------
 -module(witness_host).
 
--type key() :: {pile | sitting, binary()}.
+-type key() :: {pile | sitting | mine | code, binary()}.
 -export_type([key/0]).
 
 %% Meta Model API key, or undefined when Witness is not configured.
@@ -25,7 +26,7 @@
 %% The caller's rows.
 -callback save(Uid :: binary(), Key :: key(), Row :: map()) -> ok.
 -callback load(Uid :: binary(), Key :: key()) -> {ok, map()} | none.
--callback list(Uid :: binary(), Kind :: pile | sitting) -> [{Id :: binary(), Row :: map()}].
+-callback list(Uid :: binary(), Kind :: pile | sitting | mine) -> [{Id :: binary(), Row :: map()}].
 %% What a sitting cost, in US dollars, for the host to charge or log.
 -callback spend(Uid :: binary(), Feature :: binary(), Usd :: float()) -> ok.
 %% Run the marking off the request (the host chooses how it is supervised).

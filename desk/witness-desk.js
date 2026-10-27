@@ -167,6 +167,7 @@
   function viewHome() {
     var rows = S.piles.map(function (x) {
       return '<div class="wd-row" data-pile="' + esc(x.id) + '"><span class="wd-grow"><b>' + esc(x.title) + '</b></span>' +
+        (x.code ? '<span class="wd-sub">Code ' + esc(x.code) + '</span>' : '') +
         '<span class="wd-sub">' + x.papers + ' paper' + (x.papers === 1 ? '' : 's') + '</span>' +
         (x.released ? '<span class="wd-chip ok">Released</span>' : '<span class="wd-chip">Marking</span>') + '</div>';
     }).join('');
@@ -208,7 +209,9 @@
         chip(it.result) + '<span class="wd-sub">' + Math.round((it.confidence || 0) * 100) + '% sure</span></div>';
     }).join('') || '<div class="wd-sub">Nothing left to review.</div>';
     var released = j.pile && j.pile.released_ms;
-    return nums + '<div class="wd-cols"><div class="wd-card"><h3>Papers</h3>' + papers + '</div>' +
+    var code = j.pile && j.pile.code ? '<div class="wd-card"><b>Join code: <span style="font-size:18px;letter-spacing:3px">' + esc(j.pile.code) + '</span></b>' +
+      '<div class="wd-sub">Students enter it in the LoWisa phone app, then record their own paper. Or record each paper yourself.</div></div>' : '';
+    return code + nums + '<div class="wd-cols"><div class="wd-card"><h3>Papers</h3>' + papers + '</div>' +
       '<div class="wd-card"><h3>Review, least certain first</h3>' + queue + '</div></div>' +
       '<div style="margin-top:6px">' + (released ? '<span class="wd-chip ok">Released to students</span>' :
         '<button class="wd-btn wd-main" data-act="release">Release marks</button> <span class="wd-sub">Students see their marks; every question they didn\'t master becomes their next mastery level.</span>') + '</div>';
@@ -321,7 +324,7 @@
     if (!j.ok) { say(errText(j), 'err'); return render(); }
     S.draft = {};
     if (await loadPile(j.id)) S.view = 'pile';
-    say('Exam created. Record each paper from the LoWisa phone app under "' + (S.pile && S.pile.pile ? S.pile.pile.title : 'this exam') + '".');
+    say('Exam created. Give your students the join code ' + (j.code || '') + ', or record each paper yourself from the LoWisa phone app.');
     render();
   }
   async function save() {

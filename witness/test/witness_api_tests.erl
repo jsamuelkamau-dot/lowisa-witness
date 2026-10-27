@@ -121,3 +121,29 @@ review_before_marking_is_refused_test() ->
     setup(),
     {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10}, <<"u1">>),
     ?assertMatch({409, #{code := <<"not_marked">>}}, r(<<"POST">>, [<<"sitting">>, S, <<"review">>], #{<<"n">> => 1}, <<"u1">>)).
+
+join_code_puts_the_students_paper_in_the_teachers_pile_test() ->
+    setup(),
+    {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions quiz">>, <<"level">> => <<"Year 7">>}, <<"teacher">>),
+    ?assertEqual(6, byte_size(Code)),
+    ?assertMatch({200, #{piles := [#{code := Code}]}}, r(<<"GET">>, [<<"piles">>], #{}, <<"teacher">>)),
+    %% the student checks the code (any case, spaces around it), then sits
+    ?assertMatch({200, #{pile := #{title := <<"Fractions quiz">>, level := <<"Year 7">>}}},
+                 r(<<"POST">>, [<<"join">>], #{<<"code">> => <<" ", (string:lowercase(Code))/binary, " ">>}, <<"stud">>)),
+    ?assertMatch({404, #{code := <<"no_code">>}}, r(<<"POST">>, [<<"join">>], #{<<"code">> => <<"ZZZZZZ">>}, <<"stud">>)),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amara">>}, <<"stud">>),
+    %% the clip is signed under the teacher, the paper is in the teacher's pile
+    ?assert(lists:member({put, <<"teacher">>, S, <<"video/mp4">>, 10}, events())),
+    {200, #{sittings := [#{id := S, student := <<"Amara">>}]}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>),
+    %% the student marks their own paper, and sees it with the teacher until it is released
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"stud">>),
+    ?assertMatch({200, #{papers := [#{id := S, status := <<"with_teacher">>}]}}, r(<<"GET">>, [<<"mine">>], #{}, <<"stud">>)),
+    {200, #{papers := [Before]}} = r(<<"GET">>, [<<"mine">>], #{}, <<"stud">>),
+    ?assertNot(maps:is_key(result, Before)),
+    {200, _} = r(<<"POST">>, [<<"pile">>, P, <<"release">>], #{}, <<"teacher">>),
+    ?assertMatch({200, #{papers := [#{id := S, status := <<"released">>, title := <<"Fractions quiz">>, result := #{questions := [_]}}]}},
+                 r(<<"GET">>, [<<"mine">>], #{}, <<"stud">>)),
+    %% nobody else reaches it: not another student, not through the teacher's routes
+    ?assertMatch({200, #{papers := []}}, r(<<"GET">>, [<<"mine">>], #{}, <<"other">>)),
+    ?assertMatch({404, _}, r(<<"GET">>, [<<"pile">>, P], #{}, <<"stud">>)),
+    ?assertMatch({404, _}, r(<<"POST">>, [<<"sitting">>, S, <<"review">>], #{<<"n">> => 1}, <<"stud">>)).
