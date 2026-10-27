@@ -330,8 +330,10 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
   const act = async (action: 'event' | 'explain' | 'ask', body: Record<string, unknown>) => {
     const r = await witness.mastery(env, paper.id, q.n, action, body);
     if (r.ok) setM(r.value.mastery); else setSaid(r.error);
-    return r.ok;
+    return r.ok ? r.value.mastery : null;
   };
+  // the exam's teacher looks at each level first: it opens once they let the student start (28 Oct)
+  const held = !!m && m.status === 'held';
   // a level played to the end on this phone tells the teacher once
   useEffect(() => {
     if (path && masteryDone(storage, path) && (!m || (m.status !== 'completed' && m.status !== 'badge' && m.status !== 'not_yet'))) { void act('event', {event: 'completed'}); }
@@ -364,12 +366,19 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
     setM(prev => (prev ? {...prev, fresh: {status: 'marking'}} : prev));
   };
   const start = async () => {
+    if (path && held) { const r = await witness.mine(env); const p = r.ok ? (r.value.papers || []).find(x => x.id === paper.id) : undefined;
+      const now = p && p.result ? p.result.questions.find(x => x.n === q.n) : undefined; if (now && now.mastery) setM(now.mastery);
+      if (!now || !now.mastery || now.mastery.status === 'held') return; }
     if (path) { if (onOpenPath) onOpenPath(path); return; }
     setSaid(''); setBuilding('Planning your level…');
     const off = onBuildProgress(st => setBuilding(st.stage === 'write' ? 'Writing your lessons…' : st.stage === 'check' ? 'Playing it through as you, to be sure it teaches this…' : st.stage === 'review' ? 'Checking the plan…' : st.stage === 'redesign' ? 'Making it sharper…' : 'Planning your level…'));
     const made = await buildMastery(env, storage, paper, q);
     off(); setBuilding('');
-    if (made.ok && made.pathId) { setPath(made.pathId); await act('event', {event: 'built', path: made.pathId, check: made.checked}); if (onOpenPath) onOpenPath(made.pathId); }
+    if (made.ok && made.pathId) {
+      setPath(made.pathId);
+      const after = await act('event', {event: 'built', path: made.pathId, check: made.checked, level: made.outline});
+      if (after && after.status !== 'held' && onOpenPath) onOpenPath(made.pathId);
+    }
     else setSaid(failedWords(made.reason, made.text));
   };
   return (
@@ -396,6 +405,8 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
       {next ? (
         <View style={{marginTop: 10}}>
           {building ? <View style={s.buildRow}><ActivityIndicator /><Text style={s.small}> {building}</Text></View>
+            : held ? <View><Text style={s.small} testID={'witness-held-' + q.n}>Your level is made. Your teacher is looking at it first; it opens here once they let you start.</Text>
+                <Btn label="Has my teacher let me start?" onPress={start} small testID={'witness-held-look-' + q.n} /></View>
             : <Btn label={path ? 'Open my mastery level' : 'Start my mastery level'} onPress={start} primary testID={'witness-master-' + q.n} />}
           {said ? <Text style={s.error}>{said}</Text> : null}
           <AfterLevel m={m} act={act} film={film} filming={filming} />
@@ -412,7 +423,7 @@ const FRESH_WORDS: Record<string, string> = {
   failed: 'Witness could not read that video. Film it again.',
 };
 
-function AfterLevel({m, act, film, filming}: {m?: Mastery; act(action: 'explain' | 'ask', body: Record<string, unknown>): Promise<boolean>; film(source: 'camera' | 'gallery'): void; filming: string}): React.JSX.Element | null {
+function AfterLevel({m, act, film, filming}: {m?: Mastery; act(action: 'explain' | 'ask', body: Record<string, unknown>): Promise<unknown>; film(source: 'camera' | 'gallery'): void; filming: string}): React.JSX.Element | null {
   const [toLo, setToLo] = useState('');
   const [toTeacher, setToTeacher] = useState('');
   const [question, setQuestion] = useState('');

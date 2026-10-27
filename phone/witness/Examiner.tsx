@@ -11,6 +11,7 @@ import {ActivityIndicator, PermissionsAndroid, Platform, StyleSheet, Text, TextI
 import {Btn} from '../exam/print/ui';
 import {cancelRecording, readRecording, recorderAvailable, removeRecording, RECORDING_MIME, startRecording, stopRecording} from '../voice/recorder';
 import {Ask, Examiner, witness, WitnessEnv} from './net';
+import {tutorSay} from '../tutor/voice';
 
 /** An answer is a sentence or two; the recording stops on its own after this. */
 export const ANSWER_SECONDS = 90;
@@ -18,6 +19,9 @@ export const ANSWER_SECONDS = 90;
 export function AsksView({env, paperId, title, examiner, onDone}: {env: WitnessEnv; paperId: string; title: string; examiner: Examiner; onDone(): void}): React.JSX.Element {
   const [asks, setAsks] = useState<Ask[]>(examiner.asks);
   const left = asks.filter(a => !a.answered);
+  // Lo asks the next question out loud (28 Oct audit: the plan has Lo's voice ask them; they were text only), once each
+  const next = left.length ? left[0] : null;
+  useEffect(() => { if (next) tutorSay(next.ask); }, [next && next.k]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <View style={s.card} testID="witness-asks">
       <Text style={s.h}>{asks.length === 1 ? 'A question about your work' : 'Two questions about your work'}</Text>
@@ -83,6 +87,7 @@ function AskCard({a, env, paperId, onAnswered}: {a: Ask; env: WitnessEnv; paperI
     <View style={s.ask} testID={'witness-ask-' + a.k}>
       <Text style={s.q}>{a.ask}</Text>
       {a.wrote ? <Text style={s.wrote}>{a.wrote}</Text> : null}
+      <Btn label="Hear the question" onPress={() => tutorSay(a.ask)} small testID={'witness-ask-hear-' + a.k} />
       {mode === 'sending' ? (
         <View style={s.row}><ActivityIndicator /><Text style={s.small}> Witness is listening to your answer…</Text></View>
       ) : mode === 'recording' ? (

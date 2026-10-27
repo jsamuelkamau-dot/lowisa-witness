@@ -278,7 +278,12 @@ after_release_the_teacher_chooses_and_issues_the_badge_test() ->
     {200, #{papers := [#{result := #{questions := [_, Mine3]}}]}} = r(<<"GET">>, [<<"mine">>], #{}, <<"stud">>),
     ?assertMatch(#{mastery := #{status := <<"badge">>, badge := #{issued := true}, thread := [_, _]}}, Mine3),
     ?assertNot(maps:is_key(explain, maps:get(mastery, Mine3))),
-    ?assertEqual(#{status => <<"marked">>}, maps:get(fresh, maps:get(mastery, Mine3))).   %% the fresh marks are the teacher's
+    ?assertEqual(#{status => <<"marked">>}, maps:get(fresh, maps:get(mastery, Mine3))),   %% the fresh marks are the teacher's
+    %% 28 Oct audit: the badge is on the student's profile too, naming the question and what was turned around
+    {200, #{badges := [Bd]}} = r(<<"GET">>, [<<"badges">>], #{}, <<"stud">>),
+    ?assertMatch(#{exam := <<"Fractions">>, note := <<"Turned around">>, fixed := _, turned_at := _, wrong_at := _}, Bd),
+    ?assert(maps:get(turned_at, Bd) >= maps:get(wrong_at, Bd)),
+    ?assertMatch({200, #{badges := []}}, r(<<"GET">>, [<<"badges">>], #{}, <<"other">>)).
 
 %% The examiner's two questions, answered out loud or in writing; the stills; the drawn step; the spoken comment;
 %% the Proof of Thinking record; the measured numbers.
@@ -505,4 +510,30 @@ the_record_names_only_the_models_that_read_this_paper_test() ->
                  maps:get(read_by, witness_proof:record(<<"s">>, Full, Pile, teacher))),
     Open = #{result => #{questions => [], lines => [], engine => <<"muse-spark-open">>}},
     ?assertEqual([<<"Muse Spark Open on open weights (the marking)">>], maps:get(read_by, witness_proof:record(<<"s">>, Open, Pile, student))).
+
+%% 28 Oct audit (the plan's step 4): the teacher may look at each level before it reaches the student
+the_teacher_can_look_at_each_level_first_test() ->
+    setup(),
+    {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions">>, <<"preview">> => true}, <<"teacher">>),
+    ?assertMatch({200, #{pile := #{preview := true}}}, r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>)),
+    persistent_term:put(witness_api_result, #{questions => [q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amara">>}, <<"stud">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"stud">>),
+    {200, _} = r(<<"POST">>, [<<"pile">>, P, <<"release">>], #{}, <<"teacher">>),
+    M = fun(Who, Action, Body) -> r(<<"POST">>, [<<"mastery">>, S, <<"3">>, Action], Body, Who) end,
+    Level = #{<<"title">> => <<"Cancel Factors Right">>, <<"lessons">> => [#{<<"title">> => <<"Price the boots sale">>, <<"beats">> => [<<"Half price: 32/64">>]}]},
+    {200, #{mastery := #{status := <<"held">>}}} = M(<<"stud">>, <<"event">>, #{<<"event">> => <<"built">>, <<"path">> => <<"p1">>, <<"level">> => Level}),
+    %% the teacher reads it; the student cannot approve it; the teacher lets them start
+    {200, #{result := #{questions := [#{mastery := #{level := #{title := <<"Cancel Factors Right">>, lessons := [#{title := <<"Price the boots sale">>}]}}}]}}} =
+        r(<<"GET">>, [<<"sitting">>, S], #{}, <<"teacher">>),
+    ?assertMatch({403, _}, M(<<"stud">>, <<"approve">>, #{})),
+    {200, #{mastery := #{status := <<"ready">>}}} = M(<<"teacher">>, <<"approve">>, #{}),
+    ?assertMatch({400, #{code := <<"not_held">>}}, M(<<"teacher">>, <<"approve">>, #{})),
+    %% the default: a level reaches the student at once
+    {201, #{code := Code2}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Other">>}, <<"teacher">>),
+    {201, #{id := S2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code2}, <<"stud">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S2, <<"mark">>], #{}, <<"stud">>),
+    {200, _} = r(<<"POST">>, [<<"pile">>, maps:get(pile, element(2, load(<<"teacher">>, {sitting, S2}))), <<"release">>], #{}, <<"teacher">>),
+    ?assertMatch({200, #{mastery := #{status := <<"ready">>}}},
+                 r(<<"POST">>, [<<"mastery">>, S2, <<"3">>, <<"event">>], #{<<"event">> => <<"built">>, <<"path">> => <<"p2">>}, <<"stud">>)).
 

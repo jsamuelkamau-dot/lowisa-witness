@@ -68,7 +68,9 @@ route(<<"POST">>, [<<"pile">>], B, Uid, Host) ->
             Id = new_id(),
             Code = new_code(Host),
             ok = Host:save(?CODES, {code, Code}, #{owner => Uid, pile => Id}),
-            ok = Host:save(Uid, {pile, Id}, (sitting_of(B))#{title => Title, sittings => [], created_ms => now_ms(), code => Code}),
+            %% preview: the teacher looks at each mastery level before it reaches the student (default: at once)
+            ok = Host:save(Uid, {pile, Id}, (sitting_of(B))#{title => Title, sittings => [], created_ms => now_ms(), code => Code,
+                                                              preview => maps:get(<<"preview">>, B, false) =:= true}),
             {201, #{ok => true, id => Id, code => Code}}
     end;
 route(<<"GET">>, [<<"piles">>], _B, Uid, Host) ->
@@ -107,6 +109,12 @@ route(<<"POST">>, [<<"join">>], B, _Uid, Host) ->
 route(<<"GET">>, [<<"mine">>], _B, Uid, Host) ->
     Papers = [mine_view(Id, M, Host) || {Id, M} <- Host:list(Uid, mine)],
     {200, #{ok => true, papers => [P || P <- Papers, P =/= none]}};
+%% The student's "Turned around" badges, newest first, for their profile (28 Oct audit: the plan puts them on the
+%% profile and the record, first; they showed inside Witness only): the idea, the exam, when it went wrong and when
+%% the teacher saw it turned around.
+route(<<"GET">>, [<<"badges">>], _B, Uid, Host) ->
+    Badges = lists:append([badges_of(Id, M, Host) || {Id, M} <- Host:list(Uid, mine)]),
+    {200, #{ok => true, badges => lists:sort(fun(A, B) -> maps:get(turned_at, A) >= maps:get(turned_at, B) end, Badges)}};
 
 %% ---------------------------------------------------------------- sittings
 route(<<"POST">>, [<<"sitting">>, <<"start">>], B, Uid0, Host) ->
@@ -305,6 +313,12 @@ route(<<"POST">>, [<<"mastery">>, Sid, NBin, Action], B, Uid, Host) ->
                 {_, _, [Q | _]} ->
                     Step = case {Role, Action} of
                         {student, <<"fresh">>} -> fresh_start(Q, B, #{owner => Owner, sid => Sid, n => N, uid => Uid, row => Row}, Host);
+                        {student, <<"event">>} ->
+                            Preview = case Host:load(Owner, {pile, maps:get(pile, Row, <<>>)}) of {ok, #{preview := true}} -> true; _ -> false end,
+                            witness_mastery:event(Q, maps:get(<<"event">>, B, <<>>),
+                                                  #{path => clean(maps:get(<<"path">>, B, <<>>), 200), at => now_ms(), preview => Preview,
+                                                    check => maps:get(<<"check">>, B, null), level => maps:get(<<"level">>, B, null)});
+                        {teacher, <<"approve">>} -> witness_mastery:approve(Q, now_ms());
                         _ -> mastery_step(Role, Action, Q, B, Host)
                     end,
                     case Step of
@@ -377,9 +391,6 @@ checker(Host) ->
         false -> fun witness_check:run/2
     end.
 
-mastery_step(student, <<"event">>, Q, B, _Host) ->
-    witness_mastery:event(Q, maps:get(<<"event">>, B, <<>>), #{path => clean(maps:get(<<"path">>, B, <<>>), 200), at => now_ms(),
-                                                             check => maps:get(<<"check">>, B, null)});
 mastery_step(student, <<"explain">>, Q, B, Host) ->
     To = maps:get(<<"to">>, B, <<>>),
     Text = clean(maps:get(<<"text">>, B, <<>>), 2000),
@@ -404,6 +415,7 @@ mastery_words(storage) -> <<"Couldn't get the upload ready. Try again in a momen
 mastery_words(not_asked) -> <<"Your teacher hasn't asked for that.">>;
 mastery_words(empty) -> <<"Write something first.">>;
 mastery_words(not_to_master) -> <<"This question was mastered already.">>;
+mastery_words(not_held) -> <<"This level already reached the student.">>;
 mastery_words(_) -> <<"That can't be done here.">>.
 
 %% The fresh question on paper: a sitting of one question in the teacher's store, pointing back at the question it
@@ -543,6 +555,18 @@ spark_judge(Key, Q, Text) ->
         {ok, R} -> witness_mastery:judge(witness_meta:text_of(R));
         E -> E
     end.
+
+badges_of(Id, #{owner := O} = M, Host) when not is_map_key(fresh, M) ->
+    case Host:load(O, {sitting, Id}) of
+        {ok, #{status := <<"released">>, result := #{questions := Qs}} = R} ->
+            Exam = case Host:load(O, {pile, maps:get(pile, R, <<>>)}) of {ok, P} -> P; none -> #{} end,
+            Texts = maps:from_list([{maps:get(n, Q), maps:get(text, Q, <<>>)} || Q <- maps:get(questions, Exam, []), is_map(Q)]),
+            [#{question => maps:get(maps:get(n, Q), Texts, <<>>), fixed => maps:get(diagnosis, Q, <<>>), exam => maps:get(title, Exam, <<>>),
+               wrong_at => maps:get(created_ms, R, null), turned_at => At, note => maps:get(note, B, <<>>)}
+             || Q <- Qs, #{mastery := #{status := <<"badge">>, badge := #{issued := true, at := At} = B}} <- [Q]];
+        _ -> []
+    end;
+badges_of(_, _, _) -> [].
 
 %% A student's paper in a teacher's exam is the teacher's row; the student reaches it through their pointer.
 owner_of(Uid, Id, Host) ->

@@ -22,7 +22,7 @@
 %%% saving and checking who may do what.
 %%%-------------------------------------------------------------------
 -module(witness_mastery).
--export([event/3, verify/2, explain/4, ask/3, reply/3, badge/3, view/2, needs/1, judge_prompt/2, judge/1, fresh_started/3, fresh_marked/3]).
+-export([event/3, approve/2, verify/2, explain/4, ask/3, reply/3, badge/3, view/2, needs/1, judge_prompt/2, judge/1, fresh_started/3, fresh_marked/3]).
 
 -define(MAX_TEXT, 2000).
 -define(MAX_THREAD, 60).
@@ -36,7 +36,10 @@ put_m(Q, M) -> Q#{mastery => M}.
 event(Q, <<"built">>, #{path := Path, at := At} = Ctx) ->
     M = maps:remove(check, m(Q)),
     Check = case check(maps:get(check, Ctx, null)) of none -> #{}; C -> #{check => C} end,
-    put_m(Q, maps:merge(M#{status => keep(M, <<"ready">>), path => Path, built_ms => At}, Check));
+    %% 28 Oct audit (the plan's step 4): the exam's teacher may look at each level first; then it waits, held
+    Status = case maps:get(preview, Ctx, false) of true -> keep(M, <<"held">>); false -> keep(M, <<"ready">>) end,
+    Level = case outline(maps:get(level, Ctx, null)) of none -> #{}; L -> #{level => L} end,
+    put_m(Q, maps:merge(maps:merge(M#{status => Status, path => Path, built_ms => At}, Check), Level));
 event(Q, <<"completed">>, #{at := At}) ->
     M = m(Q),
     case maps:get(status, M) of
@@ -44,6 +47,21 @@ event(Q, <<"completed">>, #{at := At}) ->
         _ -> put_m(Q, M#{status => <<"completed">>, completed_ms => At})
     end;
 event(_, _, _) -> {error, bad_event}.
+
+%% The teacher lets a held level reach the student.
+approve(Q, At) ->
+    M = m(Q),
+    case maps:get(status, M) of
+        <<"held">> -> put_m(Q, M#{status => <<"ready">>, approved_ms => At});
+        _ -> {error, not_held}
+    end.
+
+%% What the teacher reads of a level: its title and each lesson with its steps (short, capped).
+outline(#{<<"title">> := T, <<"lessons">> := Ls}) when is_binary(T), is_list(Ls) ->
+    #{title => clean(T), lessons => [#{title => clean(maps:get(<<"title">>, L, <<>>)),
+                                       beats => [clean(B) || B <- lists:sublist(listy(maps:get(<<"beats">>, L, [])), 8), is_binary(B)]}
+                                     || L <- lists:sublist(Ls, 5), is_map(L)]};
+outline(_) -> none.
 
 %% the phone's verdict on the level it kept: passes, and what Wonder still found (a few short lines)
 check(#{<<"passes">> := P} = C) when is_boolean(P) ->

@@ -28,7 +28,7 @@ const WRITE_MS = 20000;
 export type Result = 'mastered' | 'right_answer_wrong_thinking' | 'part_way' | 'not_yet';
 export interface Step { t: number | null; wrote: string; crossed_out: boolean; line?: number }
 export interface Mastery {
-  status: 'not_started' | 'building' | 'ready' | 'completed' | 'badge' | 'not_yet';
+  status: 'not_started' | 'building' | 'ready' | 'held' | 'completed' | 'badge' | 'not_yet';
   path?: string; asks?: {lo?: boolean; paper?: boolean; teacher?: boolean; fresh?: string}; explained?: string[]; lo_next?: string;
   fresh?: {status: 'uploading' | 'marking' | 'marked' | 'failed'};
   thread?: Array<{from: 'student' | 'teacher'; text: string; at: number}>; badge?: {issued: boolean; note: string; at: number};
@@ -43,6 +43,8 @@ export interface Question {
   n: number; result: Result; teacher_result?: Result; marks: number; teacher_marks?: number; out_of: number;
   final_answer: string; steps: Step[]; diagnosis: string; moment_s: number | null; confidence: number; focus?: string;
 }
+/** A "Turned around" badge: the question, what was turned around, and the days from going wrong to mastered. */
+export interface Badge { question: string; fixed: string; exam: string; wrong_at: number | null; turned_at: number; note: string }
 export interface Paper { id: string; status: string; unseen?: boolean; title?: string; student?: string; result?: {questions: Question[]; stills?: Still[]}; examiner?: Examiner }
 export interface Proof {
   record: 'proof_of_thinking'; id: string; exam: string; level: string; kind: string; student: string;
@@ -105,6 +107,7 @@ export async function door<T>(env: WitnessEnv, method: 'GET' | 'POST', path: str
 
 export const witness = {
   mine: (env: WitnessEnv) => door<{papers: Paper[]}>(env, 'GET', 'mine'),
+  badges: (env: WitnessEnv) => door<{badges: Badge[]}>(env, 'GET', 'badges'),
   join: (env: WitnessEnv, code: string) => door<{pile: {title: string; level: string}}>(env, 'POST', 'join', {code}),
   start: (env: WitnessEnv, size: number, mime: string, code?: string, student?: string) =>
     door<{id: string; put: string; headers: Record<string, string>}>(env, 'POST', 'sitting/start', {size, mime, ...(code ? {code} : {}), ...(student ? {student} : {})}),

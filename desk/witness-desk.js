@@ -208,6 +208,9 @@
       '<label for="wdEngine">Marked by</label><select id="wdEngine" data-f="engine">' +
       '<option value="meta"' + (d.engine !== 'open' ? ' selected' : '') + '>Muse Spark, with SAM 3.1 following the ink</option>' +
       '<option value="open"' + (d.engine === 'open' ? ' selected' : '') + '>Muse Spark Open, on open weights</option></select>' +
+      '<label for="wdPreview">Mastery levels</label><select id="wdPreview" data-f="preview">' +
+      '<option value="no"' + (d.preview !== 'yes' ? ' selected' : '') + '>Reach each student as soon as it is made</option>' +
+      '<option value="yes"' + (d.preview === 'yes' ? ' selected' : '') + '>I look at each level first</option></select>' +
       '<label for="wdQs">' + (d.kind === 'practical' ? 'The procedure\'s steps, one a line, with the marks in brackets' : 'Questions, one a line, with the marks in brackets') + '</label>' +
       '<textarea id="wdQs" data-f="qs" rows="6" placeholder="1. 3/4 ÷ 1/2 (2)&#10;2. Solve 2x + 6 = 14 (2)&#10;3. Simplify 16/64 (2)">' + esc(d.qs || '') + '</textarea>' +
       '<div class="wd-sub">Leave it empty to let Witness read the questions printed on the paper.</div>' +
@@ -293,8 +296,17 @@
 
   // After release: the student's level, their questions to the teacher, the checks the teacher chooses (none needed),
   // what they explained, and the badge. Only for a question that was to master.
-  var STATUS = { not_started: 'Level not started yet', building: 'Level being made', ready: 'Level ready on their phone',
+  var STATUS = { not_started: 'Level not started yet', building: 'Level being made', ready: 'Level ready on their phone', held: 'Level made: waiting for you to look',
                  completed: 'Level played to the end', badge: 'Turned around', not_yet: 'Not yet' };
+  // the level as it was built, for the teacher to read; one the exam holds for a look waits for "Let them start" (28 Oct)
+  function levelOutline(m) {
+    var l = m.level; if (!l) return '';
+    return '<div class="wd-card" style="margin-top:8px"><b>' + esc(l.title || 'The level') + '</b>' + (l.lessons || []).map(function (ls, i) {
+      return '<div style="margin-top:6px"><b style="font-size:12px">Lesson ' + (i + 1) + ': ' + esc(ls.title) + '</b>' +
+        (ls.beats || []).map(function (b) { return '<div class="wd-sub" style="margin:2px 0">· ' + esc(b) + '</div>'; }).join('') + '</div>';
+    }).join('') + (m.status === 'held' ? '<div style="margin-top:8px"><button class="wd-btn wd-main" data-act="approve">Let them start</button>' +
+      ' <span class="wd-sub">It reaches the student once you do.</span></div>' : '') + '</div>';
+  }
   function masteryCard(q) {
     var released = S.paper && S.paper.status === 'released';
     var res = q.teacher_result || q.result;
@@ -322,7 +334,7 @@
       '<div class="wd-card" style="margin-top:8px;border-color:var(--warn,#b26a00)"><b>Self-check: still not right</b><div class="wd-sub">After its rewrites the level still had these. Look before you rely on it, or answer them in the thread.</div>' +
       (m.check.problems || []).map(function (p) { return '<div class="wd-sub" style="margin:3px 0">· ' + esc(p) + '</div>'; }).join('') + '</div>') : '';
     return '<div class="wd-card"><div class="wd-row" style="cursor:default;padding:0"><span class="wd-grow"><h3 style="margin:0">Mastery</h3></span>' +
-      '<span class="wd-chip ' + (done ? 'ok' : '') + '">' + esc(STATUS[m.status] || m.status) + '</span></div>' + chk +
+      '<span class="wd-chip ' + (done ? 'ok' : '') + '">' + esc(STATUS[m.status] || m.status) + '</span></div>' + chk + levelOutline(m) +
       (thread ? '<div style="margin-top:8px"><b style="font-size:12px">Questions to you</b>' + thread + '</div>' : '') +
       '<label for="wdReply">Answer in the thread</label><input id="wdReply" data-f="reply" placeholder="Your answer to their question">' +
       '<div style="margin-top:6px"><button class="wd-btn" data-act="reply">Send</button></div>' +
@@ -394,6 +406,7 @@
     if (act === 'print') { try { window.print(); } catch (e) { /* no printer */ } return; }
     if (act === 'verify') return masteryDo('verify', checks());
     if (act === 'reply') return masteryDo('reply', { text: S.draft.reply || '' });
+    if (act === 'approve') return masteryDo('approve', {});
     if (act === 'badge') return masteryDo('badge', { issue: true, note: S.draft.badgeNote || '' });
     if (act === 'notyet') return masteryDo('badge', { issue: false, note: S.draft.badgeNote || '' });
     if (t.hasAttribute('data-pile')) { if (await loadPile(t.getAttribute('data-pile'))) { S.view = 'pile'; } return render(); }
@@ -563,7 +576,7 @@
     var d = S.draft;
     if (!String(d.title || '').trim()) { say('Give the exam a name.', 'err'); return render(); }
     S.busy = true;
-    var j = await api('POST', '/api/witness/pile', { title: d.title, level: d.level || '', questions: questionsOf(d.qs), scheme: d.scheme || '', kind: d.kind === 'practical' ? 'practical' : 'paper', engine: d.engine === 'open' ? 'open' : 'meta' });
+    var j = await api('POST', '/api/witness/pile', { title: d.title, level: d.level || '', questions: questionsOf(d.qs), scheme: d.scheme || '', kind: d.kind === 'practical' ? 'practical' : 'paper', engine: d.engine === 'open' ? 'open' : 'meta', preview: d.preview === 'yes' });
     S.busy = false;
     if (!j.ok) { say(errText(j), 'err'); return render(); }
     S.draft = {};
