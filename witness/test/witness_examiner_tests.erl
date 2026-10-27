@@ -33,8 +33,12 @@ draw_lines_are_checked_and_capped_test() ->
     ?assertMatch({ok, #{changed := 1}}, witness_draw:parse_lines(<<"{\"lines\":[\"x = 5\"],\"changed\":9}">>)),
     ?assertEqual({error, no_lines}, witness_draw:parse_lines(<<"{\"lines\":[]}">>)),
     P = witness_draw:picture_prompt([<<"3x = 15">>, <<"x = 5">>], 2),
-    ?assertNotEqual(nomatch, binary:match(P, <<"2. x = 5">>)),
-    ?assertNotEqual(nomatch, binary:match(P, <<"Line 2 is the corrected step">>)).
+    ?assertNotEqual(nomatch, binary:match(P, <<"\"x = 5\"">>)),
+    ?assertEqual(nomatch, binary:match(P, <<"2. x = 5">>)),
+    ?assertNotEqual(nomatch, binary:match(P, <<"The second line is the corrected step">>)),
+    %% a question number in front of a line is not part of the working; a number that is the working stays
+    {ok, #{lines := [<<"F = m x a">>, <<"F = 2 x 2 = 4 N">>]}} = witness_draw:parse_lines(<<"{\"lines\":[\"F = m x a\",\"2. F = 2 x 2 = 4 N\"],\"changed\":2}">>),
+    {ok, #{lines := [<<"0.5 m">>]}} = witness_draw:parse_lines(<<"{\"lines\":[\"0.5 m\"]}">>).
 
 transcribe_sends_a_request_and_an_audio_part_test() ->
     B = witness_meta:transcribe_body("BB", <<"RIFFwav">>),

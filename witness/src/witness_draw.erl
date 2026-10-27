@@ -22,14 +22,17 @@ lines_prompt(Q, Sitting) ->
         "THE QUESTION: ", str(Text), "\n",
         "WHAT THEY WROTE:\n", [["  ", str(maps:get(wrote, S, <<>>)), "\n"] || S <- maps:get(steps, Q, []), is_map(S)],
         "WHERE IT WENT WRONG: ", str(maps:get(diagnosis, Q, <<>>)), "\n\n",
-        "Start from their own first step where it was right and change only what was wrong. At most 6 short lines of\n"
-        "working, in the paper's language and notation, every number checked, ending in the answer. Return JSON only:\n"
+        "Show the full working a teacher would write: the rule or method first, then each step, ending in the answer\n"
+        "(at least 2 and at most 6 short lines), starting where their own working was right and changing only what was\n"
+        "wrong, in the paper's language and notation, every number checked. Never put a question number in front of a\n"
+        "line. Return JSON only:\n"
         "{\"lines\":[\"...\"],\"changed\":2}   (changed = the number of the first line that differs from their work)"]).
 
 parse_lines(Text) ->
     case json_in(Text) of
         #{<<"lines">> := L} = J when is_list(L) ->
-            Lines = [string:slice(string:trim(X), 0, 120) || X <- lists:sublist(L, 6), is_binary(X), string:trim(X) =/= <<>>],
+            %% a question number in front ("2. F = 2 x 2") is drawn as part of the working (27 Oct, live: "1. 2. F = ...")
+            Lines = [string:slice(unnumbered(string:trim(X)), 0, 120) || X <- lists:sublist(L, 6), is_binary(X), unnumbered(string:trim(X)) =/= <<>>],
             case Lines of
                 [] -> {error, no_lines};
                 _ -> {ok, #{lines => Lines, changed => case maps:get(<<"changed">>, J, 1) of C when is_integer(C), C >= 1 -> min(C, length(Lines)); _ -> 1 end}}
@@ -37,14 +40,30 @@ parse_lines(Text) ->
         _ -> {error, no_lines}
     end.
 
+%% The lines go in quoted and unnumbered: a numbered list was drawn with its numbers, and a line twice (27 Oct, live).
 picture_prompt(Lines, Changed) ->
-    Numbered = [[integer_to_binary(I), ". ", L, "\n"] || {I, L} <- lists:zip(lists:seq(1, length(Lines)), Lines)],
+    Quoted = [["\"", L, "\"\n"] || L <- Lines],
     unicode:characters_to_binary([
         "A photo-real top-down view of one sheet of lined school paper with neat handwriting in dark blue ink. Write\n"
-        "EXACTLY these lines, one per ruled line, nothing else on the page (no title, no labels, no extra numbers):\n",
-        Numbered,
-        "Line ", integer_to_binary(Changed), " is the corrected step: underline it in green and put a small green tick\n"
-        "beside it. Plain paper, soft daylight, no hands, no people, no logos."]).
+        "these ", integer_to_binary(length(Lines)), " lines of working, in this order, each ONCE, one per ruled line, exactly as\n"
+        "quoted (without the quote marks), and nothing else on the page: no title, no labels, no line numbers, no repeats.\n",
+        Quoted,
+        "The ", ordinal(Changed), " line is the corrected step: underline it in green and put a small green tick beside\n"
+        "it. Plain paper, soft daylight, no hands, no people, no logos."]).
+
+ordinal(1) -> "first";
+ordinal(2) -> "second";
+ordinal(3) -> "third";
+ordinal(4) -> "fourth";
+ordinal(5) -> "fifth";
+ordinal(_) -> "last".
+
+%% "2. F = 2 x 2 = 4 N" or "Q2) ..." -> "F = 2 x 2 = 4 N"; a number that is the working ("0.5 m") stays
+unnumbered(L) ->
+    case re:run(L, "^(?:[QqPp])?[0-9]{1,2}[.)]\\s+(.+)$", [{capture, [1], binary}, unicode]) of
+        {match, [Rest]} -> string:trim(Rest);
+        nomatch -> L
+    end.
 
 %% Spark reasons before it writes and the reasoning shares the budget: at 4,000 tokens one call spent 2,858 thinking
 %% and another came back with no lines at all (27 Oct, live in the desktop app). It gets room, and one more try.

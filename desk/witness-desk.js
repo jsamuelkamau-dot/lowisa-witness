@@ -446,13 +446,20 @@
     return '<div class="wd-card"><h3>The step, corrected</h3>' + inner + '</div>';
   }
   // pictures come through the desk's door as short-lived links, fetched once per paper
+  // the links last 30 minutes: one is kept for 20, and a picture that fails to load asks for a fresh one once
+  // (live in the desktop app, 27 Oct: a still opened again after half an hour showed as broken)
   function fillAssets(p) {
     Array.prototype.forEach.call(p.querySelectorAll('img[data-asset]'), function (img) {
       var key = S.sid + '/' + img.getAttribute('data-asset');
-      if (S.assets[key]) { img.src = S.assets[key]; return; }
-      api('GET', '/api/witness/sitting/' + S.sid + '/asset/' + img.getAttribute('data-asset')).then(function (j) {
-        if (j.ok && j.url) { S.assets[key] = j.url; img.src = j.url; } else img.remove();
-      });
+      var fetchUrl = function () {
+        api('GET', '/api/witness/sitting/' + S.sid + '/asset/' + img.getAttribute('data-asset')).then(function (j) {
+          if (j.ok && j.url) { S.assets[key] = { url: j.url, at: Date.now() }; img.src = j.url; } else img.remove();
+        });
+      };
+      img.onerror = function () { img.onerror = null; delete S.assets[key]; fetchUrl(); };
+      var c = S.assets[key];
+      if (c && Date.now() - c.at < 20 * 60 * 1000) { img.src = c.url; return; }
+      fetchUrl();
     });
   }
   async function draw() {
