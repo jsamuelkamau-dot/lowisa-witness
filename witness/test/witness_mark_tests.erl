@@ -38,3 +38,12 @@ prompt_carries_scheme_and_questions_test() ->
     [?assertNotEqual(nomatch, binary:match(P, S)) || S <- [<<"Simplify 16/64 (2 marks)">>, <<"1 mark method">>,
                                                            <<"Year 7">>, <<"right_answer_wrong_thinking">>, <<"THINKING">>]],
     ?assertNotEqual(nomatch, binary:match(witness_mark:prompt(#{}), <<"printed on the paper">>)).
+
+%% 27 Oct, live: a question with "÷" made the prompt invalid UTF-8 and every sitting of the exam failed to send.
+prompt_is_utf8_in_any_script_test() ->
+    Qs = [#{n => 1, text => <<"3/4 ÷ 1/2"/utf8>>, marks => 2}, #{n => 2, text => <<"Écris 2x = 8 · x ≥ 4"/utf8>>},
+          #{n => 3, text => <<"हल करें: 16/64"/utf8>>}, #{n => 4, text => <<"Tafuta thamani ya x²"/utf8>>}],
+    P = witness_mark:prompt(#{questions => Qs, scheme => <<"√ ½ ∑ — à la règle"/utf8>>}),
+    ?assertEqual(P, unicode:characters_to_binary(P)),
+    [?assertNotEqual(nomatch, binary:match(P, T)) || T <- [<<"3/4 ÷ 1/2"/utf8>>, <<"हल करें"/utf8>>, <<"x²"/utf8>>, <<"√ ½ ∑"/utf8>>]],
+    ?assert(is_binary(iolist_to_binary(json:encode(#{input => P})))).

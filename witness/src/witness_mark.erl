@@ -23,7 +23,9 @@ results() -> [<<"mastered">>, <<"right_answer_wrong_thinking">>, <<"part_way">>,
 prompt(Sitting) ->
     Qs = case maps:get(questions, Sitting, []) of
         [] -> <<"The questions are printed on the paper.">>;
-        List -> iolist_to_binary(["The questions:\n" | [io_lib:format("~p. ~ts (~p marks)~n", [maps:get(n, Q), maps:get(text, Q), maps:get(marks, Q, 1)]) || Q <- List]])
+        %% characters_to_binary, never iolist_to_binary: io_lib's ~ts hands back characters, and iolist_to_binary wrote
+        %% "÷" as one Latin-1 byte, so every question with a symbol or a non-English letter failed to send (27 Oct, live)
+        List -> unicode:characters_to_binary(["The questions:\n" | [io_lib:format("~p. ~ts (~p marks)~n", [maps:get(n, Q), maps:get(text, Q), maps:get(marks, Q, 1)]) || Q <- List]])
     end,
     Scheme = case maps:get(scheme, Sitting, <<>>) of
         <<>> -> <<"No mark scheme was given: give 1 mark for a fully correct question, judged by its method as well as its answer.">>;
