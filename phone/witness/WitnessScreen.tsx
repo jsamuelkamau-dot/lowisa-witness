@@ -285,7 +285,8 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
     <View style={[s.card, next ? s.next : null]} testID={'witness-q-' + q.n}>
       <View style={s.rowTop}>
         <Text style={s.rowTitle}>Question {q.n}</Text>
-        <Text style={[s.chip, next ? s.chipNext : s.chipOk]}>{RESULT_WORDS[r]}</Text>
+        {/* once the teacher issues the badge, the question reads as turned around, not as still to fix */}
+        <Text style={[s.chip, next && !(m && m.status === 'badge') ? s.chipNext : s.chipOk]}>{m && m.status === 'badge' ? 'Turned around' : RESULT_WORDS[r]}</Text>
       </View>
       <Text style={s.sub}>{marksOf(q)} of {q.out_of} marks</Text>
       <Replay q={q} />
