@@ -14,7 +14,7 @@
 %%% Keys come from the host (witness_host); nothing here reads configuration.
 %%%-------------------------------------------------------------------
 -module(witness_meta).
--export([chat_request/3, ssl_opts/0, upload/4, sam_video/3, sam_video/4, read_video/5, video/1, responses/2, text_of/1, cost/2, multipart/4]).
+-export([chat_request/3, ssl_opts/0, upload/4, sam_video/3, sam_video/4, read_video/5, video/1, responses/2, text_of/1, cost/2, multipart/4, range/3]).
 
 -define(API, "https://api.meta.ai/v1").
 -define(TIMEOUT_MS, 300000).
@@ -122,6 +122,16 @@ http(Key, Path, Mime, Body) ->
 
 %% api.meta.ai answers with a *.meta.ai certificate; Erlang's default hostname check refuses wildcards
 %% (27 Oct, live: hostname_check_failed), so the HTTPS matching rules are asked for explicitly.
+%% range(Url, Offset, Length) -> {ok, Bytes}: one byte range of a clip behind a signed link (its frame table).
+range(Url, Off, Len) ->
+    Hdr = [{"range", "bytes=" ++ integer_to_list(Off) ++ "-" ++ integer_to_list(Off + Len - 1)}],
+    case httpc:request(get, {str(Url), Hdr}, [{timeout, 30000}, {connect_timeout, 10000}, {ssl, ssl_opts()}], [{body_format, binary}]) of
+        {ok, {{_, 206, _}, _, Body}} -> {ok, Body};
+        {ok, {{_, 200, _}, _, Body}} when byte_size(Body) >= Off -> {ok, binary:part(Body, Off, min(Len, byte_size(Body) - Off))};
+        {ok, {{_, S, _}, _, _}} -> {error, {range_status, S}};
+        E -> E
+    end.
+
 ssl_opts() ->
     [{verify, verify_peer}, {cacerts, public_key:cacerts_get()},
      {customize_hostname_check, [{match_fun, public_key:pkix_verify_hostname_match_fun(https)}]}].

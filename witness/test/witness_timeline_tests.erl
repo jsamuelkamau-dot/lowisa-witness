@@ -18,6 +18,18 @@ frame_times_test() ->
     ?assertEqual(0.8, witness_mp4:at(T, 99)),
     ?assertMatch({error, _}, witness_mp4:frame_times(<<"not a clip">>)).
 
+%% the same table read in byte ranges, from a clip whose media comes first (a 64-bit mdat header) as phones write them
+frame_times_ranged_test() ->
+    <<Ftyp:12/binary, Moov/binary>> = mp4(),
+    Mdat = <<1:32, "mdat", (16 + 1000):64, 0:8000>>,
+    Clip = <<Ftyp/binary, Mdat/binary, Moov/binary>>,
+    Reads = put(reads, 0),
+    Get = fun(O, L) -> put(reads, get(reads) + 1), {ok, binary:part(Clip, O, min(L, byte_size(Clip) - O))} end,
+    ?assertEqual(witness_mp4:frame_times(mp4()), witness_mp4:frame_times_ranged(Get)),
+    ?assertEqual(4, get(reads) - case Reads of undefined -> 0; N -> N end),   %% three headers and the moov
+    ?assertEqual({error, no_moov}, witness_mp4:frame_times_ranged(fun(O, L) -> {ok, binary:part(Ftyp, O, min(L, max(0, 12 - O)))} end)),
+    ?assertEqual({error, gone}, witness_mp4:frame_times_ranged(fun(_, _) -> {error, gone} end)).
+
 b(X1, X2, Y) -> #{x1 => X1, y1 => Y, x2 => X2, y2 => Y + 30, w => 720, h => 1600}.
 
 lines_start_end_and_order_test() ->

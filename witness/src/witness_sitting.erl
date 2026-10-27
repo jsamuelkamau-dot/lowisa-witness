@@ -3,7 +3,8 @@
 %%%
 %%%   mark(Key, Clip, Sitting) -> {ok, Result} | {error, Why}
 %%%       Clip = #{name, bytes}    uploaded to Meta's Files API, frame times read from the clip
-%%%            | #{url, fps}       a signed link Meta reads directly (the host never holds the bytes)
+%%%            | #{url, fps}       a signed link Meta reads directly (the host never holds the bytes); frame times
+%%%                                from the clip's own table read in byte ranges, fps only when that fails
 %%%       Sitting as witness_mark:prompt/1
 %%%       Result = #{questions => [Q with steps placed on the page], pauses, lines, cost_usd, frames}
 %%%
@@ -17,7 +18,11 @@
 -define(SPARK, <<"muse-spark-1.3">>).
 
 mark(Key, #{url := Url} = Clip, Sitting) ->
-    read(Key, {url, Url}, {fps, maps:get(fps, Clip, 30)}, Sitting);
+    Times = case witness_mp4:frame_times_ranged(fun(O, L) -> witness_meta:range(Url, O, L) end) of
+        {ok, T} when T =/= [] -> T;
+        _ -> {fps, maps:get(fps, Clip, 30)}
+    end,
+    read(Key, {url, Url}, Times, Sitting);
 mark(Key, #{name := Name, bytes := Bytes}, Sitting) ->
     case witness_meta:upload(Key, Name, <<"video/mp4">>, Bytes) of
         {ok, Fid} ->
