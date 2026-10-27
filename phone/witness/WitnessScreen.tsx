@@ -285,7 +285,7 @@ function Mine({papers, onOpen}: {papers: Paper[] | null; onOpen(p: Paper): void}
       {papers.map(p => {
         const left = toMaster(p).length;
         const asks = asksLeft(p).length;
-        const line = p.status === 'released' ? (left ? left + ' to master next' : 'All mastered') : p.status === 'failed' ? 'Record it again'
+        const line = p.status === 'released' ? (left ? left + ' to master next' : 'All mastered') : p.status === 'failed' ? (p.unseen ? 'Paper not in view: record it again' : 'Record it again')
           : asks ? (asks === 1 ? 'A question about your work' : asks + ' questions about your work') : 'With your teacher';
         return (
           <Pressable key={p.id} onPress={() => (p.status === 'released' || asks) && onOpen(p)} style={s.row} accessibilityRole="button" testID={'witness-paper-' + p.id}>

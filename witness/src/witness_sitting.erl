@@ -13,7 +13,7 @@
 %%% without places on the page; if Spark fails there is no marking and the sitting is an error.
 %%%-------------------------------------------------------------------
 -module(witness_sitting).
--export([mark/3]).
+-export([mark/3, finish/3]).
 
 -define(SPARK, <<"muse-spark-1.3">>).
 
@@ -35,7 +35,9 @@ read(Key, Video, Times, Sitting) ->
     Self = self(),
     %% on paper SAM follows the written lines ("word"); in a practical it follows the hands
     Concept = case maps:get(kind, Sitting, <<"paper">>) of <<"practical">> -> <<"hand">>; _ -> <<"word">> end,
-    Sam = spawn_link(fun() -> Self ! {sam, self(), witness_meta:sam_video(Key, Video, Concept, #{direction => forward})} end),
+    %% SAM only places the steps on the page: whatever happens to its call, the marking is not lost with it
+    Sam = spawn_link(fun() -> Self ! {sam, self(), try witness_meta:sam_video(Key, Video, Concept, #{direction => forward})
+                                                     catch C:R -> {error, {sam_crashed, C, R}} end} end),
     Spark = witness_meta:read_video(Key, ?SPARK, Video, witness_mark:prompt(Sitting), #{effort => <<"medium">>}),
     SamRes = receive {sam, Sam, R} -> R after 300000 -> {error, sam_timeout} end,
     finish(Spark, SamRes, Times).
@@ -44,7 +46,8 @@ finish({ok, Text, Usage}, SamRes, Times) ->
     case witness_mark:parse(Text) of
         {ok, #{questions := Qs, pauses := Ps}} ->
             {Lines, Frames} = case SamRes of
-                {ok, SamText, F} -> {witness_timeline:lines(witness_sam:records(SamText), witness_mp4:sam_times(Times, F)), F};
+                {ok, SamText, F} -> {try witness_timeline:lines(witness_sam:records(SamText), witness_mp4:sam_times(Times, F))
+                                     catch _:_ -> [] end, F};
                 _ -> {[], 0}
             end,
             PerQ = witness_timeline:merge_all([maps:get(steps, Q) || Q <- Qs], Lines),

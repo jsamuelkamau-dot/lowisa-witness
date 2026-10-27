@@ -29,3 +29,18 @@ unknown_fields_never_become_atoms_test() ->
     [{0, 3, B}] = witness_sam:records(<<"<0f>3<|box;x1=1;y1=2;x2=3;y2=4;w=9;h=9;zz_never_an_atom_7731=5|>">>),
     ?assertEqual(#{x1 => 1, y1 => 2, x2 => 3, y2 => 4, w => 9, h => 9}, B),
     ?assertError(badarg, binary_to_existing_atom(<<"zz_never_an_atom_7731">>)).
+
+%% 28 Oct: a box with a corner missing or not a number crashed the timeline, and with it a marking Spark had finished
+a_box_without_four_number_corners_is_left_out_test() ->
+    T = <<"<0f>1<|box;x1=1;y1=2|><|mask;x|>,2<|box;x1=a;y1=2;x2=5;y2=9|><|mask;x|>,3<|box;x1=1;y1=2;x2=5;y2=9|><|mask;x|>
+">>,
+    ?assertMatch([{0, 3, #{x1 := 1, y2 := 9}}], witness_sam:records(T)).
+
+%% SAM only places the steps on the page: a SAM failure of any kind leaves Spark's marking standing
+the_marking_stands_whatever_sam_answers_test() ->
+    Spark = {ok, <<"{\"questions\":[{\"n\":1,\"result\":\"mastered\",\"steps\":[{\"t\":2,\"wrote\":\"1/4\"}]}]}">>, #{<<"input_tokens">> => 1000}},
+    [?assertMatch({ok, #{questions := [#{result := <<"mastered">>}], lines := []}}, witness_sitting:finish(Spark, Sam, [0.0, 0.5]))
+     || Sam <- [{error, sam_timeout}, {error, {sam_crashed, error, badarg}}, {ok, <<"<0f>1<|box;x1=1|><|mask;x|>
+">>, 2},
+                {ok, <<"garbage">>, 0}]].
+

@@ -2,7 +2,7 @@
 -include_lib("eunit/include/eunit.hrl").
 -behaviour(witness_host).
 -export([meta_key/0, put_url/4, get_url/2, drop_clip/2, save/3, load/2, list/2, spend/3, run/1, marker/0, checker/0, design/2, judger/0,
-         put_asset/4, asset_url/2, stiller/0, examiner/0, answer_judge/0, drawer/0, hearer/0, open_engine/0, open_marker/0]).
+         put_asset/4, asset_url/2, stiller/0, examiner/0, answer_judge/0, drawer/0, hearer/0, open_engine/0, open_marker/0, retry_waits/0]).
 
 %% An in-memory host: rows and events in an ets table, marking run at once, a canned marker.
 meta_key() -> <<"test-key">>.
@@ -14,12 +14,17 @@ load(Uid, Key) -> case ets:lookup(witness_api_t, {row, Uid, Key}) of [{_, R}] ->
 list(Uid, Kind) -> [{Id, R} || {{row, U, {K, Id}}, R} <- ets:tab2list(witness_api_t), U =:= Uid, K =:= Kind].
 spend(Uid, F, Usd) -> ev({spend, Uid, F, Usd}), ok.
 run(Fun) -> Fun(), ok.
+retry_waits() -> [0, 0].
 marker() ->
     fun(<<"test-key">>, #{url := Url, fps := Fps}, Sitting) ->
         ev({marked, Url, Fps, Sitting}),
         case persistent_term:get(witness_api_fail, false) of
             true -> {error, boom};
             {unreadable, _} = U -> {error, U};
+            %% Meta busy for the next N marking calls (forever when N is always)
+            {busy, always} -> {error, {503, <<"busy">>}};
+            {busy, N} when N > 0 -> persistent_term:put(witness_api_fail, {busy, N - 1}), {error, {503, <<"busy">>}};
+            {busy, 0} -> {ok, #{questions => [#{n => 1, result => <<"mastered">>}], pauses => [], lines => [], cost_usd => 0.08}};
             false -> {ok, persistent_term:get(witness_api_result, #{questions => [#{n => 1, result => <<"mastered">>}], pauses => [], lines => [], cost_usd => 0.08})}
         end
     end.
@@ -45,16 +50,18 @@ on(K) -> persistent_term:get({witness_api_on, K}, false).
 stiller() -> fun(Url, T) -> case on(stills) of true -> ev({still, Url, T}), {ok, <<255, 216, "jpeg">>}; false -> {error, off} end end.
 examiner() ->
     fun(<<"test-key">>, Sitting, Qs) ->
-        case on(examiner) of
-            true -> ev({examiner, maps:get(level, Sitting, none), [maps:get(n, Q) || Q <- Qs]}),
+        case {on(examiner), persistent_term:get(witness_api_exbusy, 0)} of
+            {true, B} when B > 0 -> persistent_term:put(witness_api_exbusy, B - 1), ev(examiner_busy), {error, {503, <<"busy">>}};
+            {true, _} -> ev({examiner, maps:get(level, Sitting, none), [maps:get(n, Q) || Q <- Qs]}),
                     {ok, [#{k => 1, n => 3, step => 1, wrote => <<"16/64 = 1/4">>, ask => <<"You wrote 16/64 = 1/4. Why did you cross out the 6s?">>},
                           #{k => 2, n => 1, step => 1, wrote => <<"3/2">>, ask => <<"How did you get 3/2?">>}], 0.02};
-            false -> {error, off}
+            {false, _} -> {error, off}
         end
     end.
 answer_judge() -> fun(<<"test-key">>, #{k := K}, _Q, Text) -> ev({answer_judged, K, Text}), {ok, #{own_work => true, understood => binary:match(Text, <<"factor">>) =/= nomatch, why => <<"w">>}, 0.002} end.
 drawer() -> fun(<<"test-key">>, #{n := N}, Sitting) -> ev({drawn, N, [maps:get(n, Q) || Q <- maps:get(questions, Sitting, [])]}), {ok, #{bytes => <<"RIFFwebp">>, format => <<"webp">>, lines => [<<"16/64">>, <<"= 1/4 (divide by 16)">>], changed => 2}, 0.019} end.
-hearer() -> fun(<<"test-key">>, <<"audio-bytes">>) -> {ok, <<"Because I divided by the common factor 16.">>, 4.0}; (_, _) -> {error, unreadable} end.
+hearer() -> fun(<<"test-key">>, <<"audio-bytes">>) -> {ok, <<"Because I divided by the common factor 16.">>, 4.0};
+                (_, <<"busy">>) -> {error, {429, <<"slow down">>}}; (_, _) -> {error, unreadable} end.
 
 open_engine() -> case on(open) of true -> #{url => <<"https://open.example.com/v1">>, key => <<"k">>, model => <<"muse-spark-open">>}; false -> undefined end.
 open_marker() -> fun(#{model := M}, #{url := Url}, Sitting) -> ev({open_marked, M, Url, maps:get(engine, Sitting)}), {ok, #{questions => [#{n => 1, result => <<"mastered">>}], pauses => [], lines => [], engine => M, cost_usd => 0.07}} end.
@@ -63,7 +70,7 @@ ev(E) -> ets:insert(witness_api_t, {erlang:unique_integer([monotonic]), E}).
 events() -> [E || {K, E} <- lists:sort(ets:tab2list(witness_api_t)), is_integer(K)].
 
 setup() -> case ets:whereis(witness_api_t) of undefined -> ok; _ -> ets:delete(witness_api_t) end, ets:new(witness_api_t, [named_table, public]), persistent_term:put(witness_api_fail, false), persistent_term:erase(witness_api_result),
-           [persistent_term:erase({witness_api_on, K}) || K <- [stills, examiner, open]].
+           [persistent_term:erase({witness_api_on, K}) || K <- [stills, examiner, open]], persistent_term:erase(witness_api_exbusy).
 
 r(M, P, B, Uid) -> witness_api:route(M, P, B, Uid, ?MODULE).
 
@@ -301,6 +308,9 @@ examiner_proof_draw_voice_measure_test() ->
     ?assert(lists:member({spend, <<"teacher">>, <<"witness_transcribe">>, witness_meta:cost(transcribe, 4.0)}, events())),
     ?assertMatch({409, #{code := <<"answered">>}}, r(<<"POST">>, [<<"sitting">>, S, <<"answer">>], #{<<"k">> => 1, <<"text">> => <<"again">>}, <<"stud">>)),
     ?assertMatch({400, #{code := <<"not_heard">>}}, r(<<"POST">>, [<<"sitting">>, S, <<"answer">>], #{<<"k">> => 2, <<"audio">> => base64:encode(<<"noise">>)}, <<"stud">>)),
+    %% Meta busy is not the student's microphone
+    ?assertMatch({503, #{code := <<"busy">>, error := <<"Listening is busy right now", _/binary>>}},
+                 r(<<"POST">>, [<<"sitting">>, S, <<"answer">>], #{<<"k">> => 2, <<"audio">> => base64:encode(<<"busy">>)}, <<"stud">>)),
     ?assertMatch({404, _}, r(<<"POST">>, [<<"sitting">>, S, <<"answer">>], #{<<"k">> => 2, <<"text">> => <<"x">>}, <<"other">>)),
     {200, _} = r(<<"POST">>, [<<"sitting">>, S, <<"answer">>], #{<<"k">> => 2, <<"text">> => <<"I multiplied by the reciprocal.">>}, <<"stud">>),
     {200, TV} = r(<<"GET">>, [<<"sitting">>, S], #{}, <<"teacher">>),
@@ -398,6 +408,87 @@ a_video_without_the_paper_is_not_marked_test() ->
     {200, #{sittings := [Row], queue := Queue}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>),
     ?assertMatch(#{status := <<"failed">>, unreadable := _, to_master := 0}, Row),
     ?assertEqual([], Queue),
-    ?assertMatch({200, #{papers := [#{status := <<"failed">>}]}}, r(<<"GET">>, [<<"mine">>], #{}, <<"stud">>)),
+    ?assertMatch({200, #{papers := [#{status := <<"failed">>, unseen := true} = Mine]}} when not is_map_key(unreadable, Mine), r(<<"GET">>, [<<"mine">>], #{}, <<"stud">>)),
     ?assertNot(lists:keymember(spend, 1, events())),
     persistent_term:put(witness_api_fail, false).
+
+%% 28 Oct, Meta tooling through the judges' eyes: a moment's outage at Meta failed the sitting and deleted the clip,
+%% so the student had to sit the exam again
+a_moment_of_meta_busy_is_tried_again_test() ->
+    setup(), persistent_term:put(witness_api_fail, {busy, 2}),
+    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10}, <<"u1">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], #{}, <<"u1">>),
+    ?assertMatch({200, #{status := <<"marked">>}}, r(<<"GET">>, [<<"sitting">>, Id], #{}, <<"u1">>)),
+    ?assertEqual(3, length([1 || {marked, _, _, _} <- events()])),
+    ?assertEqual([{drop, <<"u1">>, Id}], [E || E = {drop, _, _} <- events()]),
+    persistent_term:put(witness_api_fail, false).
+
+meta_busy_every_time_keeps_the_clip_to_mark_again_test() ->
+    setup(), persistent_term:put(witness_api_fail, {busy, always}),
+    {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions check">>}, <<"teacher">>),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amina">>}, <<"stud">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"stud">>),
+    ?assertEqual(3, length([1 || {marked, _, _, _} <- events()])),
+    ?assertEqual([], [E || E = {drop, _, _} <- events()]),
+    {200, V} = r(<<"GET">>, [<<"sitting">>, S], #{}, <<"teacher">>),
+    ?assertMatch(#{status := <<"failed">>, kept := true, error := <<"Witness couldn't reach the marking service", _/binary>>}, V),
+    ?assertMatch({200, #{sittings := [#{status := <<"failed">>, kept := true}]}}, r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>)),
+    %% the student is not told to film it again: the paper is with the teacher
+    ?assertMatch({200, #{papers := [#{status := <<"with_teacher">>}]}}, r(<<"GET">>, [<<"mine">>], #{}, <<"stud">>)),
+    ?assertNot(lists:keymember(spend, 1, events())),
+    %% Meta is back: the teacher marks it again from the kept clip, and only then is the clip dropped
+    persistent_term:put(witness_api_fail, false),
+    ?assertMatch({202, #{status := <<"marking">>}}, r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"teacher">>)),
+    {200, V2} = r(<<"GET">>, [<<"sitting">>, S], #{}, <<"teacher">>),
+    ?assertMatch(#{status := <<"marked">>}, V2),
+    ?assertMatch({200, #{sittings := [#{status := <<"marked">>} = Row]}} when not is_map_key(kept, Row), r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>)),
+    ?assertEqual(1, length([E || E = {drop, _, _} <- events()])).
+
+a_kept_clip_is_not_kept_past_a_day_test() ->
+    setup(), persistent_term:put(witness_api_fail, {busy, always}),
+    {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"T">>}, <<"teacher">>),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code}, <<"stud">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"stud">>),
+    {ok, Row} = load(<<"teacher">>, {sitting, S}),
+    save(<<"teacher">>, {sitting, S}, Row#{marked_ms => maps:get(marked_ms, Row) - 86400001}),
+    {200, #{sittings := [Sum]}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>),
+    ?assertNot(is_map_key(kept, Sum)),
+    ?assertEqual([{drop, <<"teacher">>, S}], [E || E = {drop, _, _} <- events()]),
+    persistent_term:put(witness_api_fail, false),
+    ?assertMatch({410, #{code := <<"too_old">>}}, r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"teacher">>)),
+    ?assertMatch({200, #{error := <<"This sitting couldn't be marked. Record it again.">>}}, r(<<"GET">>, [<<"sitting">>, S], #{}, <<"teacher">>)).
+
+a_marking_that_never_came_back_can_be_marked_again_test() ->
+    setup(),
+    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10}, <<"u1">>),
+    {ok, Row} = load(<<"u1">>, {sitting, Id}),
+    save(<<"u1">>, {sitting, Id}, Row#{status => <<"marking">>, started_ms => erlang:system_time(millisecond) - 60000}),
+    %% still inside its time: left alone
+    ?assertMatch({200, #{status := <<"marking">>}}, r(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], #{}, <<"u1">>)),
+    save(<<"u1">>, {sitting, Id}, Row#{status => <<"marking">>, started_ms => erlang:system_time(millisecond) - 2700001}),
+    ?assertMatch({202, _}, r(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], #{}, <<"u1">>)),
+    ?assertMatch({200, #{status := <<"marked">>}}, r(<<"GET">>, [<<"sitting">>, Id], #{}, <<"u1">>)).
+
+a_failure_that_is_not_meta_busy_is_not_tried_again_test() ->
+    setup(), persistent_term:put(witness_api_fail, true),
+    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10}, <<"u1">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], #{}, <<"u1">>),
+    ?assertEqual(1, length([1 || {marked, _, _, _} <- events()])),
+    ?assertMatch({200, #{status := <<"failed">>} = V} when not is_map_key(kept, V), r(<<"GET">>, [<<"sitting">>, Id], #{}, <<"u1">>)),
+    persistent_term:put(witness_api_fail, false).
+
+%% the examiner (Muse Wonder) is written off the request: Meta busy once is tried again, not left without questions
+the_examiner_is_tried_again_when_meta_is_busy_test() ->
+    setup(), persistent_term:put({witness_api_on, examiner}, true), persistent_term:put(witness_api_exbusy, 1),
+    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10}, <<"u1">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], #{}, <<"u1">>),
+    ?assertEqual(1, length([1 || examiner_busy <- events()])),
+    ?assertMatch({200, #{examiner := #{status := <<"ready">>, asks := [_, _]}}}, r(<<"GET">>, [<<"sitting">>, Id], #{}, <<"u1">>)),
+    persistent_term:put(witness_api_exbusy, 5),
+    {201, #{id := Id2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10}, <<"u1">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, Id2, <<"mark">>], #{}, <<"u1">>),
+    %% busy every time: the marking stands, the examiner says it failed (three tries, not five)
+    ?assertEqual(4, length([1 || examiner_busy <- events()])),
+    ?assertMatch({200, #{status := <<"marked">>, examiner := #{status := <<"failed">>}}}, r(<<"GET">>, [<<"sitting">>, Id2], #{}, <<"u1">>)),
+    persistent_term:erase({witness_api_on, examiner}).
+

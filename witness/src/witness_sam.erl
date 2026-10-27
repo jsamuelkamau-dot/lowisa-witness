@@ -34,7 +34,10 @@ objects(Body) ->
         nomatch -> {match, []};
         M -> M
     end,
-    [{binary_to_integer(Id), box(Fields)} || [Id, Fields] <- Ms].
+    [{binary_to_integer(Id), B} || [Id, Fields] <- Ms, B <- [box(Fields)], corners(B)].
+
+%% A box is only used with all four corners as numbers: a short or garbled one is left out, not trusted.
+corners(B) -> lists:all(fun(K) -> is_number(maps:get(K, B, x)) end, [x1, y1, x2, y2]).
 
 %% Only the box's own fields, as fixed atoms: a field name from the model never becomes a new atom (27 Oct, live: a
 %% row holding atoms one node had never made could not be read back on that node).

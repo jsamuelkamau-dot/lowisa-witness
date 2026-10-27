@@ -8,3 +8,4 @@ probe-out/
 node_modules/
 _build/
 *.beam
+erl_crash.dump

@@ -43,7 +43,7 @@ export interface Question {
   n: number; result: Result; teacher_result?: Result; marks: number; teacher_marks?: number; out_of: number;
   final_answer: string; steps: Step[]; diagnosis: string; moment_s: number | null; confidence: number; focus?: string;
 }
-export interface Paper { id: string; status: string; title?: string; student?: string; result?: {questions: Question[]; stills?: Still[]}; examiner?: Examiner }
+export interface Paper { id: string; status: string; unseen?: boolean; title?: string; student?: string; result?: {questions: Question[]; stills?: Still[]}; examiner?: Examiner }
 export interface Proof {
   record: 'proof_of_thinking'; id: string; exam: string; level: string; kind: string; student: string;
   sat_ms: number | null; marked_ms: number | null; released_ms: number | null; marks: number; out_of: number; video: string; read_by: string[];

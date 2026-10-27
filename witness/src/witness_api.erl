@@ -51,6 +51,11 @@
 -define(MAX_BYTES, 500 * 1024 * 1024).
 %% How long a signed upload link lasts (expiresIn below is the same, in seconds).
 -define(LINK_MS, 900000).
+%% A marking Meta could not answer is tried again after these waits; then its clip is kept this long to mark again.
+-define(RETRY_WAITS, [5000, 30000]).
+-define(KEEP_MS, 86400000).
+%% Longer than every try and wait together (three marking calls of up to 5 minutes each, SAM's wait after them).
+-define(STUCK_MS, 2700000).
 -define(MIMES, [<<"video/mp4">>, <<"video/quicktime">>]).
 -define(MAX_PILE, 200).
 -define(CODES, <<"witness-codes">>).
@@ -78,7 +83,7 @@ route(<<"GET">>, [<<"pile">>, Id], _B, Uid, Host) ->
             %% an upload whose link ran out can never arrive: it leaves the exam (and its paper count), the row stays
             Gone = [S || {S, {ok, R}} <- All, lapsed(R)],
             Gone =:= [] orelse Host:save(Uid, {pile, Id}, P#{sittings => maps:get(sittings, P, []) -- Gone}),
-            Ss = [{S, R} || {S, {ok, R}} <- All, not lists:member(S, Gone)],
+            Ss = [{S, settle(Uid, S, R, Host)} || {S, {ok, R}} <- All, not lists:member(S, Gone)],
             {200, #{ok => true, pile => maps:without([sittings], P#{id => Id}),
                     sittings => [summary(S, R) || {S, R} <- Ss], queue => queue(Ss)}}
     end;
@@ -148,19 +153,14 @@ route(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], B, Uid0, Host) ->
     Uid = owner_of(Uid0, Id, Host),
     case Host:load(Uid, {sitting, Id}) of
         none -> refuse(404, <<"no_sitting">>, <<"That sitting isn't here.">>);
-        {ok, #{status := <<"uploading">>} = Row} ->
-            case Host:meta_key() of
-                undefined -> refuse(503, <<"not_configured">>, <<"Marking isn't available right now.">>);
-                Key ->
-                    Sitting = case {maps:get(sitting_in, Row, undefined), maps:get(pile, Row, undefined)} of
-                        {#{} = In, _} -> In;                                   %% a fresh question carries its own
-                        {_, undefined} -> sitting_of(B);
-                        {_, PileId} -> case Host:load(Uid, {pile, PileId}) of {ok, P} -> maps:with([questions, scheme, level, kind, engine], P); none -> sitting_of(B) end
-                    end,
-                    Fps = case maps:get(<<"fps">>, B, 30) of F when is_number(F), F > 0, F =< 240 -> F; _ -> 30 end,
-                    ok = Host:save(Uid, {sitting, Id}, Row#{status => <<"marking">>, started_ms => now_ms()}),
-                    ok = Host:run(fun() -> mark(Uid, Id, Key, Fps, Sitting, Host) end),
-                    {202, #{ok => true, id => Id, status => <<"marking">>}}
+        {ok, #{status := <<"uploading">>} = Row} -> start_marking(Uid, Id, Row, B, Host);
+        %% a clip kept because Meta could not mark it, or a marking that never came back, is marked again
+        {ok, #{status := S0} = Row0} when S0 =:= <<"failed">>; S0 =:= <<"marking">> ->
+            case settle(Uid, Id, Row0, Host) of
+                #{kept := true} = Kept -> start_marking(Uid, Id, Kept, B, Host);
+                #{status := <<"failed">>, kept := false} ->
+                    refuse(410, <<"too_old">>, <<"This recording is no longer kept. Ask for it to be filmed again.">>);
+                #{status := S} -> {200, #{ok => true, id => Id, status => S}}
             end;
         {ok, #{status := S}} -> {200, #{ok => true, id => Id, status => S}}
     end;
@@ -198,7 +198,7 @@ route(<<"POST">>, [<<"sitting">>, Id, <<"answer">>], B, Uid, Host) ->
                 {_, [#{answer := _} | _]} -> refuse(409, <<"answered">>, <<"You answered that one already.">>);
                 {_, [Ask | _]} ->
                     case heard(Owner, B, Host) of
-                        {error, Code} -> refuse(case Code of not_configured -> 503; _ -> 400 end, atom_to_binary(Code), answer_words(Code));
+                        {error, Code} -> refuse(case Code of not_configured -> 503; busy -> 503; _ -> 400 end, atom_to_binary(Code), answer_words(Code));
                         {Text, Spoken} ->
                             Q = case [X || X = #{n := N} <- Qs, N =:= maps:get(n, Ask)] of [X | _] -> X; [] -> #{} end,
                             Verdict = case (answer_judge(Host))(Host:meta_key(), Ask, Q, Text) of
@@ -230,7 +230,7 @@ route(<<"POST">>, [<<"sitting">>, Id, <<"draw">>], B, Uid, Host) ->
                     Sitting = case Host:load(Uid, {pile, maps:get(pile, Row, <<>>)}) of {ok, P} -> maps:with([questions, level], P); none -> #{questions => []} end,
                     ok = Host:run(fun() ->
                         Name = <<Id/binary, "/drawn-", (integer_to_binary(N))/binary, ".webp">>,
-                        Drawn = case catch (drawer(Host))(Key, Q, Sitting) of
+                        Drawn = case again(Host, fun() -> (drawer(Host))(Key, Q, Sitting) end) of
                             {ok, #{bytes := Bytes, lines := Lines, changed := Ch}, Cost} ->
                                 Host:spend(Uid, <<"witness_draw">>, Cost),
                                 case Host:put_asset(Uid, Name, Bytes, <<"image/webp">>) of
@@ -251,7 +251,7 @@ route(<<"POST">>, [<<"sitting">>, Id, <<"voice">>], B, Uid, Host) ->
         {ok, #{result := #{questions := Qs}}} ->
             case {[Q || Q = #{n := Qn} <- Qs, Qn =:= N], heard(Uid, B, Host)} of
                 {[], _} -> refuse(404, <<"no_question">>, <<"That question isn't on this paper.">>);
-                {_, {error, Code}} -> refuse(case Code of not_configured -> 503; _ -> 400 end, atom_to_binary(Code), answer_words(Code));
+                {_, {error, Code}} -> refuse(case Code of not_configured -> 503; busy -> 503; _ -> 400 end, atom_to_binary(Code), answer_words(Code));
                 {_, {Text, _}} ->
                     ok = put_q(Uid, Id, N, fun(X) -> X#{comment => #{text => Text, spoken => true, at => now_ms()}} end, Host),
                     {200, #{ok => true, n => N, text => Text}}
@@ -451,7 +451,7 @@ moment(Q) -> case [T || #{t := T} <- maps:get(steps, Q, []), is_number(T)] of []
 
 %% Muse Wonder writes the examiner's questions as soon as the paper is marked, while the student is still there.
 examine(Uid, Id, Key, Sitting, Qs, Host) ->
-    Ex = case catch (examiner(Host))(Key, Sitting, Qs) of
+    Ex = case again(Host, fun() -> (examiner(Host))(Key, Sitting, Qs) end) of
         {ok, Asks, Cost} -> Host:spend(Uid, <<"witness_examiner">>, Cost), #{status => <<"ready">>, asks => Asks, at => now_ms()};
         Why -> report(Host, <<"witness.examiner_failed">>, Why), #{status => <<"failed">>, asks => []}
     end,
@@ -477,6 +477,8 @@ heard(Owner, B, Host) ->
                         {ok, T, Secs} ->
                             Host:spend(Owner, <<"witness_transcribe">>, witness_meta:cost(transcribe, Secs)),
                             case clean(T, 2000) of <<>> -> {error, not_heard}; Text -> {Text, true} end;
+                        %% Meta busy is not the student's microphone: they are told to try again, not to speak closer
+                        {error, W} -> case busy(W) of true -> {error, busy}; false -> {error, not_heard} end;
                         _ -> {error, not_heard}
                     end
             end;
@@ -486,6 +488,7 @@ heard(Owner, B, Host) ->
 
 answer_words(empty) -> <<"Say or write your answer first.">>;
 answer_words(bad_audio) -> <<"That recording couldn't be read. Try again.">>;
+answer_words(busy) -> <<"Listening is busy right now. Try again in a moment, or write it.">>;
 answer_words(not_heard) -> <<"Nothing was heard. Speak a little closer, or write it.">>;
 answer_words(not_configured) -> <<"Listening isn't available right now. Write your answer instead.">>;
 answer_words(_) -> <<"That can't be done here.">>.
@@ -562,8 +565,10 @@ mine_view(Id, #{owner := O}, Host) ->
         {ok, R} ->
             %% before release the student sees no marks, only the examiner's questions about their own steps
             Title = case Host:load(O, {pile, maps:get(pile, R, <<>>)}) of {ok, P} -> maps:get(title, P); none -> <<>> end,
-            V = #{id => Id, title => Title, status => case maps:get(status, R) of <<"failed">> -> <<"failed">>; <<"uploading">> -> <<"uploading">>; _ -> <<"with_teacher">> end},
-            case maps:get(examiner, R, undefined) of undefined -> V; Ex -> V#{examiner => examiner_view(Ex, student)} end;
+            V = #{id => Id, title => Title, status => case maps:get(status, R) of <<"failed">> when map_get(kept, R) =:= true -> <<"with_teacher">>; <<"failed">> -> <<"failed">>; <<"uploading">> -> <<"uploading">>; _ -> <<"with_teacher">> end},
+            %% a refused video says why (the paper was not in view), never what the model said about it
+            V2 = case R of #{status := <<"failed">>, unreadable := _} -> V#{unseen => true}; _ -> V end,
+            case maps:get(examiner, R, undefined) of undefined -> V2; Ex -> V2#{examiner => examiner_view(Ex, student)} end;
         none -> none
     end;
 mine_view(_, _, _) -> none.
@@ -594,8 +599,44 @@ review(Q, B) ->
     end,
     Q4#{reviewed => true}.
 
+%% A sitting goes to marking: from its upload, or again from a clip kept when Meta could not mark it.
+start_marking(Uid, Id, Row, B, Host) ->
+    case Host:meta_key() of
+        undefined -> refuse(503, <<"not_configured">>, <<"Marking isn't available right now.">>);
+        Key ->
+            Sitting = case {maps:get(sitting_in, Row, undefined), maps:get(pile, Row, undefined)} of
+                {#{} = In, _} -> In;                                   %% a fresh question carries its own
+                {_, undefined} -> sitting_of(B);
+                {_, PileId} -> case Host:load(Uid, {pile, PileId}) of {ok, P} -> maps:with([questions, scheme, level, kind, engine], P); none -> sitting_of(B) end
+            end,
+            Fps = case maps:get(<<"fps">>, B, 30) of F when is_number(F), F > 0, F =< 240 -> F; _ -> 30 end,
+            ok = Host:save(Uid, {sitting, Id}, (maps:without([kept, reason, marked_ms], Row))#{status => <<"marking">>, started_ms => now_ms()}),
+            ok = Host:run(fun() -> mark(Uid, Id, Key, Fps, Sitting, Host) end),
+            {202, #{ok => true, id => Id, status => <<"marking">>}}
+    end.
+
 mark(Uid, Id, Key, Fps, Sitting, Host) ->
     {ok, Row} = Host:load(Uid, {sitting, Id}),
+    {Outcome, UrlR} = attempt(Uid, Id, Key, Fps, Sitting, Host, retry_waits(Host)),
+    %% the stills are taken while the clip is still there: the record keeps the moments, never the video
+    Stills = case {Outcome, UrlR} of {{ok, Res}, {ok, U}} -> stills(Uid, Id, U, Res, Host); _ -> [] end,
+    case Outcome of
+        {error, Busy} ->
+            case busy(Busy) of
+                %% Meta was busy or out of reach every time: nothing was marked, and the student must not sit the
+                %% exam again for it, so the clip is kept (KEEP_MS at most) and the sitting can be marked again
+                true ->
+                    ok = Host:save(Uid, {sitting, Id}, Row#{status => <<"failed">>, kept => true, marked_ms => now_ms(),
+                                                            reason => iolist_to_binary(io_lib:format("~0p", [Busy]))}),
+                    link_fresh(Uid, Row, <<"failed">>, #{}, Host);
+                false -> ok = Host:drop_clip(Uid, Id), done(Uid, Id, Key, Sitting, Row, Outcome, Stills, Host)
+            end;
+        _ -> ok = Host:drop_clip(Uid, Id), done(Uid, Id, Key, Sitting, Row, Outcome, Stills, Host)
+    end.
+
+%% One marking, tried again after each wait while the failure is Meta's (busy, down, out of reach), each time
+%% with a fresh signed link, so a clip is not lost to a moment's outage.
+attempt(Uid, Id, Key, Fps, Sitting, Host, Waits) ->
     UrlR = Host:get_url(Uid, Id),
     Outcome = try
         case UrlR of
@@ -611,9 +652,44 @@ mark(Uid, Id, Key, Fps, Sitting, Host) ->
         end
     catch C:R -> {error, {C, R}}
     end,
-    %% the stills are taken while the clip is still there: the record keeps the moments, never the video
-    Stills = case {Outcome, UrlR} of {{ok, Res}, {ok, U}} -> stills(Uid, Id, U, Res, Host); _ -> [] end,
-    ok = Host:drop_clip(Uid, Id),
+    case {Outcome, Waits} of
+        {{error, W}, [Ms | More]} ->
+            case busy(W) of
+                true -> report(Host, <<"witness.mark_retry">>, W), timer:sleep(Ms), attempt(Uid, Id, Key, Fps, Sitting, Host, More);
+                false -> {Outcome, UrlR}
+            end;
+        _ -> {Outcome, UrlR}
+    end.
+
+%% Meta's side, worth trying again: rate limited, overloaded, down, or the connection gave out.
+busy({Code, _}) when is_integer(Code) -> lists:member(Code, [408, 409, 425, 429, 500, 502, 503, 504, 529]);
+busy(timeout) -> true;
+busy(sam_timeout) -> true;
+busy({failed_connect, _}) -> true;
+busy(socket_closed_remotely) -> true;
+busy({socket_closed_remotely, _}) -> true;
+busy(econnreset) -> true;
+busy(closed) -> true;
+busy(_) -> false.
+
+%% again(Host, Call): a call made off the request (the examiner, a drawing) tried again after each wait while Meta
+%% is busy; whatever else happens comes back as it is, a crash as {'EXIT', Why}.
+again(Host, Call) -> again(Call, retry_waits(Host), Host).
+again(Call, Waits, Host) ->
+    case catch Call() of
+        {error, W} = E ->
+            case {busy(W), Waits} of
+                {true, [Ms | More]} -> report(Host, <<"witness.call_retry">>, W), timer:sleep(Ms), again(Call, More, Host);
+                _ -> E
+            end;
+        R -> R
+    end.
+
+retry_waits(Host) ->
+    _ = code:ensure_loaded(Host),
+    case erlang:function_exported(Host, retry_waits, 0) of true -> Host:retry_waits(); false -> ?RETRY_WAITS end.
+
+done(Uid, Id, Key, Sitting, Row, Outcome, Stills, Host) ->
     case Outcome of
         {ok, Result} ->
             ok = Host:save(Uid, {sitting, Id}, Row#{status => <<"marked">>, result => Result#{stills => Stills}, marked_ms => now_ms()}),
@@ -646,6 +722,9 @@ view(Id, #{status := S, result := R} = Row) when S =:= <<"marked">>; S =:= <<"re
 view(Id, #{status := <<"failed">>, unreadable := W}) ->
     #{ok => true, id => Id, status => <<"failed">>, unreadable => W,
       error => <<"Witness couldn't see the paper in this video, so nothing was marked. Ask for it to be filmed again.">>};
+view(Id, #{status := <<"failed">>, kept := true}) ->
+    #{ok => true, id => Id, status => <<"failed">>, kept => true,
+      error => <<"Witness couldn't reach the marking service, so this paper isn't marked yet. The video is kept: mark it again, no need to film it again.">>};
 view(Id, #{status := <<"failed">>}) ->
     #{ok => true, id => Id, status => <<"failed">>, error => <<"This sitting couldn't be marked. Record it again.">>};
 view(Id, #{status := S}) -> #{ok => true, id => Id, status => S}.
@@ -655,7 +734,7 @@ summary(Id, Row) ->
     Qs = case Row of #{result := #{questions := L}} -> L; _ -> [] end,
     Marks = lists:sum([num(maps:get(teacher_marks, Q, maps:get(marks, Q, 0))) || Q <- Qs]),
     OutOf = lists:sum([num(maps:get(out_of, Q, 0)) || Q <- Qs]),
-    Seen = case Row of #{unreadable := W} -> #{unreadable => W}; _ -> #{} end,
+    Seen = case Row of #{unreadable := W} -> #{unreadable => W}; #{kept := true} -> #{kept => true}; _ -> #{} end,
     Seen#{id => Id, student => maps:get(student, Row, <<>>), status => maps:get(status, Row),
       marks => Marks, out_of => OutOf, to_master => length([Q || Q <- Qs, needs_level(Q)]),
       to_review => length([Q || Q <- Qs, not maps:get(reviewed, Q, false)])}.
@@ -709,6 +788,20 @@ now_ms() -> erlang:system_time(millisecond).
 %% a dropped connection left one on the teacher's desk as "Uploading" for good (27 Oct, emulator).
 lapsed(#{status := <<"uploading">>, created_ms := C}) -> now_ms() - C > ?LINK_MS + 300000;
 lapsed(_) -> false.
+
+%% settle(Uid, Id, Row, Host) -> Row: a clip kept past KEEP_MS is dropped (kept false: film it again); a marking that
+%% never came back (the node went away under it) becomes a kept failure after STUCK_MS, so it can be marked again.
+settle(Uid, Id, #{status := <<"failed">>, kept := true, marked_ms := M} = R, Host) ->
+    case now_ms() - M > ?KEEP_MS of
+        true -> ok = Host:drop_clip(Uid, Id), R1 = R#{kept => false}, ok = Host:save(Uid, {sitting, Id}, R1), R1;
+        false -> R
+    end;
+settle(Uid, Id, #{status := <<"marking">>, started_ms := S} = R, Host) ->
+    case now_ms() - S > ?STUCK_MS of
+        true -> R1 = R#{status => <<"failed">>, kept => true, marked_ms => now_ms(), reason => <<"stuck">>}, ok = Host:save(Uid, {sitting, Id}, R1), R1;
+        false -> R
+    end;
+settle(_, _, R, _) -> R.
 
 live({ok, R}) -> case lapsed(R) of true -> none; false -> {ok, R} end;
 live(Other) -> Other.

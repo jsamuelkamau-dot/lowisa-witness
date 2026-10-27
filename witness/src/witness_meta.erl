@@ -143,7 +143,8 @@ http(Key, Path, Mime, Body) ->
     Opts = [{timeout, ?TIMEOUT_MS}, {connect_timeout, 10000}, {ssl, ssl_opts()}],
     Req = {?API ++ Path, [{"authorization", "Bearer " ++ str(Key)}], Mime, Body},
     case httpc:request(post, Req, Opts, [{body_format, binary}]) of
-        {ok, {{_, Code, _}, _, Resp}} when Code >= 200, Code < 300 -> {ok, json:decode(Resp)};
+        {ok, {{_, Code, _}, _, Resp}} when Code >= 200, Code < 300 ->
+            try {ok, json:decode(Resp)} catch _:_ -> {error, {Code, not_json}} end;
         {ok, {{_, Code, _}, _, Resp}} ->
             Msg = try json:decode(Resp) of #{<<"error">> := #{<<"message">> := M}} -> M; _ -> Resp catch _:_ -> Resp end,
             {error, {Code, Msg}};
