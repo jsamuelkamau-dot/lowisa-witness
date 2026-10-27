@@ -42,4 +42,6 @@
 %% Optional: an OpenAI-compatible endpoint serving Muse Spark Open (Baseten, Modal, a school's own server), for exams
 %% marked on open weights; undefined when there is none.
 -callback open_engine() -> #{url := string() | binary(), key := string() | binary(), model := binary()} | undefined.
--optional_callbacks([open_engine/0]).
+%% Optional: a line for the host's own log when something off the request failed (a drawing, the examiner).
+-callback report(Event :: binary(), Why :: term()) -> any().
+-optional_callbacks([open_engine/0, report/2]).

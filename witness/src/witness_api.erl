@@ -231,7 +231,7 @@ route(<<"POST">>, [<<"sitting">>, Id, <<"draw">>], B, Uid, Host) ->
                                     ok -> #{status => <<"done">>, asset => <<"drawn-", (integer_to_binary(N))/binary, ".webp">>, lines => Lines, changed => Ch, at => now_ms()};
                                     _ -> #{status => <<"failed">>}
                                 end;
-                            _ -> #{status => <<"failed">>}
+                            Why -> report(Host, <<"witness.draw_failed">>, Why), #{status => <<"failed">>}
                         end,
                         put_q(Uid, Id, N, fun(X) -> X#{drawn => Drawn} end, Host)
                     end),
@@ -447,7 +447,7 @@ moment(Q) -> case [T || #{t := T} <- maps:get(steps, Q, []), is_number(T)] of []
 examine(Uid, Id, Key, Sitting, Qs, Host) ->
     Ex = case catch (examiner(Host))(Key, Sitting, Qs) of
         {ok, Asks, Cost} -> Host:spend(Uid, <<"witness_examiner">>, Cost), #{status => <<"ready">>, asks => Asks, at => now_ms()};
-        _ -> #{status => <<"failed">>, asks => []}
+        Why -> report(Host, <<"witness.examiner_failed">>, Why), #{status => <<"failed">>, asks => []}
     end,
     case Host:load(Uid, {sitting, Id}) of
         {ok, Row} -> Host:save(Uid, {sitting, Id}, Row#{examiner => Ex});
@@ -491,6 +491,11 @@ put_q(Uid, Id, N, F, Host) ->
             Host:save(Uid, {sitting, Id}, Row#{result => R#{questions => [case X of #{n := N} -> F(X); _ -> X end || X <- Qs]}});
         _ -> ok
     end.
+
+%% Why something off the request failed, for the host's log (never shown to anyone): optional Host:report/2.
+report(Host, Event, Why) ->
+    _ = code:ensure_loaded(Host),
+    case erlang:function_exported(Host, report, 2) of true -> catch Host:report(Event, Why), ok; false -> ok end.
 
 seam(Host, Name, Default) ->
     _ = code:ensure_loaded(Host),

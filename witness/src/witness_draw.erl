@@ -46,13 +46,18 @@ picture_prompt(Lines, Changed) ->
         "Line ", integer_to_binary(Changed), " is the corrected step: underline it in green and put a small green tick\n"
         "beside it. Plain paper, soft daylight, no hands, no people, no logos."]).
 
-run(Key, Q, Sitting) ->
-    Req = #{model => ?SPARK, reasoning => #{effort => <<"medium">>}, max_output_tokens => 4000,
+%% Spark reasons before it writes and the reasoning shares the budget: at 4,000 tokens one call spent 2,858 thinking
+%% and another came back with no lines at all (27 Oct, live in the desktop app). It gets room, and one more try.
+run(Key, Q, Sitting) -> run(Key, Q, Sitting, 2).
+
+run(Key, Q, Sitting, Tries) ->
+    Req = #{model => ?SPARK, reasoning => #{effort => <<"low">>}, max_output_tokens => 12000,
             input => [#{type => message, role => user, content => [#{type => input_text, text => lines_prompt(Q, Sitting)}]}]},
     case witness_meta:responses(Key, Req) of
         {ok, R} ->
             SparkCost = witness_meta:cost({tokens, ?SPARK}, maps:get(<<"usage">>, R, #{})),
             case parse_lines(witness_meta:text_of(R)) of
+                {error, no_lines} when Tries > 1 -> run(Key, Q, Sitting, Tries - 1);
                 {ok, #{lines := Lines, changed := Ch}} ->
                     case witness_meta:image(Key, picture_prompt(Lines, Ch)) of
                         {ok, Bytes, Fmt} -> {ok, #{bytes => Bytes, format => Fmt, lines => Lines, changed => Ch}, SparkCost + witness_meta:cost(image, 1)};

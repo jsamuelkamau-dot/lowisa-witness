@@ -142,8 +142,9 @@
     S.pid = id; S.pile = j;
     var m = await api('GET', '/api/witness/pile/' + id + '/measure');
     S.measure = m.ok ? m : null;
-    var marking = (j.sittings || []).some(function (s) { return s.status === 'marking' || s.status === 'uploading'; });
-    if (marking) poll(); else stopPoll();
+    // an open exam keeps itself current: a student's paper arrives, is marked, its examiner answers come in
+    // (live in the desktop app, 27 Oct: the first paper of a new exam never showed until the exam was reopened)
+    poll();
     return true;
   }
   async function loadPaper(sid) {
