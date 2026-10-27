@@ -25,6 +25,7 @@ Mark     SAM 3.1 follows the ink → the order each answer was written in
            mastered · right answer, wrong thinking · part way · not yet
          plus a one-sentence diagnosis and the second it happened
 Check    a Muse Wonder examiner asks about the student's own step; Voice Transcribe hears the reply
+Record   a dated Proof of Thinking: the steps and their times, the marks, the answers, stills; the video deleted
 Desk     the teacher reviews (least certain first) and writes a focus note on each failed question
 Plan     one mastery level per failed question, checked by an agent before it reaches the student
 Master   the student plays the level; "ask my teacher" sits on every step
@@ -60,6 +61,17 @@ as the work lands.
 | After release: the level's progress, ask-my-teacher threads, verification only when the teacher asks (explain back to Lo, judged by Muse Spark; a fresh paper; explain back to the teacher), and the teacher-issued "Turned around" badge | `witness/src/witness_mastery.erl`, `witness/src/witness_api.erl` | done 27 Oct |
 | The Exam Desk (desktop): exams, papers, the review queue, a replay of how each answer was written, the diagnosis at its moment, the teacher's result, marks and focus note, release | `desk/witness-desk.js`, `scripts/sync_desk.sh` | done 27 Oct |
 
+| The examiner: as soon as a paper is marked, Muse Wonder asks the student about at most two steps they wrote themselves; the student answers out loud (Muse Voice Transcribe) or in writing, and Muse Spark judges whether it is their own reasoning and whether they now understand | `witness/src/witness_examiner.erl`, `phone/witness/Examiner.tsx` | done 27 Oct |
+| The corrected step: Muse Spark writes the corrected working and Muse Image draws it on lined paper, the changed step underlined | `witness/src/witness_draw.erl` | done 27 Oct |
+| The teacher's spoken comment written down as feedback (Voice Transcribe's file door; ffmpeg makes the WAV it takes) | `witness/src/witness_meta.erl`, `witness/src/witness_media.erl` | done 27 Oct |
+| The Proof of Thinking record: dated; every answer's steps and times, the marks and confidence beside the teacher's word, the examiner's questions and answers, a still of the desk at each moment that matters; the video itself deleted | `witness/src/witness_proof.erl`, `phone/witness/Proof.tsx` | done 27 Oct |
+| The student's own replay, stopping at the moment the thinking went wrong | `phone/witness/Proof.tsx` | done 27 Oct |
+| Practical mode: a practical task marked step by step against the teacher's procedure, SAM following the hands and the apparatus | `witness/src/witness_mark.erl`, `witness/src/witness_sitting.erl` | done 27 Oct |
+| A fresh question on paper, watched again: the teacher writes it, the student films it, its marking comes back onto the question it checks | `witness/src/witness_api.erl`, `witness/src/witness_mastery.erl` | done 27 Oct |
+| The pilot's numbers, measured: agreement with the teacher, wrong-thinking catches the teacher kept, marking seconds, the teacher's seconds per paper | `witness/src/witness_measure.erl` | done 27 Oct |
+| Marking on open weights: Muse Spark Open through any OpenAI-compatible endpoint, the same prompt and result | `witness/src/witness_open.erl` | built 27 Oct; live through Meta's endpoint, the hosted open-weight key pending |
+| True clip times: SAM's sampled frames scaled onto the clip's own frame table, read in byte ranges from the stored clip | `witness/src/witness_mp4.erl` | done 27 Oct |
+
 ## What existed before (not in this repository)
 
 LoWisa existed before the event. These parts are used by Witness but were built earlier. They are named here so
@@ -82,7 +94,7 @@ See `docs/existed-before.md` and `docs/integration.md` for how Witness plugs int
 | Read the video, mark the path, diagnose | Muse Spark 1.3 |
 | Examiner, mastery-level agent, self-check | Muse Wonder |
 | Hear spoken replies (25 languages, mixed languages) | Muse Voice Transcribe |
-| Art for the level's real-world setting | Muse Image |
+| Draw the corrected step | Muse Image |
 | The same reading on open weights | Muse Spark Open |
 
 ## Running the probe
