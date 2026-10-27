@@ -47,9 +47,11 @@ http.createServer((req, res) => {
   const route = (req.url || '').split('?')[0];
   if (route === '/' || route === '/index.html') { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); return res.end(PAGE); }
   if (req.url === '/witness-desk.js') { res.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8' }); return res.end(fs.readFileSync(DESK)); }
-  if (!/^\/api\/witness\/[a-z0-9/]+$/.test(req.url || '')) { res.writeHead(404); return res.end(); }
+  // a paper's pictures (still-1.jpg, drawn-2.webp) and the record pass too; nothing outside /api/witness/
+  if (!/^\/api\/witness\/[a-z0-9/._-]+$/.test(req.url || '') || (req.url || '').indexOf('..') >= 0) { res.writeHead(404); return res.end(); }
+  const cap = /\/voice$/.test(route) ? 6 * 1024 * 1024 : 65536;   // a spoken comment is base64 audio
   let body = '';
-  req.on('data', (c) => { body += c; if (body.length > 65536) req.destroy(); });
+  req.on('data', (c) => { body += c; if (body.length > cap) req.destroy(); });
   req.on('end', async () => {
     try {
       const r = await fetch(HOST + req.url, { method: req.method, headers: { authorization: 'Bearer ' + TOKEN, ...(req.method === 'POST' ? { 'content-type': 'application/json' } : {}) },

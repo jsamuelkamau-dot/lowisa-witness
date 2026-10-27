@@ -246,12 +246,12 @@
     if (!qs.length) return '<div class="wd-card wd-sub">This paper is still being marked.</div>';
     var list = qs.map(function (q) {
       var res = q.teacher_result || q.result;
-      return '<div class="wd-row' + (q.n === S.n ? ' on' : '') + '" data-q="' + esc(q.n) + '"><span class="wd-grow">Question ' + esc(q.n) + '</span>' + chip(res) +
+      return '<div class="wd-row' + (q.n === S.n ? ' on' : '') + '" data-q="' + esc(q.n) + '"><span class="wd-grow">' + unit() + ' ' + esc(q.n) + '</span>' + chip(res) +
         (q.reviewed ? '<span class="wd-chip ok">Reviewed</span>' : '') + '</div>';
     }).join('');
     var q = qs.filter(function (x) { return x.n === S.n; })[0] || qs[0];
     S.n = q.n;
-    return '<div class="wd-cols"><div><div class="wd-card"><h3>Questions</h3>' + list +
+    return '<div class="wd-cols"><div><div class="wd-card"><h3>' + (practical() ? 'The procedure' : 'Questions') + '</h3>' + list +
       '<div style="margin-top:10px"><button class="wd-btn" data-act="proof">Proof of Thinking</button></div></div>' + examinerCard(j) + '</div><div>' + questionCard(q) + '</div></div>';
   }
 
@@ -264,17 +264,17 @@
     var res = q.teacher_result || q.result;
     var marks = q.teacher_marks != null ? q.teacher_marks : q.marks;
     var opts = Object.keys(RESULT).map(function (k) { return '<option value="' + k + '"' + (k === res ? ' selected' : '') + '>' + RESULT[k] + '</option>'; }).join('');
-    return '<div class="wd-card"><div class="wd-row" style="cursor:default;padding:0"><span class="wd-grow"><h3 style="margin:0">Question ' + esc(q.n) +
-      (q.final_answer ? ' · answer ' + esc(q.final_answer) : '') + '</h3></span>' + chip(q.result) +
+    return '<div class="wd-card"><div class="wd-row" style="cursor:default;padding:0"><span class="wd-grow"><h3 style="margin:0">' + unit() + ' ' + esc(q.n) +
+      (q.final_answer ? (practical() ? ' · result ' : ' · answer ') + esc(q.final_answer) : '') + '</h3></span>' + chip(q.result) +
       '<span class="wd-sub">' + Math.round((q.confidence || 0) * 100) + '% sure</span></div>' +
-      '<div style="margin:10px 0 4px;display:flex;gap:8px;align-items:center"><b style="font-size:12px">How it was written</b>' +
+      '<div style="margin:10px 0 4px;display:flex;gap:8px;align-items:center"><b style="font-size:12px">' + (practical() ? 'What was done' : 'How it was written') + '</b>' +
       '<button class="wd-btn" data-act="replay">Replay</button></div><div class="wd-steps" id="wdSteps">' + steps + '</div>' +
       (q.diagnosis ? '<div class="wd-diag"><b>Where the thinking went wrong' + (q.moment_s != null ? ' (' + fmtT(q.moment_s) + ')' : '') + '</b><div>' + esc(q.diagnosis) + '</div></div>' : '') +
       stillOf(q) + '</div>' + drawnCard(q) + '<div class="wd-card"><h3>Your word</h3>' +
       '<label for="wdRes">Result</label><select id="wdRes" data-f="res">' + opts + '</select>' +
       '<label for="wdMarks">Marks out of ' + esc(q.out_of) + '</label><input id="wdMarks" data-f="marks" type="number" min="0" max="' + esc(q.out_of) + '" value="' + esc(marks) + '">' +
       '<label for="wdFocus">What should this student\'s mastery level focus on?</label>' +
-      '<textarea id="wdFocus" data-f="focus" rows="3" placeholder="Make them see why only the divisor flips. They like cooking.">' + esc(q.focus || '') + '</textarea>' +
+      '<textarea id="wdFocus" data-f="focus" rows="3" placeholder="What to make them see, and something they care about (a sport, a job they want).">' + esc(q.focus || '') + '</textarea>' +
       '<div class="wd-sub">Witness builds one level for each question a student didn\'t master, from their own working and your note.</div>' +
       '<label for="wdComment">Your comment for the student</label>' +
       '<textarea id="wdComment" data-f="comment" rows="3" placeholder="Say it or write it: what they did well, and the one thing to change.">' + esc(S.draft.comment != null ? S.draft.comment : ((q.comment && q.comment.text) || '')) + '</textarea>' +
@@ -411,12 +411,16 @@
   }
 
   // ---------------------------------------------------------------- the examiner, the drawn step, the spoken comment, the record
+  // a practical task's lines are the procedure's steps, not questions
+  function practical() { return !!(S.pile && S.pile.pile && S.pile.pile.kind === 'practical'); }
+  function unit() { return practical() ? 'Step' : 'Question'; }
+
   function examinerCard(j) {
     var ex = j.examiner; if (!ex) return '';
     if (ex.status === 'failed' || !(ex.asks || []).length) return '';
     var rows = ex.asks.map(function (a) {
       var ans = a.answer, v = ans && ans.verdict;
-      return '<div style="margin-top:10px"><b>Q' + esc(a.n) + ':</b> ' + esc(a.ask) + (a.wrote ? '<div class="wd-ink" style="margin:4px 0">' + esc(a.wrote) + '</div>' : '') +
+      return '<div style="margin-top:10px"><b>' + (practical() ? 'Step ' : 'Q') + esc(a.n) + ':</b> ' + esc(a.ask) + (a.wrote ? '<div class="wd-ink" style="margin:4px 0">' + esc(a.wrote) + '</div>' : '') +
         (ans ? '<div>' + (ans.spoken ? 'Said: ' : 'Wrote: ') + '<i>' + esc(ans.text) + '</i></div>' +
           (v ? '<div class="wd-sub">' + (v.own_work ? '<span class="wd-chip ok">Their own reasoning</span> ' : '<span class="wd-chip err">Not clearly their own</span> ') +
             (v.understood ? '<span class="wd-chip ok">Understands it now</span> ' : '<span class="wd-chip">Not yet understood</span> ') + esc(v.why || '') + '</div>' : '')
