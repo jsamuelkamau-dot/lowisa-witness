@@ -16,3 +16,10 @@
   - About $0.02 and 15 s.
   - With low effort and a plain "is it right" prompt, it called the same answer right. Marking must ask about the method and use medium effort.
 - **Erlang TLS** refuses `*.meta.ai` by default (hostname_check_failed); the HTTPS match function is required.
+
+## 27 Oct: the whole sitting through Erlang (`harness/sitting_check.escript`)
+
+- Uploading, then running SAM ("word", forward) and Spark (marking, medium effort) side by side takes 44–53 s and about **$0.08** for the 44 s clip.
+- Muse Spark caught the right answer reached by wrong thinking on every run, with the moment at 33–36 s. Q1's crossed-out 3/8 was read on every run.
+- **SAM "word" tracked forward finds the written lines in writing order**: 6 of 6 on one run, 5 of 6 on another. Tracked both ways, first sightings came earlier than the ink.
+- SAM sees a line once it reads as a word, a few seconds after the ink, so steps are placed by page order and time, with a penalty for leaving one of SAM's lines empty, all questions in one pass.

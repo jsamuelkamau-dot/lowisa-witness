@@ -14,7 +14,7 @@
 %%% Keys come from the host (witness_host); nothing here reads configuration.
 %%%-------------------------------------------------------------------
 -module(witness_meta).
--export([chat_request/3, ssl_opts/0, upload/4, sam_video/3, read_video/5, responses/2, text_of/1, cost/2, multipart/4]).
+-export([chat_request/3, ssl_opts/0, upload/4, sam_video/3, sam_video/4, read_video/5, responses/2, text_of/1, cost/2, multipart/4]).
 
 -define(API, "https://api.meta.ai/v1").
 -define(TIMEOUT_MS, 300000).
@@ -55,8 +55,14 @@ multipart(Boundary, Name, Mime, Bytes) ->
 
 %% SAM 3.1 takes one short noun phrase per request ("number", "paper"); "handwriting" and "text" found nothing
 %% on our test clip, "number" followed digits in the order they were written. At most 16 objects a frame.
-sam_video(Key, FileId, Prompt) ->
-    Req = #{model => <<"sam-3.1">>, metadata => #{include_confidence => <<"true">>},
+sam_video(Key, FileId, Prompt) -> sam_video(Key, FileId, Prompt, #{}).
+
+%% Opts: direction (forward | backward | both, default both). Tracked both ways, a line's first sighting is
+%% pulled earlier than its ink, so the timeline asks for forward.
+sam_video(Key, FileId, Prompt, Opts) ->
+    Meta0 = #{include_confidence => <<"true">>},
+    Meta = case maps:get(direction, Opts, both) of both -> Meta0; D -> Meta0#{propagation_direction => atom_to_binary(D)} end,
+    Req = #{model => <<"sam-3.1">>, metadata => Meta,
             input => [#{type => message, role => user, content => [
                 #{type => input_text, text => Prompt}, #{type => input_video, file_id => FileId}]}]},
     case responses(Key, Req) of
