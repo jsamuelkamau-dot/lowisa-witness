@@ -551,10 +551,12 @@ the_students_own_step_is_cut_from_the_page_test() ->
     setup(), persistent_term:put({witness_api_on, stills}, true),
     Box = #{x1 => 100, y1 => 200, x2 => 400, y2 => 240, w => 720, h => 1280},
     persistent_term:put(witness_api_result, #{questions => [#{n => 3, result => <<"right_answer_wrong_thinking">>, moment_s => 35, confidence => 0.9,
-        marks => 0, out_of => 2, steps => [#{t => 33, wrote => <<"16/64">>, box => Box}, #{t => 38, wrote => <<"= 1/4">>}]}], pauses => [], lines => [], cost_usd => 0.0}),
+        marks => 0, out_of => 2, steps => [#{t => 33, wrote => <<"16/64">>, box => Box, line => 7}, #{t => 38, wrote => <<"= 1/4">>}]}], pauses => [],
+        lines => [#{id => 7, start_s => 36.0, end_s => 41.0, box => Box}], cost_usd => 0.0}),
     {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10}, <<"u1">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"u1">>),
-    ?assertMatch([{cropped, _, 34.5, Box}], [E || E = {cropped, _, _, _} <- events()]),
+    %% cut once SAM saw the line stop growing (41 s), not at Spark's step time: the ink is there
+    ?assertMatch([{cropped, _, 42.0, Box}], [E || E = {cropped, _, _, _} <- events()]),
     {200, #{result := #{stills := [#{n := 3, asset := <<"still-3.jpg">>, step := <<"step-3.jpg">>}]}}} = r(<<"GET">>, [<<"sitting">>, S], #{}, <<"u1">>),
     ?assertMatch({200, #{url := _}}, r(<<"GET">>, [<<"sitting">>, S, <<"asset">>, <<"step-3.jpg">>], #{}, <<"u1">>)),
     persistent_term:erase({witness_api_on, stills}).

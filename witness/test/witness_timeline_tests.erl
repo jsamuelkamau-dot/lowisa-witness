@@ -75,7 +75,18 @@ late_sighting_keeps_page_order_test() ->
 
 merge_all_reads_the_page_once_test() ->
     Lines = [#{id => I, start_s => float(10 * I), end_s => float(10 * I + 5), box => b(1, 2, 100 * I)} || I <- [1, 2, 3]],
-    Q1 = [#{t => 14, wrote => <<"q1">>, crossed_out => false}, #{t => 24, wrote => <<"q1b">>, crossed_out => false}],
+    Q1 = [#{t => 14, wrote => <<"q1">>, crossed_out => false}, #{t => 24, wrote => <<"r1">>, crossed_out => false}],
     Q2 = [#{t => 25, wrote => <<"q2">>, crossed_out => false}],
     [[A, B], [C]] = witness_timeline:merge_all([Q1, Q2], Lines),
     ?assertEqual({1, 2, 3}, {maps:get(line, A), maps:get(line, B), maps:get(line, C)}).
+
+%% 28 Oct, live: Spark wrote one line as two steps, the second going on with the first; the second took the next line
+%% down (question 2's) and the student's own step was cut from the wrong place
+a_step_that_goes_on_writing_stays_on_its_line_test() ->
+    L = fun(Id, Y, A, B) -> #{id => Id, start_s => A, end_s => B, box => #{x1 => 0, y1 => Y, x2 => 10, y2 => Y + 20}} end,
+    Lines = [L(0, 186, 2.1, 24.5), L(1, 253, 9.6, 15.2), L(2, 301, 12.4, 15.5)],
+    Steps = [#{t => 3, wrote => <<"1. 16/64 = 1/4">>}, #{t => 6, wrote => <<"1. 16/64 = 1/4 (the 6s cancel)">>},
+             #{t => 11, wrote => <<"2. 1/2 = 2/4">>}, #{t => 14, wrote => <<"2/4 + 1/4 = 3/4">>}],
+    ?assertEqual([0, 0, 1, 2], [maps:get(line, S) || S <- witness_timeline:merge(Steps, Lines)]),
+    ?assertEqual([], witness_timeline:merge([], Lines)).
+

@@ -20,6 +20,8 @@
 -define(GROWTH, 0.02).
 %% What leaving one of SAM's lines without any step costs, in seconds of time distance.
 -define(SKIP, 3.0).
+%% A step that goes on writing the step before comes this soon after it, in seconds.
+-define(GOES_ON, 10).
 
 lines(Records, Times) ->
     ById = lists:foldl(fun({F, Id, B}, Acc) -> maps:update_with(Id, fun(L) -> [{F, B} | L] end, [{F, B}], Acc) end,
@@ -42,9 +44,13 @@ merge(Steps, Lines0) ->
     %% Steps come in writing order and a page is written top to bottom, so steps are laid on the lines in page
     %% order (never back up the page) and time chooses among the lines in reach (27 Oct, live: SAM sees a line
     %% once it reads as a word, seconds after the ink, so placing by time alone put 6 steps on one line).
+    %% A step that only goes on writing the one before it ("1. 16/64 = 1/4", then "1. 16/64 = 1/4 (the 6s cancel)") is
+    %% the same line growing: it takes no line of its own and stays on the one before (28 Oct, live: it took the next
+    %% line down, question 2's, and the replay and the student's own step pointed there).
     Lines = list_to_tuple(lists:sort(fun(A, B) -> y(A) =< y(B) end, Lines0)),
-    Timed = list_to_tuple([S || S = #{t := T} <- Steps, is_number(T)]),
-    place(Steps, align(Timed, Lines), Lines).
+    Goes = goes_on(Steps),
+    Timed = list_to_tuple([S || {S = #{t := T}, false} <- lists:zip(Steps, Goes), is_number(T)]),
+    place(lists:zip(Steps, Goes), align(Timed, Lines), Lines, none).
 
 %% The whole page in one pass: question 2's first line comes after question 1's last.
 merge_all(PerQuestion, Lines) ->
@@ -53,11 +59,21 @@ merge_all(PerQuestion, Lines) ->
 split(_, []) -> [];
 split(All, [N | Ns]) -> {A, B} = lists:split(N, All), [A | split(B, Ns)].
 
-place([], _, _) -> [];
-place([S = #{t := T} | Rest], [J | Plan], Lines) when is_number(T) ->
+place([], _, _, _) -> [];
+place([{S, true} | Rest], Plan, Lines, {Id, Box} = Prev) -> [S#{line => Id, box => Box} | place(Rest, Plan, Lines, Prev)];
+place([{S = #{t := T}, _} | Rest], [J | Plan], Lines, _) when is_number(T) ->
     L = element(J, Lines),
-    [S#{line => maps:get(id, L), box => maps:get(box, L)} | place(Rest, Plan, Lines)];
-place([S | Rest], Plan, Lines) -> [S | place(Rest, Plan, Lines)].
+    [S#{line => maps:get(id, L), box => maps:get(box, L)} | place(Rest, Plan, Lines, {maps:get(id, L), maps:get(box, L)})];
+place([{S, _} | Rest], Plan, Lines, Prev) -> [S | place(Rest, Plan, Lines, Prev)].
+
+%% goes_on(Steps) -> [boolean()]: whether each step's words begin with the whole of the step before (and add to them).
+%% Within ?GOES_ON seconds: a line written again whole and carried on further down the page comes later than that.
+goes_on([]) -> [];
+goes_on(Steps) ->
+    Ws = [{string:trim(maps:get(wrote, S, <<>>)), maps:get(t, S, null)} || S <- Steps],
+    [false | [P =/= <<>> andalso byte_size(T) > byte_size(P) andalso binary:longest_common_prefix([T, P]) =:= byte_size(P)
+              andalso is_number(Tp) andalso is_number(Tt) andalso Tt - Tp =< ?GOES_ON
+              || {{P, Tp}, {T, Tt}} <- lists:zip(lists:droplast(Ws), tl(Ws))]].
 
 %% align(Steps, Lines) -> [line index per step], never decreasing, least total cost (dynamic programming).
 %% Every line SAM found holds ink some step wrote, so a line left without a step costs ?SKIP seconds' worth.

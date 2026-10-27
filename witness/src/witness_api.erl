@@ -543,10 +543,14 @@ own_step(Uid, Id, Url, N, Result, Host) ->
         {M, _} when is_number(M) -> hd(lists:sort(fun(A, B) -> abs(maps:get(t, A) - M) =< abs(maps:get(t, B) - M) end, Placed));
         _ -> lists:last(Placed)
     end,
+    %% cut once SAM saw the line stop growing (28 Oct, live: Spark put the step at 6 s, SAM saw its ink start at 9.6 s,
+    %% and a cut at 7.5 s was blank paper); a step with no line of its own is cut a little after Spark's time
+    Lines = maps:from_list([{maps:get(id, L), L} || L <- maps:get(lines, Result, []), is_map(L), is_map_key(id, L)]),
     case Pick of
         none -> #{};
-        #{t := At, box := Box} ->
-            case catch (cropper(Host))(Url, At + 1.5, Box) of
+        #{t := St, box := Box} = P ->
+            At = case maps:get(maps:get(line, P, none), Lines, undefined) of #{end_s := E} when is_number(E) -> E + 1.0; _ -> St + 1.5 end,
+            case catch (cropper(Host))(Url, At, Box) of
                 {ok, Jpeg} ->
                     File = <<"step-", (integer_to_binary(N))/binary, ".jpg">>,
                     case Host:put_asset(Uid, <<Id/binary, "/", File/binary>>, Jpeg, <<"image/jpeg">>) of ok -> #{step => File}; _ -> #{} end;

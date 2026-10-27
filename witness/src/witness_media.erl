@@ -50,7 +50,8 @@ step(Url, Seconds, #{x1 := X1, y1 := Y1, x2 := X2, y2 := Y2, w := W, h := H}) wh
     PadX = (X2 - X1) * 0.08 + 12, PadY = (Y2 - Y1) * 0.6 + 12,
     L = max(0, round(X1 - PadX)), T = max(0, round(Y1 - PadY)),
     R = min(W, round(X2 + PadX)), B = min(H, round(Y2 + PadY)),
-    Crop = io_lib:format("crop=~b:~b:~b:~b,scale='min(900,iw)':-2", [R - L, B - T, L, T]),
+    %% the box is in SAM's frame (W x H); scaled to the video's own size, so a frame of another size cuts the same place
+    Crop = io_lib:format("crop=iw*~b/~b:ih*~b/~b:iw*~b/~b:ih*~b/~b,scale='min(900,iw)':-2", [R - L, W, B - T, H, L, W, T, H]),
     Out = tmp(".jpg"),
     try
         At = float_to_list(float(Seconds), [{decimals, 2}]),
