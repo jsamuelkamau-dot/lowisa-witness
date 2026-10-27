@@ -233,7 +233,7 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
             {notice ? <Text style={s.notice} accessibilityRole="alert" testID="witness-kept">{notice}</Text> : null}
             {unsent ? (
               <>
-                <Btn label="Send my recording again" onPress={() => send(unsent)} primary testID="witness-resend" />
+                <Btn label={notice ? 'Send my recording' : 'Send my recording again'} onPress={() => send(unsent)} primary testID="witness-resend" />
                 <View style={{height: 8}} />
               </>
             ) : null}
