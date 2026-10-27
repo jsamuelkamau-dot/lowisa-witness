@@ -2,7 +2,7 @@
 -include_lib("eunit/include/eunit.hrl").
 -behaviour(witness_host).
 -export([meta_key/0, put_url/4, get_url/2, drop_clip/2, save/3, load/2, list/2, spend/3, run/1, marker/0, checker/0, design/2, judger/0,
-         put_asset/4, asset_url/2, stiller/0, examiner/0, answer_judge/0, drawer/0, hearer/0]).
+         put_asset/4, asset_url/2, stiller/0, examiner/0, answer_judge/0, drawer/0, hearer/0, open_engine/0, open_marker/0]).
 
 %% An in-memory host: rows and events in an ets table, marking run at once, a canned marker.
 meta_key() -> <<"test-key">>.
@@ -55,11 +55,14 @@ answer_judge() -> fun(<<"test-key">>, #{k := K}, _Q, Text) -> ev({answer_judged,
 drawer() -> fun(<<"test-key">>, #{n := N}, Sitting) -> ev({drawn, N, [maps:get(n, Q) || Q <- maps:get(questions, Sitting, [])]}), {ok, #{bytes => <<"RIFFwebp">>, format => <<"webp">>, lines => [<<"16/64">>, <<"= 1/4 (divide by 16)">>], changed => 2}, 0.019} end.
 hearer() -> fun(<<"test-key">>, <<"audio-bytes">>) -> {ok, <<"Because I divided by the common factor 16.">>, 4.0}; (_, _) -> {error, unreadable} end.
 
+open_engine() -> case on(open) of true -> #{url => <<"https://open.example.com/v1">>, key => <<"k">>, model => <<"muse-spark-open">>}; false -> undefined end.
+open_marker() -> fun(#{model := M}, #{url := Url}, Sitting) -> ev({open_marked, M, Url, maps:get(engine, Sitting)}), {ok, #{questions => [#{n => 1, result => <<"mastered">>}], pauses => [], lines => [], engine => M, cost_usd => 0.07}} end.
+
 ev(E) -> ets:insert(witness_api_t, {erlang:unique_integer([monotonic]), E}).
 events() -> [E || {K, E} <- lists:sort(ets:tab2list(witness_api_t)), is_integer(K)].
 
 setup() -> case ets:whereis(witness_api_t) of undefined -> ok; _ -> ets:delete(witness_api_t) end, ets:new(witness_api_t, [named_table, public]), persistent_term:put(witness_api_fail, false), persistent_term:erase(witness_api_result),
-           [persistent_term:erase({witness_api_on, K}) || K <- [stills, examiner]].
+           [persistent_term:erase({witness_api_on, K}) || K <- [stills, examiner, open]].
 
 r(M, P, B, Uid) -> witness_api:route(M, P, B, Uid, ?MODULE).
 
@@ -105,7 +108,7 @@ refusals_test() ->
 
 sitting_of_cleans_input_test() ->
     S = witness_api:sitting_of(#{<<"questions">> => [#{<<"n">> => 1, <<"marks">> => 999}, #{<<"n">> => <<"x">>}, 7], <<"scheme">> => 5}),
-    ?assertEqual(#{questions => [#{n => 1, text => <<>>, marks => 1}], scheme => <<>>, level => <<"any level">>, kind => <<"paper">>}, S),
+    ?assertEqual(#{questions => [#{n => 1, text => <<>>, marks => 1}], scheme => <<>>, level => <<"any level">>, kind => <<"paper">>, engine => <<"meta">>}, S),
     ?assertMatch(#{kind := <<"practical">>}, witness_api:sitting_of(#{<<"kind">> => <<"practical">>})),
     ?assertMatch(#{kind := <<"paper">>}, witness_api:sitting_of(#{<<"kind">> => <<"anything">>})).
 
@@ -349,3 +352,19 @@ practical_mode_marks_the_procedure_test() ->
     ?assertNotEqual(nomatch, binary:match(Prompt, <<"practical task">>)),
     ?assertNotEqual(nomatch, binary:match(Prompt, <<"Read the thermometer at eye level">>)),
     ?assertEqual(nomatch, binary:match(witness_mark:prompt(Sitting#{kind => <<"paper">>}), <<"practical task">>)).
+
+open_weights_engine_test() ->
+    setup(),
+    {201, #{id := P}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Open">>, <<"engine">> => <<"open">>}, <<"teacher">>),
+    %% no open endpoint on this host: Muse Spark marks it, and the result says so
+    {201, #{id := S1}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"pile">> => P}, <<"teacher">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S1, <<"mark">>], #{}, <<"teacher">>),
+    ?assertMatch({200, #{result := #{engine := <<"muse-spark-1.3">>}}}, r(<<"GET">>, [<<"sitting">>, S1], #{}, <<"teacher">>)),
+    %% with one, Spark Open marks it from the same signed link
+    persistent_term:put({witness_api_on, open}, true),
+    {201, #{id := S2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"pile">> => P}, <<"teacher">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S2, <<"mark">>], #{}, <<"teacher">>),
+    [{open_marked, <<"muse-spark-open">>, Url, <<"open">>}] = [E || E = {open_marked, _, _, _} <- events()],
+    ?assertEqual(<<"https://store.example.com/", S2/binary, "?signed">>, Url),
+    ?assertMatch({200, #{result := #{engine := <<"muse-spark-open">>}}}, r(<<"GET">>, [<<"sitting">>, S2], #{}, <<"teacher">>)),
+    ?assertMatch({200, #{engine := <<"muse-spark-open">>}}, r(<<"GET">>, [<<"sitting">>, S2, <<"proof">>], #{}, <<"teacher">>)).

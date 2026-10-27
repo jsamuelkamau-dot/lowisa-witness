@@ -34,6 +34,8 @@
 %%%   GET  sitting/<id>/proof       -> the Proof of Thinking record (witness_proof)
 %%%   GET  pile/<id>/measure        -> the exam's measured numbers (witness_measure)
 %%%   A pile with kind "practical" marks a practical task: its questions are the procedure's steps.
+%%%   A pile with engine "open" is marked by Muse Spark Open on open weights (witness_open) when the host has an
+%%%   endpoint for it (Host:open_engine/0), else by Muse Spark; the result names the engine that marked it.
 %%%   When a paper is marked Witness also keeps a still at each moment that matters and Muse Wonder writes the
 %%%   examiner's two questions about the student's own steps (witness_examiner).
 %%%   POST design                   {requestId, messages: [system, user], reasoningEffort?, maxOutputTokens?}
@@ -147,7 +149,7 @@ route(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], B, Uid0, Host) ->
                     Sitting = case {maps:get(sitting_in, Row, undefined), maps:get(pile, Row, undefined)} of
                         {#{} = In, _} -> In;                                   %% a fresh question carries its own
                         {_, undefined} -> sitting_of(B);
-                        {_, PileId} -> case Host:load(Uid, {pile, PileId}) of {ok, P} -> maps:with([questions, scheme, level, kind], P); none -> sitting_of(B) end
+                        {_, PileId} -> case Host:load(Uid, {pile, PileId}) of {ok, P} -> maps:with([questions, scheme, level, kind, engine], P); none -> sitting_of(B) end
                     end,
                     Fps = case maps:get(<<"fps">>, B, 30) of F when is_number(F), F > 0, F =< 240 -> F; _ -> 30 end,
                     ok = Host:save(Uid, {sitting, Id}, Row#{status => <<"marking">>, started_ms => now_ms()}),
@@ -494,6 +496,8 @@ seam(Host, Name, Default) ->
     _ = code:ensure_loaded(Host),
     case erlang:function_exported(Host, Name, 0) of true -> Host:Name(); false -> Default end.
 
+open_engine(Host) -> _ = code:ensure_loaded(Host), case erlang:function_exported(Host, open_engine, 0) of true -> Host:open_engine(); false -> undefined end.
+open_marker(Host) -> seam(Host, open_marker, fun witness_open:mark/3).
 stiller(Host) -> seam(Host, stiller, case witness_media:available() of true -> fun witness_media:still/2; false -> fun(_, _) -> {error, no_ffmpeg} end end).
 examiner(Host) -> seam(Host, examiner, fun witness_examiner:run/3).
 answer_judge(Host) -> seam(Host, answer_judge, fun witness_examiner:judge_run/4).
@@ -584,7 +588,14 @@ mark(Uid, Id, Key, Fps, Sitting, Host) ->
     UrlR = Host:get_url(Uid, Id),
     Outcome = try
         case UrlR of
-            {ok, Url} -> (marker(Host))(Key, #{url => Url, fps => Fps}, Sitting);
+            {ok, Url} ->
+                case {maps:get(engine, Sitting, <<"meta">>), open_engine(Host)} of
+                    {<<"open">>, #{} = Cfg} -> (open_marker(Host))(Cfg, #{url => Url}, Sitting);
+                    _ -> case (marker(Host))(Key, #{url => Url, fps => Fps}, Sitting) of
+                             {ok, R0} -> {ok, maps:merge(#{engine => <<"muse-spark-1.3">>}, R0)};
+                             E0 -> E0
+                         end
+                end;
             E -> E
         end
     catch C:R -> {error, {C, R}}
@@ -617,7 +628,7 @@ marker(Host) ->
 view(Id, #{status := S, result := R} = Row) when S =:= <<"marked">>; S =:= <<"released">> ->
     V = #{ok => true, id => Id, status => S, student => maps:get(student, Row, <<>>),
           result => #{questions => maps:get(questions, R, []), pauses => maps:get(pauses, R, []), lines => maps:get(lines, R, []),
-                      stills => maps:get(stills, R, [])}},
+                      stills => maps:get(stills, R, []), engine => maps:get(engine, R, <<"muse-spark-1.3">>)}},
     case maps:get(examiner, Row, undefined) of undefined -> V; Ex -> V#{examiner => examiner_view(Ex, teacher)} end;
 view(Id, #{status := <<"failed">>}) ->
     #{ok => true, id => Id, status => <<"failed">>, error => <<"This sitting couldn't be marked. Record it again.">>};
@@ -656,7 +667,8 @@ sitting_of(B) ->
              N <- [maps:get(<<"n">>, Q, 0)], is_integer(N)],
     #{questions => Qs, scheme => clean(maps:get(<<"scheme">>, B, <<>>), 8000),
       level => case clean(maps:get(<<"level">>, B, <<>>), 60) of <<>> -> <<"any level">>; L -> L end,
-      kind => case maps:get(<<"kind">>, B, <<"paper">>) of <<"practical">> -> <<"practical">>; _ -> <<"paper">> end}.
+      kind => case maps:get(<<"kind">>, B, <<"paper">>) of <<"practical">> -> <<"practical">>; _ -> <<"paper">> end,
+      engine => case maps:get(<<"engine">>, B, <<"meta">>) of <<"open">> -> <<"open">>; _ -> <<"meta">> end}.
 
 marks(N) when is_integer(N), N >= 0, N =< 100 -> N;
 marks(_) -> 1.

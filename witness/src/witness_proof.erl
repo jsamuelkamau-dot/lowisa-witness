@@ -24,7 +24,7 @@ record(Id, Row, Pile, Viewer) ->
       questions => Qs, examiner => Asks,
       marks => lists:sum([num(maps:get(marks, Q, 0)) || Q <- Qs]), out_of => lists:sum([num(maps:get(out_of, Q, 0)) || Q <- Qs]),
       pauses => maps:get(pauses, R, []), lines => length(maps:get(lines, R, [])),
-      video => <<"deleted once the paper was marked">>,
+      video => <<"deleted once the paper was marked">>, engine => maps:get(engine, R, <<"muse-spark-1.3">>),
       read_by => [<<"SAM 3.1 (the ink, line by line)">>, <<"Muse Spark (the marking)">>, <<"Muse Wonder (the examiner)">>,
                   <<"Muse Voice Transcribe (spoken answers)">>]}.
 

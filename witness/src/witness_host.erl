@@ -39,3 +39,7 @@
 %% to it. Name is <<SittingId/binary, "/", File/binary>>; they go when the paper's rows go.
 -callback put_asset(Uid :: binary(), Name :: binary(), Bytes :: binary(), Mime :: binary()) -> ok | {error, term()}.
 -callback asset_url(Uid :: binary(), Name :: binary()) -> {ok, Url :: binary()} | {error, term()}.
+%% Optional: an OpenAI-compatible endpoint serving Muse Spark Open (Baseten, Modal, a school's own server), for exams
+%% marked on open weights; undefined when there is none.
+-callback open_engine() -> #{url := string() | binary(), key := string() | binary(), model := binary()} | undefined.
+-optional_callbacks([open_engine/0]).

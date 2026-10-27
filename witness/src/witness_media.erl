@@ -10,7 +10,7 @@
 %%% ffmpeg runs as a program with its arguments (no shell); it must be on the PATH. available/0 says whether it is.
 %%%-------------------------------------------------------------------
 -module(witness_media).
--export([wav/1, still/2, available/0]).
+-export([wav/1, still/2, last/1, frames/3, available/0]).
 
 -define(TIMEOUT_MS, 60000).
 -define(MAX_AUDIO, 25 * 1024 * 1024).
@@ -42,6 +42,34 @@ still(Url, Seconds) when is_number(Seconds), Seconds >= 0 ->
         _ = file:delete(Out)
     end;
 still(_, _) -> {error, bad_time}.
+
+%% last(Url) -> {ok, Jpeg}: the clip's final frame (the finished page, whatever the frame rate).
+last(Url) ->
+    Out = tmp(".jpg"),
+    try
+        case run(["-v", "error", "-y", "-sseof", "-0.4", "-i", str(Url), "-frames:v", "1", "-vf", "scale=640:-2", "-q:v", "6", Out]) of
+            ok -> file:read_file(Out);
+            E -> E
+        end
+    after
+        _ = file:delete(Out)
+    end.
+
+%% frames(Url, Fps, Max) -> {ok, [Jpeg]}: the clip as stills, Fps a second, at most Max (the open-weight marking reads
+%% these; frame I is at I / Fps seconds).
+frames(Url, Fps, Max) when is_number(Fps), Fps > 0, is_integer(Max), Max > 0 ->
+    Dir = tmp(".frames"),
+    ok = file:make_dir(Dir),
+    try
+        Pattern = filename:join(Dir, "f%04d.jpg"),
+        case run(["-v", "error", "-y", "-i", str(Url), "-vf", "fps=" ++ float_to_list(float(Fps), [{decimals, 3}]) ++ ",scale=640:-2",
+                  "-frames:v", integer_to_list(Max), "-q:v", "6", Pattern]) of
+            ok -> {ok, [B || F <- lists:sort(filelib:wildcard(filename:join(Dir, "f*.jpg"))), {ok, B} <- [file:read_file(F)]]};
+            E -> E
+        end
+    after
+        [file:delete(F) || F <- filelib:wildcard(filename:join(Dir, "*"))], file:del_dir(Dir)
+    end.
 
 run(Args) ->
     case os:find_executable("ffmpeg") of

@@ -202,6 +202,9 @@
       '<label for="wdKind">What students do</label><select id="wdKind" data-f="kind">' +
       '<option value="paper"' + (d.kind !== 'practical' ? ' selected' : '') + '>An exam on paper (Witness follows the ink)</option>' +
       '<option value="practical"' + (d.kind === 'practical' ? ' selected' : '') + '>A practical task (Witness follows the hands and the apparatus)</option></select>' +
+      '<label for="wdEngine">Marked by</label><select id="wdEngine" data-f="engine">' +
+      '<option value="meta"' + (d.engine !== 'open' ? ' selected' : '') + '>Muse Spark, with SAM 3.1 following the ink</option>' +
+      '<option value="open"' + (d.engine === 'open' ? ' selected' : '') + '>Muse Spark Open, on open weights</option></select>' +
       '<label for="wdQs">' + (d.kind === 'practical' ? 'The procedure\'s steps, one a line, with the marks in brackets' : 'Questions, one a line, with the marks in brackets') + '</label>' +
       '<textarea id="wdQs" data-f="qs" rows="6" placeholder="1. 3/4 ÷ 1/2 (2)&#10;2. Solve 2x + 6 = 14 (2)&#10;3. Simplify 16/64 (2)">' + esc(d.qs || '') + '</textarea>' +
       '<div class="wd-sub">Leave it empty to let Witness read the questions printed on the paper.</div>' +
@@ -506,7 +509,7 @@
       '<div class="wd-sub">' + esc(p.exam || '') + (p.level ? ' · ' + esc(p.level) : '') + ' · ' + esc(p.student || '') + ' · sat ' + esc(day(p.sat_ms)) + ' · ' + num(p.marks) + ' of ' + num(p.out_of) + ' marks</div></span>' +
       '<button class="wd-btn" data-act="print">Print</button></div></div>' + qs +
       (asks ? '<div class="wd-card"><h3>The examiner\'s questions</h3>' + asks + '</div>' : '') +
-      '<div class="wd-sub" style="margin:8px 2px">Read by ' + esc((p.read_by || []).join(', ')) + '. The video was ' + esc(p.video || '') + '.</div>';
+      '<div class="wd-sub" style="margin:8px 2px">Marked by ' + esc(p.engine || '') + '. Read by ' + esc((p.read_by || []).join(', ')) + '. The video was ' + esc(p.video || '') + '.</div>';
   }
   function measured() {
     var m = S.measure; if (!m || !m.marked) return '';
@@ -533,7 +536,7 @@
     var d = S.draft;
     if (!String(d.title || '').trim()) { say('Give the exam a name.', 'err'); return render(); }
     S.busy = true;
-    var j = await api('POST', '/api/witness/pile', { title: d.title, level: d.level || '', questions: questionsOf(d.qs), scheme: d.scheme || '', kind: d.kind === 'practical' ? 'practical' : 'paper' });
+    var j = await api('POST', '/api/witness/pile', { title: d.title, level: d.level || '', questions: questionsOf(d.qs), scheme: d.scheme || '', kind: d.kind === 'practical' ? 'practical' : 'paper', engine: d.engine === 'open' ? 'open' : 'meta' });
     S.busy = false;
     if (!j.ok) { say(errText(j), 'err'); return render(); }
     S.draft = {};
