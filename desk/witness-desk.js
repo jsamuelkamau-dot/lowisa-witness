@@ -126,7 +126,9 @@
   // Esc and Back go one step up; from the exams list they close the desk
   function back() {
     if (S.view === 'proof') { S.view = 'paper'; render(); }
-    else if (S.view === 'paper') { stopPlay(); stopRec(); S.view = 'pile'; render(); }
+    // back on the exam it is read again and keeps itself current (28 Oct, live: a paper sent while the teacher
+    // reviewed another never showed, because the exam's refresh stopped when the paper opened)
+    else if (S.view === 'paper') { stopPlay(); stopRec(); S.view = 'pile'; render(); loadPile(S.pid).then(render); }
     else if (S.view === 'pile' || S.view === 'new') { stopPoll(); S.view = 'home'; loadPiles().then(render); }
     else close();
   }
