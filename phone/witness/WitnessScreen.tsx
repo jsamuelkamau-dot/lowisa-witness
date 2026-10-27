@@ -40,7 +40,7 @@ type Stage =
   | {kind: 'proof'; paper: Paper}
   | {kind: 'paper'; paper: Paper};
 
-interface Native { uploadFile?(uri: string, url: string, contentType: string): Promise<number>; takeVideo?(maxSeconds: number): Promise<VideoFile | null>; smallVideo?(uri: string): Promise<VideoFile | null> }
+interface Native { uploadFile?(uri: string, url: string, contentType: string): Promise<number>; takeVideo?(maxSeconds: number): Promise<VideoFile | null>; smallVideo?(uri: string): Promise<VideoFile | null>; lastClip?(sinceMs: number): Promise<VideoFile | null> }
 const docs = () => (NativeModules as Record<string, unknown>).LoWisaDocuments as Native | undefined;
 
 /**
@@ -72,6 +72,31 @@ export async function sendClip(uri: string, put: string, mime: string, wait = (m
   return status;
 }
 
+/**
+ * The exam a camera recording is being made for, kept until the paper is sent. Android stops the app when a camera
+ * grant given "Only this time" lapses while the camera app records (about a minute in, 27 Oct, emulator), and the
+ * recording the camera app still wrote is found again from this when Witness opens.
+ */
+export const PENDING_KEY = 'lowisa-witness-pending-v1';
+export interface PendingSit { code: string; title: string; level: string; name: string; at: number }
+/** A kept recording is offered for six hours (the cache drops an unsent clip after a day). */
+const PENDING_MS = 6 * 3600 * 1000;
+
+export function readPending(storage: MirrorStorage, now = Date.now()): PendingSit | null {
+  try {
+    const p = JSON.parse(storage.getItem(PENDING_KEY) || 'null') as PendingSit | null;
+    return p && typeof p.code === 'string' && typeof p.at === 'number' && now - p.at < PENDING_MS ? p : null;
+  } catch (e) { return null; }
+}
+
+/** The recording a stopped app left behind for the pending exam, or null. */
+export async function keptRecording(storage: MirrorStorage, now = Date.now()): Promise<{pending: PendingSit; clip: VideoFile} | null> {
+  const p = readPending(storage, now);
+  const n = docs();
+  if (!p || !n || !n.lastClip) return null;
+  try { const clip = await n.lastClip(p.at - 2000); return clip ? {pending: p, clip} : null; } catch (e) { return null; }
+}
+
 export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessEnv & CustomEnv; storage: MirrorStorage; onBack(): void; onOpenPath?(pathId: string): void}): React.JSX.Element {
   const [stage, setStage] = useState<Stage>({kind: 'home'});
   const [code, setCode] = useState('');
@@ -81,6 +106,20 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
   const [busy, setBusy] = useState(false);
   // a recording that did not go up stays here: a weak connection costs a second try, not the paper sat again
   const [unsent, setUnsent] = useState<VideoFile | null>(null);
+  const [notice, setNotice] = useState('');
+
+  // a recording the camera app made while Android stopped this app (PENDING_KEY): offered as soon as Witness opens
+  useEffect(() => {
+    let live = true;
+    keptRecording(storage).then(k => {
+      if (!live || !k) return;
+      setName(k.pending.name);
+      setUnsent(k.clip);
+      setStage({kind: 'joined', code: k.pending.code, title: k.pending.title, level: k.pending.level});
+      setNotice('Your recording was kept. Send it to your teacher.');
+    });
+    return () => { live = false; };
+  }, [storage]);
 
   const loadMine = useCallback(async () => {
     const r = await witness.mine(env);
@@ -103,10 +142,13 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
     setError('');
     if (!name.trim()) { setError('Write your name as your teacher knows it.'); return; }
     let file: VideoFile | null = null;
+    const n = docs();
+    const camera = source === 'camera' && !!n && !!n.takeVideo;
+    if (camera) storage.setItem(PENDING_KEY, JSON.stringify({code: stage.code, title: stage.title, level: stage.level, name: name.trim(), at: Date.now()}));
     // the camera app records up to ten minutes here (the composer's own recordings stop at two)
-    try { const n = docs(); file = source === 'camera' && n && n.takeVideo ? await n.takeVideo(RECORD_SECONDS) : await chooseVideo(source); }
-    catch (e) { setError('The camera could not start. Try choosing a video you already recorded.'); return; }
-    if (!file) return;
+    try { file = camera ? await n!.takeVideo!(RECORD_SECONDS) : await chooseVideo(source); }
+    catch (e) { if (camera) storage.removeItem(PENDING_KEY); setError('The camera could not start. Try choosing a video you already recorded.'); return; }
+    if (!file) { if (camera) storage.removeItem(PENDING_KEY); return; }
     if (!doorMime(file.mime, file.name)) { setError('Witness reads MP4 and MOV videos. Record it again with the camera here.'); return; }
     await send(file);
   };
@@ -115,6 +157,7 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
     if (stage.kind !== 'joined') return;
     setError('');
     if (!name.trim()) { setError('Write your name as your teacher knows it.'); return; }
+    setNotice('');
     const {title} = stage;
     const again = (why: string, file: VideoFile) => { setStage({kind: 'joined', code: stage.code, title, level: stage.level}); setUnsent(file); setError(why); };
     setStage({kind: 'sending', title, line: 'Making the video smaller to send…'});
@@ -130,6 +173,7 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
       return;
     }
     setUnsent(null);
+    storage.removeItem(PENDING_KEY);
     setStage({kind: 'sending', title, line: 'Witness is reading how you worked…'});
     const marked = await witness.mark(env, started.value.id, PHONE_FPS);
     if (!marked.ok) { setStage({kind: 'joined', code: stage.code, title, level: stage.level}); setError(marked.error); return; }
@@ -186,6 +230,7 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
             <TextInput value={name} onChangeText={setName} placeholder="Your name, as your teacher knows it" maxLength={80}
               style={s.input} accessibilityLabel="Your name" testID="witness-name" />
             <Text style={s.how}>Prop your phone above the desk so it sees the whole page and your hand. Keep faces out of view. Then work through the paper and stop the recording when you finish.</Text>
+            {notice ? <Text style={s.notice} accessibilityRole="alert" testID="witness-kept">{notice}</Text> : null}
             {unsent ? (
               <>
                 <Btn label="Send my recording again" onPress={() => send(unsent)} primary testID="witness-resend" />
@@ -429,6 +474,7 @@ const s = StyleSheet.create({
   input: {borderWidth: 1, borderColor: '#cfcdc5', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 16, marginBottom: 10, color: '#1f1e1c'},
   code: {fontSize: 22, letterSpacing: 4, textAlign: 'center'},
   error: {color: '#c62828', fontSize: 14, marginBottom: 10},
+  notice: {color: '#1b5e20', fontSize: 14, fontWeight: '600', marginBottom: 10},
   row: {paddingVertical: 10, borderTopWidth: 1, borderTopColor: '#efeeea'},
   rowTop: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'},
   rowTitle: {fontSize: 15, fontWeight: '600', color: '#1f1e1c'},
