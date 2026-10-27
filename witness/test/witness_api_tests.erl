@@ -1,7 +1,8 @@
 -module(witness_api_tests).
 -include_lib("eunit/include/eunit.hrl").
 -behaviour(witness_host).
--export([meta_key/0, put_url/4, get_url/2, drop_clip/2, save/3, load/2, list/2, spend/3, run/1, marker/0, checker/0, design/2, judger/0]).
+-export([meta_key/0, put_url/4, get_url/2, drop_clip/2, save/3, load/2, list/2, spend/3, run/1, marker/0, checker/0, design/2, judger/0,
+         put_asset/4, asset_url/2, stiller/0, examiner/0, answer_judge/0, drawer/0, hearer/0]).
 
 %% An in-memory host: rows and events in an ets table, marking run at once, a canned marker.
 meta_key() -> <<"test-key">>.
@@ -35,10 +36,30 @@ checker() ->
                problems => [#{lesson => 3, fix => <<"use 19/95, where cancelling the 9s gives 1/5, not 1/5... make it fail">>}]}, 0.04}
     end.
 
+put_asset(Uid, Name, Bytes, Mime) -> ets:insert(witness_api_t, {{asset, Uid, Name}, {Bytes, Mime}}), ok.
+asset_url(Uid, Name) -> case ets:lookup(witness_api_t, {asset, Uid, Name}) of [_] -> {ok, <<"https://store.example.com/a/", Name/binary>>}; [] -> {error, none} end.
+
+%% The new seams stay off unless a test turns them on, so the older tests' event lists are unchanged.
+on(K) -> persistent_term:get({witness_api_on, K}, false).
+stiller() -> fun(Url, T) -> case on(stills) of true -> ev({still, Url, T}), {ok, <<255, 216, "jpeg">>}; false -> {error, off} end end.
+examiner() ->
+    fun(<<"test-key">>, Sitting, Qs) ->
+        case on(examiner) of
+            true -> ev({examiner, maps:get(level, Sitting, none), [maps:get(n, Q) || Q <- Qs]}),
+                    {ok, [#{k => 1, n => 3, step => 1, wrote => <<"16/64 = 1/4">>, ask => <<"You wrote 16/64 = 1/4. Why did you cross out the 6s?">>},
+                          #{k => 2, n => 1, step => 1, wrote => <<"3/2">>, ask => <<"How did you get 3/2?">>}], 0.02};
+            false -> {error, off}
+        end
+    end.
+answer_judge() -> fun(<<"test-key">>, #{k := K}, _Q, Text) -> ev({answer_judged, K, Text}), {ok, #{own_work => true, understood => binary:match(Text, <<"factor">>) =/= nomatch, why => <<"w">>}, 0.002} end.
+drawer() -> fun(<<"test-key">>, #{n := N}, Sitting) -> ev({drawn, N, [maps:get(n, Q) || Q <- maps:get(questions, Sitting, [])]}), {ok, #{bytes => <<"RIFFwebp">>, format => <<"webp">>, lines => [<<"16/64">>, <<"= 1/4 (divide by 16)">>], changed => 2}, 0.019} end.
+hearer() -> fun(<<"test-key">>, <<"audio-bytes">>) -> {ok, <<"Because I divided by the common factor 16.">>, 4.0}; (_, _) -> {error, unreadable} end.
+
 ev(E) -> ets:insert(witness_api_t, {erlang:unique_integer([monotonic]), E}).
 events() -> [E || {K, E} <- lists:sort(ets:tab2list(witness_api_t)), is_integer(K)].
 
-setup() -> case ets:whereis(witness_api_t) of undefined -> ok; _ -> ets:delete(witness_api_t) end, ets:new(witness_api_t, [named_table, public]), persistent_term:put(witness_api_fail, false), persistent_term:erase(witness_api_result).
+setup() -> case ets:whereis(witness_api_t) of undefined -> ok; _ -> ets:delete(witness_api_t) end, ets:new(witness_api_t, [named_table, public]), persistent_term:put(witness_api_fail, false), persistent_term:erase(witness_api_result),
+           [persistent_term:erase({witness_api_on, K}) || K <- [stills, examiner]].
 
 r(M, P, B, Uid) -> witness_api:route(M, P, B, Uid, ?MODULE).
 
@@ -84,7 +105,9 @@ refusals_test() ->
 
 sitting_of_cleans_input_test() ->
     S = witness_api:sitting_of(#{<<"questions">> => [#{<<"n">> => 1, <<"marks">> => 999}, #{<<"n">> => <<"x">>}, 7], <<"scheme">> => 5}),
-    ?assertEqual(#{questions => [#{n => 1, text => <<>>, marks => 1}], scheme => <<>>, level => <<"any level">>}, S).
+    ?assertEqual(#{questions => [#{n => 1, text => <<>>, marks => 1}], scheme => <<>>, level => <<"any level">>, kind => <<"paper">>}, S),
+    ?assertMatch(#{kind := <<"practical">>}, witness_api:sitting_of(#{<<"kind">> => <<"practical">>})),
+    ?assertMatch(#{kind := <<"paper">>}, witness_api:sitting_of(#{<<"kind">> => <<"anything">>})).
 
 q(N, Res, Conf) -> #{n => N, result => Res, confidence => Conf, marks => case Res of <<"mastered">> -> 2; _ -> 0 end, out_of => 2,
                     diagnosis => <<"d">>, moment_s => 3, steps => []}.
@@ -245,3 +268,84 @@ after_release_the_teacher_chooses_and_issues_the_badge_test() ->
     ?assertMatch(#{mastery := #{status := <<"badge">>, badge := #{issued := true}, thread := [_, _]}}, Mine3),
     ?assertNot(maps:is_key(explain, maps:get(mastery, Mine3))),
     ?assertEqual(#{status => <<"marked">>}, maps:get(fresh, maps:get(mastery, Mine3))).   %% the fresh marks are the teacher's
+
+%% The examiner's two questions, answered out loud or in writing; the stills; the drawn step; the spoken comment;
+%% the Proof of Thinking record; the measured numbers.
+examiner_proof_draw_voice_measure_test() ->
+    setup(),
+    [persistent_term:put({witness_api_on, K}, true) || K <- [stills, examiner]],
+    persistent_term:put(witness_api_result, #{questions => [
+        #{n => 1, result => <<"mastered">>, confidence => 0.95, marks => 2, out_of => 2, steps => [#{t => 9, wrote => <<"3/2">>, crossed_out => false}]},
+        #{n => 3, result => <<"right_answer_wrong_thinking">>, confidence => 0.9, marks => 0, out_of => 2, moment_s => 35,
+          diagnosis => <<"Cancelled the 6s.">>, steps => [#{t => 34, wrote => <<"16/64 = 1/4">>, crossed_out => false}]}],
+        pauses => [], lines => [], cost_usd => 0.08}),
+    {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions">>, <<"level">> => <<"Year 7">>,
+        <<"questions">> => [#{<<"n">> => 1, <<"text">> => <<"3/4 ÷ 1/2"/utf8>>}, #{<<"n">> => 3, <<"text">> => <<"Simplify 16/64">>}]}, <<"teacher">>),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amara">>}, <<"stud">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"stud">>),
+    %% a still at each moment: where the thinking went wrong (35 s), else the question's last step (9 s)
+    ?assertEqual([9, 35], lists:sort([T || {still, _, T} <- events()])),
+    [{examiner, <<"Year 7">>, [1, 3]}] = [E || E = {examiner, _, _} <- events()],
+    ?assert(lists:member({spend, <<"teacher">>, <<"witness_examiner">>, 0.02}, events())),
+    %% before release the student sees no marks, only the two questions about their own steps
+    {200, #{papers := [Before]}} = r(<<"GET">>, [<<"mine">>], #{}, <<"stud">>),
+    ?assertMatch(#{status := <<"with_teacher">>, title := <<"Fractions">>, examiner := #{asks := [#{k := 1, answered := false}, #{k := 2}]}}, Before),
+    ?assertNot(maps:is_key(result, Before)),
+    %% answered out loud (heard) and in writing; once each; never by anyone else
+    {200, #{examiner := #{asks := [#{answered := true}, #{answered := false}]}}} =
+        r(<<"POST">>, [<<"sitting">>, S, <<"answer">>], #{<<"k">> => 1, <<"audio">> => base64:encode(<<"audio-bytes">>), <<"mime">> => <<"audio/mp4">>}, <<"stud">>),
+    ?assert(lists:member({spend, <<"teacher">>, <<"witness_transcribe">>, witness_meta:cost(transcribe, 4.0)}, events())),
+    ?assertMatch({409, #{code := <<"answered">>}}, r(<<"POST">>, [<<"sitting">>, S, <<"answer">>], #{<<"k">> => 1, <<"text">> => <<"again">>}, <<"stud">>)),
+    ?assertMatch({400, #{code := <<"not_heard">>}}, r(<<"POST">>, [<<"sitting">>, S, <<"answer">>], #{<<"k">> => 2, <<"audio">> => base64:encode(<<"noise">>)}, <<"stud">>)),
+    ?assertMatch({404, _}, r(<<"POST">>, [<<"sitting">>, S, <<"answer">>], #{<<"k">> => 2, <<"text">> => <<"x">>}, <<"other">>)),
+    {200, _} = r(<<"POST">>, [<<"sitting">>, S, <<"answer">>], #{<<"k">> => 2, <<"text">> => <<"I multiplied by the reciprocal.">>}, <<"stud">>),
+    {200, TV} = r(<<"GET">>, [<<"sitting">>, S], #{}, <<"teacher">>),
+    ?assertMatch(#{examiner := #{asks := [#{answer := #{spoken := true, text := <<"Because I divided by the common factor 16.">>, verdict := #{own_work := true, understood := true}}},
+                                          #{answer := #{spoken := false, verdict := #{understood := false}}}]}}, TV),
+    ?assertMatch(#{result := #{stills := [#{n := 1, asset := <<"still-1.jpg">>}, #{n := 3, t := 35}]}}, TV),
+    %% the teacher draws the corrected step and speaks a comment; the review keeps the written comment and desk time
+    {202, #{drawn := #{status := <<"drawing">>}}} = r(<<"POST">>, [<<"sitting">>, S, <<"draw">>], #{<<"n">> => 3}, <<"teacher">>),
+    [{drawn, 3, [1, 3]}] = [E || E = {drawn, _, _} <- events()],
+    ?assertMatch({404, _}, r(<<"POST">>, [<<"sitting">>, S, <<"draw">>], #{<<"n">> => 3}, <<"stud">>)),
+    {200, #{text := <<"Because I divided by the common factor 16.">>}} = r(<<"POST">>, [<<"sitting">>, S, <<"voice">>], #{<<"n">> => 3, <<"audio">> => base64:encode(<<"audio-bytes">>)}, <<"teacher">>),
+    {200, _} = r(<<"POST">>, [<<"sitting">>, S, <<"review">>], #{<<"n">> => 3, <<"comment">> => <<"Divide by 16, not the 6s.">>, <<"desk_s">> => 40}, <<"teacher">>),
+    {200, _} = r(<<"POST">>, [<<"sitting">>, S, <<"review">>], #{<<"n">> => 1, <<"result">> => <<"part_way">>, <<"desk_s">> => 20}, <<"teacher">>),
+    {200, #{result := #{questions := [_, Q3]}}} = r(<<"GET">>, [<<"sitting">>, S], #{}, <<"teacher">>),
+    ?assertMatch(#{drawn := #{status := <<"done">>, asset := <<"drawn-3.webp">>, changed := 2}, comment := #{text := <<"Divide by 16, not the 6s.">>, spoken := true}}, Q3),
+    %% pictures: the teacher at once; the student only once the paper is released; never a path outside the paper
+    {200, #{url := <<"https://store.example.com/a/", S:16/binary, "/drawn-3.webp">>}} = r(<<"GET">>, [<<"sitting">>, S, <<"asset">>, <<"drawn-3.webp">>], #{}, <<"teacher">>),
+    ?assertMatch({404, _}, r(<<"GET">>, [<<"sitting">>, S, <<"asset">>, <<"still-3.jpg">>], #{}, <<"stud">>)),
+    ?assertMatch({404, _}, r(<<"GET">>, [<<"sitting">>, S, <<"asset">>, <<"../x">>], #{}, <<"teacher">>)),
+    ?assertMatch({404, _}, r(<<"GET">>, [<<"sitting">>, S, <<"proof">>], #{}, <<"stud">>)),
+    {200, _} = r(<<"POST">>, [<<"pile">>, P, <<"release">>], #{}, <<"teacher">>),
+    {200, #{url := _}} = r(<<"GET">>, [<<"sitting">>, S, <<"asset">>, <<"still-3.jpg">>], #{}, <<"stud">>),
+    %% the Proof of Thinking record: the teacher reads the verdicts, the student their own answers
+    {200, Proof} = r(<<"GET">>, [<<"sitting">>, S, <<"proof">>], #{}, <<"teacher">>),
+    ?assertMatch(#{record := <<"proof_of_thinking">>, exam := <<"Fractions">>, student := <<"Amara">>, video := <<"deleted once the paper was marked">>,
+                   questions := [#{n := 1, question := <<"3/4 ÷ 1/2"/utf8>>, still := <<"still-1.jpg">>, teacher_result := <<"part_way">>},
+                                 #{n := 3, steps := [#{t := 34, wrote := <<"16/64 = 1/4">>}], still := <<"still-3.jpg">>, comment := <<"Divide by 16, not the 6s.">>,
+                                   drawn := #{lines := [_, _]}}],
+                   examiner := [#{k := 1, answer := #{verdict := _}}, _]}, Proof),
+    {200, Mine} = r(<<"GET">>, [<<"sitting">>, S, <<"proof">>], #{}, <<"stud">>),
+    ?assertMatch(#{examiner := [#{k := 1, answered := true, answer := #{text := _}}, _]}, Mine),
+    ?assertNot(maps:is_key(verdict, maps:get(answer, hd(maps:get(examiner, Mine))))),
+    %% the measured numbers
+    {200, M} = r(<<"GET">>, [<<"pile">>, P, <<"measure">>], #{}, <<"teacher">>),
+    ?assertMatch(#{papers := 1, marked := 1, questions := 2, reviewed := 2, teacher_agreed := 1, agreement := 0.5,
+                   changed_by_teacher := [#{n := 1, witness := <<"mastered">>, teacher := <<"part_way">>}],
+                   wrong_thinking_caught := 1, wrong_thinking_kept_by_teacher := 1,
+                   teacher_seconds_per_paper := #{n := 1, mean := 60.0}, examiner_asks := 2, examiner_answered := 2, examiner_own_work := 2}, M),
+    ?assertMatch({404, _}, r(<<"GET">>, [<<"pile">>, P, <<"measure">>], #{}, <<"stud">>)).
+
+practical_mode_marks_the_procedure_test() ->
+    setup(),
+    {201, #{id := P}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Heating water">>, <<"kind">> => <<"practical">>, <<"level">> => <<"Grade 8 science">>,
+        <<"questions">> => [#{<<"n">> => 1, <<"text">> => <<"Measure 100 ml of water">>, <<"marks">> => 2}, #{<<"n">> => 2, <<"text">> => <<"Read the thermometer at eye level">>}]}, <<"teacher">>),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"pile">> => P}, <<"teacher">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"teacher">>),
+    [{marked, _, _, Sitting}] = [E || E = {marked, _, _, _} <- events()],
+    ?assertMatch(#{kind := <<"practical">>, questions := [#{n := 1, text := <<"Measure 100 ml of water">>}, _]}, Sitting),
+    Prompt = witness_mark:prompt(Sitting),
+    ?assertNotEqual(nomatch, binary:match(Prompt, <<"practical task">>)),
+    ?assertNotEqual(nomatch, binary:match(Prompt, <<"Read the thermometer at eye level">>)),
+    ?assertEqual(nomatch, binary:match(witness_mark:prompt(Sitting#{kind => <<"paper">>}), <<"practical task">>)).

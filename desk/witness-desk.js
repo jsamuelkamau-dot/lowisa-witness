@@ -10,7 +10,8 @@
 (function () {
   'use strict';
 
-  var S = { on: false, view: 'home', piles: [], pid: '', pile: null, sid: '', paper: null, n: null, msg: null, busy: false, draft: {}, timer: null, play: null };
+  var S = { on: false, view: 'home', piles: [], pid: '', pile: null, sid: '', paper: null, n: null, msg: null, busy: false, draft: {}, timer: null, play: null,
+            opened: 0, assets: {}, proof: null, measure: null, rec: null, drawTimer: null };
   var ipc = function () { return window.__lowisaWitnessIpc; };
   var uid = function () { try { return localStorage.getItem('lowisa-user-id') || localStorage.getItem('lowisa-userId') || ''; } catch (e) { return ''; } };
   var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
@@ -124,7 +125,8 @@
   }
   // Esc and Back go one step up; from the exams list they close the desk
   function back() {
-    if (S.view === 'paper') { stopPlay(); S.view = 'pile'; render(); }
+    if (S.view === 'proof') { S.view = 'paper'; render(); }
+    else if (S.view === 'paper') { stopPlay(); stopRec(); S.view = 'pile'; render(); }
     else if (S.view === 'pile' || S.view === 'new') { stopPoll(); S.view = 'home'; loadPiles().then(render); }
     else close();
   }
@@ -138,6 +140,8 @@
     var j = await api('GET', '/api/witness/pile/' + id);
     if (!j.ok) { say(errText(j), 'err'); return false; }
     S.pid = id; S.pile = j;
+    var m = await api('GET', '/api/witness/pile/' + id + '/measure');
+    S.measure = m.ok ? m : null;
     var marking = (j.sittings || []).some(function (s) { return s.status === 'marking' || s.status === 'uploading'; });
     if (marking) poll(); else stopPoll();
     return true;
@@ -145,7 +149,10 @@
   async function loadPaper(sid) {
     var j = await api('GET', '/api/witness/sitting/' + sid);
     if (!j.ok) { say(errText(j), 'err'); return false; }
+    if (S.sid !== sid) S.opened = Date.now();
     S.sid = sid; S.paper = j;
+    var drawing = ((j.result && j.result.questions) || []).some(function (q) { return q.drawn && q.drawn.status === 'drawing'; });
+    if (drawing && !S.drawTimer) S.drawTimer = setTimeout(function () { S.drawTimer = null; if (S.view === 'paper' && S.sid === sid) loadPaper(sid).then(render); }, 4000);
     return true;
   }
   function poll() {
@@ -167,9 +174,10 @@
       (S.view !== 'home' ? '<button class="wd-btn" data-act="back">Back</button>' : '') +
       '<button class="wd-btn" data-act="close" aria-label="Close the Exam Desk">Close</button></div>';
     var msg = S.msg ? '<div class="wd-msg ' + (S.msg.kind === 'err' ? 'err' : '') + '" role="status">' + esc(S.msg.text) + '</div>' : '';
-    var body = S.view === 'new' ? viewNew() : S.view === 'pile' ? viewPile() : S.view === 'paper' ? viewPaper() : viewHome();
+    var body = S.view === 'new' ? viewNew() : S.view === 'pile' ? viewPile() : S.view === 'paper' ? viewPaper() : S.view === 'proof' ? viewProof() : viewHome();
     p.innerHTML = head + '<div class="wd-body">' + msg + body + '</div>';
     S.msg = null;
+    fillAssets(p);
     if (S.view === 'paper' && S.play && S.play.pending) { S.play.pending = false; runPlay(); }
   }
 
@@ -191,7 +199,10 @@
     return '<div class="wd-card" style="max-width:720px">' +
       '<label for="wdTitle">Exam name</label><input id="wdTitle" data-f="title" value="' + esc(d.title || '') + '" placeholder="Fractions quiz, Year 7">' +
       '<label for="wdLevel">Level</label><input id="wdLevel" data-f="level" value="' + esc(d.level || '') + '" placeholder="Year 7, university first year, CPA part 1">' +
-      '<label for="wdQs">Questions, one a line, with the marks in brackets</label>' +
+      '<label for="wdKind">What students do</label><select id="wdKind" data-f="kind">' +
+      '<option value="paper"' + (d.kind !== 'practical' ? ' selected' : '') + '>An exam on paper (Witness follows the ink)</option>' +
+      '<option value="practical"' + (d.kind === 'practical' ? ' selected' : '') + '>A practical task (Witness follows the hands and the apparatus)</option></select>' +
+      '<label for="wdQs">' + (d.kind === 'practical' ? 'The procedure\'s steps, one a line, with the marks in brackets' : 'Questions, one a line, with the marks in brackets') + '</label>' +
       '<textarea id="wdQs" data-f="qs" rows="6" placeholder="1. 3/4 ÷ 1/2 (2)&#10;2. Solve 2x + 6 = 14 (2)&#10;3. Simplify 16/64 (2)">' + esc(d.qs || '') + '</textarea>' +
       '<div class="wd-sub">Leave it empty to let Witness read the questions printed on the paper.</div>' +
       '<label for="wdScheme">Your mark scheme</label><textarea id="wdScheme" data-f="scheme" rows="6" placeholder="Q1: 1 mark for multiplying by the reciprocal, 1 for 3/2.">' + esc(d.scheme || '') + '</textarea>' +
@@ -220,7 +231,7 @@
     var released = j.pile && j.pile.released_ms;
     var code = j.pile && j.pile.code ? '<div class="wd-card"><b>Join code: <span style="font-size:18px;letter-spacing:3px">' + esc(j.pile.code) + '</span></b>' +
       '<div class="wd-sub">Students enter it in the LoWisa phone app, then record their own paper. Or record each paper yourself.</div></div>' : '';
-    return code + nums + '<div class="wd-cols"><div class="wd-card"><h3>Papers</h3>' + papers + '</div>' +
+    return code + nums + measured() + '<div class="wd-cols"><div class="wd-card"><h3>Papers</h3>' + papers + '</div>' +
       '<div class="wd-card"><h3>To review: what needs you first</h3>' + queue + '</div></div>' +
       '<div style="margin-top:6px">' + (released ? '<span class="wd-chip ok">Released to students</span>' :
         '<button class="wd-btn wd-main" data-act="release">Release marks</button> <span class="wd-sub">Students see their marks; every question they didn\'t master becomes their next mastery level.</span>') + '</div>';
@@ -237,7 +248,8 @@
     }).join('');
     var q = qs.filter(function (x) { return x.n === S.n; })[0] || qs[0];
     S.n = q.n;
-    return '<div class="wd-cols"><div class="wd-card"><h3>Questions</h3>' + list + '</div><div>' + questionCard(q) + '</div></div>';
+    return '<div class="wd-cols"><div><div class="wd-card"><h3>Questions</h3>' + list +
+      '<div style="margin-top:10px"><button class="wd-btn" data-act="proof">Proof of Thinking</button></div></div>' + examinerCard(j) + '</div><div>' + questionCard(q) + '</div></div>';
   }
 
   function questionCard(q) {
@@ -255,12 +267,16 @@
       '<div style="margin:10px 0 4px;display:flex;gap:8px;align-items:center"><b style="font-size:12px">How it was written</b>' +
       '<button class="wd-btn" data-act="replay">Replay</button></div><div class="wd-steps" id="wdSteps">' + steps + '</div>' +
       (q.diagnosis ? '<div class="wd-diag"><b>Where the thinking went wrong' + (q.moment_s != null ? ' (' + fmtT(q.moment_s) + ')' : '') + '</b><div>' + esc(q.diagnosis) + '</div></div>' : '') +
-      '</div><div class="wd-card"><h3>Your word</h3>' +
+      stillOf(q) + '</div>' + drawnCard(q) + '<div class="wd-card"><h3>Your word</h3>' +
       '<label for="wdRes">Result</label><select id="wdRes" data-f="res">' + opts + '</select>' +
       '<label for="wdMarks">Marks out of ' + esc(q.out_of) + '</label><input id="wdMarks" data-f="marks" type="number" min="0" max="' + esc(q.out_of) + '" value="' + esc(marks) + '">' +
       '<label for="wdFocus">What should this student\'s mastery level focus on?</label>' +
       '<textarea id="wdFocus" data-f="focus" rows="3" placeholder="Make them see why only the divisor flips. They like cooking.">' + esc(q.focus || '') + '</textarea>' +
       '<div class="wd-sub">Witness builds one level for each question a student didn\'t master, from their own working and your note.</div>' +
+      '<label for="wdComment">Your comment for the student</label>' +
+      '<textarea id="wdComment" data-f="comment" rows="3" placeholder="Say it or write it: what they did well, and the one thing to change.">' + esc(S.draft.comment != null ? S.draft.comment : ((q.comment && q.comment.text) || '')) + '</textarea>' +
+      '<div style="margin-top:6px;display:flex;gap:8px;align-items:center"><button class="wd-btn" data-act="speak">' + (S.rec ? 'Stop and write it down' : 'Speak it') + '</button>' +
+      '<span class="wd-sub">' + (S.rec ? 'Listening… speak your comment.' : 'Muse Voice Transcribe writes down what you say; you can edit it before saving.') + '</span></div>' +
       '<div style="margin-top:10px"><button class="wd-btn wd-main" data-act="save">Save</button></div></div>' +
       masteryCard(q);
   }
@@ -341,6 +357,7 @@
   function onInput(e) {
     var f = e.target && e.target.getAttribute('data-f');
     if (f) S.draft[f] = e.target.value;
+    if (f === 'kind' && e.type === 'change') render();   // a practical's lines are the procedure's steps
   }
   async function onClick(e) {
     var t = e.target.closest('[data-act],[data-pile],[data-paper],[data-q]');
@@ -353,6 +370,10 @@
     if (act === 'release') return release();
     if (act === 'save') return save();
     if (act === 'replay') return runPlay();
+    if (act === 'draw') return draw();
+    if (act === 'speak') return speak();
+    if (act === 'proof') return openProof();
+    if (act === 'print') { try { window.print(); } catch (e) { /* no printer */ } return; }
     if (act === 'verify') return masteryDo('verify', checks());
     if (act === 'reply') return masteryDo('reply', { text: S.draft.reply || '' });
     if (act === 'badge') return masteryDo('badge', { issue: true, note: S.draft.badgeNote || '' });
@@ -386,6 +407,120 @@
     render();
   }
 
+  // ---------------------------------------------------------------- the examiner, the drawn step, the spoken comment, the record
+  function examinerCard(j) {
+    var ex = j.examiner; if (!ex) return '';
+    if (ex.status === 'failed' || !(ex.asks || []).length) return '';
+    var rows = ex.asks.map(function (a) {
+      var ans = a.answer, v = ans && ans.verdict;
+      return '<div style="margin-top:10px"><b>Q' + esc(a.n) + ':</b> ' + esc(a.ask) + (a.wrote ? '<div class="wd-ink" style="margin:4px 0">' + esc(a.wrote) + '</div>' : '') +
+        (ans ? '<div>' + (ans.spoken ? 'Said: ' : 'Wrote: ') + '<i>' + esc(ans.text) + '</i></div>' +
+          (v ? '<div class="wd-sub">' + (v.own_work ? '<span class="wd-chip ok">Their own reasoning</span> ' : '<span class="wd-chip err">Not clearly their own</span> ') +
+            (v.understood ? '<span class="wd-chip ok">Understands it now</span> ' : '<span class="wd-chip">Not yet understood</span> ') + esc(v.why || '') + '</div>' : '')
+          : '<div class="wd-sub">Not answered yet.</div>') + '</div>';
+    }).join('');
+    return '<div class="wd-card"><h3>The examiner\'s questions</h3><div class="wd-sub">Muse Wonder asked about steps the student wrote; they answered out loud or in writing.</div>' + rows + '</div>';
+  }
+  function stillOf(q) {
+    var st = ((S.paper && S.paper.result && S.paper.result.stills) || []).filter(function (x) { return x.n === q.n; })[0];
+    if (!st) return '';
+    return '<div style="margin-top:10px"><b style="font-size:12px">The desk at ' + fmtT(st.t) + '</b><img data-asset="' + esc(st.asset) + '" alt="The desk at ' + fmtT(st.t) + ', question ' + esc(q.n) + '" style="display:block;width:100%;max-width:420px;border-radius:8px;margin-top:4px;background:#f4efe2;min-height:60px"></div>';
+  }
+  function drawnCard(q) {
+    var res = q.teacher_result || q.result;
+    if (res === 'mastered' && !q.drawn) return '';
+    var d = q.drawn || {};
+    var inner = d.status === 'done' ? '<img data-asset="' + esc(d.asset) + '" alt="The corrected working: ' + esc((d.lines || []).join(', ')) + '" style="display:block;width:100%;max-width:420px;border-radius:8px;background:#f4efe2;min-height:60px">' +
+        '<div class="wd-sub" style="margin-top:6px">' + (d.lines || []).map(esc).join(' · ') + '</div><div style="margin-top:6px"><button class="wd-btn" data-act="draw">Draw it again</button></div>'
+      : d.status === 'drawing' ? '<div class="wd-sub">Muse Spark is writing the corrected working and Muse Image is drawing it…</div>'
+      : '<div class="wd-sub">' + (d.status === 'failed' ? 'That drawing did not come back. ' : '') + 'The student sees it with their marks: their own working, with the step that changes underlined.</div>' +
+        '<div style="margin-top:6px"><button class="wd-btn" data-act="draw">Draw the corrected step</button></div>';
+    return '<div class="wd-card"><h3>The step, corrected</h3>' + inner + '</div>';
+  }
+  // pictures come through the desk's door as short-lived links, fetched once per paper
+  function fillAssets(p) {
+    Array.prototype.forEach.call(p.querySelectorAll('img[data-asset]'), function (img) {
+      var key = S.sid + '/' + img.getAttribute('data-asset');
+      if (S.assets[key]) { img.src = S.assets[key]; return; }
+      api('GET', '/api/witness/sitting/' + S.sid + '/asset/' + img.getAttribute('data-asset')).then(function (j) {
+        if (j.ok && j.url) { S.assets[key] = j.url; img.src = j.url; } else img.remove();
+      });
+    });
+  }
+  async function draw() {
+    if (S.n == null) return;
+    var j = await api('POST', '/api/witness/sitting/' + S.sid + '/draw', { n: S.n });
+    if (!j.ok) { say(errText(j), 'err'); return render(); }
+    delete S.assets[S.sid + '/drawn-' + S.n + '.webp'];
+    await loadPaper(S.sid);
+    say('Drawing the corrected step. It takes about half a minute.');
+    render();
+  }
+  // the teacher's spoken comment: recorded here, written down on the server by Muse Voice Transcribe
+  function stopRec() { if (S.rec) { try { S.rec.r.stop(); } catch (e) { /* stopped */ } S.rec = null; } }
+  async function speak() {
+    if (S.rec) { var r = S.rec; S.rec = null; r.r.stop(); return; }
+    if (!navigator.mediaDevices || typeof MediaRecorder === 'undefined') { say('This computer has no microphone the desk can use. Write the comment instead.', 'err'); return render(); }
+    var stream;
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch (e) { say('The microphone is not allowed for the desk. Write the comment instead.', 'err'); return render(); }
+    var chunks = [], n = S.n, sid = S.sid;
+    var rec = new MediaRecorder(stream);
+    rec.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
+    rec.onstop = async function () {
+      stream.getTracks().forEach(function (t) { t.stop(); });
+      var blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
+      var b64 = await new Promise(function (ok) { var fr = new FileReader(); fr.onload = function () { ok(String(fr.result).split(',')[1] || ''); }; fr.readAsDataURL(blob); });
+      say('Writing down your comment…'); render();
+      var j = await api('POST', '/api/witness/sitting/' + sid + '/voice', { n: n, audio: b64, mime: blob.type });
+      if (!j.ok) { say(errText(j), 'err'); return render(); }
+      S.draft.comment = (S.draft.comment ? S.draft.comment + ' ' : '') + j.text;
+      say('Written down. Edit it if you like, then Save.');
+      render();
+    };
+    S.rec = { r: rec };
+    rec.start();
+    render();
+  }
+  async function openProof() {
+    var j = await api('GET', '/api/witness/sitting/' + S.sid + '/proof');
+    if (!j.ok) { say(errText(j), 'err'); return render(); }
+    S.proof = j; S.view = 'proof'; render();
+  }
+  function viewProof() {
+    var p = S.proof || {};
+    var day = function (ms) { return ms ? new Date(ms).toLocaleString() : ''; };
+    var qs = (p.questions || []).map(function (q) {
+      return '<div class="wd-card"><div class="wd-row" style="cursor:default;padding:0"><span class="wd-grow"><h3 style="margin:0">Question ' + esc(q.n) + (q.question ? ' · ' + esc(q.question) : '') + '</h3></span>' +
+        chip(q.teacher_result || q.result) + '<span class="wd-sub">' + num(q.teacher_marks != null ? q.teacher_marks : q.marks) + ' / ' + num(q.out_of) + ' · ' + Math.round((q.confidence || 0) * 100) + '% sure</span></div>' +
+        (q.steps || []).map(function (s) { return '<div class="wd-step' + (s.crossed_out ? ' crossed' : '') + '" style="opacity:1"><span class="wd-sub">' + (s.t == null ? '' : fmtT(s.t)) + '</span><div class="wd-ink">' + esc(s.wrote) + '</div></div>'; }).join('') +
+        (q.diagnosis ? '<div class="wd-diag"><b>' + (q.moment_s != null ? 'At ' + fmtT(q.moment_s) : 'Where it went wrong') + '</b><div>' + esc(q.diagnosis) + '</div></div>' : '') +
+        (q.still ? '<img data-asset="' + esc(q.still) + '" alt="The desk, question ' + esc(q.n) + '" style="display:block;width:100%;max-width:360px;border-radius:8px;margin-top:8px">' : '') +
+        (q.comment ? '<div style="margin-top:6px"><b>Teacher:</b> ' + esc(q.comment) + '</div>' : '') + '</div>';
+    }).join('');
+    var asks = (p.examiner || []).map(function (a) {
+      var v = a.answer && a.answer.verdict;
+      return '<div style="margin-top:8px"><b>Q' + esc(a.n) + ':</b> ' + esc(a.ask) + '<div>' + (a.answer ? esc(a.answer.text) : '<span class="wd-sub">Not answered.</span>') + '</div>' +
+        (v ? '<div class="wd-sub">' + (v.own_work ? 'Their own reasoning. ' : 'Not clearly their own. ') + (v.understood ? 'Understands it now. ' : '') + esc(v.why || '') + '</div>' : '') + '</div>';
+    }).join('');
+    return '<div class="wd-card"><div class="wd-row" style="cursor:default;padding:0"><span class="wd-grow"><h3 style="margin:0">Proof of Thinking</h3>' +
+      '<div class="wd-sub">' + esc(p.exam || '') + (p.level ? ' · ' + esc(p.level) : '') + ' · ' + esc(p.student || '') + ' · sat ' + esc(day(p.sat_ms)) + ' · ' + num(p.marks) + ' of ' + num(p.out_of) + ' marks</div></span>' +
+      '<button class="wd-btn" data-act="print">Print</button></div></div>' + qs +
+      (asks ? '<div class="wd-card"><h3>The examiner\'s questions</h3>' + asks + '</div>' : '') +
+      '<div class="wd-sub" style="margin:8px 2px">Read by ' + esc((p.read_by || []).join(', ')) + '. The video was ' + esc(p.video || '') + '.</div>';
+  }
+  function measured() {
+    var m = S.measure; if (!m || !m.marked) return '';
+    var pct = m.agreement == null ? '—' : Math.round(m.agreement * 100) + '%';
+    var secs = function (x) { return x && x.n ? Math.round(x.median) + ' s' : '—'; };
+    return '<div class="wd-card"><h3>Measured on this exam</h3><div class="wd-nums">' +
+      '<div><b>' + pct + '</b>you agreed with Witness (' + m.teacher_agreed + ' of ' + m.reviewed + ' reviewed)</div>' +
+      '<div><b>' + m.wrong_thinking_caught + '</b>right answers by wrong thinking caught</div>' +
+      '<div><b>' + secs(m.marking_seconds) + '</b>to mark a paper (median)</div>' +
+      '<div><b>' + secs(m.teacher_seconds_per_paper) + '</b>of your time per paper (median)</div>' +
+      '<div><b>' + m.examiner_answered + ' / ' + m.examiner_asks + '</b>examiner questions answered</div></div>' +
+      ((m.changed_by_teacher || []).length ? '<div class="wd-sub">You changed: ' + m.changed_by_teacher.map(function (c) { return 'Q' + c.n + ' ' + (RESULT[c.witness] || c.witness) + ' → ' + (RESULT[c.teacher] || c.teacher); }).join('; ') + '</div>' : '') + '</div>';
+  }
+
   // "1. 3/4 ÷ 1/2 (2)" -> {n: 1, text: "3/4 ÷ 1/2", marks: 2}
   function questionsOf(text) {
     return String(text || '').split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean).map(function (l, i) {
@@ -398,7 +533,7 @@
     var d = S.draft;
     if (!String(d.title || '').trim()) { say('Give the exam a name.', 'err'); return render(); }
     S.busy = true;
-    var j = await api('POST', '/api/witness/pile', { title: d.title, level: d.level || '', questions: questionsOf(d.qs), scheme: d.scheme || '' });
+    var j = await api('POST', '/api/witness/pile', { title: d.title, level: d.level || '', questions: questionsOf(d.qs), scheme: d.scheme || '', kind: d.kind === 'practical' ? 'practical' : 'paper' });
     S.busy = false;
     if (!j.ok) { say(errText(j), 'err'); return render(); }
     S.draft = {};
@@ -414,6 +549,9 @@
     var m = d.marks != null && d.marks !== '' ? Number(d.marks) : (q.teacher_marks != null ? q.teacher_marks : q.marks);
     if (isFinite(m)) body.marks = m;
     body.focus = d.focus != null ? d.focus : (q.focus || '');
+    if (d.comment != null) body.comment = d.comment;
+    body.desk_s = Math.max(0, Math.round((Date.now() - (S.opened || Date.now())) / 1000));
+    S.opened = Date.now();
     S.busy = true;
     var j = await api('POST', '/api/witness/sitting/' + S.sid + '/review', body);
     S.busy = false;

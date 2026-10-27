@@ -6,7 +6,11 @@
  *   PUT  <signed url>                                the video, straight to storage (LoWisaDocuments.uploadFile)
  *   POST sitting/<id>/mark    {fps}                  SAM 3.1 and Muse Spark read it; the clip is deleted after
  *   GET  sitting/<id>         a paper of my own (homework, no code), its result once marked
- *   GET  mine                 my papers in teachers' exams: "with your teacher" until released, then the result
+ *   GET  mine                 my papers in teachers' exams: "with your teacher" until released, then the result;
+ *                             the examiner's questions about my own steps as soon as the paper is marked
+ *   POST sitting/<id>/answer  {k, audio?, mime?, text?}   my answer to one of them, out loud or written
+ *   GET  sitting/<id>/asset/<file>   a still of my desk or my teacher's drawn step, once released
+ *   GET  sitting/<id>/proof   my Proof of Thinking record, once released
  *
  * Off LOWISA_WITNESS_ACCESS the edge answers its unknown route, read here as `closed`: the app shows nothing of Witness.
  */
@@ -29,12 +33,27 @@ export interface Mastery {
   fresh?: {status: 'uploading' | 'marking' | 'marked' | 'failed'};
   thread?: Array<{from: 'student' | 'teacher'; text: string; at: number}>; badge?: {issued: boolean; note: string; at: number};
 }
+export interface Ask { k: number; n: number; ask: string; wrote?: string; answered: boolean }
+export interface Examiner { status: string; asks: Ask[] }
+export interface Still { n: number; t: number; asset: string }
 export interface Question {
   mastery?: Mastery;
+  comment?: {text: string; spoken?: boolean};
+  drawn?: {status: 'drawing' | 'done' | 'failed'; asset?: string; lines?: string[]; changed?: number};
   n: number; result: Result; teacher_result?: Result; marks: number; teacher_marks?: number; out_of: number;
   final_answer: string; steps: Step[]; diagnosis: string; moment_s: number | null; confidence: number; focus?: string;
 }
-export interface Paper { id: string; status: string; title?: string; student?: string; result?: {questions: Question[]} }
+export interface Paper { id: string; status: string; title?: string; student?: string; result?: {questions: Question[]; stills?: Still[]}; examiner?: Examiner }
+export interface Proof {
+  record: 'proof_of_thinking'; id: string; exam: string; level: string; kind: string; student: string;
+  sat_ms: number | null; marked_ms: number | null; released_ms: number | null; marks: number; out_of: number; video: string; read_by: string[];
+  questions: Array<{n: number; question: string; result: Result; teacher_result?: Result; marks: number; teacher_marks?: number; out_of: number;
+    confidence: number; moment_s: number | null; diagnosis: string; steps: Step[]; still?: string; comment?: string; drawn?: {asset: string; lines: string[]}}>;
+  examiner: Array<{k: number; n: number; ask: string; wrote?: string; answered: boolean; answer?: {text: string; spoken: boolean}}>;
+}
+
+/** The examiner's questions still to answer on a paper. */
+export function asksLeft(p: Paper): Ask[] { return ((p.examiner && p.examiner.asks) || []).filter(a => !a.answered); }
 
 /** The words a student sees: a failed question is never "failed", it is the next thing they master. */
 export const RESULT_WORDS: Record<Result, string> = {
@@ -56,13 +75,13 @@ export function typedCode(input: string): string {
   return String(input || '').toUpperCase().split('').filter(ch => CODE_ALPHABET.indexOf(ch) >= 0).join('').slice(0, 6);
 }
 
-export async function door<T>(env: WitnessEnv, method: 'GET' | 'POST', path: string, body?: Record<string, unknown>): Promise<Door<T>> {
+export async function door<T>(env: WitnessEnv, method: 'GET' | 'POST', path: string, body?: Record<string, unknown>, longMs?: number): Promise<Door<T>> {
   let token: string | null = null;
   try { token = await env.token(); } catch (e) { token = null; }
   if (!token) return {ok: false, error: 'Sign in first.', code: 'unauthorized', status: 401};
   let miss: EdgeMiss | null = null;
   const onMiss = (m: EdgeMiss) => { miss = m; };
-  const timeoutMs = method === 'GET' ? READ_MS : WRITE_MS;
+  const timeoutMs = longMs || (method === 'GET' ? READ_MS : WRITE_MS);
   let r: {status: number; json: Record<string, unknown>} | null = null;
   try {
     r = await callViaEdge(env, method, BASE + path, body,
@@ -94,5 +113,10 @@ export const witness = {
   mastery: (env: WitnessEnv, paperId: string, n: number, action: 'event' | 'explain' | 'ask' | 'fresh', body: Record<string, unknown>) =>
     door<{mastery: Mastery; fresh?: {id: string; put: string}}>(env, 'POST', 'mastery/' + paperId + '/' + n + '/' + action, body),
   check: (env: WitnessEnv, body: Record<string, unknown>) => door<{id: string}>(env, 'POST', 'check', body),
+  // a spoken answer is heard (Voice Transcribe) and judged (Muse Spark) before the reply: give it longer
+  answer: (env: WitnessEnv, id: string, body: {k: number; audio?: string; mime?: string; text?: string}) =>
+    door<{examiner: Examiner}>(env, 'POST', 'sitting/' + id + '/answer', body, 45000),
+  asset: (env: WitnessEnv, id: string, file: string) => door<{url: string}>(env, 'GET', 'sitting/' + id + '/asset/' + file),
+  proof: (env: WitnessEnv, id: string) => door<Proof>(env, 'GET', 'sitting/' + id + '/proof'),
   checked: (env: WitnessEnv, id: string) => door<{status: string; verdict?: {passes: boolean; problems: Array<{lesson: number | null; fix: string}>}}>(env, 'GET', 'check/' + id),
 };

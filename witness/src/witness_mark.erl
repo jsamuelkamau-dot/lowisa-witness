@@ -20,6 +20,35 @@
 
 results() -> [<<"mastered">>, <<"right_answer_wrong_thinking">>, <<"part_way">>, <<"not_yet">>].
 
+%% Practical mode: the same engine on a practical task (a science practical, a technical or workplace task). The
+%% teacher's rubric is a list of procedure steps, each marked like a question, so the desk, the queue, the release
+%% and the mastery levels all work unchanged; SAM follows the hands (witness_sitting) instead of the ink.
+prompt(#{kind := <<"practical">>} = Sitting) ->
+    Steps = unicode:characters_to_binary(["The procedure the teacher will mark (each step is marked like a question):\n" |
+        [io_lib:format("~p. ~ts (~p marks)~n", [maps:get(n, Q), maps:get(text, Q), maps:get(marks, Q, 1)]) || Q <- maps:get(questions, Sitting, [])]]),
+    Scheme = case maps:get(scheme, Sitting, <<>>) of
+        <<>> -> <<"No rubric was given beyond the steps: give full marks for a step done correctly and safely.">>;
+        S -> <<"The teacher's rubric (follow it exactly, including safety):\n", S/binary>>
+    end,
+    unicode:characters_to_binary([
+        "You are assessing a student doing a practical task, from a video of their bench or desk (",
+        maps:get(level, Sitting, <<"any level">>), "). Only their hands and the apparatus are in view.\n",
+        Steps, "\n", Scheme, "\n\n",
+        "Watch the whole video. For every procedure step judge what they DID, in order, as well as the result:\n"
+        "- \"steps\" are what you saw, each with the second it was finished: an action (\"poured 50 ml into the beaker\")\n"
+        "  or a reading they wrote or said (\"thermometer 21 °C\"); crossed_out is true for an action they undid or\n"
+        "  a reading they struck out and wrote again;\n"
+        "- \"mastered\" is done correctly and safely; \"part_way\" is done but not to the standard (an imprecise reading,\n"
+        "  a step out of order that still worked); \"not_yet\" is missed, wrong or unsafe; a right result reached by a\n"
+        "  wrong procedure (reading a scale from above, a measurement that was lucky) is \"right_answer_wrong_thinking\";\n"
+        "- the diagnosis is ONE plain sentence naming exactly what was done wrong and why it matters; empty when\n"
+        "  mastered; moment_s is the second it happened; confidence is how sure you are, 0 to 1; final_answer is the\n"
+        "  step's result (a reading, an outcome), or empty.\n"
+        "Return JSON only:\n"
+        "{\"questions\":[{\"n\":1,\"final_answer\":\"...\",\"steps\":[{\"t\":0,\"wrote\":\"...\",\"crossed_out\":false}],"
+        "\"result\":\"mastered|right_answer_wrong_thinking|part_way|not_yet\",\"marks\":0,\"out_of\":1,"
+        "\"diagnosis\":\"...\",\"moment_s\":null,\"confidence\":0.9}],\"pauses\":[{\"from_s\":0,\"to_s\":0}]}\n"
+        "List a pause only when nothing happened for 5 seconds or more."]);
 prompt(Sitting) ->
     Qs = case maps:get(questions, Sitting, []) of
         [] -> <<"The questions are printed on the paper.">>;
@@ -38,7 +67,9 @@ prompt(Sitting) ->
         "Watch the whole video. For every question, judge the THINKING as well as the final answer:\n"
         "- read every step in the order it was written, with the second it was finished; \"wrote\" is the ink exactly as\n"
         "  written (copy it, never describe it: \"16/64 = 1/4\", not \"cancelled the 6s\"); crossed_out is true only for a\n"
-        "  step the student struck out to replace it, never for marks drawn as part of the working;\n"
+        "  step the student struck out to replace it, never for marks drawn as part of the working; a step whose result\n"
+        "  or any part was struck through and then written again is crossed_out true, even when only one number is struck\n"
+        "  (\"20 x 50 = 1000\" with the 1000 struck, then \"20/100 x 50 = 10\" below it);\n"
         "- a right final answer reached by a wrong method is \"right_answer_wrong_thinking\" (for example cancelling\n"
         "  digits that are not common factors, or two mistakes that cancel each other out);\n"
         "- \"mastered\" is right with right thinking (a slip the student corrected themselves still counts as mastered);\n"

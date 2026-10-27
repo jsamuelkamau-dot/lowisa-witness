@@ -33,7 +33,9 @@ mark(Key, #{name := Name, bytes := Bytes}, Sitting) ->
 
 read(Key, Video, Times, Sitting) ->
     Self = self(),
-    Sam = spawn_link(fun() -> Self ! {sam, self(), witness_meta:sam_video(Key, Video, <<"word">>, #{direction => forward})} end),
+    %% on paper SAM follows the written lines ("word"); in a practical it follows the hands
+    Concept = case maps:get(kind, Sitting, <<"paper">>) of <<"practical">> -> <<"hand">>; _ -> <<"word">> end,
+    Sam = spawn_link(fun() -> Self ! {sam, self(), witness_meta:sam_video(Key, Video, Concept, #{direction => forward})} end),
     Spark = witness_meta:read_video(Key, ?SPARK, Video, witness_mark:prompt(Sitting), #{effort => <<"medium">>}),
     SamRes = receive {sam, Sam, R} -> R after 300000 -> {error, sam_timeout} end,
     finish(Spark, SamRes, Times).

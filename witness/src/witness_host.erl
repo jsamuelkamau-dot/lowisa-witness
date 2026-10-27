@@ -35,3 +35,7 @@
     {ok, Text :: binary()} | {gate, Status :: pos_integer(), Body :: map()} | {error, term()}.
 %% Run the marking off the request (the host chooses how it is supervised).
 -callback run(fun(() -> any())) -> ok.
+%% A small file kept with a paper (a still of the desk at a moment, a drawn corrected step), and a short-lived link
+%% to it. Name is <<SittingId/binary, "/", File/binary>>; they go when the paper's rows go.
+-callback put_asset(Uid :: binary(), Name :: binary(), Bytes :: binary(), Mime :: binary()) -> ok | {error, term()}.
+-callback asset_url(Uid :: binary(), Name :: binary()) -> {ok, Url :: binary()} | {error, term()}.

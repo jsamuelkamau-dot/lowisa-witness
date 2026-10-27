@@ -14,7 +14,8 @@
 %%% Keys come from the host (witness_host); nothing here reads configuration.
 %%%-------------------------------------------------------------------
 -module(witness_meta).
--export([chat_request/3, ssl_opts/0, upload/4, sam_video/3, sam_video/4, read_video/5, video/1, responses/2, text_of/1, cost/2, multipart/4, range/3]).
+-export([chat_request/3, ssl_opts/0, upload/4, sam_video/3, sam_video/4, read_video/5, video/1, responses/2, text_of/1, cost/2, multipart/4, range/3,
+         image/2, transcribe/2, transcribe_body/2]).
 
 -define(API, "https://api.meta.ai/v1").
 -define(TIMEOUT_MS, 300000).
@@ -81,6 +82,35 @@ read_video(Key, Model, FileId, Prompt, Opts) ->
         {ok, R} -> {ok, text_of(R), maps:get(<<"usage">>, R, #{})};
         E -> E
     end.
+
+%% image(Key, Prompt) -> {ok, Bytes, Format}: Muse Image draws one picture (27 Oct, live: /images/generations answers
+%% one b64_json WebP at 1024 square for $0.01).
+image(Key, Prompt) ->
+    Req = #{model => <<"muse-image-1.0">>, prompt => Prompt, n => 1, size => <<"1024x1024">>},
+    case http(Key, "/images/generations", "application/json", iolist_to_binary(json:encode(Req))) of
+        {ok, #{<<"data">> := [#{<<"b64_json">> := B} | _]} = R} -> {ok, base64:decode(B), maps:get(<<"output_format">>, R, <<"webp">>)};
+        {ok, Other} -> {error, {no_image, maps:keys(Other)}};
+        E -> E
+    end.
+
+%% transcribe(Key, Wav) -> {ok, Text, Seconds}: Muse Voice Transcribe on one recorded answer. Its file door is
+%% /asr/transcribe, a JSON `request` part and an `audio` part (27 Oct, live; /audio/transcriptions is not served and
+%% the audio must be WAV, which witness_media:wav/1 makes).
+transcribe(Key, Wav) ->
+    Boundary = "----witness" ++ integer_to_list(erlang:unique_integer([positive])),
+    case http(Key, "/asr/transcribe", "multipart/form-data; boundary=" ++ Boundary, transcribe_body(Boundary, Wav)) of
+        {ok, #{<<"transcript">> := T} = R} -> {ok, T, num(maps:get(<<"audioDurationMs">>, R, 0)) / 1000};
+        {ok, Other} -> {error, {no_transcript, maps:keys(Other)}};
+        E -> E
+    end.
+
+transcribe_body(Boundary, Wav) ->
+    B = list_to_binary(Boundary),
+    Req = json:encode(#{model => <<"muse-voice-transcribe-1.0">>, audioEncoding => <<"WAV">>, sampleRateHertz => 16000}),
+    iolist_to_binary([
+        "--", B, "\r\nContent-Disposition: form-data; name=\"request\"\r\nContent-Type: application/json\r\n\r\n", Req, "\r\n",
+        "--", B, "\r\nContent-Disposition: form-data; name=\"audio\"; filename=\"answer.wav\"\r\nContent-Type: audio/wav\r\n\r\n",
+        Wav, "\r\n--", B, "--\r\n"]).
 
 %% video(Ref): a clip is either a Files API id or {url, SignedUrl}. Both SAM 3.1 and Muse Spark read a signed S3 link
 %% (27 Oct, live), so a host can hand Meta the stored clip without ever holding its bytes.

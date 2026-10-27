@@ -22,6 +22,9 @@ import type {CustomEnv} from '../paths/custom/course';
 import {onBuildProgress} from '../paths/custom/course';
 import {buildMastery, masteryDone, masteryPath} from './mastery';
 import type {Mastery} from './net';
+import {asksLeft} from './net';
+import {AsksView} from './Examiner';
+import {clock, Picture, ProofView, Replay} from './Proof';
 
 /** The camera app is told to stop here: SAM 3.1 follows up to about ten minutes of video in one go. */
 export const RECORD_SECONDS = 600;
@@ -32,7 +35,9 @@ type Stage =
   | {kind: 'home'}
   | {kind: 'joined'; code: string; title: string; level: string}
   | {kind: 'sending'; title: string; line: string}
-  | {kind: 'sent'; title: string}
+  | {kind: 'sent'; title: string; id: string}
+  | {kind: 'asks'; paper: Paper}
+  | {kind: 'proof'; paper: Paper}
   | {kind: 'paper'; paper: Paper};
 
 interface Native { uploadFile?(uri: string, url: string, contentType: string): Promise<number>; takeVideo?(maxSeconds: number): Promise<VideoFile | null> }
@@ -89,9 +94,28 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
     setStage({kind: 'sending', title, line: 'Witness is reading how you worked…'});
     const marked = await witness.mark(env, started.value.id, PHONE_FPS);
     if (!marked.ok) { setStage({kind: 'joined', code: stage.code, title, level: stage.level}); setError(marked.error); return; }
-    setStage({kind: 'sent', title});
+    setStage({kind: 'sent', title, id: started.value.id});
     loadMine();
   };
+
+  // the examiner's questions arrive a little after the marking (Muse Wonder writes them): look for them while the
+  // student is still on the "sent" page, for up to two minutes
+  const [waitingAsks, setWaitingAsks] = useState<Paper | null>(null);
+  useEffect(() => {
+    if (stage.kind !== 'sent') { setWaitingAsks(null); return; }
+    let live = true; let tries = 0;
+    const look = async () => {
+      if (!live || tries++ > 24) return;
+      const r = await witness.mine(env);
+      if (!live) return;
+      const mine = r.ok ? (r.value.papers || []).find(p => p.id === stage.id) : undefined;
+      if (mine && mine.examiner && asksLeft(mine).length) { setWaitingAsks(mine); if (r.ok) setPapers(r.value.papers || []); return; }
+      if (mine && mine.examiner && mine.examiner.status === 'failed') return;
+      setTimeout(look, 5000);
+    };
+    setTimeout(look, 4000);
+    return () => { live = false; };
+  }, [stage, env]);
 
   const back = () => {
     if (stage.kind === 'home') onBack();
@@ -112,7 +136,7 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
                 style={[s.input, s.code]} accessibilityLabel="Your teacher's join code" testID="witness-code" />
               <Btn label={busy ? 'Checking…' : 'Find the exam'} onPress={join} primary disabled={busy} testID="witness-join" />
             </View>
-            <Mine papers={papers} onOpen={p => setStage({kind: 'paper', paper: p})} />
+            <Mine papers={papers} onOpen={p => setStage(p.status === 'released' ? {kind: 'paper', paper: p} : {kind: 'asks', paper: p})} />
           </>
         ) : null}
 
@@ -142,11 +166,21 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
           <View style={s.card} testID="witness-sent">
             <Text style={s.h}>Sent to your teacher</Text>
             <Text style={s.sub}>Your paper for {stage.title} is with your teacher. Your marks show here once they release them, with what to master next.</Text>
-            <Btn label="Done" onPress={back} primary testID="witness-done" />
+            {waitingAsks ? (
+              <View style={{marginBottom: 10}}>
+                <Text style={s.sub}>Witness has {asksLeft(waitingAsks).length === 1 ? 'a question' : 'two questions'} about steps you wrote.</Text>
+                <Btn label="Answer about my work" onPress={() => setStage({kind: 'asks', paper: waitingAsks})} primary testID="witness-open-asks" />
+              </View>
+            ) : <Text style={s.small}>Witness may ask you about a step you wrote. Stay here a moment.</Text>}
+            <Btn label="Done" onPress={back} testID="witness-done" />
           </View>
         ) : null}
 
-        {stage.kind === 'paper' ? <PaperView paper={stage.paper} env={env} storage={storage} onOpenPath={onOpenPath} /> : null}
+        {stage.kind === 'asks' && stage.paper.examiner ? (
+          <AsksView env={env} paperId={stage.paper.id} title={stage.paper.title || ''} examiner={stage.paper.examiner} onDone={back} />
+        ) : null}
+        {stage.kind === 'proof' ? <ProofView env={env} paperId={stage.paper.id} /> : null}
+        {stage.kind === 'paper' ? <PaperView paper={stage.paper} env={env} storage={storage} onOpenPath={onOpenPath} onProof={() => setStage({kind: 'proof', paper: stage.paper})} /> : null}
       </ScrollView>
     </Page>
   );
@@ -160,9 +194,11 @@ function Mine({papers, onOpen}: {papers: Paper[] | null; onOpen(p: Paper): void}
       <Text style={s.h}>Your papers</Text>
       {papers.map(p => {
         const left = toMaster(p).length;
-        const line = p.status === 'released' ? (left ? left + ' to master next' : 'All mastered') : p.status === 'failed' ? 'Record it again' : 'With your teacher';
+        const asks = asksLeft(p).length;
+        const line = p.status === 'released' ? (left ? left + ' to master next' : 'All mastered') : p.status === 'failed' ? 'Record it again'
+          : asks ? (asks === 1 ? 'A question about your work' : asks + ' questions about your work') : 'With your teacher';
         return (
-          <Pressable key={p.id} onPress={() => p.status === 'released' && onOpen(p)} style={s.row} accessibilityRole="button" testID={'witness-paper-' + p.id}>
+          <Pressable key={p.id} onPress={() => (p.status === 'released' || asks) && onOpen(p)} style={s.row} accessibilityRole="button" testID={'witness-paper-' + p.id}>
             <Text style={s.rowTitle}>{p.title || 'Paper'}</Text>
             <Text style={s.rowMeta}>{line}</Text>
           </Pressable>
@@ -180,7 +216,7 @@ export function failedWords(reason: string | undefined, text: string): string {
   return 'Your level could not be made just now. Tap Start my mastery level to try again in a moment.';
 }
 
-function PaperView({paper, env, storage, onOpenPath}: {paper: Paper; env: CustomEnv & WitnessEnv; storage: MirrorStorage; onOpenPath?(pathId: string): void}): React.JSX.Element {
+function PaperView({paper, env, storage, onOpenPath, onProof}: {paper: Paper; env: CustomEnv & WitnessEnv; storage: MirrorStorage; onOpenPath?(pathId: string): void; onProof(): void}): React.JSX.Element {
   const qs = (paper.result && paper.result.questions) || [];
   const got = qs.reduce((a, q) => a + marksOf(q), 0);
   const of = qs.reduce((a, q) => a + (q.out_of || 0), 0);
@@ -189,6 +225,7 @@ function PaperView({paper, env, storage, onOpenPath}: {paper: Paper; env: Custom
       <View style={s.card} testID="witness-result">
         <Text style={s.h}>{paper.title || 'Your paper'}</Text>
         <Text style={s.sub}>{got} of {of} marks · {toMaster(paper).length} to master next</Text>
+        <Btn label="My Proof of Thinking" onPress={onProof} small testID="witness-proof-open" />
       </View>
       {qs.map(q => <QuestionCard key={q.n} q={q} paper={paper} env={env} storage={storage} onOpenPath={onOpenPath} />)}
     </>
@@ -251,10 +288,19 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
         <Text style={[s.chip, next ? s.chipNext : s.chipOk]}>{RESULT_WORDS[r]}</Text>
       </View>
       <Text style={s.sub}>{marksOf(q)} of {q.out_of} marks</Text>
-      {(q.steps || []).map((st, i) => (
-        <Text key={i} style={[s.step, st.crossed_out ? s.crossed : null]}>{st.wrote}</Text>
-      ))}
-      {next && q.diagnosis ? <Text style={s.diag}>{q.diagnosis}</Text> : null}
+      <Replay q={q} />
+      {next && q.diagnosis && q.moment_s == null ? <Text style={s.diag}>{q.diagnosis}</Text> : null}
+      {q.comment && q.comment.text ? <Text style={s.comment} testID={'witness-comment-' + q.n}>Your teacher: {q.comment.text}</Text> : null}
+      {next && (paper.result?.stills || []).some(x => x.n === q.n) ? (
+        <Picture env={env} paperId={paper.id} file={(paper.result?.stills || []).find(x => x.n === q.n)!.asset}
+          label={'Your desk at ' + clock(q.moment_s) + ', question ' + q.n} testID={'witness-still-' + q.n} />
+      ) : null}
+      {q.drawn && q.drawn.status === 'done' && q.drawn.asset ? (
+        <View>
+          <Text style={s.rowTitle}>The step, corrected</Text>
+          <Picture env={env} paperId={paper.id} file={q.drawn.asset} label={'The corrected working: ' + (q.drawn.lines || []).join(', ')} testID={'witness-drawn-' + q.n} />
+        </View>
+      ) : null}
       {next ? (
         <View style={{marginTop: 10}}>
           {building ? <View style={s.buildRow}><ActivityIndicator /><Text style={s.small}> {building}</Text></View>
@@ -346,6 +392,7 @@ const s = StyleSheet.create({
   step: {fontSize: 15, color: '#1f1e1c', fontFamily: 'monospace', marginTop: 4},
   crossed: {textDecorationLine: 'line-through', color: '#8a8984'},
   buildRow: {flexDirection: 'row', alignItems: 'center'},
+  comment: {fontSize: 14, color: '#141a2e', marginTop: 8, fontStyle: 'italic', lineHeight: 20},
   badge: {fontSize: 15, fontWeight: '700', color: '#2e7d32', padding: 10, borderRadius: 8, backgroundColor: '#eaf3de', overflow: 'hidden'},
   diag: {fontSize: 14, color: '#1f1e1c', marginTop: 10, padding: 10, borderRadius: 8, backgroundColor: '#faeeda'},
 });

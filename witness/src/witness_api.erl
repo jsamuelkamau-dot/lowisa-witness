@@ -26,6 +26,16 @@
 %%%                 fresh {mime, size} -> {fresh: {id, put, headers}}: the teacher's fresh question on paper, watched again
 %%%                 (a one-question sitting the teacher owns; marked with sitting/<id>/mark, it comes back onto the question)
 %%%        teacher: verify {lo, paper, teacher, fresh?}, reply {text}, badge {issue, note}
+%%%   POST sitting/<id>/answer      {k, audio? (base64), mime?, text?}  the student answers the examiner's question k,
+%%%                                 out loud (Voice Transcribe) or in writing; Spark judges it against their own step
+%%%   POST sitting/<id>/draw        {n} -> 202   Muse Image draws question n's corrected step (the teacher's)
+%%%   POST sitting/<id>/voice       {n, audio, mime} -> {text}   the teacher's spoken comment, written down as feedback
+%%%   GET  sitting/<id>/asset/<f>   -> {url}   a still of the desk or a drawn step (the teacher; the student once released)
+%%%   GET  sitting/<id>/proof       -> the Proof of Thinking record (witness_proof)
+%%%   GET  pile/<id>/measure        -> the exam's measured numbers (witness_measure)
+%%%   A pile with kind "practical" marks a practical task: its questions are the procedure's steps.
+%%%   When a paper is marked Witness also keeps a still at each moment that matters and Muse Wonder writes the
+%%%   examiner's two questions about the student's own steps (witness_examiner).
 %%%   POST design                   {requestId, messages: [system, user], reasoningEffort?, maxOutputTokens?}
 %%%                                 -> 200 {success, text}   one design call of a mastery level, on Muse Spark, paid by
 %%%                                 the learner through the host (a credit wall answers as the host's wall)
@@ -137,7 +147,7 @@ route(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], B, Uid0, Host) ->
                     Sitting = case {maps:get(sitting_in, Row, undefined), maps:get(pile, Row, undefined)} of
                         {#{} = In, _} -> In;                                   %% a fresh question carries its own
                         {_, undefined} -> sitting_of(B);
-                        {_, PileId} -> case Host:load(Uid, {pile, PileId}) of {ok, P} -> maps:with([questions, scheme, level], P); none -> sitting_of(B) end
+                        {_, PileId} -> case Host:load(Uid, {pile, PileId}) of {ok, P} -> maps:with([questions, scheme, level, kind], P); none -> sitting_of(B) end
                     end,
                     Fps = case maps:get(<<"fps">>, B, 30) of F when is_number(F), F > 0, F =< 240 -> F; _ -> 30 end,
                     ok = Host:save(Uid, {sitting, Id}, Row#{status => <<"marking">>, started_ms => now_ms()}),
@@ -154,7 +164,9 @@ route(<<"POST">>, [<<"sitting">>, Id, <<"review">>], B, Uid, Host) ->
                 [] -> refuse(404, <<"no_question">>, <<"That question isn't on this paper.">>);
                 [Q | _] ->
                     Q1 = review(Q, B),
-                    ok = Host:save(Uid, {sitting, Id}, Row#{result => R#{questions => [case X of #{n := N} -> Q1; _ -> X end || X <- Qs]}}),
+                    %% the seconds the paper was open at the desk since the last save: the pilot's time per paper
+                    Desk = case maps:get(<<"desk_s">>, B, null) of D when is_number(D), D >= 0, D < 7200 -> #{desk_s => maps:get(desk_s, Row, 0) + D}; _ -> #{} end,
+                    ok = Host:save(Uid, {sitting, Id}, maps:merge(Row#{result => R#{questions => [case X of #{n := N} -> Q1; _ -> X end || X <- Qs]}}, Desk)),
                     {200, #{ok => true, question => Q1}}
             end;
         {ok, _} -> refuse(409, <<"not_marked">>, <<"This paper isn't marked yet.">>);
@@ -165,6 +177,109 @@ route(<<"GET">>, [<<"sitting">>, Id], _B, Uid, Host) ->
         none -> refuse(404, <<"no_sitting">>, <<"That sitting isn't here.">>);
         {ok, Row} -> {200, view(Id, Row)}
     end;
+%% ---------------------------------------------------------------- the examiner, the drawn step, the spoken comment
+route(<<"POST">>, [<<"sitting">>, Id, <<"answer">>], B, Uid, Host) ->
+    Owner = owner_of(Uid, Id, Host),
+    case Host:load(Owner, {sitting, Id}) of
+        {ok, #{examiner := #{asks := Asks} = Ex, result := #{questions := Qs}} = Row} ->
+            Mine = maps:get(student_uid, Row, Owner) =:= Uid,
+            K = maps:get(<<"k">>, B, null),
+            case {Mine, [A || A = #{k := Ak} <- Asks, Ak =:= K]} of
+                {false, _} -> refuse(404, <<"no_sitting">>, <<"That paper isn't here.">>);
+                {_, []} -> refuse(404, <<"no_ask">>, <<"That question isn't on this paper.">>);
+                {_, [#{answer := _} | _]} -> refuse(409, <<"answered">>, <<"You answered that one already.">>);
+                {_, [Ask | _]} ->
+                    case heard(Owner, B, Host) of
+                        {error, Code} -> refuse(case Code of not_configured -> 503; _ -> 400 end, atom_to_binary(Code), answer_words(Code));
+                        {Text, Spoken} ->
+                            Q = case [X || X = #{n := N} <- Qs, N =:= maps:get(n, Ask)] of [X | _] -> X; [] -> #{} end,
+                            Verdict = case (answer_judge(Host))(Host:meta_key(), Ask, Q, Text) of
+                                {ok, V, Cost} -> Host:spend(Owner, <<"witness_examiner">>, Cost), V;
+                                _ -> undefined
+                            end,
+                            Answer0 = #{text => Text, spoken => Spoken, at => now_ms()},
+                            Answer = case Verdict of undefined -> Answer0; _ -> Answer0#{verdict => Verdict} end,
+                            {ok, Fresh} = Host:load(Owner, {sitting, Id}),
+                            FEx = maps:get(examiner, Fresh, Ex),
+                            Asks1 = [case A of #{k := K} -> A#{answer => Answer}; _ -> A end || A <- maps:get(asks, FEx, Asks)],
+                            ok = Host:save(Owner, {sitting, Id}, Fresh#{examiner => FEx#{asks => Asks1}}),
+                            {200, #{ok => true, examiner => examiner_view(FEx#{asks => Asks1}, student)}}
+                    end
+            end;
+        {ok, _} -> refuse(409, <<"no_examiner">>, <<"There are no questions about this paper yet.">>);
+        none -> refuse(404, <<"no_sitting">>, <<"That paper isn't here.">>)
+    end;
+route(<<"POST">>, [<<"sitting">>, Id, <<"draw">>], B, Uid, Host) ->
+    N = maps:get(<<"n">>, B, null),
+    case {Host:load(Uid, {sitting, Id}), Host:meta_key()} of
+        {none, _} -> refuse(404, <<"no_sitting">>, <<"That sitting isn't here.">>);
+        {_, undefined} -> refuse(503, <<"not_configured">>, <<"Drawing isn't available right now.">>);
+        {{ok, #{result := #{questions := Qs}} = Row}, Key} ->
+            case [Q || Q = #{n := Qn} <- Qs, Qn =:= N] of
+                [] -> refuse(404, <<"no_question">>, <<"That question isn't on this paper.">>);
+                [Q | _] ->
+                    ok = put_q(Uid, Id, N, fun(X) -> X#{drawn => #{status => <<"drawing">>}} end, Host),
+                    Sitting = case Host:load(Uid, {pile, maps:get(pile, Row, <<>>)}) of {ok, P} -> maps:with([questions, level], P); none -> #{questions => []} end,
+                    ok = Host:run(fun() ->
+                        Name = <<Id/binary, "/drawn-", (integer_to_binary(N))/binary, ".webp">>,
+                        Drawn = case catch (drawer(Host))(Key, Q, Sitting) of
+                            {ok, #{bytes := Bytes, lines := Lines, changed := Ch}, Cost} ->
+                                Host:spend(Uid, <<"witness_draw">>, Cost),
+                                case Host:put_asset(Uid, Name, Bytes, <<"image/webp">>) of
+                                    ok -> #{status => <<"done">>, asset => <<"drawn-", (integer_to_binary(N))/binary, ".webp">>, lines => Lines, changed => Ch, at => now_ms()};
+                                    _ -> #{status => <<"failed">>}
+                                end;
+                            _ -> #{status => <<"failed">>}
+                        end,
+                        put_q(Uid, Id, N, fun(X) -> X#{drawn => Drawn} end, Host)
+                    end),
+                    {202, #{ok => true, n => N, drawn => #{status => <<"drawing">>}}}
+            end;
+        {{ok, _}, _} -> refuse(409, <<"not_marked">>, <<"This paper isn't marked yet.">>)
+    end;
+route(<<"POST">>, [<<"sitting">>, Id, <<"voice">>], B, Uid, Host) ->
+    N = maps:get(<<"n">>, B, null),
+    case Host:load(Uid, {sitting, Id}) of
+        {ok, #{result := #{questions := Qs}}} ->
+            case {[Q || Q = #{n := Qn} <- Qs, Qn =:= N], heard(Uid, B, Host)} of
+                {[], _} -> refuse(404, <<"no_question">>, <<"That question isn't on this paper.">>);
+                {_, {error, Code}} -> refuse(case Code of not_configured -> 503; _ -> 400 end, atom_to_binary(Code), answer_words(Code));
+                {_, {Text, _}} ->
+                    ok = put_q(Uid, Id, N, fun(X) -> X#{comment => #{text => Text, spoken => true, at => now_ms()}} end, Host),
+                    {200, #{ok => true, n => N, text => Text}}
+            end;
+        {ok, _} -> refuse(409, <<"not_marked">>, <<"This paper isn't marked yet.">>);
+        none -> refuse(404, <<"no_sitting">>, <<"That sitting isn't here.">>)
+    end;
+route(<<"GET">>, [<<"sitting">>, Id, <<"asset">>, File], _B, Uid, Host) ->
+    Owner = owner_of(Uid, Id, Host),
+    Safe = binary:match(File, [<<"/">>, <<"\\">>, <<"..">>]) =:= nomatch andalso
+           (binary:longest_common_prefix([File, <<"still-">>]) =:= 6 orelse binary:longest_common_prefix([File, <<"drawn-">>]) =:= 6),
+    case {Safe, Host:load(Owner, {sitting, Id})} of
+        {true, {ok, Row}} when Owner =:= Uid; map_get(status, Row) =:= <<"released">> ->
+            case Host:asset_url(Owner, <<Id/binary, "/", File/binary>>) of
+                {ok, Url} -> {200, #{ok => true, url => Url}};
+                _ -> refuse(404, <<"no_asset">>, <<"That picture isn't here.">>)
+            end;
+        _ -> refuse(404, <<"no_asset">>, <<"That picture isn't here.">>)
+    end;
+route(<<"GET">>, [<<"sitting">>, Id, <<"proof">>], _B, Uid, Host) ->
+    Owner = owner_of(Uid, Id, Host),
+    case Host:load(Owner, {sitting, Id}) of
+        {ok, #{result := _} = Row} when Owner =:= Uid; map_get(status, Row) =:= <<"released">> ->
+            Pile = case Host:load(Owner, {pile, maps:get(pile, Row, <<>>)}) of {ok, P} -> P; none -> #{} end,
+            Viewer = case Owner =:= Uid of true -> teacher; false -> student end,
+            {200, maps:merge(#{ok => true}, witness_proof:record(Id, Row, Pile, Viewer))};
+        _ -> refuse(404, <<"no_sitting">>, <<"That paper isn't here.">>)
+    end;
+route(<<"GET">>, [<<"pile">>, Id, <<"measure">>], _B, Uid, Host) ->
+    case Host:load(Uid, {pile, Id}) of
+        none -> refuse(404, <<"no_pile">>, <<"That exam isn't here.">>);
+        {ok, P} ->
+            Ss = [{S, R} || S <- maps:get(sittings, P, []), {ok, R} <- [Host:load(Uid, {sitting, S})]],
+            {200, maps:merge(#{ok => true, title => maps:get(title, P)}, witness_measure:exam(Ss))}
+    end;
+
 %% ---------------------------------------------------------------- a question after release
 route(<<"POST">>, [<<"mastery">>, Sid, NBin, Action], B, Uid, Host) ->
     N = try binary_to_integer(NBin) catch _:_ -> -1 end,
@@ -309,6 +424,82 @@ fresh_start(Q, B, #{owner := O, sid := Sid, n := N, uid := U, row := Row}, Host)
             end
     end.
 
+%% A still of the desk at each moment that matters: where the thinking went wrong, else the question's last step.
+stills(Uid, Id, Url, Result, Host) ->
+    Moments = lists:sublist([{maps:get(n, Q), T} || Q <- maps:get(questions, Result, []), T <- [moment(Q)], is_number(T)], 8),
+    Still = stiller(Host),
+    lists:append([case catch Still(Url, T) of
+                      {ok, Jpeg} ->
+                          File = <<"still-", (integer_to_binary(N))/binary, ".jpg">>,
+                          case Host:put_asset(Uid, <<Id/binary, "/", File/binary>>, Jpeg, <<"image/jpeg">>) of
+                              ok -> [#{n => N, t => T, asset => File}];
+                              _ -> []
+                          end;
+                      _ -> []
+                  end || {N, T} <- Moments]).
+
+moment(#{moment_s := M}) when is_number(M) -> M;
+moment(Q) -> case [T || #{t := T} <- maps:get(steps, Q, []), is_number(T)] of [] -> null; Ts -> lists:max(Ts) end.
+
+%% Muse Wonder writes the examiner's questions as soon as the paper is marked, while the student is still there.
+examine(Uid, Id, Key, Sitting, Qs, Host) ->
+    Ex = case catch (examiner(Host))(Key, Sitting, Qs) of
+        {ok, Asks, Cost} -> Host:spend(Uid, <<"witness_examiner">>, Cost), #{status => <<"ready">>, asks => Asks, at => now_ms()};
+        _ -> #{status => <<"failed">>, asks => []}
+    end,
+    case Host:load(Uid, {sitting, Id}) of
+        {ok, Row} -> Host:save(Uid, {sitting, Id}, Row#{examiner => Ex});
+        none -> ok
+    end.
+
+examiner_view(Ex, teacher) -> Ex;
+examiner_view(Ex, student) ->
+    #{status => maps:get(status, Ex, <<"ready">>),
+      asks => [(maps:with([k, n, ask, wrote], A))#{answered => maps:is_key(answer, A)} || A <- maps:get(asks, Ex, [])]}.
+
+%% An answer is heard (audio, through Voice Transcribe) or read (text).
+heard(Owner, B, Host) ->
+    case {maps:get(<<"audio">>, B, null), clean(maps:get(<<"text">>, B, <<>>), 2000)} of
+        {A, _} when is_binary(A), A =/= <<>> ->
+            case {Host:meta_key(), try base64:decode(A) catch _:_ -> bad end} of
+                {undefined, _} -> {error, not_configured};
+                {_, bad} -> {error, bad_audio};
+                {Key, Bytes} ->
+                    case catch (hearer(Host))(Key, Bytes) of
+                        {ok, T, Secs} ->
+                            Host:spend(Owner, <<"witness_transcribe">>, witness_meta:cost(transcribe, Secs)),
+                            case clean(T, 2000) of <<>> -> {error, not_heard}; Text -> {Text, true} end;
+                        _ -> {error, not_heard}
+                    end
+            end;
+        {_, <<>>} -> {error, empty};
+        {_, Text} -> {Text, false}
+    end.
+
+answer_words(empty) -> <<"Say or write your answer first.">>;
+answer_words(bad_audio) -> <<"That recording couldn't be read. Try again.">>;
+answer_words(not_heard) -> <<"Nothing was heard. Speak a little closer, or write it.">>;
+answer_words(not_configured) -> <<"Listening isn't available right now. Write your answer instead.">>;
+answer_words(_) -> <<"That can't be done here.">>.
+
+%% One question of a sitting changed in place (the row read again first, so a change made meanwhile is kept).
+put_q(Uid, Id, N, F, Host) ->
+    case Host:load(Uid, {sitting, Id}) of
+        {ok, #{result := #{questions := Qs} = R} = Row} ->
+            Host:save(Uid, {sitting, Id}, Row#{result => R#{questions => [case X of #{n := N} -> F(X); _ -> X end || X <- Qs]}});
+        _ -> ok
+    end.
+
+seam(Host, Name, Default) ->
+    _ = code:ensure_loaded(Host),
+    case erlang:function_exported(Host, Name, 0) of true -> Host:Name(); false -> Default end.
+
+stiller(Host) -> seam(Host, stiller, case witness_media:available() of true -> fun witness_media:still/2; false -> fun(_, _) -> {error, no_ffmpeg} end end).
+examiner(Host) -> seam(Host, examiner, fun witness_examiner:run/3).
+answer_judge(Host) -> seam(Host, answer_judge, fun witness_examiner:judge_run/4).
+drawer(Host) -> seam(Host, drawer, fun witness_draw:run/3).
+hearer(Host) -> seam(Host, hearer, fun(Key, Bytes) -> case witness_media:wav(Bytes) of {ok, Wav} -> witness_meta:transcribe(Key, Wav); E -> E end end).
+
 %% A fresh question's marking goes back onto the question it checks.
 link_fresh(Uid, #{for := #{sitting := Sid, n := N}}, Status, Result, Host) ->
     case Host:load(Uid, {sitting, Sid}) of
@@ -351,8 +542,13 @@ mine_view(Id, #{owner := O}, Host) ->
             V = view(Id, R),
             Qs = [case Q of #{mastery := _} -> Q#{mastery => witness_mastery:view(Q, student)}; _ -> Q end
                   || Q <- maps:get(questions, maps:get(result, V))],
-            V#{title => Title, result => (maps:get(result, V))#{questions => Qs}};
-        {ok, R} -> #{id => Id, status => case maps:get(status, R) of <<"failed">> -> <<"failed">>; <<"uploading">> -> <<"uploading">>; _ -> <<"with_teacher">> end};
+            V1 = V#{title => Title, result => (maps:get(result, V))#{questions => Qs}},
+            case maps:get(examiner, R, undefined) of undefined -> V1; Ex -> V1#{examiner => examiner_view(Ex, student)} end;
+        {ok, R} ->
+            %% before release the student sees no marks, only the examiner's questions about their own steps
+            Title = case Host:load(O, {pile, maps:get(pile, R, <<>>)}) of {ok, P} -> maps:get(title, P); none -> <<>> end,
+            V = #{id => Id, title => Title, status => case maps:get(status, R) of <<"failed">> -> <<"failed">>; <<"uploading">> -> <<"uploading">>; _ -> <<"with_teacher">> end},
+            case maps:get(examiner, R, undefined) of undefined -> V; Ex -> V#{examiner => examiner_view(Ex, student)} end;
         none -> none
     end;
 mine_view(_, _, _) -> none.
@@ -377,23 +573,34 @@ review(Q, B) ->
     Q1 = case lists:member(Res, witness_mark:results()) of true -> Q#{teacher_result => Res}; false -> Q end,
     Q2 = case is_number(Marks) andalso Marks >= 0 andalso Marks =< maps:get(out_of, Q, 100) of true -> Q1#{teacher_marks => Marks}; false -> Q1 end,
     Q3 = case maps:get(<<"focus">>, B, null) of F when is_binary(F) -> Q2#{focus => clean(F, 600)}; _ -> Q2 end,
-    Q3#{reviewed => true}.
+    Q4 = case maps:get(<<"comment">>, B, null) of
+        Cm when is_binary(Cm) -> Q3#{comment => (maps:get(comment, Q3, #{}))#{text => clean(Cm, 2000), at => now_ms()}};
+        _ -> Q3
+    end,
+    Q4#{reviewed => true}.
 
 mark(Uid, Id, Key, Fps, Sitting, Host) ->
     {ok, Row} = Host:load(Uid, {sitting, Id}),
+    UrlR = Host:get_url(Uid, Id),
     Outcome = try
-        case Host:get_url(Uid, Id) of
+        case UrlR of
             {ok, Url} -> (marker(Host))(Key, #{url => Url, fps => Fps}, Sitting);
             E -> E
         end
     catch C:R -> {error, {C, R}}
     end,
+    %% the stills are taken while the clip is still there: the record keeps the moments, never the video
+    Stills = case {Outcome, UrlR} of {{ok, Res}, {ok, U}} -> stills(Uid, Id, U, Res, Host); _ -> [] end,
     ok = Host:drop_clip(Uid, Id),
     case Outcome of
         {ok, Result} ->
-            ok = Host:save(Uid, {sitting, Id}, Row#{status => <<"marked">>, result => Result, marked_ms => now_ms()}),
+            ok = Host:save(Uid, {sitting, Id}, Row#{status => <<"marked">>, result => Result#{stills => Stills}, marked_ms => now_ms()}),
             link_fresh(Uid, Row, <<"marked">>, Result, Host),
-            Host:spend(Uid, <<"witness_sitting">>, maps:get(cost_usd, Result, 0.0));
+            Host:spend(Uid, <<"witness_sitting">>, maps:get(cost_usd, Result, 0.0)),
+            case maps:is_key(for, Row) of
+                true -> ok;                                         %% a fresh question is checked by the teacher
+                false -> examine(Uid, Id, Key, Sitting, maps:get(questions, Result, []), Host)
+            end;
         {error, Why} ->
             ok = Host:save(Uid, {sitting, Id}, Row#{status => <<"failed">>, reason => iolist_to_binary(io_lib:format("~0p", [Why])), marked_ms => now_ms()}),
             link_fresh(Uid, Row, <<"failed">>, #{}, Host)
@@ -408,8 +615,10 @@ marker(Host) ->
 
 %% What the phone and the desk see of a sitting (never the reason a model call failed).
 view(Id, #{status := S, result := R} = Row) when S =:= <<"marked">>; S =:= <<"released">> ->
-    #{ok => true, id => Id, status => S, student => maps:get(student, Row, <<>>),
-      result => #{questions => maps:get(questions, R, []), pauses => maps:get(pauses, R, []), lines => maps:get(lines, R, [])}};
+    V = #{ok => true, id => Id, status => S, student => maps:get(student, Row, <<>>),
+          result => #{questions => maps:get(questions, R, []), pauses => maps:get(pauses, R, []), lines => maps:get(lines, R, []),
+                      stills => maps:get(stills, R, [])}},
+    case maps:get(examiner, Row, undefined) of undefined -> V; Ex -> V#{examiner => examiner_view(Ex, teacher)} end;
 view(Id, #{status := <<"failed">>}) ->
     #{ok => true, id => Id, status => <<"failed">>, error => <<"This sitting couldn't be marked. Record it again.">>};
 view(Id, #{status := S}) -> #{ok => true, id => Id, status => S}.
@@ -446,7 +655,8 @@ sitting_of(B) ->
           || Q <- lists:sublist(list(maps:get(<<"questions">>, B, [])), 60), is_map(Q),
              N <- [maps:get(<<"n">>, Q, 0)], is_integer(N)],
     #{questions => Qs, scheme => clean(maps:get(<<"scheme">>, B, <<>>), 8000),
-      level => case clean(maps:get(<<"level">>, B, <<>>), 60) of <<>> -> <<"any level">>; L -> L end}.
+      level => case clean(maps:get(<<"level">>, B, <<>>), 60) of <<>> -> <<"any level">>; L -> L end,
+      kind => case maps:get(<<"kind">>, B, <<"paper">>) of <<"practical">> -> <<"practical">>; _ -> <<"paper">> end}.
 
 marks(N) when is_integer(N), N >= 0, N =< 100 -> N;
 marks(_) -> 1.
