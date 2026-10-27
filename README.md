@@ -45,6 +45,7 @@ as the work lands.
 | Meta Model API client: chat (OpenAI-shaped), Files, SAM 3.1 video, Muse Spark video reading, cost per call | `witness/src/witness_meta.erl` | done 27 Oct |
 | SAM 3.1 answer parser: records, tracks, order of appearance | `witness/src/witness_sam.erl` | done 27 Oct |
 | Live check through the Erlang client | `harness/live_check.escript` | done 27 Oct |
+| Sync into a host app, and the integration points | `scripts/sync_to_host.sh`, `docs/integration.md` | done 27 Oct |
 
 ## What existed before (not in this repository)
 
