@@ -10,7 +10,7 @@
 %%% ffmpeg runs as a program with its arguments (no shell); it must be on the PATH. available/0 says whether it is.
 %%%-------------------------------------------------------------------
 -module(witness_media).
--export([step/3, wav/1, still/2, clip/3, last/1, frames/3, available/0]).
+-export([step/3, wav/1, still/2, clip/3, last/1, frames/3, gray/4, available/0]).
 
 -define(TIMEOUT_MS, 60000).
 -define(MAX_AUDIO, 25 * 1024 * 1024).
@@ -80,6 +80,24 @@ step(Url, Seconds, #{x1 := X1, y1 := Y1, x2 := X2, y2 := Y2, w := W, h := H}) wh
         _ = file:delete(Out)
     end;
 step(_, _, _) -> {error, no_box}.
+
+%% gray(Url, first | last, W, H) -> {ok, Pixels}: the clip's first or last frame as W x H grey bytes, one a pixel, row
+%% by row (W x H = SAM's frame, so SAM's boxes index it directly). witness_timeline:printed/4 reads which of SAM's lines
+%% already held ink before anything was written.
+gray(Url, Which, W, H) when is_integer(W), is_integer(H), W > 0, H > 0 ->
+    Out = tmp(".gray"),
+    Seek = case Which of first -> ["-ss", "0"]; last -> ["-sseof", "-0.4"] end,
+    try
+        Size = integer_to_list(W) ++ ":" ++ integer_to_list(H),
+        case run(["-v", "error", "-y"] ++ Seek ++ ["-i", str(Url), "-frames:v", "1", "-vf", "scale=" ++ Size ++ ",format=gray",
+                                                    "-f", "rawvideo", Out]) of
+            ok -> case file:read_file(Out) of {ok, B} when byte_size(B) =:= W * H -> {ok, B}; {ok, _} -> {error, short_frame}; E -> E end;
+            E -> E
+        end
+    after
+        _ = file:delete(Out)
+    end;
+gray(_, _, _, _) -> {error, bad_size}.
 
 %% last(Url) -> {ok, Jpeg}: the clip's final frame (the finished page, whatever the frame rate).
 last(Url) ->

@@ -90,3 +90,28 @@ a_step_that_goes_on_writing_stays_on_its_line_test() ->
     ?assertEqual([0, 0, 1, 2], [maps:get(line, S) || S <- witness_timeline:merge(Steps, Lines)]),
     ?assertEqual([], witness_timeline:merge([], Lines)).
 
+
+%% 29 Oct, live: SAM followed the printed questions too, and question 1's step was placed on them. A line that already
+%% held ink in the first frame and gained little is the printed paper; the steps go on the lines written in the clip.
+gray(W, H, Inked) ->
+    << <<(case lists:any(fun({X1, Y1, X2, Y2}) -> X >= X1 andalso X < X2 andalso Y >= Y1 andalso Y < Y2 end, Inked) of
+              true -> 40; false -> 230 end)>> || Y <- lists:seq(0, H - 1), X <- lists:seq(0, W - 1) >>.
+
+printed_lines_test() ->
+    Box = fun(X1, Y1, X2, Y2) -> #{x1 => X1, y1 => Y1, x2 => X2, y2 => Y2, w => 100, h => 100} end,
+    Title = #{id => 0, start_s => 9.0, end_s => 9.5, box => Box(10, 5, 90, 15)},       %% printed, seen late by SAM
+    Q1 = #{id => 1, start_s => 2.0, end_s => 6.0, box => Box(10, 30, 60, 40)},
+    Q2 = #{id => 2, start_s => 12.0, end_s => 16.0, box => Box(10, 50, 70, 60)},
+    First = gray(100, 100, [{10, 5, 90, 15}]),                                          %% only the print
+    Last = gray(100, 100, [{10, 5, 90, 15}, {10, 30, 60, 40}, {10, 50, 70, 60}]),
+    ?assertEqual(1.0, witness_timeline:ink(First, 100, maps:get(box, Title))),
+    ?assertEqual(0.0, witness_timeline:ink(First, 100, maps:get(box, Q1))),
+    Lines = [Title, Q1, Q2],
+    ?assertEqual([0], witness_timeline:printed(Lines, First, Last, 100)),
+    Steps = [[#{t => 8, wrote => <<"16/64 = 1/4">>}], [#{t => 14, wrote => <<"1/2 + 1/4 = 3/4">>}]],
+    %% with the printed line in, question 1 lands on it (the bug); without it, each step is on its own line
+    ?assertMatch([[0], _], [[maps:get(line, S) || S <- Q] || Q <- witness_timeline:merge_all(Steps, Lines)]),
+    ?assertEqual([[1], [2]], [[maps:get(line, S) || S <- Q] || Q <- witness_timeline:merge_all(Steps, witness_timeline:written(Lines, [0]))]),
+    %% a page filmed after it was written looks all printed: nothing is dropped
+    ?assertEqual(Lines, witness_timeline:written(Lines, [0, 1, 2])),
+    ?assertEqual(Lines, witness_timeline:written(Lines, [])).

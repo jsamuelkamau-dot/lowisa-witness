@@ -13,7 +13,7 @@
 %%% without places on the page; if Spark fails there is no marking and the sitting is an error.
 %%%-------------------------------------------------------------------
 -module(witness_sitting).
--export([mark/3, finish/3]).
+-export([mark/3, finish/3, finish/4]).
 
 -define(SPARK, <<"muse-spark-1.3">>).
 
@@ -40,7 +40,7 @@ read(Key, Video, Times, Sitting) ->
                                                      catch C:R -> {error, {sam_crashed, C, R}} end} end),
     Spark = witness_meta:read_video(Key, ?SPARK, Video, witness_mark:prompt(Sitting), #{effort => <<"medium">>}),
     SamRes = receive {sam, Sam, R} -> R after 300000 -> {error, sam_timeout} end,
-    case finish(Spark, SamRes, Times) of
+    case finish(Spark, SamRes, Times, printed_lines(Video)) of
         {ok, #{questions := Qs} = Marked} -> {ok, second_reading(Key, Video, Sitting, Marked#{questions => witness_mark:fit(Qs, Sitting)})};
         E -> E
     end.
@@ -80,7 +80,24 @@ third_reading(Key, Video, Sitting, Marked, First, Second, Rec, Cost) ->
             end
     end.
 
-finish({ok, Text, Usage}, SamRes, Times) ->
+%% Which of SAM's lines are the printed paper, read from the clip's first and last frames (a link only; ffmpeg reads it
+%% over HTTP). Without ffmpeg or the frames, none are: the steps are placed on every line, as before.
+printed_lines({url, Url}) ->
+    fun(Lines) ->
+        case [{W, H} || #{box := #{w := W, h := H}} <- Lines, is_integer(W), is_integer(H)] of
+            [] -> [];
+            [{W, H} | _] ->
+                case witness_media:available() andalso {witness_media:gray(Url, first, W, H), witness_media:gray(Url, last, W, H)} of
+                    {{ok, First}, {ok, Last}} -> try witness_timeline:printed(Lines, First, Last, W) catch _:_ -> [] end;
+                    _ -> []
+                end
+        end
+    end;
+printed_lines(_) -> fun(_) -> [] end.
+
+finish(Spark, SamRes, Times) -> finish(Spark, SamRes, Times, fun(_) -> [] end).
+
+finish({ok, Text, Usage}, SamRes, Times, Printed) ->
     case witness_mark:parse(Text) of
         {ok, #{questions := Qs, pauses := Ps} = M} ->
             {Lines, Frames} = case SamRes of
@@ -88,10 +105,10 @@ finish({ok, Text, Usage}, SamRes, Times) ->
                                      catch _:_ -> [] end, F};
                 _ -> {[], 0}
             end,
-            PerQ = witness_timeline:merge_all([maps:get(steps, Q) || Q <- Qs], Lines),
+            PerQ = witness_timeline:merge_all([maps:get(steps, Q) || Q <- Qs], witness_timeline:written(Lines, Printed(Lines))),
             Placed = [Q#{steps => S} || {Q, S} <- lists:zip(Qs, PerQ)],
             Cost = witness_meta:cost({tokens, ?SPARK}, Usage) + case Frames of 0 -> 0.0; _ -> witness_meta:cost(sam_video, Frames) end,
             {ok, #{questions => Placed, pauses => Ps, returns => maps:get(returns, M, []), lines => Lines, frames => Frames, cost_usd => Cost}};
         E -> E
     end;
-finish(E, _, _) -> E.
+finish(E, _, _, _) -> E.

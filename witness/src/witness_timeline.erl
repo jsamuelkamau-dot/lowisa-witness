@@ -12,9 +12,12 @@
 %%%   lines(Records, Times) -> [Line]         Line = #{id, start_s, end_s, box}  (box = the line when finished)
 %%%   merge(Steps, Lines) -> [Step]           Step from Spark #{t, wrote, crossed_out}, gains line and box
 %%%   merge_all([Steps], Lines) -> [[Step]]   every question's steps at once, so the page is read in one order
+%%%   printed(Lines, First, Last, W) -> [Id]  SAM's lines that already held ink in the first frame and gained little:
+%%%                                           the printed paper (title, questions), not the student's writing
+%%%   written(Lines, PrintedIds) -> Lines     the lines steps may be placed on
 %%%-------------------------------------------------------------------
 -module(witness_timeline).
--export([lines/2, merge/2, merge_all/2, align/2]).
+-export([lines/2, merge/2, merge_all/2, align/2, printed/4, ink/3, written/2]).
 
 %% A line has stopped growing once its box area no longer rises by more than this share.
 -define(GROWTH, 0.02).
@@ -22,6 +25,11 @@
 -define(SKIP, 3.0).
 %% A step that goes on writing the step before comes this soon after it, in seconds.
 -define(GOES_ON, 10).
+%% Grey levels below this are ink (paper reads about 230, pencil and pens well under 120).
+-define(INK, 110).
+%% A line is printed when this share of its box was already ink in the first frame and it gained under ?GAIN times that.
+-define(INKED, 0.03).
+-define(GAIN, 1.6).
 
 lines(Records, Times) ->
     ById = lists:foldl(fun({F, Id, B}, Acc) -> maps:update_with(Id, fun(L) -> [{F, B} | L] end, [{F, B}], Acc) end,
@@ -65,6 +73,31 @@ place([{S = #{t := T}, _} | Rest], [J | Plan], Lines, _) when is_number(T) ->
     L = element(J, Lines),
     [S#{line => maps:get(id, L), box => maps:get(box, L)} | place(Rest, Plan, Lines, {maps:get(id, L), maps:get(box, L)})];
 place([{S, _} | Rest], Plan, Lines, Prev) -> [S | place(Rest, Plan, Lines, Prev)].
+
+%% printed(Lines, First, Last, W): 29 Oct, live (the demo paper): SAM's "word" also follows the printed questions,
+%% seen 9 s in, and every line left without a step costs ?SKIP, so question 1's step was placed on the printed line
+%% above it, and each step after it one line too high (the student's own step showed "2. Work out 1/2 + 1/4"). A line
+%% written during the clip was blank paper in its first frame; a printed one already held its ink and gains little.
+printed(Lines, First, Last, W) ->
+    [maps:get(id, L) || L = #{box := B} <- Lines, is_map(B),
+                        begin A = ink(First, W, B), Z = ink(Last, W, B), A >= ?INKED andalso Z < A * ?GAIN end].
+
+%% ink(Gray, W, Box) -> the share of the box's pixels darker than ?INK.
+ink(Gray, W, #{x1 := X1, y1 := Y1, x2 := X2, y2 := Y2}) ->
+    H = byte_size(Gray) div W,
+    L = max(0, round(X1)), R = min(W, round(X2)), T = max(0, round(Y1)), B = min(H, round(Y2)),
+    case R > L andalso B > T of
+        false -> 0.0;
+        true ->
+            Dark = lists:sum([length([P || <<P>> <= binary:part(Gray, Y * W + L, R - L), P < ?INK]) || Y <- lists:seq(T, B - 1)]),
+            Dark / ((R - L) * (B - T))
+    end.
+
+%% written(Lines, Printed): the lines steps may be placed on. If every line looked printed (a page filmed after it was
+%% written), all of them stay: the placing then works as it did before.
+written(Lines, []) -> Lines;
+written(Lines, Printed) ->
+    case [L || L <- Lines, not lists:member(maps:get(id, L), Printed)] of [] -> Lines; Ws -> Ws end.
 
 %% goes_on(Steps) -> [boolean()]: whether each step's words begin with the whole of the step before (and add to them).
 %% Within ?GOES_ON seconds: a line written again whole and carried on further down the page comes later than that.
