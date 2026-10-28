@@ -55,6 +55,8 @@
 %%%-------------------------------------------------------------------
 -module(witness_api).
 -export([route/5, view/2, sitting_of/1, queue/1, summary/2]).
+%% 29 Oct audit: who pays for a mastery level's call, for a host's other doors (the level's animations)
+-export([payer/3]).
 
 -define(MAX_BYTES, 500 * 1024 * 1024).
 %% How long a signed upload link lasts (expiresIn below is the same, in seconds).
