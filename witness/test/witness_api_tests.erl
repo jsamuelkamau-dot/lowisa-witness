@@ -32,6 +32,9 @@ marker() ->
             {busy, always} -> {error, {503, <<"busy">>}};
             {busy, N} when N > 0 -> persistent_term:put(witness_api_fail, {busy, N - 1}), {error, {503, <<"busy">>}};
             {busy, 0} -> {ok, #{questions => [#{n => 1, result => <<"mastered">>}], pauses => [], lines => [], cost_usd => 0.08}};
+            %% a reply that ran out before its JSON, the next N calls
+            {nomark, N} when N > 0 -> persistent_term:put(witness_api_fail, {nomark, N - 1}), {error, no_marking};
+            {nomark, 0} -> {ok, #{questions => [#{n => 1, result => <<"mastered">>}], pauses => [], lines => [], cost_usd => 0.08}};
             false -> {ok, persistent_term:get(witness_api_result, #{questions => [#{n => 1, result => <<"mastered">>}], pauses => [], lines => [], cost_usd => 0.08})}
         end
     end.
@@ -626,6 +629,16 @@ a_marking_that_never_came_back_can_be_marked_again_test() ->
     save(<<"u1">>, {sitting, Id}, Row#{status => <<"marking">>, started_ms => erlang:system_time(millisecond) - 2700001}),
     ?assertMatch({202, _}, r(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], #{}, <<"u1">>)),
     ?assertMatch({200, #{status := <<"marked">>}}, r(<<"GET">>, [<<"sitting">>, Id], #{}, <<"u1">>)).
+
+%% 28 Oct re-audit, live: 1 in 12 benchmark papers came back with no JSON (Spark's thinking used the whole budget); it
+%% failed the sitting and deleted the video. It is read again now.
+a_reply_without_its_marking_is_read_again_test() ->
+    setup(), persistent_term:put(witness_api_fail, {nomark, 1}),
+    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10}, <<"u1">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], #{}, <<"u1">>),
+    ?assertEqual(2, length([1 || {marked, _, _, _} <- events()])),
+    ?assertMatch({200, #{status := <<"marked">>}}, r(<<"GET">>, [<<"sitting">>, Id], #{}, <<"u1">>)),
+    persistent_term:put(witness_api_fail, false).
 
 a_failure_that_is_not_meta_busy_is_not_tried_again_test() ->
     setup(), persistent_term:put(witness_api_fail, true),

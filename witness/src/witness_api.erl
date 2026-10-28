@@ -959,6 +959,9 @@ busy({failed_connect, _}) -> true;
 busy(socket_closed_remotely) -> true;
 busy({socket_closed_remotely, _}) -> true;
 busy(econnreset) -> true;
+%% a reply that ran out before its JSON (28 Oct re-audit, live: 1 in 12 benchmark papers): read again, never lost
+busy(no_marking) -> true;
+busy(incomplete) -> true;
 busy(closed) -> true;
 busy(_) -> false.
 

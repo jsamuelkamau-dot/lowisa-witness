@@ -72,10 +72,12 @@ sam_video(Key, FileId, Prompt, Opts) ->
     end.
 
 %% read_video(Key, Model, FileId, Prompt, Opts): Muse Spark reads every frame and the sound track in one call.
-%%   Opts: effort (low|medium|high, default medium), max_output_tokens (default 6000).
+%%   Opts: effort (low|medium|high, default medium), max_output_tokens (default 16000: 28 Oct re-audit, live: at medium
+%%   effort Spark's thinking used 3,800-4,800 of 6,000 and some replies ran out before the JSON; high effort needs more;
+%%   only the tokens used are paid for).
 read_video(Key, Model, FileId, Prompt, Opts) ->
     Req = #{model => Model, reasoning => #{effort => maps:get(effort, Opts, <<"medium">>)},
-            max_output_tokens => maps:get(max_output_tokens, Opts, 6000),
+            max_output_tokens => maps:get(max_output_tokens, Opts, 16000),
             input => [#{type => message, role => user, content => [
                 #{type => input_text, text => Prompt}, video(FileId)]}]},
     case responses(Key, Req) of

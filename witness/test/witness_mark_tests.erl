@@ -115,3 +115,27 @@ going_back_to_an_earlier_question_is_kept_test() ->
     ?assertMatch({ok, #{returns := []}}, witness_mark:parse(<<"{\"questions\":[]}">>)),
     ?assertNotEqual(nomatch, binary:match(witness_mark:prompt(#{}), <<"List a return only when the student went back">>)).
 
+
+%% 28 Oct re-audit, live: right one-word answers came back 1 of 2 on one reading and 2 of 2 on the other; every split ended
+%% part way at 40%. A third reading decides: two of three agreeing stand, three different stay with the teacher.
+a_split_is_decided_by_a_third_reading_test() ->
+    One = #{n => 1, result => <<"part_way">>, confidence => 0.5, steps => [placed], diagnosis => <<"Not every mark was earned.">>},
+    Two = #{n => 2, result => <<"mastered">>, confidence => 0.5, steps => [placed2], diagnosis => <<>>},
+    First = [One, Two],
+    Second = [#{n => 1, result => <<"mastered">>, confidence => 0.9, steps => [x], diagnosis => <<>>},
+              #{n => 2, result => <<"not_yet">>, confidence => 0.8, steps => [y], diagnosis => <<"Flipped it.">>}],
+    Rec = witness_mark:reconcile(First, Second),
+    ?assert(witness_mark:split(Rec)),
+    Third = [#{n => 1, result => <<"mastered">>, confidence => 0.95, steps => [z], diagnosis => <<>>},
+             #{n => 2, result => <<"part_way">>, confidence => 0.7, steps => [w], diagnosis => <<"d">>}],
+    [A, B] = witness_mark:decide(Rec, First, Second, Third),
+    %% two agree: mastered at the surer confidence, the first reading's steps kept
+    ?assertMatch(#{result := <<"mastered">>, confidence := 0.95, steps := [placed], read_thrice := true}, A),
+    ?assertNot(maps:is_key(split, A)),
+    %% three different: the teacher decides
+    ?assertMatch(#{confidence := 0.4, read_thrice := true}, B),
+    ?assertNotEqual(nomatch, binary:match(maps:get(diagnosis, B), <<"Three readings of the video disagreed">>)),
+    %% no third reading (it failed): the split stays as two readings left it, without the internal flag
+    [C, _] = witness_mark:decide(Rec, First, Second, []),
+    ?assertMatch(#{confidence := 0.4}, C), ?assertNot(maps:is_key(split, C)),
+    ?assertNot(witness_mark:split(witness_mark:decide(Rec, First, Second, Third))).

@@ -36,3 +36,23 @@
 - The Witness tile shows only for the pilot account. The join code found the exam; "choose a video" sent the desk clip in 6 s; it was marked live.
 - The exam's question held "÷", which had failed every paper before the UTF-8 fix; it now marks.
 - After the teacher's focus note and release, the phone showed 5 of 6, the crossed-out first try, and "Right answer, thinking to fix" with the diagnosis.
+
+## 28 Oct: video against a photo of the finished page (`harness/photo_cmp.escript`, same day, same model)
+
+12 benchmark papers, 43 questions, 6 languages, plus a new clip where the wrong reason is rubbed out (`erased_en`).
+Witness marks the video (SAM 3.1 + Muse Spark); the photo run gives Muse Spark the clip's last frame with the same
+marking prompt worded for a photo, and the same scheme.
+
+| | Exact | Sound (mastered or not) | Right answer by wrong thinking caught |
+|---|---|---|---|
+| Video (Witness) | 43 of 43 | 43 of 43 | 3 of 3 |
+| Photo of the finished page | 36 of 43 | 38 of 43 | 2 of 3 |
+
+- The photo missed "19/95 = 1/5" whose reason ("cancel the 9s") was rubbed out: it saw only the answer.
+- The photo marked a paper the student corrected in front of the camera (crossed out, then right) part way on all three.
+- A wrong method rubbed out and replaced by the right one is a self-correction for both; the video keeps the rubbed-out
+  line in the teacher's replay ("16/64: cross out the 6s → 1/4"), the photo cannot.
+- Found on the way: one reply in twelve ran out of tokens before its JSON (Spark's thinking used 3,800-4,800 of 6,000 at
+  medium effort), which failed the sitting; the budget is 16,000 now and such a reply is read again. And two readings
+  that split always ended part way at 40%, so right one-word answers read 1 of 2 once became "part way"; a third
+  reading now decides (two of three agree), and the benchmark is back to 46 of 46 exact.

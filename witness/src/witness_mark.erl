@@ -16,7 +16,7 @@
 %%%   needs_level(Q) -> boolean              a mastery level is offered for "not yet" and "wrong thinking"
 %%%-------------------------------------------------------------------
 -module(witness_mark).
--export([fit/2, unsure/1, reconcile/2, prompt/1, parse/1, needs_level/1, results/0]).
+-export([fit/2, unsure/1, reconcile/2, decide/4, split/1, prompt/1, parse/1, needs_level/1, results/0]).
 
 %% 27 Oct, emulator: a video of no paper at all (the camera pointed at a picture) was marked "to master" on every
 %% question at 20% sure, so each would have become a mastery level for a paper nobody filmed. A video that does not
@@ -199,6 +199,34 @@ fit(Qs, Sitting) ->
 -define(UNSURE, 0.7).
 unsure(Qs) -> lists:any(fun(Q) -> num(maps:get(confidence, Q, 1.0)) < ?UNSURE end, Qs).
 
+%% decide(Reconciled, First, Second, Third): a question the first two readings split on is settled by a third (28 Oct
+%% re-audit, live: right one-word answers came back 1 of 2 on one reading and 2 of 2 on the other, and every split ended
+%% part way at 40%, so a right answer could have become a mastery level). A result two of the three readings agree on
+%% stands, at the surer of their confidences; three different results stay with the teacher. The first reading's steps
+%% stay either way (they carry SAM's places on the page).
+decide(Reconciled, First, Second, Third) ->
+    By = fun(L) -> maps:from_list([{maps:get(n, Q), Q} || Q <- L]) end,
+    B1 = By(First), B2 = By(Second), B3 = By(Third),
+    [case Q of
+         #{split := true, n := N} ->
+             Q1 = maps:get(N, B1, Q), Q2 = maps:get(N, B2, undefined), Q3 = maps:get(N, B3, undefined),
+             R = fun(undefined) -> none; (X) -> maps:get(result, X) end,
+             Agree = fun(A, Bq) -> (maps:remove(split, A))#{steps => maps:get(steps, Q1, []), read_thrice => true, read_twice => true,
+                                                           confidence => max(num(maps:get(confidence, A, 0)), num(maps:get(confidence, Bq, 0)))} end,
+             case {R(Q1), R(Q2), R(Q3)} of
+                 {_, _, none} -> maps:remove(split, Q);
+                 {X, _, X} -> Agree(Q1, Q3);
+                 {_, X, X} -> Agree(Q2, Q3);
+                 _ -> (maps:remove(split, Q))#{read_thrice => true,
+                                               diagnosis => binary:replace(maps:get(diagnosis, Q, <<>>), <<"Two readings of the video disagreed">>,
+                                                                           <<"Three readings of the video disagreed">>)}
+             end;
+         _ -> maps:remove(split, Q)
+     end || Q <- Reconciled].
+
+%% split(Reconciled) -> true when a question still needs the deciding reading
+split(Qs) -> lists:any(fun(Q) -> maps:get(split, Q, false) =:= true end, Qs).
+
 reconcile(First, Second) ->
     ByN = maps:from_list([{maps:get(n, Q), Q} || Q <- Second]),
     [case {num(maps:get(confidence, Q, 1.0)) < ?UNSURE, maps:get(maps:get(n, Q), ByN, undefined)} of
@@ -209,7 +237,7 @@ reconcile(First, Second) ->
          {true, Q2} ->
              %% the first reading's steps stay: they carry SAM's places on the page
              Cautious = case {maps:get(result, Q), maps:get(result, Q2)} of {<<"mastered">>, _} -> Q2#{steps => maps:get(steps, Q, [])}; _ -> Q end,
-             Cautious#{confidence => min(0.4, num(maps:get(confidence, Cautious, 0))), read_twice => true,
+             Cautious#{confidence => min(0.4, num(maps:get(confidence, Cautious, 0))), read_twice => true, split => true,
                        diagnosis => case maps:get(diagnosis, Cautious, <<>>) of
                                         <<>> -> <<"Two readings of the video disagreed: the teacher decides.">>;
                                         D -> <<D/binary, " (Two readings of the video disagreed: the teacher decides.)">>

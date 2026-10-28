@@ -55,11 +55,28 @@ second_reading(Key, Video, Sitting, #{questions := Qs} = Marked) ->
                 {ok, Text, Usage} ->
                     case witness_mark:parse(Text) of
                         {ok, #{questions := Qs2}} ->
-                            Marked#{questions => witness_mark:reconcile(Qs, witness_mark:fit(Qs2, Sitting)), read_twice => true,
-                                    cost_usd => maps:get(cost_usd, Marked, 0.0) + witness_meta:cost({tokens, ?SPARK}, Usage)};
+                            Second = witness_mark:fit(Qs2, Sitting),
+                            Rec = witness_mark:reconcile(Qs, Second),
+                            Cost = maps:get(cost_usd, Marked, 0.0) + witness_meta:cost({tokens, ?SPARK}, Usage),
+                            third_reading(Key, Video, Sitting, Marked#{read_twice => true}, Qs, Second, Rec, Cost);
                         _ -> Marked
                     end;
                 _ -> Marked
+            end
+    end.
+
+%% Where the two readings split, a third reading decides (witness_mark:decide/4); one that fails leaves the split with
+%% the teacher.
+third_reading(Key, Video, Sitting, Marked, First, Second, Rec, Cost) ->
+    case witness_mark:split(Rec) of
+        false -> Marked#{questions => witness_mark:decide(Rec, First, Second, []), cost_usd => Cost};
+        true ->
+            case witness_meta:read_video(Key, ?SPARK, Video, witness_mark:prompt(Sitting), #{effort => <<"high">>}) of
+                {ok, Text, Usage} ->
+                    Third = case witness_mark:parse(Text) of {ok, #{questions := Qs3}} -> witness_mark:fit(Qs3, Sitting); _ -> [] end,
+                    Marked#{questions => witness_mark:decide(Rec, First, Second, Third), read_thrice => Third =/= [],
+                            cost_usd => Cost + witness_meta:cost({tokens, ?SPARK}, Usage)};
+                _ -> Marked#{questions => witness_mark:decide(Rec, First, Second, []), cost_usd => Cost}
             end
     end.
 
