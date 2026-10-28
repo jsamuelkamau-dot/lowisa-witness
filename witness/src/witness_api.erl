@@ -343,7 +343,15 @@ route(<<"POST">>, [<<"mastery">>, Sid, NBin, Action], B, Uid, Host) ->
     case Host:load(Owner, {sitting, Sid}) of
         none -> refuse(404, <<"no_sitting">>, <<"That paper isn't here.">>);
         {ok, Row} ->
-            Role = if Owner =:= Uid -> teacher; true -> case maps:get(student_uid, Row, undefined) of Uid -> student; _ -> none end end,
+            %% 28 Oct, live: a teacher who sits their own exam (one account, both sides) was refused every student step;
+            %% the steps a student takes are theirs when they are this paper's student, the teacher's steps the owner's
+            IsStudent = maps:get(student_uid, Row, undefined) =:= Uid,
+            Role = case {Owner =:= Uid, IsStudent, lists:member(Action, [<<"fresh">>, <<"event">>, <<"explain">>, <<"ask">>])} of
+                       {_, true, true} -> student;
+                       {true, _, _} -> teacher;
+                       {false, true, _} -> student;
+                       _ -> none
+                   end,
             Released = maps:get(status, Row) =:= <<"released">>,
             Qs = case Row of #{result := #{questions := L}} -> L; _ -> [] end,
             case {Role, Released, [Q || Q = #{n := Qn} <- Qs, Qn =:= N]} of

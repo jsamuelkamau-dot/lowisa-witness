@@ -8,24 +8,25 @@ import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, Image, Pressable, StyleSheet, Text, View} from 'react-native';
 import {witness, WitnessEnv} from './net';
 
-export function OwnStep({env, paperId, n, onGo}: {env: WitnessEnv; paperId: string; n: number; onGo(): void}): React.JSX.Element {
+export function OwnStep({env, paperId, n, onGo}: {env: WitnessEnv; paperId: string; n: number; onGo(shown: boolean): void}): React.JSX.Element {
   const [url, setUrl] = useState<string | null>(null);
   // the real-world place the level happens in, drawn by Muse Image when the level was built (none: nothing shows)
   const [world, setWorld] = useState<string | null>(null);
   useEffect(() => {
     let live = true;
-    witness.asset(env, paperId, 'step-' + n + '.jpg').then(r => { if (!live) return; if (r.ok) setUrl(r.value.url); else onGo(); }).catch(() => { if (live) onGo(); });
+    witness.asset(env, paperId, 'step-' + n + '.jpg').then(r => { if (!live) return; if (r.ok) setUrl(r.value.url); else onGo(false); }).catch(() => { if (live) onGo(false); });
     witness.asset(env, paperId, 'world-' + n + '.webp').then(r => { if (live && r.ok) setWorld(r.value.url); }).catch(() => undefined);
     return () => { live = false; };
   }, [env, paperId, n]); // eslint-disable-line react-hooks/exhaustive-deps
+  // the picture, once its link is back (one that does not load skips the card, so the first look is never held up)
   if (!url) return <View style={s.wrap}><ActivityIndicator /></View>;
   return (
     <View style={s.wrap} testID="witness-own-step">
       <Text style={s.eyebrow}>YOUR STEP, AS YOU WROTE IT</Text>
-      <Image source={{uri: url}} style={s.picture} resizeMode="contain" accessibilityLabel="Your own written step, from your paper" />
+      <Image source={{uri: url}} style={s.picture} resizeMode="contain" onError={() => onGo(false)} accessibilityLabel="Your own written step, from your paper" />
       <Text style={s.sub}>Now watch it run in the real world.</Text>
       {world ? <Image source={{uri: world}} style={s.world} resizeMode="cover" accessibilityLabel="Where your step runs next" testID="witness-own-step-world" /> : null}
-      <Pressable style={s.go} onPress={onGo} accessibilityRole="button" testID="witness-own-step-go"><Text style={s.goText}>Watch it run</Text></Pressable>
+      <Pressable style={s.go} onPress={() => onGo(true)} accessibilityRole="button" testID="witness-own-step-go"><Text style={s.goText}>Watch it run</Text></Pressable>
     </View>
   );
 }

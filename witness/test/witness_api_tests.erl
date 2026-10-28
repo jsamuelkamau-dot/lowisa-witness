@@ -219,6 +219,23 @@ self_check_runs_off_the_request_test() ->
     ?assert(lists:member({spend, <<"stud">>, <<"witness_check">>, 0.04}, events())),
     ?assertMatch({404, _}, r(<<"GET">>, [<<"check">>, Id], #{}, <<"other">>)).
 
+%% 28 Oct, live: a teacher sitting their own exam on one account was refused every student step ("That isn't yours")
+a_teacher_sitting_their_own_exam_plays_both_sides_test() ->
+    setup(),
+    {201, #{code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions">>}, <<"teacher">>),
+    persistent_term:put(witness_api_result, #{questions => [q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Me">>}, <<"teacher">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"teacher">>),
+    {200, _} = r(<<"POST">>, [<<"pile">>, maps:get(pile, element(2, load(<<"teacher">>, {sitting, S}))), <<"release">>], #{}, <<"teacher">>),
+    M = fun(Action, Body) -> r(<<"POST">>, [<<"mastery">>, S, <<"3">>, Action], Body, <<"teacher">>) end,
+    {200, #{mastery := #{status := <<"ready">>}}} = M(<<"event">>, #{<<"event">> => <<"built">>, <<"path">> => <<"custom-topic-me">>}),
+    {200, #{mastery := #{thread := [#{from := student}]}}} = M(<<"ask">>, #{<<"text">> => <<"Why?">>, <<"where">> => <<"Lesson 1">>}),
+    %% the teacher's own steps stay the teacher's
+    {200, #{mastery := #{thread := [_, #{from := teacher}]}}} = M(<<"reply">>, #{<<"text">> => <<"Because.">>}),
+    {200, _} = M(<<"verify">>, #{<<"lo">> => true}),
+    %% and someone else's paper is still not theirs to act on as its student
+    ?assertMatch({404, _}, r(<<"POST">>, [<<"mastery">>, S, <<"3">>, <<"ask">>], #{<<"text">> => <<"hi">>}, <<"other">>)).
+
 design_door_passes_one_call_and_the_wall_test() ->
     setup(),
     B = #{<<"requestId">> => <<"mob-course-1-s">>, <<"reasoningEffort">> => <<"medium">>, <<"maxOutputTokens">> => 12000,

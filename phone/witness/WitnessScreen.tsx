@@ -47,13 +47,18 @@ const docs = () => (NativeModules as Record<string, unknown>).LoWisaDocuments as
  * A desk video made small enough to send on a phone's data: 720p, ten frames a second, about 8 MB a minute where the
  * camera made some 120 (27 Oct). The original goes when it is small already, or when this phone cannot make it smaller.
  */
-export async function smaller(file: VideoFile, onPercent?: (percent: number) => void): Promise<VideoFile> {
+export async function smaller(file: VideoFile, onPercent?: (percent: number, stage: 'faces' | 'small') => void): Promise<VideoFile> {
   const n = docs();
   if (!n || !n.smallVideo) return file;
-  const sub = onPercent ? DeviceEventEmitter.addListener('lowisaSmallVideo', (e: {percent?: number}) => {
-    if (typeof e?.percent === 'number') onPercent(Math.max(0, Math.min(100, Math.round(e.percent))));
+  const sub = onPercent ? DeviceEventEmitter.addListener('lowisaSmallVideo', (e: {percent?: number; stage?: string}) => {
+    if (typeof e?.percent === 'number') onPercent(Math.max(0, Math.min(100, Math.round(e.percent))), e.stage === 'faces' ? 'faces' : 'small');
   }) : null;
   try { return (await n.smallVideo(file.uri)) || file; } catch (e) { return file; } finally { sub?.remove(); }
+}
+
+/** What the phone says while the video is got ready: first the look for faces to cover, then making it smaller (28 Oct). */
+export function readyLine(percent: number, stage: 'faces' | 'small'): string {
+  return (stage === 'faces' ? 'Covering any face the camera caught… ' : 'Making the video smaller to send… ') + percent + '%';
 }
 
 /**
@@ -191,8 +196,8 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
     setNotice('');
     const {title} = stage;
     const again = (why: string, file: VideoFile) => { setStage({kind: 'joined', code: stage.code, title, level: stage.level}); setUnsent(file); setError(why); };
-    setStage({kind: 'sending', title, line: 'Making the video smaller to send…'});
-    const file = await smaller(picked, p => setStage({kind: 'sending', title, line: `Making the video smaller to send… ${p}%`}));
+    setStage({kind: 'sending', title, line: 'Covering any face the camera caught…'});
+    const file = await smaller(picked, (p, st) => setStage({kind: 'sending', title, line: readyLine(p, st)}));
     const mime = doorMime(file.mime, file.name)!;
     const kept = 'The video did not go up. It is kept on this phone: send it again when the connection is better, on Wi-Fi if you can.';
     const total = Math.round(file.size);
@@ -406,8 +411,8 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
     catch (e) { setSaid('The camera could not start. Try choosing a video you already recorded.'); return; }
     if (!file) return;
     if (!doorMime(file.mime, file.name)) { setSaid('Witness reads MP4 and MOV videos. Record it again with the camera here.'); return; }
-    setFilming('Making the video smaller to send…');
-    file = await smaller(file, p => setFilming(`Making the video smaller to send… ${p}%`));
+    setFilming('Covering any face the camera caught…');
+    file = await smaller(file, (p, st) => setFilming(readyLine(p, st)));
     const mime = doorMime(file.mime, file.name)!;
     setFilming('Getting the upload ready…');
     const r = await witness.mastery(env, paper.id, q.n, 'fresh', {mime, size: Math.round(file.size)});
