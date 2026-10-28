@@ -8,6 +8,7 @@
  */
 import React, {useEffect, useRef, useState} from 'react';
 import {ActivityIndicator, Image, StyleSheet, Text, View} from 'react-native';
+import {WebView} from 'react-native-webview';
 import {Btn} from '../exam/print/ui';
 import {Proof, Question, RESULT_WORDS, Step, witness, WitnessEnv} from './net';
 
@@ -73,6 +74,27 @@ export function Picture({env, paperId, file, label, testID}: {env: WitnessEnv; p
   return <Image source={{uri: url}} style={s.picture} resizeMode="contain" accessibilityLabel={label} testID={testID} />;
 }
 
+/** Six seconds of the desk around a moment that matters (28 Oct re-audit: the research's record keeps "short clips at the
+ *  moments that matter" once the video is deleted), played in a web view from its short-lived link. */
+export function Clip({env, paperId, file, label}: {env: WitnessEnv; paperId: string; file: string; label: string}): React.JSX.Element | null {
+  const [url, setUrl] = useState<string | null>(null);
+  const [gone, setGone] = useState(false);
+  useEffect(() => {
+    let live = true;
+    witness.asset(env, paperId, file).then(r => { if (!live) return; if (r.ok) setUrl(r.value.url); else setGone(true); });
+    return () => { live = false; };
+  }, [env, paperId, file]);
+  if (gone) return null;
+  if (!url) return <ActivityIndicator style={{marginVertical: 10}} />;
+  const html = '<html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:#000">' +
+    '<video src="' + url.replace(/"/g, '&quot;') + '" controls muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:contain"></video></body></html>';
+  return (
+    <View style={s.clip} accessibilityLabel={label} testID={'witness-clip-' + file}>
+      <WebView source={{html}} originWhitelist={['*']} allowsInlineMediaPlayback mediaPlaybackRequiresUserAction javaScriptEnabled={false} style={{backgroundColor: '#000'}} />
+    </View>
+  );
+}
+
 export function ProofView({env, paperId}: {env: WitnessEnv; paperId: string}): React.JSX.Element {
   const [p, setP] = useState<Proof | null>(null);
   const [err, setErr] = useState('');
@@ -84,7 +106,8 @@ export function ProofView({env, paperId}: {env: WitnessEnv; paperId: string}): R
     <View style={s.card} testID="witness-proof">
       <Text style={s.h}>Proof of Thinking</Text>
       <Text style={s.sub}>{p.exam}{p.level ? ' · ' + p.level : ''}</Text>
-      <Text style={s.meta}>{p.student ? p.student + ' · ' : ''}sat {day(p.sat_ms)} · {p.marks} of {p.out_of} marks</Text>
+      <Text style={s.meta}>{p.student ? p.student + ' · ' : ''}sat {day(p.sat_ms)} · {p.marks} of {p.out_of} marks
+        {p.mastered != null ? ' · ' + p.mastered + ' of ' + p.questions.length + ' mastered' + (p.turned_around ? ' (' + p.turned_around + ' turned around)' : '') : ''}</Text>
       {p.questions.map(q => (
         <View key={q.n} style={s.block}>
           <Text style={s.qh}>Question {q.n} · {RESULT_WORDS[q.teacher_result || q.result]}</Text>
@@ -94,6 +117,11 @@ export function ProofView({env, paperId}: {env: WitnessEnv; paperId: string}): R
           ))}
           {q.diagnosis ? <Text style={s.diag}>{q.moment_s != null ? 'At ' + clock(q.moment_s) + ': ' : ''}{q.diagnosis}</Text> : null}
           {q.comment ? <Text style={s.comment}>Your teacher: {q.comment}</Text> : null}
+          {q.still ? <Picture env={env} paperId={paperId} file={q.still} label={'Your desk, question ' + q.n} testID={'witness-proof-still-' + q.n} /> : null}
+          {q.clip ? <Clip env={env} paperId={paperId} file={q.clip} label={'Six seconds of your desk, question ' + q.n} /> : null}
+          {q.turned_around ? (
+            <Text style={s.turned} testID={'witness-proof-turned-' + q.n}>Turned around · {day(q.turned_around.from_ms)} to {day(q.turned_around.at)}{q.turned_around.note ? ' · ' + q.turned_around.note : ''}. Counted as mastered.</Text>
+          ) : null}
         </View>
       ))}
       {p.examiner.length ? (
@@ -128,6 +156,8 @@ const s = StyleSheet.create({
   diag: {fontSize: 14, color: '#b3261e', marginTop: 6, lineHeight: 20},
   comment: {fontSize: 14, color: '#141a2e', marginTop: 6, fontStyle: 'italic'},
   picture: {width: '100%', aspectRatio: 1, marginTop: 10, borderRadius: 8, backgroundColor: '#f4efe2'},
+  clip: {width: '100%', aspectRatio: 9 / 16, maxHeight: 420, marginTop: 8, borderRadius: 8, overflow: 'hidden', backgroundColor: '#000'},
+  turned: {fontSize: 14, color: '#166534', marginTop: 8, fontWeight: '600'},
   foot: {fontSize: 12, color: '#6b7389', marginTop: 14, lineHeight: 18},
   error: {fontSize: 14, color: '#b3261e', marginTop: 12},
 });

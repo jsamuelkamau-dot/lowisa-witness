@@ -24,6 +24,9 @@ import {buildMastery, masteryDone, masteryPath} from './mastery';
 import type {Mastery} from './net';
 import {asksLeft} from './net';
 import {AsksView} from './Examiner';
+import {SayIt} from './SayIt';
+import {tutorSay} from '../tutor/voice';
+import {turnedAround} from './net';
 import {clock, Picture, ProofView, Replay} from './Proof';
 
 /** The camera app is told to stop here: SAM 3.1 follows up to about ten minutes of video in one go. */
@@ -40,8 +43,23 @@ type Stage =
   | {kind: 'proof'; paper: Paper}
   | {kind: 'paper'; paper: Paper};
 
-interface Native { uploadPart?(uri: string, url: string, offset: number, length: number): Promise<number>; uploadFile?(uri: string, url: string, contentType: string): Promise<number>; takeVideo?(maxSeconds: number): Promise<VideoFile | null>; smallVideo?(uri: string): Promise<VideoFile | null>; lastClip?(sinceMs: number): Promise<VideoFile | null> }
+interface Native { uploadPart?(uri: string, url: string, offset: number, length: number): Promise<number>; uploadFile?(uri: string, url: string, contentType: string): Promise<number>; takeVideo?(maxSeconds: number): Promise<VideoFile | null>; witnessCamera?(maxSeconds: number): Promise<VideoFile | null>; smallVideo?(uri: string): Promise<VideoFile | null>; lastClip?(sinceMs: number): Promise<VideoFile | null> }
 const docs = () => (NativeModules as Record<string, unknown>).LoWisaDocuments as Native | undefined;
+
+/** A paper recorded with the Witness camera (a guide frame on the page, the screen dimmed; 28 Oct re-audit), or the
+ *  phone's own camera app on a build without it. */
+function record(n: Native): Promise<VideoFile | null> {
+  return n.witnessCamera ? n.witnessCamera(RECORD_SECONDS) : n.takeVideo!(RECORD_SECONDS);
+}
+
+/** What Lo says for "Hear it" on a question: the result, the marks, what went wrong and the teacher's words (pure). */
+export function spokenFeedback(q: Question): string {
+  const parts = ['Question ' + q.n + '. ' + (turnedAround(q) ? 'Turned around.' : RESULT_WORDS[resultOf(q)] + '.'),
+    'You got ' + marksOf(q) + ' of ' + q.out_of + ' marks.'];
+  if (q.diagnosis && !turnedAround(q)) parts.push('What went wrong: ' + q.diagnosis);
+  if (q.comment && q.comment.text) parts.push('Your teacher says: ' + q.comment.text);
+  return parts.join(' ');
+}
 
 /**
  * A desk video made small enough to send on a phone's data: 720p, ten frames a second, about 8 MB a minute where the
@@ -179,10 +197,10 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
     if (!name.trim()) { setError('Write your name as your teacher knows it.'); return; }
     let file: VideoFile | null = null;
     const n = docs();
-    const camera = source === 'camera' && !!n && !!n.takeVideo;
+    const camera = source === 'camera' && !!n && !!(n.witnessCamera || n.takeVideo);
     if (camera) storage.setItem(PENDING_KEY, JSON.stringify({code: stage.code, title: stage.title, level: stage.level, name: name.trim(), at: Date.now()}));
     // the camera app records up to ten minutes here (the composer's own recordings stop at two)
-    try { file = camera ? await n!.takeVideo!(RECORD_SECONDS) : await chooseVideo(source); }
+    try { file = camera ? await record(n!) : await chooseVideo(source); }
     catch (e) { if (camera) storage.removeItem(PENDING_KEY); setError('The camera could not start. Try choosing a video you already recorded.'); return; }
     if (!file) { if (camera) storage.removeItem(PENDING_KEY); return; }
     if (!doorMime(file.mime, file.name)) { setError('Witness reads MP4 and MOV videos. Record it again with the camera here.'); return; }
@@ -410,7 +428,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
   const film = async (source: 'camera' | 'gallery') => {
     setSaid('');
     let file: VideoFile | null = null;
-    try { const n = docs(); file = source === 'camera' && n && n.takeVideo ? await n.takeVideo(RECORD_SECONDS) : await chooseVideo(source); }
+    try { const n = docs(); file = source === 'camera' && n && (n.witnessCamera || n.takeVideo) ? await record(n) : await chooseVideo(source); }
     catch (e) { setSaid('The camera could not start. Try choosing a video you already recorded.'); return; }
     if (!file) return;
     if (!doorMime(file.mime, file.name)) { setSaid('Witness reads MP4 and MOV videos. Record it again with the camera here.'); return; }
@@ -458,6 +476,8 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
       </View>
       <Text style={s.sub}>{marksOf(q)} of {q.out_of} marks</Text>
       <Replay q={q} />
+      {/* 28 Oct re-audit (the submission: each student's feedback comes "with a short spoken explanation") */}
+      <Btn label="Hear it" onPress={() => tutorSay(spokenFeedback(q))} small testID={'witness-hear-' + q.n} />
       {next && q.diagnosis && q.moment_s == null ? <Text style={s.diag}>{q.diagnosis}</Text> : null}
       {q.comment && q.comment.text ? <Text style={s.comment} testID={'witness-comment-' + q.n}>Your teacher: {q.comment.text}</Text> : null}
       {next && (paper.result?.stills || []).some(x => x.n === q.n) ? (
@@ -508,6 +528,7 @@ function AfterLevel({m, act, film, filming}: {m?: Mastery; act(action: 'explain'
           {m && m.lo_next ? <Text style={s.sub}>Lo: {m.lo_next}</Text> : <Text style={s.sub}>In your own words: what went wrong, and what is right?</Text>}
           <TextInput value={toLo} onChangeText={setToLo} multiline style={s.input} accessibilityLabel="Your explanation for Lo" testID="witness-explain-lo" />
           <Btn label="Tell Lo" onPress={async () => { if (await act('explain', {to: 'lo', text: toLo})) setToLo(''); }} small />
+          <SayIt label="Say it to Lo" onAudio={(audio, mime) => act('explain', {to: 'lo', audio, mime})} testID="witness-say-lo" />
         </View>
       ) : null}
       {asks.teacher && told.indexOf('teacher') < 0 ? (
@@ -515,6 +536,7 @@ function AfterLevel({m, act, film, filming}: {m?: Mastery; act(action: 'explain'
           <Text style={s.rowTitle}>Explain it back to your teacher</Text>
           <TextInput value={toTeacher} onChangeText={setToTeacher} multiline style={s.input} accessibilityLabel="Your explanation for your teacher" testID="witness-explain-teacher" />
           <Btn label="Send to my teacher" onPress={async () => { if (await act('explain', {to: 'teacher', text: toTeacher})) setToTeacher(''); }} small />
+          <SayIt label="Say it to my teacher" onAudio={(audio, mime) => act('explain', {to: 'teacher', audio, mime})} testID="witness-say-teacher" />
         </View>
       ) : null}
       {asks.paper && asks.fresh ? (

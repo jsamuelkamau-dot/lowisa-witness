@@ -12,6 +12,7 @@ import {Btn} from '../exam/print/ui';
 import {cancelRecording, readRecording, recorderAvailable, removeRecording, RECORDING_MIME, startRecording, stopRecording} from '../voice/recorder';
 import {Ask, Examiner, witness, WitnessEnv} from './net';
 import {tutorSay} from '../tutor/voice';
+import {KEPT_WORDS} from './SayIt';
 
 /** An answer is a sentence or two; the recording stops on its own after this. */
 export const ANSWER_SECONDS = 90;
@@ -62,10 +63,10 @@ function AskCard({a, env, paperId, onAnswered}: {a: Ask; env: WitnessEnv; paperI
   const record = async () => {
     setSaid('');
     if (Platform.OS === 'android') {
-      // Witness's own words: the answer's text is kept for the teacher, the recording is not
+      // 28 Oct (owner): the recording is kept with the paper for the teacher to hear; the student is told so first
       try {
         const g = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO, {
-          title: 'Answer out loud', message: 'Witness records your answer, turns it into words for your teacher, and deletes the recording.',
+          title: 'Answer out loud', message: KEPT_WORDS,
           buttonPositive: 'Allow', buttonNegative: 'Not now'});
         if (g !== PermissionsAndroid.RESULTS.GRANTED) { setSaid('Witness needs the microphone to hear you. You can write your answer instead.'); return; }
       } catch (e) { return; }

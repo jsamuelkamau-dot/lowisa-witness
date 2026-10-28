@@ -52,8 +52,11 @@ export interface Paper { id: string; status: string; unseen?: boolean; title?: s
 export interface Proof {
   record: 'proof_of_thinking'; id: string; exam: string; level: string; kind: string; student: string;
   sat_ms: number | null; marked_ms: number | null; released_ms: number | null; marks: number; out_of: number; video: string; read_by: string[];
+  /** 28 Oct re-audit: mastered on the paper or turned around since, and how many were turned around */
+  mastered?: number; turned_around?: number;
   questions: Array<{n: number; question: string; result: Result; teacher_result?: Result; marks: number; teacher_marks?: number; out_of: number;
-    confidence: number; moment_s: number | null; diagnosis: string; steps: Step[]; still?: string; comment?: string; drawn?: {asset: string; lines: string[]}}>;
+    confidence: number; moment_s: number | null; diagnosis: string; steps: Step[]; still?: string; clip?: string; comment?: string; drawn?: {asset: string; lines: string[]};
+    turned_around?: {from_ms: number | null; at: number; note: string}}>;
   examiner: Array<{k: number; n: number; ask: string; wrote?: string; answered: boolean; answer?: {text: string; spoken: boolean}}>;
 }
 
@@ -71,8 +74,12 @@ export const RESULT_WORDS: Record<Result, string> = {
 export function resultOf(q: Question): Result { return q.teacher_result || q.result; }
 export function marksOf(q: Question): number { return typeof q.teacher_marks === 'number' ? q.teacher_marks : q.marks; }
 export function toMaster(p: Paper): Question[] {
-  return ((p.result && p.result.questions) || []).filter(q => { const r = resultOf(q); return r === 'not_yet' || r === 'right_answer_wrong_thinking'; });
+  // 28 Oct re-audit (the plan: a question turned around counts the same as one right the first time)
+  return ((p.result && p.result.questions) || []).filter(q => { const r = resultOf(q); return (r === 'not_yet' || r === 'right_answer_wrong_thinking') && !turnedAround(q); });
 }
+
+/** The teacher saw this question turned around (the badge). */
+export function turnedAround(q: Question): boolean { return !!q.mastery && q.mastery.status === 'badge'; }
 
 /** The join code as typed or pasted: upper case, only the code's letters, at most 6. */
 export const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';

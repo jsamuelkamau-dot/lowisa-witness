@@ -104,7 +104,7 @@ export async function buildMastery(env: CustomEnv & WitnessEnv, storage: MirrorS
   // the level as it was last checked is the one kept: its outline goes to the teacher (28 Oct: the teacher's preview)
   let outline: MasteryLevelText | null = null;
   const masteryCheck = async (l: MasteryLevelText) => { outline = l; checked = await check(l); return checked; };
-  const made = await createCustomCourse({...env, designModel: MASTERY_MODEL, designPath: MASTERY_DESIGN_PATH, mastery: true, masteryCheck}, storage, 'topic', input, {context});
+  const made = await createCustomCourse({...env, designModel: MASTERY_MODEL, designPath: MASTERY_DESIGN_PATH, designFor: {sitting: paper.id, n: q.n}, mastery: true, masteryCheck}, storage, 'topic', input, {context});
   if (made.ok && made.pathId) remember(storage, paper.id, q.n, made.pathId);
   return {...made, checked, outline};
 }
