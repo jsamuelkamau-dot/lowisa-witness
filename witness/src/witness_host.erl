@@ -31,7 +31,7 @@
 %% What a sitting cost, in US dollars, for the host to charge or log.
 -callback spend(Uid :: binary(), Feature :: binary(), Usd :: float()) -> ok.
 %% One design call of a mastery level (Muse Spark), paid by the learner the host's own way; {gate, ...} is its wall.
--callback design(Uid :: binary(), Req :: #{request_id := binary(), messages := [map()], effort := binary(), max_tokens := pos_integer()}) ->
+-callback design(Uid :: binary(), Req :: #{request_id := binary(), messages := [map()], effort := binary(), max_tokens := pos_integer(), reply => json | text}) ->
     {ok, Text :: binary()} | {gate, Status :: pos_integer(), Body :: map()} | {error, term()}.
 %% Run the marking off the request (the host chooses how it is supervised).
 -callback run(fun(() -> any())) -> ok.

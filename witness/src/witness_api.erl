@@ -44,7 +44,7 @@
 %%%   endpoint for it (Host:open_engine/0), else by Muse Spark; the result names the engine that marked it.
 %%%   When a paper is marked Witness also keeps a still at each moment that matters and Muse Wonder writes the
 %%%   examiner's two questions about the student's own steps (witness_examiner).
-%%%   POST design                   {requestId, messages: [system, user], reasoningEffort?, maxOutputTokens?}
+%%%   POST design                   {requestId, messages: [system, user], reasoningEffort?, maxOutputTokens?, reply?: "text"}
 %%%                                 -> 200 {success, text}   one design call of a mastery level, on Muse Spark, paid by
 %%%                                 the exam's teacher when `for` names the paper it is for and the caller is that
 %%%                                 paper's student (the plan: levels are charged to the school's wallet), else by the
@@ -451,7 +451,9 @@ route(<<"POST">>, [<<"design">>], B, Uid, Host) ->
         _ ->
             Req = #{request_id => clean(maps:get(<<"requestId">>, B, <<>>), 120), messages => Msgs,
                     effort => case maps:get(<<"reasoningEffort">>, B, null) of E when E =:= <<"low">>; E =:= <<"medium">>; E =:= <<"high">> -> E; _ -> <<"low">> end,
-                    max_tokens => case maps:get(<<"maxOutputTokens">>, B, null) of N when is_integer(N), N >= 1024, N =< 16000 -> N; _ -> 8000 end},
+                    max_tokens => case maps:get(<<"maxOutputTokens">>, B, null) of N when is_integer(N), N >= 1024, N =< 16000 -> N; _ -> 8000 end,
+                    %% 29 Oct audit (the plan, 1b: a mastery level's calls go to Meta): Lo's live teaching turns are words, not JSON
+                    reply => case maps:get(<<"reply">>, B, null) of <<"text">> -> text; _ -> json end},
             Payer = payer(Uid, maps:get(<<"for">>, B, null), Host),
             case Host:design(Payer, Req) of
                 {ok, Text} -> {200, #{success => true, text => Text}};

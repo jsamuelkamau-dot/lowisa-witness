@@ -12,6 +12,7 @@ LoWisa's edge server. `scripts/sync_to_host.sh path/to/app` copies the modules a
 | Metering | Charges each call: tokens through the host's price table, SAM frames, images and audio seconds through `witness_meta:cost/2` | Two house-only model rows (Muse Spark 1.3, Muse Wonder 1.0) at Meta's Standard prices; learners can't choose them for anything else |
 | Who may use it | A switch limited to pilot accounts | The host's existing switch mechanism |
 | The level builder | Receives the mastery-level input (question, diagnosis, the student's working, the teacher's focus note) and builds the level the same way it builds every level | LoWisa's Master any topic builder (existed before) |
+| A mastery level's calls | Every model call the level makes goes to `POST design` with the paper it is for (`for`), so it runs on Muse Spark and the exam's teacher pays: the build, the lessons written when opened, the flashcards and Lo's live turns (`reply: "text"`). `phone/witness/metaRoute.ts` decides which paths are mastery levels | The lesson writer, flashcard maker and live teacher ask `askMeta` for a mastery level's path; the Insight episode is asked with `witness: true` and written on Muse Spark |
 
 ## Model calls Witness makes
 

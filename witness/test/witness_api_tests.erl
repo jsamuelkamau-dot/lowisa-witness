@@ -384,7 +384,10 @@ design_door_passes_one_call_and_the_wall_test() ->
     ?assertMatch({400, _}, r(<<"POST">>, [<<"design">>], #{}, <<"stud">>)),
     %% an unknown effort or size falls back to the safe ones
     {200, _} = r(<<"POST">>, [<<"design">>], B#{<<"reasoningEffort">> => <<"max">>, <<"maxOutputTokens">> => 999999}, <<"stud">>),
-    ?assertMatch([_, {design, _, #{effort := <<"low">>, max_tokens := 8000}}], [E || E = {design, _, _} <- events()]).
+    ?assertMatch([_, {design, _, #{effort := <<"low">>, max_tokens := 8000, reply := json}}], [E || E = {design, _, _} <- events()]),
+    %% Lo's live teaching turn on a mastery level asks for words, not JSON
+    {200, _} = r(<<"POST">>, [<<"design">>], B#{<<"reply">> => <<"text">>}, <<"stud">>),
+    ?assertMatch(#{reply := text}, lists:last([R || {design, _, R} <- events()])).
 
 after_release_the_teacher_chooses_and_issues_the_badge_test() ->
     setup(),

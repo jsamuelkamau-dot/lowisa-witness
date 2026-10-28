@@ -14,12 +14,8 @@ import {createCustomCourse, CustomCourseResult, CustomEnv, MasteryLevelText} fro
 import type {Paper, Question, WitnessEnv} from './net';
 import {resultOf, witness} from './net';
 
-/** The model of every design call of a mastery level (the edge's house-only Meta row, open to Witness accounts). */
-export const MASTERY_MODEL = 'muse-spark-1-3';
-/** Where a mastery level's design calls go: the edge's own metered call on Muse Spark (behind the Witness switch). */
-export const MASTERY_DESIGN_PATH = '/api/witness/design';
-/** Which course each question's level became: {"<paper>#<n>": pathId}. */
-export const MASTERY_KEY = 'lowisa-witness-mastery-v1';
+export {MASTERY_MODEL, MASTERY_DESIGN_PATH, MASTERY_KEY, masteryOfPath} from './metaRoute';
+import {MASTERY_MODEL, MASTERY_DESIGN_PATH, MASTERY_KEY} from './metaRoute';
 
 export function masteryKey(paperId: string, n: number): string { return paperId + '#' + n; }
 
@@ -27,19 +23,6 @@ export function masteryKey(paperId: string, n: number): string { return paperId 
 export function masteryPath(storage: MirrorStorage, paperId: string, n: number): string | null {
   try { const m = JSON.parse(storage.getItem(MASTERY_KEY) || '{}'); const v = m[masteryKey(paperId, n)]; return typeof v === 'string' ? v : null; }
   catch (e) { return null; }
-}
-
-/** The paper and question a mastery level was built for, from its path (the lesson player's "Ask my teacher"). */
-export function masteryOfPath(storage: MirrorStorage, pathId: string): {paperId: string; n: number} | null {
-  try {
-    const m = JSON.parse(storage.getItem(MASTERY_KEY) || '{}') || {};
-    for (const k of Object.keys(m)) {
-      if (m[k] !== pathId) continue;
-      const at = k.lastIndexOf('#'); const n = Number(k.slice(at + 1));
-      if (at > 0 && Number.isInteger(n)) return {paperId: k.slice(0, at), n};
-    }
-  } catch (e) { /* nothing remembered */ }
-  return null;
 }
 
 function remember(storage: MirrorStorage, paperId: string, n: number, pathId: string): void {
