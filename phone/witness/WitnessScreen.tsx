@@ -43,7 +43,7 @@ type Stage =
   | {kind: 'proof'; paper: Paper}
   | {kind: 'paper'; paper: Paper};
 
-interface Native { uploadPart?(uri: string, url: string, offset: number, length: number): Promise<number>; uploadFile?(uri: string, url: string, contentType: string): Promise<number>; takeVideo?(maxSeconds: number): Promise<VideoFile | null>; witnessCamera?(maxSeconds: number): Promise<VideoFile | null>; smallVideo?(uri: string): Promise<VideoFile | null>; lastClip?(sinceMs: number): Promise<VideoFile | null> }
+interface Native { uploadPart?(uri: string, url: string, offset: number, length: number): Promise<number>; uploadFile?(uri: string, url: string, contentType: string): Promise<number>; takeVideo?(maxSeconds: number): Promise<VideoFile | null>; witnessCamera?(maxSeconds: number): Promise<VideoFile | null>; smallVideo?(uri: string): Promise<VideoFile | null>; lastClip?(sinceMs: number): Promise<VideoFile | null>; removeFile?(uri: string): void }
 const docs = () => (NativeModules as Record<string, unknown>).LoWisaDocuments as Native | undefined;
 
 /** A paper recorded with the Witness camera (a guide frame on the page, the screen dimmed; 28 Oct re-audit), or the
@@ -149,6 +149,12 @@ export function readPending(storage: MirrorStorage, now = Date.now()): PendingSi
     const p = JSON.parse(storage.getItem(PENDING_KEY) || 'null') as PendingSit | null;
     return p && typeof p.code === 'string' && typeof p.at === 'number' && now - p.at < PENDING_MS ? p : null;
   } catch (e) { return null; }
+}
+
+/** Deletes the phone's own copies of a paper's video once it is sent (only files in the app's cache; never the gallery's). */
+export function forgetClips(uris: string[], n: Native | null | undefined = docs()): void {
+  if (!n || !n.removeFile) return;
+  for (const u of Array.from(new Set(uris.filter(Boolean)))) { try { n.removeFile(u); } catch (e) { /* the cache drops it later */ } }
 }
 
 /** The recording a stopped app left behind for the pending exam, or null. */
@@ -270,6 +276,9 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
       if (left.ok && left.value.urls.length && await sendParts(file.uri, total, left.value.size, left.value.urls)) marked = await witness.mark(env, id, PHONE_FPS);
     }
     if (!marked.ok) { setStage({kind: 'joined', code: stage.code, title, level: stage.level}); setError(marked.error); return; }
+    // 29 Oct audit ("the video is deleted once your paper is marked"): the server has it now, so the phone's own copies
+    // go (the recording and the smaller copy it made; a video picked from the gallery is the student's and is left)
+    forgetClips([picked.uri, file.uri]);
     setStage({kind: 'sent', title, id});
     loadMine();
   };
