@@ -300,7 +300,11 @@
                  completed: 'Level played to the end', badge: 'Turned around', not_yet: 'Not yet' };
   // the level as it was built, for the teacher to read; one the exam holds for a look waits for "Let them start" (28 Oct)
   function levelOutline(m) {
-    var l = m.level; if (!l) return '';
+    var l = m.level;
+    // 28 Oct, live: a level whose news reached the edge late came without its outline, and the button to let the
+    // student start lived only inside the outline; a held level always has it
+    if (!l) return m.status === 'held' ? '<div class="wd-card" style="margin-top:8px"><b>The level</b><div class="wd-sub">Its outline did not come with it.</div>' +
+      '<div style="margin-top:8px"><button class="wd-btn wd-main" data-act="approve">Let them start</button> <span class="wd-sub">It reaches the student once you do.</span></div></div>' : '';
     return '<div class="wd-card" style="margin-top:8px"><b>' + esc(l.title || 'The level') + '</b>' +
       (m.world ? '<img data-asset="' + esc(m.world) + '" alt="The real-world place the level happens in, drawn by Muse Image" style="display:block;width:100%;max-width:420px;border-radius:8px;margin-top:6px;background:#f4efe2;min-height:60px">' : '') +
       (l.lessons || []).map(function (ls, i) {

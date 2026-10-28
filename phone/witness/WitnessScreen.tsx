@@ -431,6 +431,9 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
     if (path && held) { const r = await witness.mine(env); const p = r.ok ? (r.value.papers || []).find(x => x.id === paper.id) : undefined;
       const now = p && p.result ? p.result.questions.find(x => x.n === q.n) : undefined; if (now && now.mastery) setM(now.mastery);
       if (!now || !now.mastery || now.mastery.status === 'held') return; }
+    // 28 Oct, live: a level built here whose news the edge refused (one account as teacher and student, before vb1028g)
+    // never reached the teacher; it is told again before the level opens, and waits when the teacher looks first
+    if (path && (!m || !m.status)) { const after = await act('event', {event: 'built', path}); if (!after || after.status === 'held') return; }
     if (path) { if (onOpenPath) onOpenPath(path); return; }
     setSaid(''); setBuilding('Planning your level…');
     const off = onBuildProgress(st => setBuilding(st.stage === 'write' ? 'Writing your lessons…' : st.stage === 'check' ? 'Playing it through as you, to be sure it teaches this…' : st.stage === 'review' ? 'Checking the plan…' : st.stage === 'redesign' ? 'Making it sharper…' : 'Planning your level…'));
