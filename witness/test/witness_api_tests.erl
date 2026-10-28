@@ -347,7 +347,11 @@ a_levels_design_calls_are_paid_by_the_exams_teacher_test() ->
     {200, _} = r(<<"POST">>, [<<"design">>], B#{<<"for">> => #{<<"sitting">> => S, <<"n">> => 3}}, <<"stud">>),
     {200, _} = r(<<"POST">>, [<<"design">>], B#{<<"for">> => #{<<"sitting">> => S, <<"n">> => 3}}, <<"other">>),
     {200, _} = r(<<"POST">>, [<<"design">>], B, <<"stud">>),
-    ?assertEqual([<<"teacher">>, <<"other">>, <<"stud">>], [U || {design, U, _} <- events()]).
+    ?assertEqual([<<"teacher">>, <<"other">>, <<"stud">>], [U || {design, U, _} <- events()]),
+    %% a teacher out of credits: the student is told it is the teacher's, not shown their own credit wall
+    {201, #{code := Code2}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Broke class">>}, <<"broke">>),
+    {201, #{id := S2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code2, <<"student">> => <<"Amara">>}, <<"stud">>),
+    ?assertMatch({409, #{code := <<"teacher_credits">>}}, r(<<"POST">>, [<<"design">>], B#{<<"for">> => #{<<"sitting">> => S2, <<"n">> => 3}}, <<"stud">>)).
 
 %% 28 Oct, live: a teacher sitting their own exam on one account was refused every student step ("That isn't yours")
 a_teacher_sitting_their_own_exam_plays_both_sides_test() ->

@@ -452,8 +452,13 @@ route(<<"POST">>, [<<"design">>], B, Uid, Host) ->
             Req = #{request_id => clean(maps:get(<<"requestId">>, B, <<>>), 120), messages => Msgs,
                     effort => case maps:get(<<"reasoningEffort">>, B, null) of E when E =:= <<"low">>; E =:= <<"medium">>; E =:= <<"high">> -> E; _ -> <<"low">> end,
                     max_tokens => case maps:get(<<"maxOutputTokens">>, B, null) of N when is_integer(N), N >= 1024, N =< 16000 -> N; _ -> 8000 end},
-            case Host:design(payer(Uid, maps:get(<<"for">>, B, null), Host), Req) of
+            Payer = payer(Uid, maps:get(<<"for">>, B, null), Host),
+            case Host:design(Payer, Req) of
                 {ok, Text} -> {200, #{success => true, text => Text}};
+                %% the teacher's wallet is the one that ran out: the student is told so, never shown their own wall
+                {gate, _Status, _Body} when Payer =/= Uid ->
+                    {409, #{success => false, code => <<"teacher_credits">>,
+                            error => <<"Your teacher's credits for mastery levels have run out. Ask your teacher, then try again.">>}};
                 {gate, Status, Body} -> {Status, Body};
                 {error, _} -> {502, #{success => false, error => <<"The design call did not come back. Try again in a moment.">>}}
             end
