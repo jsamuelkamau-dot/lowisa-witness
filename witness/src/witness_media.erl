@@ -10,7 +10,7 @@
 %%% ffmpeg runs as a program with its arguments (no shell); it must be on the PATH. available/0 says whether it is.
 %%%-------------------------------------------------------------------
 -module(witness_media).
--export([step/3, wav/1, still/2, last/1, frames/3, available/0]).
+-export([step/3, wav/1, still/2, clip/3, last/1, frames/3, available/0]).
 
 -define(TIMEOUT_MS, 60000).
 -define(MAX_AUDIO, 25 * 1024 * 1024).
@@ -42,6 +42,23 @@ still(Url, Seconds) when is_number(Seconds), Seconds >= 0 ->
         _ = file:delete(Out)
     end;
 still(_, _) -> {error, bad_time}.
+
+%% clip(Url, From, Secs) -> {ok, Mp4}: a few seconds of the desk around a moment that matters, small and silent (28 Oct
+%% re-audit: the research's Proof of Thinking keeps "short clips at the moments that matter" once the video is deleted).
+%% H.264 so a browser and the phone's web view play it; read from the signed link as the stills are.
+clip(Url, From, Secs) when is_number(From), From >= 0, is_number(Secs), Secs > 0, Secs =< 12 ->
+    Out = tmp(".mp4"),
+    try
+        At = float_to_list(float(From), [{decimals, 2}]), For = float_to_list(float(Secs), [{decimals, 2}]),
+        case run(["-v", "error", "-y", "-ss", At, "-i", str(Url), "-t", For, "-an", "-vf", "scale=480:-2,fps=10",
+                  "-c:v", "libx264", "-preset", "veryfast", "-crf", "30", "-pix_fmt", "yuv420p", "-movflags", "+faststart", Out]) of
+            ok -> file:read_file(Out);
+            E -> E
+        end
+    after
+        _ = file:delete(Out)
+    end;
+clip(_, _, _) -> {error, bad_time}.
 
 %% step(Url, Seconds, Box) -> {ok, Jpeg}: the student's own written step, cut from the frame by SAM's box for its line
 %% (source pixels; w and h the frame), with room around it (28 Oct audit: the plan's first look opens on the student's

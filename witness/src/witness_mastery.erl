@@ -14,18 +14,22 @@
 %%%     check => #{passes, problems} (the kept level's own self-check; the teacher sees it, the student does not),
 %%%     asks => #{lo, paper, teacher} (booleans, the teacher's), and fresh => the fresh question's text when paper,
 %%%     fresh => #{sitting, status => uploading | marked | failed, at, question} (the paper watched again),
-%%%     explain => #{lo => #{text, verdict, at}, teacher => #{text, at}},
+%%%     explain => #{lo => #{text, verdict, at, audio?}, teacher => #{text, at, audio?}} (audio: the recording, kept for the teacher),
 %%%     thread => [#{from => student | teacher, text, at}],
+%%%     activity => [#{title, right, asked, at}] (each lesson of the level the student finished),
+%%%     recommendation => #{recommend => issue | not_yet, why, at} (Muse Spark's, for the teacher only),
 %%%     badge => #{issued, note, at}}
 %%%
 %%% Every function here is pure: a question in, the question changed (or a refusal) out. witness_api does the reading,
 %%% saving and checking who may do what.
 %%%-------------------------------------------------------------------
 -module(witness_mastery).
--export([event/3, approve/2, ask/4, verify/2, explain/4, ask/3, reply/3, badge/3, view/2, needs/1, judge_prompt/2, judge/1, fresh_started/3, fresh_marked/3]).
+-export([event/3, approve/2, ask/4, verify/2, explain/4, ask/3, reply/3, badge/3, view/2, needs/1, judge_prompt/2, judge/1, fresh_started/3, fresh_marked/3,
+         recommended/3]).
 
 -define(MAX_TEXT, 2000).
 -define(MAX_THREAD, 60).
+-define(MAX_ACTIVITY, 24).
 
 needs(Q) -> witness_mark:needs_level(Q#{result => maps:get(teacher_result, Q, maps:get(result, Q))}).
 
@@ -46,7 +50,20 @@ event(Q, <<"completed">>, #{at := At}) ->
         S when S =:= <<"badge">> -> Q;
         _ -> put_m(Q, M#{status => <<"completed">>, completed_ms => At})
     end;
+%% 28 Oct re-audit (the plan's badge review: "the level activity and answers"): each lesson the student finishes in
+%% the level, with how many of its questions they had right first time. It never changes the level's state.
+event(Q, <<"lesson">>, #{at := At, lesson := #{} = L}) ->
+    case clean(maps:get(<<"title">>, L, <<>>)) of
+        <<>> -> {error, bad_event};
+        Title ->
+            M = m(Q),
+            Entry = #{title => Title, right => count(maps:get(<<"right">>, L, null)), asked => count(maps:get(<<"asked">>, L, null)), at => At},
+            put_m(Q, M#{activity => lists:sublist(maps:get(activity, M, []) ++ [Entry], ?MAX_ACTIVITY)})
+    end;
 event(_, _, _) -> {error, bad_event}.
+
+count(N) when is_integer(N), N >= 0, N < 1000 -> N;
+count(_) -> null.
 
 %% The teacher lets a held level reach the student.
 approve(Q, At) ->
@@ -109,7 +126,8 @@ explain(Q, To, Text0, #{at := At} = Ctx) ->
             case maps:get(Key, Asked, false) of
                 false -> {error, not_asked};
                 true ->
-                    Entry0 = #{text => Text, at => At},
+                    %% 28 Oct re-audit (the plan: "by voice or in writing"; owner: keep the recording for the teacher)
+                    Entry0 = case maps:get(audio, Ctx, undefined) of A when is_binary(A) -> #{text => Text, at => At, audio => A, spoken => true}; _ -> #{text => Text, at => At} end,
                     Entry = case {Key, maps:get(verdict, Ctx, undefined)} of {lo, V} when is_map(V) -> Entry0#{verdict => V}; _ -> Entry0 end,
                     put_m(Q, M#{explain => (maps:get(explain, M, #{}))#{Key => Entry}})
             end
@@ -147,12 +165,15 @@ badge(Q, Issue, #{note := Note0, at := At}) ->
                         badge => #{issued => Issue =:= true, note => Note, at => At}})
     end.
 
+%% Muse Spark's recommendation for the teacher's decision (witness_recommend), kept with when it was made.
+recommended(Q, Rec, At) -> put_m(Q, (m(Q))#{recommendation => Rec#{at => At}}).
+
 %% What each side sees: the teacher everything; the student their own level's state, the checks asked of them,
 %% the thread and the badge, never the verdict text the teacher reads before deciding.
 view(Q, teacher) -> m(Q);
 view(Q, student) ->
     M = m(Q),
-    Explain = maps:map(fun(_, E) -> maps:without([verdict], E) end, maps:get(explain, M, #{})),
+    Explain = maps:map(fun(_, E) -> maps:without([verdict, audio], E) end, maps:get(explain, M, #{})),
     LoNext = case maps:get(explain, M, #{}) of
         #{lo := #{verdict := #{understood := false, next := Next}}} when Next =/= <<>> -> #{lo_next => Next};
         _ -> #{}

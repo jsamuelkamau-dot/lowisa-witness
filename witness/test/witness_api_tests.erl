@@ -2,7 +2,8 @@
 -include_lib("eunit/include/eunit.hrl").
 -behaviour(witness_host).
 -export([meta_key/0, put_url/4, get_url/2, drop_clip/2, save/3, load/2, list/2, spend/3, run/1, marker/0, checker/0, design/2, judger/0,
-         put_asset/4, asset_url/2, stiller/0, examiner/0, answer_judge/0, drawer/0, hearer/0, open_engine/0, open_marker/0, retry_waits/0, cropper/0, painter/0, parts_start/3, part_url/4, parts_done/3, parts_finish/4]).
+         put_asset/4, asset_url/2, stiller/0, examiner/0, answer_judge/0, drawer/0, hearer/0, open_engine/0, open_marker/0, retry_waits/0, cropper/0, painter/0, parts_start/3, part_url/4, parts_done/3, parts_finish/4,
+         reader/0, patterner/0, recommender/0, clipper/0, clip_tag/2]).
 
 %% An in-memory host: rows and events in an ets table, marking run at once, a canned marker.
 meta_key() -> <<"test-key">>.
@@ -71,6 +72,16 @@ drawer() -> fun(<<"test-key">>, #{n := N}, Sitting) -> ev({drawn, N, [maps:get(n
 hearer() -> fun(<<"test-key">>, <<"audio-bytes">>) -> {ok, <<"Because I divided by the common factor 16.">>, 4.0};
                 (_, <<"busy">>) -> {error, {429, <<"slow down">>}}; (_, _) -> {error, unreadable} end.
 
+%% 28 Oct re-audit seams: each off unless its test turns it on
+reader() -> fun(<<"test-key">>, Mime, Bytes) -> ev({read, Mime, Bytes}),
+    {ok, #{title => <<"Algebra quiz">>, level => <<"Year 8">>, questions => [#{n => 1, text => <<"Expand 3(x + 4)">>, marks => 2}], scheme => <<"Q1: 1 mark each term">>}, 0.003} end.
+patterner() -> fun(<<"test-key">>, Exam, Items) -> ev({patterns, Exam, Items}),
+    {ok, #{patterns => [#{idea => <<"Cancels digits">>, students => [<<"Amara">>], questions => [3], turned_around => 0, reteach => <<"r">>}],
+           tomorrow => <<"t">>, next_exam => [#{text => <<"Simplify 18/48">>, marks => 2}]}, 0.05} end.
+recommender() -> fun(<<"test-key">>, Q) -> ev({recommend, maps:get(question, Q, none)}), {ok, #{recommend => <<"issue">>, why => <<"The fresh question was right.">>, missing => <<>>}, 0.004} end.
+clipper() -> fun(Url, From, Secs) -> case on(clips) of true -> ev({clip, Url, From, Secs}), {ok, <<"mp4clip">>}; false -> {error, off} end end.
+clip_tag(_Uid, _Id) -> case on(cache) of true -> {ok, <<"etag-same-video">>}; false -> {error, off} end.
+
 open_engine() -> case on(open) of true -> #{url => <<"https://open.example.com/v1">>, key => <<"k">>, model => <<"muse-spark-open">>}; false -> undefined end.
 open_marker() -> fun(#{model := M}, #{url := Url}, Sitting) -> ev({open_marked, M, Url, maps:get(engine, Sitting)}), {ok, #{questions => [#{n => 1, result => <<"mastered">>}], pauses => [], lines => [], engine => M, cost_usd => 0.07}} end.
 
@@ -78,7 +89,7 @@ ev(E) -> ets:insert(witness_api_t, {erlang:unique_integer([monotonic]), E}).
 events() -> [E || {K, E} <- lists:sort(ets:tab2list(witness_api_t)), is_integer(K)].
 
 setup() -> case ets:whereis(witness_api_t) of undefined -> ok; _ -> ets:delete(witness_api_t) end, ets:new(witness_api_t, [named_table, public]), persistent_term:put(witness_api_fail, false), persistent_term:erase(witness_api_result),
-           [persistent_term:erase({witness_api_on, K}) || K <- [stills, examiner, open, world]], persistent_term:erase(witness_api_exbusy).
+           [persistent_term:erase({witness_api_on, K}) || K <- [stills, examiner, open, world, clips, cache]], persistent_term:erase(witness_api_exbusy).
 
 r(M, P, B, Uid) -> witness_api:route(M, P, B, Uid, ?MODULE).
 
@@ -218,6 +229,122 @@ self_check_runs_off_the_request_test() ->
     ?assertMatch({200, #{status := <<"done">>, verdict := #{passes := false, problems := [#{lesson := 3}]}}}, r(<<"GET">>, [<<"check">>, Id], #{}, <<"stud">>)),
     ?assert(lists:member({spend, <<"stud">>, <<"witness_check">>, 0.04}, events())),
     ?assertMatch({404, _}, r(<<"GET">>, [<<"check">>, Id], #{}, <<"other">>)).
+
+%% ---------------------------------------------------------------- 28 Oct re-audit
+released_paper(Result) ->
+    {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions">>,
+        <<"questions">> => [#{<<"n">> => 3, <<"text">> => <<"Simplify 16/64">>, <<"marks">> => 2}]}, <<"teacher">>),
+    persistent_term:put(witness_api_result, Result),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amara">>}, <<"stud">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"stud">>),
+    {200, _} = r(<<"POST">>, [<<"pile">>, P, <<"release">>], #{}, <<"teacher">>),
+    {P, S}.
+
+%% the submission: "a mark scheme built from the teacher's own material"
+the_exam_is_read_from_the_teachers_own_file_test() ->
+    setup(),
+    {200, R} = r(<<"POST">>, [<<"pile">>, <<"read">>], #{<<"mime">> => <<"image/jpeg">>, <<"file">> => base64:encode(<<"jpegbytes">>)}, <<"teacher">>),
+    ?assertMatch(#{title := <<"Algebra quiz">>, questions := [#{n := 1, marks := 2}], scheme := <<"Q1: 1 mark each term">>}, R),
+    ?assert(lists:member({read, <<"image/jpeg">>, <<"jpegbytes">>}, events())),
+    ?assert(lists:member({spend, <<"teacher">>, <<"witness_read">>, 0.003}, events())),
+    ?assertMatch({400, #{code := <<"bad_type">>}}, r(<<"POST">>, [<<"pile">>, <<"read">>], #{<<"mime">> => <<"text/html">>, <<"file">> => base64:encode(<<"x">>)}, <<"teacher">>)),
+    ?assertMatch({400, #{code := <<"empty">>}}, r(<<"POST">>, [<<"pile">>, <<"read">>], #{<<"mime">> => <<"application/pdf">>}, <<"teacher">>)).
+
+%% the submission's class report and the plan's class patterns, with the turned-around count read off the papers
+the_class_patterns_come_back_on_the_exam_test() ->
+    setup(),
+    {P, S} = released_paper(#{questions => [q(1, <<"mastered">>, 0.9), q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
+    {202, #{patterns := #{status := <<"making">>}}} = r(<<"POST">>, [<<"pile">>, P, <<"patterns">>], #{}, <<"teacher">>),
+    [{patterns, #{title := <<"Fractions">>}, [Item]}] = [E || E = {patterns, _, _} <- events()],
+    ?assertMatch(#{student := <<"Amara">>, n := 3, question := <<"Simplify 16/64">>, turned_around := false}, Item),
+    {200, #{pile := #{patterns := Pat}}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>),
+    ?assertMatch(#{status := <<"ready">>, papers := 1, patterns := [#{idea := <<"Cancels digits">>}], next_exam := [_]}, Pat),
+    %% nothing to master, nothing to group; and the exam is the teacher's only
+    ?assertMatch({404, _}, r(<<"POST">>, [<<"pile">>, P, <<"patterns">>], #{}, <<"stud">>)),
+    _ = S.
+
+%% the plan's badge review: the level's activity, the explanations (spoken ones kept for the teacher), the AI's
+%% recommendation; a turned-around question then counts as mastered
+the_badge_review_has_the_activity_the_recording_and_a_recommendation_test() ->
+    setup(),
+    {P, S} = released_paper(#{questions => [q(1, <<"mastered">>, 0.9), q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
+    M = fun(Who, Action, Body) -> r(<<"POST">>, [<<"mastery">>, S, <<"3">>, Action], Body, Who) end,
+    {200, _} = M(<<"stud">>, <<"event">>, #{<<"event">> => <<"built">>, <<"path">> => <<"p1">>}),
+    {200, _} = M(<<"stud">>, <<"event">>, #{<<"event">> => <<"lesson">>, <<"lesson">> => #{<<"title">> => <<"Price the boots sale">>, <<"right">> => 5, <<"asked">> => 6}}),
+    ?assertMatch({400, _}, M(<<"stud">>, <<"event">>, #{<<"event">> => <<"lesson">>, <<"lesson">> => #{}})),
+    {200, _} = M(<<"teacher">>, <<"verify">>, #{<<"lo">> => true, <<"teacher">> => true}),
+    %% out loud to Lo: Voice Transcribe writes it, Spark judges it, the recording is kept for the teacher
+    {200, #{mastery := StudentView}} = M(<<"stud">>, <<"explain">>, #{<<"to">> => <<"lo">>, <<"audio">> => base64:encode(<<"audio-bytes">>), <<"mime">> => <<"audio/mp4">>}),
+    ?assertEqual([lo], maps:get(explained, StudentView)),
+    {200, _} = M(<<"stud">>, <<"explain">>, #{<<"to">> => <<"teacher">>, <<"text">> => <<"Divide both by the same factor.">>}),
+    {ok, Row} = load(<<"teacher">>, {sitting, S}),
+    [Q3] = [Q || Q = #{n := 3} <- maps:get(questions, maps:get(result, Row))],
+    #{explain := #{lo := Lo, teacher := Te}, activity := [Act]} = maps:get(mastery, Q3),
+    ?assertMatch(#{text := <<"Because I divided by the common factor 16.">>, spoken := true, audio := <<"explain-lo-3.m4a">>, verdict := #{understood := true}}, Lo),
+    ?assertNot(maps:is_key(audio, Te)),
+    ?assertMatch(#{title := <<"Price the boots sale">>, right := 5, asked := 6}, Act),
+    ?assertMatch([_], ets:lookup(witness_api_t, {asset, <<"teacher">>, <<S/binary, "/explain-lo-3.m4a">>})),
+    %% the recommendation: the teacher's only, never the student's
+    ?assertMatch({403, _}, M(<<"stud">>, <<"recommend">>, #{})),
+    {200, #{mastery := #{recommendation := #{recommend := <<"issue">>, why := <<"The fresh question was right.">>}}}} = M(<<"teacher">>, <<"recommend">>, #{}),
+    ?assert(lists:member({recommend, <<"Simplify 16/64">>}, events())),
+    {200, #{mastery := SV}} = M(<<"stud">>, <<"ask">>, #{<<"text">> => <<"hi">>}),
+    ?assertNot(maps:is_key(recommendation, SV)),
+    ?assertNot(maps:is_key(activity, SV)),
+    %% before the badge it is to master; after it, turned around and no longer to master
+    {200, #{sittings := [#{to_master := 1, turned_around := 0}]}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>),
+    {200, _} = M(<<"teacher">>, <<"badge">>, #{<<"issue">> => true, <<"note">> => <<"Proved it on paper.">>}),
+    {200, #{sittings := [#{to_master := 0, turned_around := 1}]}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>),
+    {200, Rec} = r(<<"GET">>, [<<"sitting">>, S, <<"proof">>], #{}, <<"stud">>),
+    ?assertMatch(#{mastered := 2, turned_around := 1}, Rec),
+    [_, RQ3] = maps:get(questions, Rec),
+    ?assertMatch(#{turned_around := #{note := <<"Proved it on paper.">>}}, RQ3).
+
+%% the examiner's spoken answer is kept for the teacher; the record names it for the teacher only
+the_examiners_spoken_answer_is_kept_for_the_teacher_test() ->
+    setup(), persistent_term:put({witness_api_on, examiner}, true),
+    {_P, S} = released_paper(#{questions => [q(1, <<"mastered">>, 0.9), q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
+    {200, _} = r(<<"POST">>, [<<"sitting">>, S, <<"answer">>], #{<<"k">> => 1, <<"audio">> => base64:encode(<<"audio-bytes">>), <<"mime">> => <<"audio/mp4">>}, <<"stud">>),
+    ?assertMatch([_], ets:lookup(witness_api_t, {asset, <<"teacher">>, <<S/binary, "/answer-1.m4a">>})),
+    {200, #{examiner := [A1 | _]}} = r(<<"GET">>, [<<"sitting">>, S, <<"proof">>], #{}, <<"teacher">>),
+    ?assertMatch(#{answer := #{spoken := true, audio := <<"answer-1.m4a">>}}, A1),
+    {200, #{examiner := [B1 | _]}} = r(<<"GET">>, [<<"sitting">>, S, <<"proof">>], #{}, <<"stud">>),
+    ?assertNot(maps:is_key(audio, maps:get(answer, B1))),
+    ?assertMatch({200, #{url := _}}, r(<<"GET">>, [<<"sitting">>, S, <<"asset">>, <<"answer-1.m4a">>], #{}, <<"teacher">>)).
+
+%% the research's Proof of Thinking: a six-second clip at each moment, beside its still
+a_short_clip_is_kept_at_each_moment_test() ->
+    setup(), persistent_term:put({witness_api_on, stills}, true), persistent_term:put({witness_api_on, clips}, true),
+    {_P, S} = released_paper(#{questions => [q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
+    ?assert(lists:member({clip, <<"https://store.example.com/", S/binary, "?signed">>, 0, 6}, events())),
+    {200, #{result := #{stills := [St]}}} = r(<<"GET">>, [<<"sitting">>, S], #{}, <<"teacher">>),
+    ?assertMatch(#{n := 3, clip := <<"clip-3.mp4">>}, St),
+    {200, #{questions := [RQ]}} = r(<<"GET">>, [<<"sitting">>, S, <<"proof">>], #{}, <<"stud">>),
+    ?assertMatch(#{clip := <<"clip-3.mp4">>, still := <<"still-3.jpg">>}, RQ),
+    ?assertMatch({200, #{url := _}}, r(<<"GET">>, [<<"sitting">>, S, <<"asset">>, <<"clip-3.mp4">>], #{}, <<"stud">>)).
+
+%% the submission's caching: the same video for the same exam is marked once
+the_same_video_is_marked_once_test() ->
+    setup(), persistent_term:put({witness_api_on, cache}, true),
+    {201, #{id := P}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions">>}, <<"teacher">>),
+    Mark = fun(Who) ->
+        {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"pile">> => P, <<"student">> => Who}, <<"teacher">>),
+        {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"teacher">>), S end,
+    S1 = Mark(<<"A">>), S2 = Mark(<<"B">>),
+    ?assertEqual(1, length([E || E = {marked, _, _, _} <- events()])),
+    {200, #{status := <<"marked">>, result := #{questions := [_]}}} = r(<<"GET">>, [<<"sitting">>, S2], #{}, <<"teacher">>),
+    ?assertEqual([0.08, 0.0], [U || {spend, _, <<"witness_sitting">>, U} <- events()]),
+    _ = S1.
+
+%% the plan: a mastery level is charged to the school's wallet (the exam's teacher), not the student
+a_levels_design_calls_are_paid_by_the_exams_teacher_test() ->
+    setup(),
+    {_P, S} = released_paper(#{questions => [q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
+    B = #{<<"requestId">> => <<"mob-1">>, <<"messages">> => [#{<<"role">> => <<"user">>, <<"content">> => <<"One level">>}]},
+    {200, _} = r(<<"POST">>, [<<"design">>], B#{<<"for">> => #{<<"sitting">> => S, <<"n">> => 3}}, <<"stud">>),
+    {200, _} = r(<<"POST">>, [<<"design">>], B#{<<"for">> => #{<<"sitting">> => S, <<"n">> => 3}}, <<"other">>),
+    {200, _} = r(<<"POST">>, [<<"design">>], B, <<"stud">>),
+    ?assertEqual([<<"teacher">>, <<"other">>, <<"stud">>], [U || {design, U, _} <- events()]).
 
 %% 28 Oct, live: a teacher sitting their own exam on one account was refused every student step ("That isn't yours")
 a_teacher_sitting_their_own_exam_plays_both_sides_test() ->

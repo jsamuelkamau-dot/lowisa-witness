@@ -33,6 +33,12 @@
 %%%   GET  sitting/<id>/asset/<f>   -> {url}   a still of the desk or a drawn step (the teacher; the student once released)
 %%%   GET  sitting/<id>/proof       -> the Proof of Thinking record (witness_proof)
 %%%   GET  pile/<id>/measure        -> the exam's measured numbers (witness_measure)
+%%%   POST pile/read                {file (base64), mime}  -> 200 {title, level, questions, scheme}   the exam read from
+%%%                                 the teacher's own photo or PDF by Muse Spark (witness_read), for the new-exam form
+%%%   POST pile/<id>/patterns       -> 202   Muse Wonder groups the class's questions to master by misconception, with
+%%%                                 what to reteach tomorrow and questions for the next exam (witness_patterns); it
+%%%                                 comes back on the pile as `patterns`
+%%%   mastery teacher: recommend -> Muse Spark's recommendation for the badge (witness_recommend), for the teacher only
 %%%   A pile with kind "practical" marks a practical task: its questions are the procedure's steps.
 %%%   A pile with engine "open" is marked by Muse Spark Open on open weights (witness_open) when the host has an
 %%%   endpoint for it (Host:open_engine/0), else by Muse Spark; the result names the engine that marked it.
@@ -40,7 +46,9 @@
 %%%   examiner's two questions about the student's own steps (witness_examiner).
 %%%   POST design                   {requestId, messages: [system, user], reasoningEffort?, maxOutputTokens?}
 %%%                                 -> 200 {success, text}   one design call of a mastery level, on Muse Spark, paid by
-%%%                                 the learner through the host (a credit wall answers as the host's wall)
+%%%                                 the exam's teacher when `for` names the paper it is for and the caller is that
+%%%                                 paper's student (the plan: levels are charged to the school's wallet), else by the
+%%%                                 caller; a credit wall answers as the host's wall
 %%%
 %%% route(Method, PathParts, Body, Uid, Host) -> {Status, Map}. Host implements witness_host; the caller has
 %%% already checked the account may use Witness. An optional Host:marker/0 replaces the model calls in tests.
@@ -100,6 +108,51 @@ route(<<"POST">>, [<<"pile">>, Id, <<"release">>], _B, Uid, Host) ->
                               ok =:= Host:save(Uid, {sitting, S}, R#{status => <<"released">>, released_ms => Now})]),
             ok = Host:save(Uid, {pile, Id}, P#{released_ms => Now}),
             {200, #{ok => true, released => N}}
+    end;
+
+%% 28 Oct re-audit (the submission: "a mark scheme built from the teacher's own material"): the new exam read from the
+%% teacher's photo or PDF of the paper or its scheme.
+route(<<"POST">>, [<<"pile">>, <<"read">>], B, Uid, Host) ->
+    Mime = maps:get(<<"mime">>, B, <<>>),
+    Bytes = try base64:decode(maps:get(<<"file">>, B, <<>>)) catch _:_ -> <<>> end,
+    case {lists:member(Mime, witness_read:mimes()), byte_size(Bytes), Host:meta_key()} of
+        {false, _, _} -> refuse(400, <<"bad_type">>, <<"Give a photo (JPEG, PNG or WebP) or a PDF.">>);
+        {_, 0, _} -> refuse(400, <<"empty">>, <<"That file is empty.">>);
+        {_, Size, _} when Size > 10485760 -> refuse(413, <<"too_big">>, <<"That file is over 10 MB. Try a smaller photo or fewer pages.">>);
+        {_, _, undefined} -> refuse(503, <<"not_configured">>, <<"Reading isn't available right now.">>);
+        {_, _, Key} ->
+            case again(Host, fun() -> (reader(Host))(Key, Mime, Bytes) end) of
+                {ok, Read, Cost} -> Host:spend(Uid, <<"witness_read">>, Cost), {200, maps:merge(#{ok => true}, Read)};
+                {error, unreadable} -> refuse(422, <<"unreadable">>, <<"That doesn't look like an exam paper or a mark scheme.">>);
+                Why -> report(Host, <<"witness.read_failed">>, Why), refuse(502, <<"read_failed">>, <<"Couldn't read it this time. Try again in a moment.">>)
+            end
+    end;
+%% 28 Oct re-audit (the submission's class report and the plan's class patterns): Muse Wonder over the whole exam.
+route(<<"POST">>, [<<"pile">>, Id, <<"patterns">>], _B, Uid, Host) ->
+    case {Host:load(Uid, {pile, Id}), Host:meta_key()} of
+        {none, _} -> refuse(404, <<"no_pile">>, <<"That exam isn't here.">>);
+        {_, undefined} -> refuse(503, <<"not_configured">>, <<"Patterns aren't available right now.">>);
+        {{ok, P}, Key} ->
+            Texts = maps:from_list([{maps:get(n, Q), maps:get(text, Q, <<>>)} || Q <- maps:get(questions, P, []), is_map(Q)]),
+            Items = [#{student => maps:get(student, R, <<>>), n => maps:get(n, Q), question => maps:get(maps:get(n, Q), Texts, <<>>),
+                       result => maps:get(teacher_result, Q, maps:get(result, Q)), diagnosis => maps:get(diagnosis, Q, <<>>),
+                       turned_around => turned(Q)}
+                     || S <- maps:get(sittings, P, []), {ok, R = #{result := #{questions := Qs}}} <- [Host:load(Uid, {sitting, S})],
+                        Q <- Qs, needs_level(Q)],
+            case Items of
+                [] -> refuse(409, <<"nothing_to_master">>, <<"Every question in this exam was mastered: there's no pattern to find.">>);
+                _ ->
+                    ok = Host:save(Uid, {pile, Id}, P#{patterns => #{status => <<"making">>, at => now_ms()}}),
+                    ok = Host:run(fun() ->
+                        Pat = case again(Host, fun() -> (patterner(Host))(Key, maps:with([title, level], P), Items) end) of
+                            {ok, Rep, Cost} -> Host:spend(Uid, <<"witness_patterns">>, Cost),
+                                               Rep#{status => <<"ready">>, papers => length(maps:get(sittings, P, [])), at => now_ms()};
+                            Why -> report(Host, <<"witness.patterns_failed">>, Why), #{status => <<"failed">>, at => now_ms()}
+                        end,
+                        case Host:load(Uid, {pile, Id}) of {ok, P1} -> Host:save(Uid, {pile, Id}, P1#{patterns => Pat}); none -> ok end
+                    end),
+                    {202, #{ok => true, patterns => #{status => <<"making">>}}}
+            end
     end;
 
 %% ---------------------------------------------------------------- students
@@ -252,7 +305,9 @@ route(<<"POST">>, [<<"sitting">>, Id, <<"answer">>], B, Uid, Host) ->
                                 {ok, V, Cost} -> Host:spend(Owner, <<"witness_examiner">>, Cost), V;
                                 _ -> undefined
                             end,
-                            Answer0 = #{text => Text, spoken => Spoken, at => now_ms()},
+                            %% 28 Oct (owner): the spoken answer is kept with the paper for the teacher to hear
+                            Answer0 = keep_audio(Owner, Id, <<"answer-", (integer_to_binary(K))/binary>>, Spoken, B, Host,
+                                                 #{text => Text, spoken => Spoken, at => now_ms()}),
                             Answer = case Verdict of undefined -> Answer0; _ -> Answer0#{verdict => Verdict} end,
                             {ok, Fresh} = Host:load(Owner, {sitting, Id}),
                             FEx = maps:get(examiner, Fresh, Ex),
@@ -310,7 +365,8 @@ route(<<"GET">>, [<<"sitting">>, Id, <<"asset">>, File], _B, Uid, Host) ->
     Owner = owner_of(Uid, Id, Host),
     Safe = binary:match(File, [<<"/">>, <<"\\">>, <<"..">>]) =:= nomatch andalso
            (binary:longest_common_prefix([File, <<"still-">>]) =:= 6 orelse binary:longest_common_prefix([File, <<"drawn-">>]) =:= 6
-            orelse binary:longest_common_prefix([File, <<"step-">>]) =:= 5 orelse binary:longest_common_prefix([File, <<"world-">>]) =:= 6),
+            orelse binary:longest_common_prefix([File, <<"step-">>]) =:= 5 orelse binary:longest_common_prefix([File, <<"world-">>]) =:= 6
+            orelse lists:any(fun(Pre) -> binary:longest_common_prefix([File, Pre]) =:= byte_size(Pre) end, [<<"clip-">>, <<"answer-">>, <<"explain-">>])),
     case {Safe, Host:load(Owner, {sitting, Id})} of
         {true, {ok, Row}} when Owner =:= Uid; map_get(status, Row) =:= <<"released">> ->
             case Host:asset_url(Owner, <<Id/binary, "/", File/binary>>) of
@@ -365,12 +421,15 @@ route(<<"POST">>, [<<"mastery">>, Sid, NBin, Action], B, Uid, Host) ->
                             Preview = case Host:load(Owner, {pile, maps:get(pile, Row, <<>>)}) of {ok, #{preview := true}} -> true; _ -> false end,
                             witness_mastery:event(Q, maps:get(<<"event">>, B, <<>>),
                                                   #{path => clean(maps:get(<<"path">>, B, <<>>), 200), at => now_ms(), preview => Preview,
-                                                    check => maps:get(<<"check">>, B, null), level => maps:get(<<"level">>, B, null)});
+                                                    check => maps:get(<<"check">>, B, null), level => maps:get(<<"level">>, B, null),
+                                                    lesson => case maps:get(<<"lesson">>, B, null) of #{} = Lsn -> Lsn; _ -> none end});
+                        {student, <<"explain">>} -> explain_step(Q, B, #{owner => Owner, sid => Sid, n => N}, Host);
                         {teacher, <<"approve">>} -> witness_mastery:approve(Q, now_ms());
+                        {teacher, <<"recommend">>} -> recommend_step(Q, Row, Owner, Host);
                         _ -> mastery_step(Role, Action, Q, B, Host)
                     end,
                     case Step of
-                        {error, Code} -> refuse(case Code of forbidden -> 403; storage -> 503; _ -> 400 end, atom_to_binary(Code), mastery_words(Code));
+                        {error, Code} -> refuse(case Code of forbidden -> 403; storage -> 503; not_configured -> 503; busy -> 503; _ -> 400 end, atom_to_binary(Code), mastery_words(Code));
                         _ ->
                             {Q1, Extra} = case Step of {#{} = Qx, #{} = E} -> {Qx, E}; Qx -> {Qx, #{}} end,
                             R = maps:get(result, Row),
@@ -393,7 +452,7 @@ route(<<"POST">>, [<<"design">>], B, Uid, Host) ->
             Req = #{request_id => clean(maps:get(<<"requestId">>, B, <<>>), 120), messages => Msgs,
                     effort => case maps:get(<<"reasoningEffort">>, B, null) of E when E =:= <<"low">>; E =:= <<"medium">>; E =:= <<"high">> -> E; _ -> <<"low">> end,
                     max_tokens => case maps:get(<<"maxOutputTokens">>, B, null) of N when is_integer(N), N >= 1024, N =< 16000 -> N; _ -> 8000 end},
-            case Host:design(Uid, Req) of
+            case Host:design(payer(Uid, maps:get(<<"for">>, B, null), Host), Req) of
                 {ok, Text} -> {200, #{success => true, text => Text}};
                 {gate, Status, Body} -> {Status, Body};
                 {error, _} -> {502, #{success => false, error => <<"The design call did not come back. Try again in a moment.">>}}
@@ -440,17 +499,78 @@ checker(Host) ->
         false -> fun witness_check:run/2
     end.
 
-mastery_step(student, <<"explain">>, Q, B, Host) ->
+%% Explain back, in writing or out loud (28 Oct re-audit: the plan's "by voice or in writing"; a spoken one is written
+%% down by Voice Transcribe and its recording kept for the teacher, owner 28 Oct). Explaining back to Lo is judged at
+%% once against the diagnosis (Muse Spark); to the teacher it waits for them. Only what the teacher asked for is taken:
+%% an explanation that would be refused is never sent to a model.
+explain_step(Q, B, #{owner := Owner, sid := Sid, n := N}, Host) ->
     To = maps:get(<<"to">>, B, <<>>),
-    Text = clean(maps:get(<<"text">>, B, <<>>), 2000),
-    %% explaining back to Lo is judged at once against the diagnosis (Muse Spark); to the teacher it waits for them
-    %% (only when the teacher asked for it: an explanation that is refused is never sent to a model)
-    AskedLo = maps:get(lo, maps:get(asks, maps:get(mastery, Q, #{}), #{}), false) =:= true,
-    Verdict = case {To, Text, AskedLo andalso Host:meta_key()} of
-        {<<"lo">>, T, K} when T =/= <<>>, is_binary(K) orelse is_list(K) -> case (judger(Host))(K, Q, T) of {ok, V} -> V; _ -> undefined end;
-        _ -> undefined
+    Asks = maps:get(asks, maps:get(mastery, Q, #{}), #{}),
+    Asked = case To of <<"lo">> -> maps:get(lo, Asks, false); <<"teacher">> -> maps:get(teacher, Asks, false); _ -> false end,
+    Spoken = case maps:get(<<"audio">>, B, null) of A when is_binary(A), A =/= <<>> -> true; _ -> false end,
+    Heard = case {Asked, Spoken} of
+        {true, true} -> heard(Owner, B, Host);
+        _ -> {clean(maps:get(<<"text">>, B, <<>>), 2000), false}
     end,
-    witness_mastery:explain(Q, To, Text, #{at => now_ms(), verdict => Verdict});
+    case Heard of
+        {error, Code} -> {error, Code};
+        {Text, WasSpoken} ->
+            Kept = keep_audio(Owner, Sid, <<"explain-", To/binary, "-", (integer_to_binary(N))/binary>>, WasSpoken, B, Host, #{}),
+            Verdict = case {To, Text, Asked andalso Host:meta_key()} of
+                {<<"lo">>, T, K} when T =/= <<>>, is_binary(K) orelse is_list(K) -> case (judger(Host))(K, Q, T) of {ok, V} -> V; _ -> undefined end;
+                _ -> undefined
+            end,
+            witness_mastery:explain(Q, To, Text, maps:merge(#{at => now_ms(), verdict => Verdict}, maps:with([audio], Kept)))
+    end.
+
+%% 28 Oct re-audit (the plan's badge review: "the AI's recommendation"): Muse Spark reads the evidence and recommends;
+%% the teacher decides.
+recommend_step(Q, Row, Owner, Host) ->
+    case Host:meta_key() of
+        undefined -> {error, not_configured};
+        Key ->
+            Text = case Host:load(Owner, {pile, maps:get(pile, Row, <<>>)}) of
+                {ok, P} -> hd([maps:get(text, X, <<>>) || X <- maps:get(questions, P, []), is_map(X), maps:get(n, X, -1) =:= maps:get(n, Q)] ++ [<<>>]);
+                none -> <<>>
+            end,
+            case again(Host, fun() -> (recommender(Host))(Key, Q#{question => Text}) end) of
+                {ok, Rec, Cost} -> Host:spend(Owner, <<"witness_recommend">>, Cost), witness_mastery:recommended(Q, Rec, now_ms());
+                {error, W} -> case busy(W) of true -> {error, busy}; false -> {error, no_recommendation} end;
+                _ -> {error, no_recommendation}
+            end
+    end.
+
+%% The recording of a spoken answer, kept beside the paper for the teacher (its name in Into's `audio`).
+keep_audio(_Owner, _Sid, _Name, false, _B, _Host, Into) -> Into;
+keep_audio(Owner, Sid, Name, true, B, Host, Into) ->
+    Mime = case maps:get(<<"mime">>, B, <<>>) of M when is_binary(M), M =/= <<>> -> M; _ -> <<"audio/mp4">> end,
+    File = <<Name/binary, ".", (audio_ext(Mime))/binary>>,
+    case catch base64:decode(maps:get(<<"audio">>, B)) of
+        Bytes when is_binary(Bytes), byte_size(Bytes) > 0 ->
+            case Host:put_asset(Owner, <<Sid/binary, "/", File/binary>>, Bytes, Mime) of ok -> Into#{audio => File}; _ -> Into end;
+        _ -> Into
+    end.
+
+audio_ext(<<"audio/wav">>) -> <<"wav">>;
+audio_ext(<<"audio/x-wav">>) -> <<"wav">>;
+audio_ext(<<"audio/webm">>) -> <<"webm">>;
+audio_ext(<<"audio/ogg">>) -> <<"ogg">>;
+audio_ext(<<"audio/mpeg">>) -> <<"mp3">>;
+audio_ext(<<"audio/aac">>) -> <<"aac">>;
+audio_ext(_) -> <<"m4a">>.
+
+%% Who pays for one design call of a mastery level: the exam's teacher, when it is for a paper the caller sat in their
+%% exam (the plan: "charged to the school wallet"); anything else, the caller.
+payer(Uid, #{<<"sitting">> := Sid}, Host) when is_binary(Sid) ->
+    case Host:load(Uid, {mine, Sid}) of
+        {ok, #{owner := O}} ->
+            case Host:load(O, {sitting, Sid}) of {ok, #{student_uid := Uid}} -> O; _ -> Uid end;
+        _ -> Uid
+    end;
+payer(Uid, _, _) -> Uid.
+
+%% A question the teacher saw turned around.
+turned(Q) -> maps:get(status, maps:get(mastery, Q, #{}), <<>>) =:= <<"badge">>.
 mastery_step(student, <<"ask">>, Q, B, _Host) ->
     witness_mastery:ask(Q, maps:get(<<"text">>, B, <<>>), now_ms(), case maps:get(<<"where">>, B, <<>>) of W when is_binary(W) -> W; _ -> <<>> end);
 mastery_step(teacher, <<"verify">>, Q, B, _Host) -> witness_mastery:verify(Q, B);
@@ -460,6 +580,11 @@ mastery_step(teacher, <<"badge">>, Q, B, _Host) ->
 mastery_step(_, _, _, _, _) -> {error, forbidden}.
 
 mastery_words(forbidden) -> <<"That isn't yours to do on this paper.">>;
+mastery_words(not_configured) -> <<"That isn't available right now.">>;
+mastery_words(busy) -> <<"Witness is busy right now. Try again in a moment.">>;
+mastery_words(no_recommendation) -> <<"Couldn't make a recommendation this time. Try again in a moment.">>;
+mastery_words(not_heard) -> <<"Nothing was heard. Speak a little closer, or write it.">>;
+mastery_words(bad_audio) -> <<"That recording couldn't be read. Try again.">>;
 mastery_words(bad_type) -> <<"Record it as an MP4 or MOV video, under an hour.">>;
 mastery_words(storage) -> <<"Couldn't get the upload ready. Try again in a moment.">>;
 mastery_words(not_asked) -> <<"Your teacher hasn't asked for that.">>;
@@ -502,7 +627,8 @@ stills(Uid, Id, Url, Result, Host) ->
                       {ok, Jpeg} ->
                           File = <<"still-", (integer_to_binary(N))/binary, ".jpg">>,
                           case Host:put_asset(Uid, <<Id/binary, "/", File/binary>>, Jpeg, <<"image/jpeg">>) of
-                              ok -> [maps:merge(#{n => N, t => T, asset => File}, own_step(Uid, Id, Url, N, Result, Host))];
+                              ok -> [maps:merge(maps:merge(#{n => N, t => T, asset => File}, own_step(Uid, Id, Url, N, Result, Host)),
+                                                clip(Uid, Id, Url, N, T, Host))];
                               _ -> []
                           end;
                       _ -> []
@@ -564,6 +690,16 @@ own_step(Uid, Id, Url, N, Result, Host) ->
                     case Host:put_asset(Uid, <<Id/binary, "/", File/binary>>, Jpeg, <<"image/jpeg">>) of ok -> #{step => File}; _ -> #{} end;
                 _ -> #{}
             end
+    end.
+
+%% 28 Oct re-audit (the research's Proof of Thinking keeps "short clips at the moments that matter" once the video is
+%% deleted): six seconds of the desk around the moment, kept as clip-N.mp4 beside its still.
+clip(Uid, Id, Url, N, T, Host) ->
+    case catch (clipper(Host))(Url, max(0, T - 3), 6) of
+        {ok, Mp4} ->
+            File = <<"clip-", (integer_to_binary(N))/binary, ".mp4">>,
+            case Host:put_asset(Uid, <<Id/binary, "/", File/binary>>, Mp4, <<"video/mp4">>) of ok -> #{clip => File}; _ -> #{} end;
+        _ -> #{}
     end.
 
 moment(#{moment_s := M}) when is_number(M) -> M;
@@ -633,6 +769,10 @@ seam(Host, Name, Default) ->
 open_engine(Host) -> _ = code:ensure_loaded(Host), case erlang:function_exported(Host, open_engine, 0) of true -> Host:open_engine(); false -> undefined end.
 open_marker(Host) -> seam(Host, open_marker, fun witness_open:mark/3).
 painter(Host) -> seam(Host, painter, fun witness_meta:image/2).
+reader(Host) -> seam(Host, reader, fun witness_read:run/3).
+patterner(Host) -> seam(Host, patterner, fun witness_patterns:run/3).
+recommender(Host) -> seam(Host, recommender, fun witness_recommend:run/2).
+clipper(Host) -> seam(Host, clipper, case witness_media:available() of true -> fun witness_media:clip/3; false -> fun(_, _, _) -> {error, no_ffmpeg} end end).
 cropper(Host) -> seam(Host, cropper, case witness_media:available() of true -> fun witness_media:step/3; false -> fun(_, _, _) -> {error, no_ffmpeg} end end).
 stiller(Host) -> seam(Host, stiller, case witness_media:available() of true -> fun witness_media:still/2; false -> fun(_, _) -> {error, no_ffmpeg} end end).
 examiner(Host) -> seam(Host, examiner, fun witness_examiner:run/3).
@@ -751,7 +891,23 @@ start_marking(Uid, Id, Row, B, Host) ->
 
 mark(Uid, Id, Key, Fps, Sitting, Host) ->
     {ok, Row} = Host:load(Uid, {sitting, Id}),
-    {Outcome, UrlR} = attempt(Uid, Id, Key, Fps, Sitting, Host, retry_waits(Host)),
+    %% 28 Oct re-audit (the submission: "caching by image hash"): the same video for the same exam, sent again, is not
+    %% marked again; its fingerprint (the store's tag for the clip) finds the marking already made
+    Cache = case has(Host, clip_tag, 2) andalso Host:clip_tag(Uid, Id) of
+        {ok, Tag} when is_binary(Tag), Tag =/= <<>> -> {mark_cache, <<(integer_to_binary(erlang:phash2({Sitting, Fps})))/binary, ":", Tag/binary>>};
+        _ -> none
+    end,
+    Cached = case Cache of none -> none; _ -> Host:load(Uid, Cache) end,
+    {Outcome, UrlR} = case Cached of
+        {ok, #{result := Res0}} -> {{ok, Res0#{cost_usd => 0.0, cached => true}}, Host:get_url(Uid, Id)};
+        _ -> attempt(Uid, Id, Key, Fps, Sitting, Host, retry_waits(Host))
+    end,
+    case {Cache, Cached, Outcome} of
+        {none, _, _} -> ok;
+        {_, {ok, _}, _} -> ok;
+        {_, _, {ok, Fresh}} -> Host:save(Uid, Cache, #{result => maps:without([stills, cached], Fresh), at => now_ms()});
+        _ -> ok
+    end,
     %% the stills are taken while the clip is still there: the record keeps the moments, never the video
     Stills = case {Outcome, UrlR} of {{ok, Res}, {ok, U}} -> stills(Uid, Id, U, Res, Host); _ -> [] end,
     case Outcome of
@@ -870,7 +1026,10 @@ summary(Id, Row) ->
     OutOf = lists:sum([num(maps:get(out_of, Q, 0)) || Q <- Qs]),
     Seen = case Row of #{unreadable := W} -> #{unreadable => W}; #{kept := true} -> #{kept => true}; _ -> #{} end,
     Seen#{id => Id, student => maps:get(student, Row, <<>>), status => maps:get(status, Row),
-      marks => Marks, out_of => OutOf, to_master => length([Q || Q <- Qs, needs_level(Q)]),
+      %% 28 Oct re-audit (the plan: "a turned-around question counts toward the record the same as one right the first
+      %% time"): a question turned around is no longer to master
+      marks => Marks, out_of => OutOf, to_master => length([Q || Q <- Qs, needs_level(Q), not turned(Q)]),
+      turned_around => length([Q || Q <- Qs, turned(Q)]),
       to_review => length([Q || Q <- Qs, not maps:get(reviewed, Q, false)])}.
 
 %% queue(Sittings): every question not yet reviewed, the ones that most need a teacher first: anything not mastered
