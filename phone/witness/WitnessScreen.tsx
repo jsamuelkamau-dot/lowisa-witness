@@ -196,8 +196,11 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
     setNotice('');
     const {title} = stage;
     const again = (why: string, file: VideoFile) => { setStage({kind: 'joined', code: stage.code, title, level: stage.level}); setUnsent(file); setError(why); };
-    setStage({kind: 'sending', title, line: 'Covering any face the camera caught…'});
-    const file = await smaller(picked, (p, st) => setStage({kind: 'sending', title, line: readyLine(p, st)}));
+    // 28 Oct, live: a resumed send made the kept copy again (a person off the page is always covered), so it was a new
+    // file and the upload started over; the copy already made is sent as it is
+    const resuming = !!resumeOf && resumeOf.uri === picked.uri;
+    if (!resuming) setStage({kind: 'sending', title, line: 'Covering any face the camera caught…'});
+    const file = resuming ? picked : await smaller(picked, (p, st) => setStage({kind: 'sending', title, line: readyLine(p, st)}));
     const mime = doorMime(file.mime, file.name)!;
     const kept = 'The video did not go up. It is kept on this phone: send it again when the connection is better, on Wi-Fi if you can.';
     const total = Math.round(file.size);
