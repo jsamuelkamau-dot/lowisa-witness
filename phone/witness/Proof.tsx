@@ -77,20 +77,25 @@ export function Picture({env, paperId, file, label, testID}: {env: WitnessEnv; p
 /** Six seconds of the desk around a moment that matters (28 Oct re-audit: the research's record keeps "short clips at the
  *  moments that matter" once the video is deleted), played in a web view from its short-lived link. */
 export function Clip({env, paperId, file, label}: {env: WitnessEnv; paperId: string; file: string; label: string}): React.JSX.Element | null {
+  // 28 Oct, live: three clips each in its own web view, loading at once, stopped the app answering on the emulator; a
+  // clip opens only when the student asks for it
+  const [open, setOpen] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
   const [gone, setGone] = useState(false);
   useEffect(() => {
+    if (!open) return;
     let live = true;
     witness.asset(env, paperId, file).then(r => { if (!live) return; if (r.ok) setUrl(r.value.url); else setGone(true); });
     return () => { live = false; };
-  }, [env, paperId, file]);
+  }, [env, paperId, file, open]);
   if (gone) return null;
+  if (!open) return <Btn label="Watch the moment (6 seconds)" onPress={() => setOpen(true)} small testID={'witness-clip-open-' + file} />;
   if (!url) return <ActivityIndicator style={{marginVertical: 10}} />;
   const html = '<html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;background:#000">' +
-    '<video src="' + url.replace(/"/g, '&quot;') + '" controls muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:contain"></video></body></html>';
+    '<video src="' + url.replace(/"/g, '&quot;') + '" controls muted playsinline autoplay style="width:100%;height:100%;object-fit:contain"></video></body></html>';
   return (
     <View style={s.clip} accessibilityLabel={label} testID={'witness-clip-' + file}>
-      <WebView source={{html}} originWhitelist={['*']} allowsInlineMediaPlayback mediaPlaybackRequiresUserAction javaScriptEnabled={false} style={{backgroundColor: '#000'}} />
+      <WebView source={{html}} originWhitelist={['*']} allowsInlineMediaPlayback mediaPlaybackRequiresUserAction={false} javaScriptEnabled={false} style={{backgroundColor: '#000'}} />
     </View>
   );
 }
@@ -156,7 +161,7 @@ const s = StyleSheet.create({
   diag: {fontSize: 14, color: '#b3261e', marginTop: 6, lineHeight: 20},
   comment: {fontSize: 14, color: '#141a2e', marginTop: 6, fontStyle: 'italic'},
   picture: {width: '100%', aspectRatio: 1, marginTop: 10, borderRadius: 8, backgroundColor: '#f4efe2'},
-  clip: {width: '100%', aspectRatio: 9 / 16, maxHeight: 420, marginTop: 8, borderRadius: 8, overflow: 'hidden', backgroundColor: '#000'},
+  clip: {width: '100%', height: 320, marginTop: 8, borderRadius: 8, overflow: 'hidden', backgroundColor: '#000'},
   turned: {fontSize: 14, color: '#166534', marginTop: 8, fontWeight: '600'},
   foot: {fontSize: 12, color: '#6b7389', marginTop: 14, lineHeight: 18},
   error: {fontSize: 14, color: '#b3261e', marginTop: 12},

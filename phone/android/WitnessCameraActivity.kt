@@ -56,6 +56,8 @@ class WitnessCameraActivity : ComponentActivity() {
   companion object {
     const val EXTRA_OUT = "out"
     const val EXTRA_MAX = "max"
+    /** This camera could not record here: the caller hands over to the phone's own camera app. */
+    const val RESULT_FAILED = Activity.RESULT_FIRST_USER
     /** The guide frame, as a share of the screen: the page is held upright under the phone. */
     const val GUIDE_W = 0.84f
     const val GUIDE_H = 0.70f
@@ -72,6 +74,8 @@ class WitnessCameraActivity : ComponentActivity() {
   private lateinit var clock: TextView
   private var recording: Recording? = null
   private var capture: VideoCapture<Recorder>? = null
+  private var provider: ProcessCameraProvider? = null
+  private var shown: Preview? = null
   private val analyser = Executors.newSingleThreadExecutor()
   private val main = Handler(Looper.getMainLooper())
   private var startedAt = 0L
@@ -114,6 +118,12 @@ class WitnessCameraActivity : ComponentActivity() {
     root.addView(bottom, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM))
     root.addView(dim, FrameLayout.LayoutParams(-1, -1))
     setContentView(root)
+    // 28 Oct, live: the app draws edge to edge, and "Start recording" sat under the navigation bar
+    androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(root) { _, insets ->
+      val bars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+      hint.setPadding(36, 48 + bars.top, 36, 12); bottom.setPadding(36, 12, 36, 32 + bars.bottom)
+      insets
+    }
 
     onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
       override fun handleOnBackPressed() { if (recording != null) stop() else { setResult(Activity.RESULT_CANCELED); finish() } }
@@ -126,7 +136,9 @@ class WitnessCameraActivity : ComponentActivity() {
     future.addListener({
       try {
         val provider = future.get()
+        this.provider = provider
         val p = Preview.Builder().build().also { it.setSurfaceProvider(preview.surfaceProvider) }
+        shown = p
         val recorder = Recorder.Builder().setQualitySelector(QualitySelector.from(Quality.HD, androidx.camera.video.FallbackStrategy.lowerQualityOrHigherThan(Quality.SD))).build()
         val vc = VideoCapture.withOutput(recorder)
         capture = vc
@@ -136,19 +148,22 @@ class WitnessCameraActivity : ComponentActivity() {
           main.post { onLook(page) }
         }
         provider.unbindAll()
-        // a camera that cannot run the preview, the recording and the page look together records without the look
-        try { provider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, p, vc, look) }
-        catch (e: Exception) { provider.unbindAll(); provider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, p, vc); onLook(false) }
+        // the page look while the student lines up; the recording takes its place at Start (28 Oct, live: with all
+        // three bound the video stream got no frames on the emulator, ERROR_NO_VALID_DATA; two at a time run anywhere)
+        try { provider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, p, look) }
+        catch (e: Exception) { provider.unbindAll(); provider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, p); onLook(false) }
       } catch (e: Exception) {
         hint.text = "The camera could not start here."
-        setResult(Activity.RESULT_CANCELED); main.postDelayed({ finish() }, 1500)
+        setResult(RESULT_FAILED); main.postDelayed({ finish() }, 1500)
       }
     }, ContextCompat.getMainExecutor(this))
   }
 
-  /** Luminance only: the guide's share of bright paper, and the rim's (the frame's centre GUIDE_W x GUIDE_H, as on screen). */
+  /** The guide's share of paper (bright and colourless: 28 Oct, live, a bright coloured scene read as a page on brightness
+   *  alone), and the rim's share of bright (the frame's centre GUIDE_W x GUIDE_H, as on screen). */
   private fun pageInView(img: androidx.camera.core.ImageProxy): Boolean {
     val plane = img.planes[0]; val buf = plane.buffer; val stride = plane.rowStride
+    val pu = img.planes[1]; val pv = img.planes[2]; val ub = pu.buffer; val vb = pv.buffer
     val w = img.width; val h = img.height
     val upright = img.imageInfo.rotationDegrees % 180 != 0
     val gw = if (upright) GUIDE_H else GUIDE_W; val gh = if (upright) GUIDE_W else GUIDE_H
@@ -157,8 +172,11 @@ class WitnessCameraActivity : ComponentActivity() {
     for (j in 0 until n) for (i in 0 until n) {
       val fx = (i + 0.5f) / n; val fy = (j + 0.5f) / n
       val y = buf.get(minOf(h - 1, (fy * h).toInt()) * stride + minOf(w - 1, (fx * w).toInt())).toInt() and 255
+      val cx = minOf(w / 2 - 1, (fx * w / 2).toInt()); val cy = minOf(h / 2 - 1, (fy * h / 2).toInt())
+      val u = ub.get(cy * pu.rowStride + cx * pu.pixelStride).toInt() and 255; val v = vb.get(cy * pv.rowStride + cx * pv.pixelStride).toInt() and 255
+      val paper = y > 150 && kotlin.math.abs(u - 128) < 22 && kotlin.math.abs(v - 128) < 22
       val inside = kotlin.math.abs(fx - 0.5f) < gw / 2 && kotlin.math.abs(fy - 0.5f) < gh / 2
-      if (inside) { inAll++; if (y > 150) inBright++ } else { rimAll++; if (y > 150) rimBright++ }
+      if (inside) { inAll++; if (paper) inBright++ } else { rimAll++; if (y > 150) rimBright++ }
     }
     return inAll > 0 && inBright.toFloat() / inAll >= PAGE_MIN && (rimAll == 0 || rimBright.toFloat() / rimAll < RIM_MAX)
   }
@@ -175,6 +193,10 @@ class WitnessCameraActivity : ComponentActivity() {
   private fun start() {
     val vc = capture ?: return
     if (recording != null) return
+    try {
+      val pr = provider; val p = shown
+      if (pr != null && p != null) { pr.unbindAll(); pr.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, p, vc) }
+    } catch (e: Exception) { hint.text = "The camera could not start recording here."; setResult(RESULT_FAILED); main.postDelayed({ finish() }, 1500); return }
     out.parentFile?.mkdirs()
     val opts = FileOutputOptions.Builder(out).build()
     val pending = vc.output.prepareRecording(this, opts)
@@ -184,7 +206,9 @@ class WitnessCameraActivity : ComponentActivity() {
         recording = null
         val ok = !ev.hasError() || ev.error == VideoRecordEvent.Finalize.ERROR_DURATION_LIMIT_REACHED || ev.error == VideoRecordEvent.Finalize.ERROR_SOURCE_INACTIVE
         if (ok && out.exists() && out.length() > 0) setResult(Activity.RESULT_OK, Intent().putExtra(EXTRA_OUT, out.absolutePath))
-        else { out.delete(); setResult(Activity.RESULT_CANCELED) }
+        // a recording this camera could not make (28 Oct, the emulator's encoder: ERROR_NO_VALID_DATA) is said so,
+        // and the phone's own camera app takes over: the student is never left without a way to record
+        else { out.delete(); setResult(RESULT_FAILED) }
         finish()
       }
     }

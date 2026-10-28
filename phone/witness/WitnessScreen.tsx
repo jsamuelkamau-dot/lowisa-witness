@@ -48,9 +48,19 @@ const docs = () => (NativeModules as Record<string, unknown>).LoWisaDocuments as
 
 /** A paper recorded with the Witness camera (a guide frame on the page, the screen dimmed; 28 Oct re-audit), or the
  *  phone's own camera app on a build without it. */
-function record(n: Native): Promise<VideoFile | null> {
-  return n.witnessCamera ? n.witnessCamera(RECORD_SECONDS) : n.takeVideo!(RECORD_SECONDS);
+export async function record(n: Native, onHandOver?: () => void): Promise<VideoFile | null> {
+  if (!n.witnessCamera) return n.takeVideo!(RECORD_SECONDS);
+  try { return await n.witnessCamera(RECORD_SECONDS); }
+  catch (e) {
+    // 28 Oct, live: a camera the Witness camera cannot record on hands over to the phone's own camera app at once
+    if ((e as {code?: string}).code !== 'witness_camera_failed' || !n.takeVideo) throw e;
+    if (onHandOver) onHandOver();
+    return n.takeVideo(RECORD_SECONDS);
+  }
 }
+
+/** Said when the Witness camera hands over to the phone's camera app. */
+export const HAND_OVER_WORDS = "The Witness camera couldn't record on this phone, so your phone's own camera opens instead. Record your paper there.";
 
 /** What Lo says for "Hear it" on a question: the result, the marks, what went wrong and the teacher's words (pure). */
 export function spokenFeedback(q: Question): string {
@@ -200,7 +210,7 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
     const camera = source === 'camera' && !!n && !!(n.witnessCamera || n.takeVideo);
     if (camera) storage.setItem(PENDING_KEY, JSON.stringify({code: stage.code, title: stage.title, level: stage.level, name: name.trim(), at: Date.now()}));
     // the camera app records up to ten minutes here (the composer's own recordings stop at two)
-    try { file = camera ? await record(n!) : await chooseVideo(source); }
+    try { file = camera ? await record(n!, () => setNotice(HAND_OVER_WORDS)) : await chooseVideo(source); }
     catch (e) { if (camera) storage.removeItem(PENDING_KEY); setError('The camera could not start. Try choosing a video you already recorded.'); return; }
     if (!file) { if (camera) storage.removeItem(PENDING_KEY); return; }
     if (!doorMime(file.mime, file.name)) { setError('Witness reads MP4 and MOV videos. Record it again with the camera here.'); return; }
@@ -383,7 +393,7 @@ function Mine({papers, onOpen}: {papers: Paper[] | null; onOpen(p: Paper): void}
 
 /** What a failed build says here: the builder's own lines name its own button ("Build my path"); the wall's words stay. */
 export function failedWords(reason: string | undefined, text: string): string {
-  if (reason === 'no-credits' || reason === 'full') return text;
+  if (reason === 'no-credits' || reason === 'full' || reason === 'refused') return text;
   if (reason === 'no-network' || reason === 'no-auth') return 'No connection right now. Try again when you are back online.';
   if (reason === 'timeout') return 'That took too long. Tap Start my mastery level to try again.';
   return 'Your level could not be made just now. Tap Start my mastery level to try again in a moment.';
@@ -428,7 +438,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
   const film = async (source: 'camera' | 'gallery') => {
     setSaid('');
     let file: VideoFile | null = null;
-    try { const n = docs(); file = source === 'camera' && n && (n.witnessCamera || n.takeVideo) ? await record(n) : await chooseVideo(source); }
+    try { const n = docs(); file = source === 'camera' && n && (n.witnessCamera || n.takeVideo) ? await record(n, () => setSaid(HAND_OVER_WORDS)) : await chooseVideo(source); }
     catch (e) { setSaid('The camera could not start. Try choosing a video you already recorded.'); return; }
     if (!file) return;
     if (!doorMime(file.mime, file.name)) { setSaid('Witness reads MP4 and MOV videos. Record it again with the camera here.'); return; }

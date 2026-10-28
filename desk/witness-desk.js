@@ -200,6 +200,11 @@
   function viewNew() {
     var d = S.draft;
     return '<div class="wd-card" style="max-width:720px">' +
+      // 28 Oct re-audit (the submission: "a mark scheme built from the teacher's own material"): Muse Spark reads a
+      // photo or PDF of the paper or its scheme into this form, for the teacher to check
+      '<label for="wdRead">Start from your own paper or mark scheme (a photo or a PDF)</label>' +
+      '<input id="wdRead" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">' +
+      '<div class="wd-sub">' + (S.reading ? 'Muse Spark is reading it…' : 'Muse Spark reads the questions, their marks and your scheme into the form below. Check them before you create the exam.') + '</div>' +
       '<label for="wdTitle">Exam name</label><input id="wdTitle" data-f="title" value="' + esc(d.title || '') + '" placeholder="Fractions quiz, Year 7">' +
       '<label for="wdLevel">Level</label><input id="wdLevel" data-f="level" value="' + esc(d.level || '') + '" placeholder="Year 7, university first year, CPA part 1">' +
       '<label for="wdKind">What students do</label><select id="wdKind" data-f="kind">' +
@@ -223,14 +228,17 @@
     var j = S.pile || {}; var ss = j.sittings || []; var q = j.queue || [];
     var marked = ss.filter(function (s) { return s.status === 'marked' || s.status === 'released'; });
     var toMaster = marked.reduce(function (a, s) { return a + (s.to_master || 0); }, 0);
+    var turned = marked.reduce(function (a, s) { return a + (s.turned_around || 0); }, 0);
     var nums = '<div class="wd-nums"><div><b>' + ss.length + '</b>papers</div><div><b>' + marked.length + '</b>marked</div>' +
-      '<div><b>' + q.length + '</b>to review</div><div><b>' + toMaster + '</b>questions to master</div></div>';
+      '<div><b>' + q.length + '</b>to review</div><div><b>' + toMaster + '</b>questions to master</div>' +
+      (turned ? '<div><b>' + turned + '</b>turned around</div>' : '') + '</div>';
     var papers = ss.map(function (s) {
       var st = s.status === 'marked' ? '<span class="wd-sub">' + num(s.marks) + ' / ' + num(s.out_of) + '</span>' :
         s.status === 'released' ? '<span class="wd-chip ok">Released</span>' :
         s.status === 'failed' ? '<span class="wd-chip err">' + (s.unreadable ? 'Paper not in view: film again' : s.kept ? 'Not marked yet: mark again' : 'Record again') + '</span>' : '<span class="wd-chip">' + (s.status === 'uploading' ? 'Uploading' : 'Marking') + '</span>';
       return '<div class="wd-row" data-paper="' + esc(s.id) + '"><span class="wd-grow">' + esc(s.student || 'Paper') + '</span>' + st +
-        (s.to_master ? '<span class="wd-chip err">' + s.to_master + ' to master</span>' : '') + '</div>';
+        (s.to_master ? '<span class="wd-chip err">' + s.to_master + ' to master</span>' : '') +
+        (s.turned_around ? '<span class="wd-chip ok">' + s.turned_around + ' turned around</span>' : '') + '</div>';
     }).join('') || '<div class="wd-sub">No papers yet. Record them from the LoWisa phone app under this exam.</div>';
     var queue = q.map(function (it) {
       return '<div class="wd-row" data-paper="' + esc(it.sitting) + '" data-n="' + esc(it.n) + '"><span class="wd-grow">' + esc(it.student || 'Paper') + ' · Q' + esc(it.n) +
@@ -240,10 +248,34 @@
     var released = j.pile && j.pile.released_ms;
     var code = j.pile && j.pile.code ? '<div class="wd-card"><b>Join code: <span style="font-size:18px;letter-spacing:3px">' + esc(j.pile.code) + '</span></b>' +
       '<div class="wd-sub">Students enter it in the LoWisa phone app, then record their own paper. Or record each paper yourself.</div></div>' : '';
-    return code + nums + measured() + '<div class="wd-cols"><div class="wd-card"><h3>Papers</h3>' + papers + '</div>' +
+    return code + nums + measured() + patternsCard(j.pile || {}, toMaster + turned) + '<div class="wd-cols"><div class="wd-card"><h3>Papers</h3>' + papers + '</div>' +
       '<div class="wd-card"><h3>To review: what needs you first</h3>' + queue + '</div></div>' +
       '<div style="margin-top:6px">' + (released ? '<span class="wd-chip ok">Released to students</span>' :
         '<button class="wd-btn wd-main" data-act="release">Release marks</button> <span class="wd-sub">Students see their marks; every question they didn\'t master becomes their next mastery level.</span>') + '</div>';
+  }
+
+  // 28 Oct re-audit (the submission's class report; the plan's class patterns and "the next exam can bring back the
+  // question types the class turned around"): Muse Wonder groups the class's questions to master by misconception
+  function patternsCard(pile, any) {
+    var pt = pile.patterns;
+    if (!any && !pt) return '';
+    var head = '<div class="wd-row" style="cursor:default;padding:0"><span class="wd-grow"><h3 style="margin:0">Class patterns</h3>' +
+      '<div class="wd-sub">The same misconception across your students, what to reteach tomorrow, and questions for the next exam.</div></span>' +
+      (pt && pt.status === 'making' ? '<span class="wd-chip">Muse Wonder is reading the class…</span>' :
+        '<button class="wd-btn" data-act="patterns">' + (pt && pt.status === 'ready' ? 'Find them again' : 'Find the class\'s patterns') + '</button>') + '</div>';
+    if (!pt || pt.status !== 'ready') return '<div class="wd-card">' + head + (pt && pt.status === 'failed' ? '<div class="wd-sub" style="margin-top:6px">That did not come back. Try again in a moment.</div>' : '') + '</div>';
+    var groups = (pt.patterns || []).map(function (g) {
+      var n = (g.students || []).length;
+      return '<div style="margin-top:10px"><b>' + n + ' student' + (n === 1 ? '' : 's') + ': ' + esc(g.idea) + '</b>' +
+        (g.turned_around ? ' <span class="wd-chip ok">' + g.turned_around + ' turned around</span>' : '') +
+        '<div class="wd-sub">' + esc((g.students || []).join(', ')) + ' · ' + unit().toLowerCase() + ((g.questions || []).length === 1 ? ' ' : 's ') + esc((g.questions || []).join(', ')) + '</div>' +
+        (g.reteach ? '<div style="margin-top:2px">Reteach: ' + esc(g.reteach) + '</div>' : '') + '</div>';
+    }).join('');
+    var next = (pt.next_exam || []);
+    return '<div class="wd-card">' + head + groups +
+      (pt.tomorrow ? '<div style="margin-top:10px"><b style="font-size:12px">Tomorrow</b><div>' + esc(pt.tomorrow) + '</div></div>' : '') +
+      (next.length ? '<div style="margin-top:10px"><b style="font-size:12px">For the next exam</b>' + next.map(function (x, i) { return '<div class="wd-sub">' + (i + 1) + '. ' + esc(x.text) + ' (' + esc(x.marks) + ')</div>'; }).join('') +
+        '<div style="margin-top:6px"><button class="wd-btn wd-main" data-act="nextexam">Start the next exam with these</button></div></div>' : '') + '</div>';
   }
 
   function viewPaper() {
@@ -324,9 +356,19 @@
         (t.where ? '<div class="wd-sub" style="margin-left:12px">Asked from ' + esc(t.where) + '</div>' : '') + '</div>';
     }).join('');
     var ex = m.explain || {};
-    var lo = ex.lo ? '<div class="wd-card"><b>Explained to Lo</b><div>' + esc(ex.lo.text) + '</div>' +
+    var lo = ex.lo ? '<div class="wd-card"><b>Explained to Lo' + (ex.lo.spoken ? ', out loud' : '') + '</b><div>' + esc(ex.lo.text) + '</div>' + listen(ex.lo.audio, 'Their explanation to Lo') +
       (ex.lo.verdict ? '<div class="wd-sub">' + (ex.lo.verdict.understood ? 'Lo: understood. ' : 'Lo: not yet understood. ') + esc(ex.lo.verdict.why || '') + '</div>' : '') + '</div>' : '';
-    var toMe = ex.teacher ? '<div class="wd-card"><b>Explained to you</b><div>' + esc(ex.teacher.text) + '</div></div>' : '';
+    var toMe = ex.teacher ? '<div class="wd-card"><b>Explained to you' + (ex.teacher.spoken ? ', out loud' : '') + '</b><div>' + esc(ex.teacher.text) + '</div>' + listen(ex.teacher.audio, 'Their explanation to you') + '</div>' : '';
+    // 28 Oct re-audit (the plan's badge review: "the level activity and answers", "the AI's recommendation")
+    var acts = (m.activity || []).map(function (a) {
+      return '<div class="wd-sub" style="margin:2px 0">· ' + esc(a.title) + (a.asked != null && a.right != null ? ': ' + esc(a.right) + ' of ' + esc(a.asked) + ' right first time' : ': finished') + '</div>';
+    }).join('');
+    var activity = '<div style="margin-top:8px"><b style="font-size:12px">In the level</b>' + (acts || '<div class="wd-sub">No lesson finished yet.</div>') + '</div>';
+    var rc = m.recommendation;
+    var recommend = '<div class="wd-card" style="margin-top:8px"><b>Witness recommends</b>' +
+      (rc ? ' <span class="wd-chip ' + (rc.recommend === 'issue' ? 'ok' : '') + '">' + (rc.recommend === 'issue' ? 'Issue Turned around' : 'Not yet') + '</span><div>' + esc(rc.why || '') + '</div>' +
+        (rc.missing ? '<div class="wd-sub">Would settle it: ' + esc(rc.missing) + '</div>' : '') : '<div class="wd-sub">Muse Spark weighs the level, the explanations and the fresh question. The decision is yours.</div>') +
+      '<div style="margin-top:6px"><button class="wd-btn" data-act="recommend">' + (rc ? 'Ask again' : 'What does Witness recommend?') + '</button></div></div>';
     // the fresh question on paper, watched again: how it was worked, beside the result
     var fr = m.fresh || null, fq = fr && fr.question;
     var fresh = !fr ? '' : '<div class="wd-card"><b>The fresh question on paper</b>' +
@@ -349,7 +391,7 @@
       box('lo', 'Explain it back to Lo') + box('paper', 'A fresh question on paper, watched again') +
       '<input id="wdFresh" data-f="fresh" value="' + esc(S.draft.fresh != null ? S.draft.fresh : (asks.fresh || '')) + '" placeholder="The fresh question, for the same idea" aria-label="The fresh question">' +
       box('teacher', 'Explain it back to me') +
-      '<button class="wd-btn" data-act="verify" style="margin-top:6px">Save checks</button></div>' + lo + toMe + fresh +
+      '<button class="wd-btn" data-act="verify" style="margin-top:6px">Save checks</button></div>' + activity + lo + toMe + fresh + (done ? '' : recommend) +
       '<label for="wdBadgeNote">A note with your decision</label><input id="wdBadgeNote" data-f="badgeNote" placeholder="Well done: you found the reason, not only the answer.">' +
       '<div style="margin-top:8px;display:flex;gap:8px">' + (done ? '<span class="wd-chip ok">Badge issued</span>' :
         '<button class="wd-btn wd-main" data-act="badge">Issue Turned around</button><button class="wd-btn" data-act="notyet">Not yet</button>') + '</div></div>';
@@ -391,6 +433,7 @@
 
   // ---------------------------------------------------------------- doing
   function onInput(e) {
+    if (e.target && e.target.id === 'wdRead' && e.type === 'change') return readFile(e.target.files && e.target.files[0]);
     var f = e.target && e.target.getAttribute('data-f');
     if (f) S.draft[f] = e.target.value;
     if (f === 'kind' && e.type === 'change') render();   // a practical's lines are the procedure's steps
@@ -414,6 +457,9 @@
     if (act === 'verify') return masteryDo('verify', checks());
     if (act === 'reply') return masteryDo('reply', { text: S.draft.reply || '' });
     if (act === 'approve') return masteryDo('approve', {});
+    if (act === 'recommend') { say('Muse Spark is weighing the evidence…'); render(); return masteryDo('recommend', {}); }
+    if (act === 'patterns') return patterns();
+    if (act === 'nextexam') return nextExam();
     if (act === 'badge') return masteryDo('badge', { issue: true, note: S.draft.badgeNote || '' });
     if (act === 'notyet') return masteryDo('badge', { issue: false, note: S.draft.badgeNote || '' });
     if (t.hasAttribute('data-pile')) { if (await loadPile(t.getAttribute('data-pile'))) { S.view = 'pile'; } return render(); }
@@ -441,7 +487,8 @@
     if (!j.ok) { say(errText(j), 'err'); return render(); }
     await loadPaper(S.sid);
     S.draft = {};
-    say(action === 'badge' ? (body.issue ? 'Badge issued: Turned around.' : 'Marked not yet, with your note.') : action === 'verify' ? 'Checks saved. The student sees only these.' : 'Sent.');
+    say(action === 'badge' ? (body.issue ? 'Badge issued: Turned around.' : 'Marked not yet, with your note.') : action === 'verify' ? 'Checks saved. The student sees only these.' :
+        action === 'recommend' ? 'Witness recommends; the decision is yours.' : action === 'approve' ? 'The level reaches the student now.' : 'Sent.');
     render();
   }
 
@@ -456,7 +503,7 @@
     var rows = ex.asks.map(function (a) {
       var ans = a.answer, v = ans && ans.verdict;
       return '<div style="margin-top:10px"><b>' + (practical() ? 'Step ' : 'Q') + esc(a.n) + ':</b> ' + esc(a.ask) + (a.wrote ? '<div class="wd-ink" style="margin:4px 0">' + esc(a.wrote) + '</div>' : '') +
-        (ans ? '<div>' + (ans.spoken ? 'Said: ' : 'Wrote: ') + '<i>' + esc(ans.text) + '</i></div>' +
+        (ans ? '<div>' + (ans.spoken ? 'Said: ' : 'Wrote: ') + '<i>' + esc(ans.text) + '</i></div>' + listen(ans.audio, 'Their answer, as they said it') +
           (v ? '<div class="wd-sub">' + (v.own_work ? '<span class="wd-chip ok">Their own reasoning</span> ' : '<span class="wd-chip err">Not clearly their own</span> ') +
             (v.understood ? '<span class="wd-chip ok">Understands it now</span> ' : '<span class="wd-chip">Not yet understood</span> ') + esc(v.why || '') + '</div>' : '')
           : '<div class="wd-sub">Not answered yet.</div>') + '</div>';
@@ -466,7 +513,9 @@
   function stillOf(q) {
     var st = ((S.paper && S.paper.result && S.paper.result.stills) || []).filter(function (x) { return x.n === q.n; })[0];
     if (!st) return '';
-    return '<div style="margin-top:10px"><b style="font-size:12px">The desk at ' + fmtT(st.t) + '</b><img data-asset="' + esc(st.asset) + '" alt="The desk at ' + fmtT(st.t) + ', question ' + esc(q.n) + '" style="display:block;width:100%;max-width:420px;border-radius:8px;margin-top:4px;background:#f4efe2;min-height:60px"></div>';
+    return '<div style="margin-top:10px"><b style="font-size:12px">The desk at ' + fmtT(st.t) + '</b><img data-asset="' + esc(st.asset) + '" alt="The desk at ' + fmtT(st.t) + ', question ' + esc(q.n) + '" style="display:block;width:100%;max-width:420px;border-radius:8px;margin-top:4px;background:#f4efe2;min-height:60px">' +
+      // six seconds of the desk around the moment, kept once the video is deleted (28 Oct re-audit)
+      (st.clip ? '<div class="wd-sub" style="margin-top:6px">The moment itself, six seconds</div><video data-asset="' + esc(st.clip) + '" controls muted playsinline preload="metadata" aria-label="Six seconds of the desk around ' + fmtT(st.t) + '" style="display:block;width:100%;max-width:420px;border-radius:8px;margin-top:4px;background:#000"></video>' : '') + '</div>';
   }
   function drawnCard(q) {
     var res = q.teacher_result || q.result;
@@ -483,7 +532,7 @@
   // the links last 30 minutes: one is kept for 20, and a picture that fails to load asks for a fresh one once
   // (live in the desktop app, 27 Oct: a still opened again after half an hour showed as broken)
   function fillAssets(p) {
-    Array.prototype.forEach.call(p.querySelectorAll('img[data-asset]'), function (img) {
+    Array.prototype.forEach.call(p.querySelectorAll('img[data-asset],video[data-asset],audio[data-asset]'), function (img) {
       var key = S.sid + '/' + img.getAttribute('data-asset');
       var fetchUrl = function () {
         api('GET', '/api/witness/sitting/' + S.sid + '/asset/' + img.getAttribute('data-asset')).then(function (j) {
@@ -544,15 +593,19 @@
         (q.steps || []).map(function (s) { return '<div class="wd-step' + (s.crossed_out ? ' crossed' : '') + '" style="opacity:1"><span class="wd-sub">' + (s.t == null ? '' : fmtT(s.t)) + '</span><div class="wd-ink">' + esc(s.wrote) + '</div></div>'; }).join('') +
         (q.diagnosis ? '<div class="wd-diag"><b>' + (q.moment_s != null ? 'At ' + fmtT(q.moment_s) : 'Where it went wrong') + '</b><div>' + esc(q.diagnosis) + '</div></div>' : '') +
         (q.still ? '<img data-asset="' + esc(q.still) + '" alt="The desk, question ' + esc(q.n) + '" style="display:block;width:100%;max-width:360px;border-radius:8px;margin-top:8px">' : '') +
+        (q.clip ? '<video data-asset="' + esc(q.clip) + '" controls muted playsinline preload="metadata" aria-label="Six seconds of the desk, question ' + esc(q.n) + '" style="display:block;width:100%;max-width:360px;border-radius:8px;margin-top:6px;background:#000"></video>' : '') +
+        (q.turned_around ? '<div style="margin-top:6px"><span class="wd-chip ok">Turned around</span> <span class="wd-sub">' + esc(day(q.turned_around.from_ms)) + ' to ' + esc(day(q.turned_around.at)) +
+          (q.turned_around.note ? ' · ' + esc(q.turned_around.note) : '') + '. Counted as mastered.</span></div>' : '') +
         (q.comment ? '<div style="margin-top:6px"><b>Teacher:</b> ' + esc(q.comment) + '</div>' : '') + '</div>';
     }).join('');
     var asks = (p.examiner || []).map(function (a) {
       var v = a.answer && a.answer.verdict;
-      return '<div style="margin-top:8px"><b>Q' + esc(a.n) + ':</b> ' + esc(a.ask) + '<div>' + (a.answer ? esc(a.answer.text) : '<span class="wd-sub">Not answered.</span>') + '</div>' +
+      return '<div style="margin-top:8px"><b>Q' + esc(a.n) + ':</b> ' + esc(a.ask) + '<div>' + (a.answer ? esc(a.answer.text) : '<span class="wd-sub">Not answered.</span>') + '</div>' + listen(a.answer && a.answer.audio, 'Their answer, as they said it') +
         (v ? '<div class="wd-sub">' + (v.own_work ? 'Their own reasoning. ' : 'Not clearly their own. ') + (v.understood ? 'Understands it now. ' : '') + esc(v.why || '') + '</div>' : '') + '</div>';
     }).join('');
     return '<div class="wd-card"><div class="wd-row" style="cursor:default;padding:0"><span class="wd-grow"><h3 style="margin:0">Proof of Thinking</h3>' +
-      '<div class="wd-sub">' + esc(p.exam || '') + (p.level ? ' · ' + esc(p.level) : '') + ' · ' + esc(p.student || '') + ' · sat ' + esc(day(p.sat_ms)) + ' · ' + num(p.marks) + ' of ' + num(p.out_of) + ' marks</div></span>' +
+      '<div class="wd-sub">' + esc(p.exam || '') + (p.level ? ' · ' + esc(p.level) : '') + ' · ' + esc(p.student || '') + ' · sat ' + esc(day(p.sat_ms)) + ' · ' + num(p.marks) + ' of ' + num(p.out_of) + ' marks' +
+        (p.mastered != null ? ' · ' + esc(p.mastered) + ' of ' + esc((p.questions || []).length) + ' mastered' + (p.turned_around ? ' (' + esc(p.turned_around) + ' turned around)' : '') : '') + '</div></span>' +
       '<button class="wd-btn" data-act="print">Print</button></div></div>' + qs +
       (asks ? '<div class="wd-card"><h3>The examiner\'s questions</h3>' + asks + '</div>' : '') +
       returnsLine(p.returns || []) +
@@ -569,6 +622,42 @@
       '<div><b>' + secs(m.teacher_seconds_per_paper) + '</b>of your time per paper (median)</div>' +
       '<div><b>' + m.examiner_answered + ' / ' + m.examiner_asks + '</b>examiner questions answered</div></div>' +
       ((m.changed_by_teacher || []).length ? '<div class="wd-sub">You changed: ' + m.changed_by_teacher.map(function (c) { return 'Q' + c.n + ' ' + (RESULT[c.witness] || c.witness) + ' → ' + (RESULT[c.teacher] || c.teacher); }).join('; ') + '</div>' : '') + '</div>';
+  }
+
+  // a recording the student made, kept with the paper for the teacher (owner, 28 Oct)
+  function listen(file, label) {
+    return file ? '<audio data-asset="' + esc(file) + '" controls preload="none" aria-label="' + esc(label) + '" style="display:block;width:100%;max-width:360px;margin-top:4px"></audio>' : '';
+  }
+  async function readFile(file) {
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { say('That file is over 10 MB. Try a smaller photo or fewer pages.', 'err'); return render(); }
+    S.reading = true; render();
+    var b64 = await new Promise(function (ok) { var fr = new FileReader(); fr.onload = function () { ok(String(fr.result).split(',')[1] || ''); }; fr.onerror = function () { ok(''); }; fr.readAsDataURL(file); });
+    var j = await api('POST', '/api/witness/pile/read', { file: b64, mime: file.type });
+    S.reading = false;
+    if (!j.ok) { say(errText(j), 'err'); return render(); }
+    var d = S.draft;
+    if (j.title && !String(d.title || '').trim()) d.title = j.title;
+    if (j.level && !String(d.level || '').trim()) d.level = j.level;
+    if ((j.questions || []).length) d.qs = j.questions.map(function (q) { return q.n + '. ' + q.text + ' (' + q.marks + ')'; }).join('\n');
+    if (j.scheme) d.scheme = j.scheme;
+    say('Read ' + (j.questions || []).length + ' question' + ((j.questions || []).length === 1 ? '' : 's') + (j.scheme ? ' and your scheme' : '') + '. Check them, then create the exam.');
+    render();
+  }
+  async function patterns() {
+    S.busy = true;
+    var j = await api('POST', '/api/witness/pile/' + S.pid + '/patterns', {});
+    S.busy = false;
+    if (!j.ok) { say(errText(j), 'err'); return render(); }
+    await loadPile(S.pid);
+    say('Muse Wonder is reading the whole class. It takes about half a minute.');
+    render();
+  }
+  function nextExam() {
+    var pl = (S.pile && S.pile.pile) || {}, pt = pl.patterns || {};
+    S.draft = { title: (pl.title || 'Exam') + ' (next)', level: pl.level || '', kind: pl.kind || 'paper',
+                qs: (pt.next_exam || []).map(function (x, i) { return (i + 1) + '. ' + x.text + ' (' + x.marks + ')'; }).join('\n') };
+    stopPoll(); S.view = 'new'; render();
   }
 
   // "1. 3/4 ÷ 1/2 (2)" -> {n: 1, text: "3/4 ÷ 1/2", marks: 2}
