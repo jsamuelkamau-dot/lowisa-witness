@@ -51,6 +51,23 @@ export function markMasteryDone(storage: MirrorStorage, pathId: string): void {
   if (!d.includes(pathId)) storage.setItem(MASTERY_DONE_KEY, JSON.stringify(d.concat(pathId).slice(-200)));
 }
 
+/** What a level's build found (its self-check, the outline the teacher looks at), kept until the teacher has it: 29 Oct,
+ * live, the news of a fresh level was lost to one dropped connection and the open sent it again without them. */
+export const BUILT_KEY = 'lowisa-witness-built-v1';
+export type BuiltNews = {check: SelfCheck | null; level: MasteryLevelText | null};
+export function keepBuilt(storage: MirrorStorage, pathId: string, news: BuiltNews): void {
+  let m: Record<string, BuiltNews> = {};
+  try { m = JSON.parse(storage.getItem(BUILT_KEY) || '{}') || {}; } catch (e) { m = {}; }
+  m[pathId] = news;
+  const keys = Object.keys(m);
+  for (const k of keys.slice(0, Math.max(0, keys.length - 20))) delete m[k];
+  storage.setItem(BUILT_KEY, JSON.stringify(m));
+}
+export function builtNews(storage: MirrorStorage, pathId: string): BuiltNews | null {
+  try { const v = (JSON.parse(storage.getItem(BUILT_KEY) || '{}') || {})[pathId]; return v && typeof v === 'object' ? v as BuiltNews : null; }
+  catch (e) { return null; }
+}
+
 /** What the build is asked (the composer's line) and its material (pure, for tests). */
 export function masteryBrief(paper: Paper, q: Question, level?: string): {input: string; context: string} {
   const working = (q.steps || []).map(s => (s.crossed_out ? '(crossed out) ' : '') + s.wrote).join('\n') || '(nothing written)';
@@ -106,6 +123,6 @@ export async function buildMastery(env: CustomEnv & WitnessEnv, storage: MirrorS
   let outline: MasteryLevelText | null = null;
   const masteryCheck = async (l: MasteryLevelText) => { outline = l; checked = await check(l); return checked; };
   const made = await createCustomCourse({...env, designModel: MASTERY_MODEL, designPath: MASTERY_DESIGN_PATH, designFor: {sitting: paper.id, n: q.n}, mastery: true, masteryCheck}, storage, 'topic', input, {context});
-  if (made.ok && made.pathId) remember(storage, paper.id, q.n, made.pathId);
+  if (made.ok && made.pathId) { remember(storage, paper.id, q.n, made.pathId); keepBuilt(storage, made.pathId, {check: checked, level: outline}); }
   return {...made, checked, outline};
 }

@@ -24,7 +24,7 @@ import {pickImagesSafely, takePhoto, PickedDocument} from '../career/documents';
 import type {MirrorStorage} from '../state/storage';
 import type {CustomEnv} from '../paths/custom/course';
 import {onBuildProgress} from '../paths/custom/course';
-import {buildMastery, masteryDone, masteryPath} from './mastery';
+import {buildMastery, builtNews, masteryDone, masteryPath} from './mastery';
 import type {Mastery} from './net';
 import {asksLeft} from './net';
 import {AsksView} from './Examiner';
@@ -494,7 +494,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
   const [m, setM] = useState<Mastery | undefined>(q.mastery);
   const act = async (action: 'event' | 'explain' | 'ask', body: Record<string, unknown>) => {
     const r = await witness.mastery(env, paper.id, q.n, action, body);
-    if (r.ok) setM(r.value.mastery); else setSaid(r.error);
+    if (r.ok) { setM(r.value.mastery); setSaid(''); } else setSaid(r.error);
     return r.ok ? r.value.mastery : null;
   };
   // the exam's teacher looks at each level first: it opens once they let the student start (28 Oct)
@@ -536,7 +536,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
       if (!now || !now.mastery || now.mastery.status === 'held') return; }
     // 28 Oct, live: a level built here whose news the edge refused (one account as teacher and student, before vb1028g)
     // never reached the teacher; it is told again before the level opens, and waits when the teacher looks first
-    if (path && (!m || !m.status)) { const after = await act('event', {event: 'built', path}); if (!after || after.status === 'held') return; }
+    if (path && (!m || !m.status)) { const after = await act('event', {event: 'built', path, ...(builtNews(storage, path) || {})}); if (!after || after.status === 'held') return; }
     if (path) { if (onOpenPath) onOpenPath(path); return; }
     setSaid(''); setBuilding('Planning your level…');
     const off = onBuildProgress(st => setBuilding(st.stage === 'write' ? 'Writing your lessons…' : st.stage === 'check' ? 'Playing it through as you, to be sure it teaches this…' : st.stage === 'review' ? 'Checking the plan…' : st.stage === 'redesign' ? 'Making it sharper…' : 'Planning your level…'));
@@ -544,7 +544,9 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
     off(); setBuilding('');
     if (made.ok && made.pathId) {
       setPath(made.pathId);
-      const after = await act('event', {event: 'built', path: made.pathId, check: made.checked, level: made.outline});
+      const news = {event: 'built', path: made.pathId, check: made.checked, level: made.outline};
+      // one dropped connection must not lose the teacher's news: asked once more before the student is told to try again
+      const after = (await act('event', news)) || (await new Promise(res => setTimeout(res, 3000)).then(() => act('event', news)));
       if (after && after.status !== 'held' && onOpenPath) onOpenPath(made.pathId);
     }
     else setSaid(failedWords(made.reason, made.text));
