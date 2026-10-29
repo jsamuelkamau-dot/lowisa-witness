@@ -91,7 +91,14 @@
     '#lowisaWitnessDesk .wd-step.crossed .wd-ink{text-decoration:line-through;color:var(--tx2)}' +
     '#lowisaWitnessDesk .wd-diag{border:1px solid var(--err);border-radius:8px;padding:8px 10px;margin:8px 0}' +
     '#lowisaWitnessDesk .wd-nums{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 12px}#lowisaWitnessDesk .wd-nums div{background:var(--bga);border-radius:8px;padding:8px 12px}' +
-    '#lowisaWitnessDesk .wd-nums b{display:block;font-size:18px}';
+    '#lowisaWitnessDesk .wd-nums b{display:block;font-size:18px}' +
+    // the Proof of Thinking record prints alone, on white (29 Oct audit: Print printed the whole window)
+    '@media print{html,body{height:auto!important;overflow:visible!important;background:#fff!important}' +
+    'body>*:not(#lowisaWitnessDesk){display:none!important}' +
+    '#lowisaWitnessDesk{position:static!important;display:block!important;border:0!important;background:#fff!important;color:#000!important;' +
+    '--tx:#000;--tx2:#444;--bg2:#fff;--bga:#f3f3f3;--bgt:#fff;--bd:#ccc;--bd2:#bbb}' +
+    '#lowisaWitnessDesk .wd-head,#lowisaWitnessDesk .wd-btn,#lowisaWitnessDesk video,#lowisaWitnessDesk audio{display:none!important}' +
+    '#lowisaWitnessDesk .wd-body{overflow:visible!important;padding:0!important}#lowisaWitnessDesk .wd-card{break-inside:avoid}}';
 
   function panelEl() {
     var p = document.getElementById('lowisaWitnessDesk');
@@ -127,22 +134,22 @@
     if (!(await open())) return false;
     where = where || {};
     if (where.pile && await loadPile(where.pile)) S.view = 'pile';
-    if (where.paper && await loadPaper(where.paper)) { S.view = 'paper'; S.n = where.n != null ? Number(where.n) : null; stopPoll(); }
+    if (where.paper && await loadPaper(where.paper)) { S.view = 'paper'; S.n = where.n != null ? Number(where.n) : null; stopPoll(); watchPaper(); }
     render();
     return true;
   }
   function close() {
-    stopPlay(); stopPoll();
+    stopPlay(); stopPoll(); stopWatch();
     var p = document.getElementById('lowisaWitnessDesk');
     if (p) p.remove();
     document.removeEventListener('keydown', onKey, true);
   }
   // Esc and Back go one step up; from the exams list they close the desk
   function back() {
-    if (S.view === 'proof') { S.view = 'paper'; render(); }
+    if (S.view === 'proof') { S.view = 'paper'; render(); watchPaper(); }
     // back on the exam it is read again and keeps itself current (28 Oct, live: a paper sent while the teacher
     // reviewed another never showed, because the exam's refresh stopped when the paper opened)
-    else if (S.view === 'paper') { stopPlay(); stopRec(); S.view = 'pile'; render(); loadPile(S.pid).then(render); }
+    else if (S.view === 'paper') { stopPlay(); stopRec(); stopWatch(); S.view = 'pile'; render(); loadPile(S.pid).then(render); }
     else if (S.view === 'pile' || S.view === 'new') { stopPoll(); S.view = 'home'; loadPiles().then(render); }
     else close();
   }
@@ -180,6 +187,27 @@
     }, 5000);
   }
   function stopPoll() { if (S.timer) { clearInterval(S.timer); S.timer = null; } }
+  // an open paper keeps its question's mastery current: a finished lesson, a question to the teacher, an explanation,
+  // the finished level (29 Oct, live: the teacher only saw them after reopening the paper). Only the mastery card is
+  // redrawn, only when it changed, and never under the teacher's typing or a playing recording.
+  function watchPaper() {
+    if (S.ptimer) return;
+    S.ptimer = setInterval(async function () {
+      if (S.view !== 'paper' || !document.getElementById('lowisaWitnessDesk')) { stopWatch(); return; }
+      var sid = S.sid, n = S.n;
+      var j = await api('GET', '/api/witness/sitting/' + sid);
+      if (!j.ok || S.view !== 'paper' || S.sid !== sid || S.n !== n) return;
+      var of = function (p) { return (((p && p.result && p.result.questions) || []).filter(function (x) { return x.n === n; })[0]) || null; };
+      var was = of(S.paper), now = of(j);
+      if (!now || JSON.stringify((was && was.mastery) || null) === JSON.stringify(now.mastery || null)) return;
+      var box = document.getElementById('wdMastery');
+      if (!box || box.contains(document.activeElement) || [].some.call(box.querySelectorAll('audio'), function (a) { return !a.paused; })) return;
+      S.paper = j;
+      box.innerHTML = masteryCard(now);
+      fillAssets(box);
+    }, 6000);
+  }
+  function stopWatch() { if (S.ptimer) { clearInterval(S.ptimer); S.ptimer = null; } }
 
   // ---------------------------------------------------------------- drawing
   function render() {
@@ -379,7 +407,7 @@
       '<div style="margin-top:6px;display:flex;gap:8px;align-items:center"><button class="wd-btn" data-act="speak">' + (S.rec ? 'Stop and write it down' : 'Speak it') + '</button>' +
       '<span class="wd-sub">' + (S.rec ? 'Listening… speak your comment.' : 'Muse Voice Transcribe writes down what you say; you can edit it before saving.') + '</span></div>' +
       '<div style="margin-top:10px"><button class="wd-btn wd-main" data-act="save">Save</button></div></div>' +
-      masteryCard(q);
+      '<div id="wdMastery">' + masteryCard(q) + '</div>';
   }
 
   // After release: the student's level, their questions to the teacher, the checks the teacher chooses (none needed),
@@ -529,7 +557,7 @@
     if (t.hasAttribute('data-pile')) { if (await loadPile(t.getAttribute('data-pile'))) { S.view = 'pile'; } return render(); }
     if (t.hasAttribute('data-paper')) {
       var n = t.getAttribute('data-n');
-      if (await loadPaper(t.getAttribute('data-paper'))) { S.view = 'paper'; S.n = n != null ? Number(n) : null; S.draft = {}; S.play = { pending: true }; stopPoll(); }
+      if (await loadPaper(t.getAttribute('data-paper'))) { S.view = 'paper'; S.n = n != null ? Number(n) : null; S.draft = {}; S.play = { pending: true }; stopPoll(); watchPaper(); }
       return render();
     }
     if (t.hasAttribute('data-q')) { S.n = Number(t.getAttribute('data-q')); S.draft = {}; S.play = { pending: true }; return render(); }
