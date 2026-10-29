@@ -57,7 +57,7 @@ export function Replay({q}: {q: Question}): React.JSX.Element {
           <Text style={[s.step, st.crossed_out ? s.crossed : null]}>{st.wrote}</Text>
         </View>
       ))}
-      {slip >= 0 && shown > slip && q.diagnosis ? <Text style={s.diag}>{timed ? 'At ' + clock(q.moment_s) + ': ' : "What you'll master: "}{q.diagnosis}</Text> : null}
+      {slip >= 0 && shown > slip && q.diagnosis ? <Text style={s.diag}>{timed ? 'At ' + clock(q.moment_s) + ': ' : "What your working shows: "}{q.diagnosis}</Text> : null}
       {timed && steps.length > 1 ? <Btn label="Replay how I worked" onPress={play} small testID={'witness-replay-play-' + q.n} /> : null}
     </View>
   );

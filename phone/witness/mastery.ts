@@ -32,9 +32,23 @@ function remember(storage: MirrorStorage, paperId: string, n: number, pathId: st
   storage.setItem(MASTERY_KEY, JSON.stringify(m));
 }
 
-/** A mastery level (a one-level course) is done once the course record counts its level complete. */
+/** The mastery levels finished on this phone: every lesson's questions and the flashcards (29 Oct, owner). */
+export const MASTERY_DONE_KEY = 'lowisa-witness-mastery-done-v1';
+
+/**
+ * A mastery level (a one-level course) is done once its lessons and its flashcard deck are finished on the path. 29 Oct,
+ * live: the level is played on the path map, which never moved the course record's count, so the teacher never heard.
+ */
 export function masteryDone(storage: MirrorStorage, pathId: string): boolean {
+  try { const d = JSON.parse(storage.getItem(MASTERY_DONE_KEY) || '[]'); if (Array.isArray(d) && d.includes(pathId)) return true; } catch (e) { /* none yet */ }
   try { const p = readCourseStore(storage).courses[pathId]; return !!p && Number(p.completed) >= 1; } catch (e) { return false; }
+}
+
+/** The path map's deck closed on a level whose lessons are all done: the level is finished (the badge may open). */
+export function markMasteryDone(storage: MirrorStorage, pathId: string): void {
+  let d: string[] = [];
+  try { const v = JSON.parse(storage.getItem(MASTERY_DONE_KEY) || '[]'); if (Array.isArray(v)) d = v.filter(x => typeof x === 'string'); } catch (e) { d = []; }
+  if (!d.includes(pathId)) storage.setItem(MASTERY_DONE_KEY, JSON.stringify(d.concat(pathId).slice(-200)));
 }
 
 /** What the build is asked (the composer's line) and its material (pure, for tests). */

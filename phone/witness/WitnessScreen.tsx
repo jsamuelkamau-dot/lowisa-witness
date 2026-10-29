@@ -73,7 +73,7 @@ export const HAND_OVER_WORDS = "The Witness camera couldn't record on this phone
 export function spokenFeedback(q: Question): string {
   const parts = ['Question ' + q.n + '. ' + (turnedAround(q) ? 'Turned around.' : RESULT_WORDS[resultOf(q)] + '.'),
     'You got ' + marksOf(q) + ' of ' + q.out_of + ' marks.'];
-  if (q.diagnosis && !turnedAround(q)) parts.push("What you'll master: " + q.diagnosis);
+  if (q.diagnosis && !turnedAround(q)) parts.push("What your working shows: " + q.diagnosis);
   if (q.comment && q.comment.text) parts.push('Your teacher says: ' + q.comment.text);
   return parts.join(' ');
 }
@@ -561,7 +561,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
       <Replay q={q} />
       {/* 28 Oct re-audit (the submission: each student's feedback comes "with a short spoken explanation") */}
       <Btn label="Hear it" onPress={() => tutorSay(spokenFeedback(q))} small testID={'witness-hear-' + q.n} />
-      {next && q.diagnosis && q.moment_s == null && !(typeof q.slip === 'number' && q.slip >= 1) ? <Text style={s.diag}>What you'll master: {q.diagnosis}</Text> : null}
+      {next && q.diagnosis && q.moment_s == null && !(typeof q.slip === 'number' && q.slip >= 1) ? <Text style={s.diag}>What your working shows: {q.diagnosis}</Text> : null}
       {next && capabilitiesOf(q).length ? (
         <View style={s.caps} testID={'witness-caps-' + q.n}>
           <Text style={s.capsHead}>Thinking it builds</Text>
