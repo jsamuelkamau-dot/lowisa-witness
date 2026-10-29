@@ -39,7 +39,9 @@ export function Replay({q}: {q: Question}): React.JSX.Element {
   const [shown, setShown] = useState(steps.length);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
-  const slip = slipIndex(steps, q.moment_s);
+  // a photographed paper (29 Oct) has no times: its steps show as written, the slip is the step Spark named
+  const timed = steps.some(st => typeof st.t === 'number');
+  const slip = timed ? slipIndex(steps, q.moment_s) : (typeof q.slip === 'number' && q.slip >= 1 ? q.slip - 1 : -1);
   const play = () => {
     if (timer.current) clearTimeout(timer.current);
     const gaps = replayGaps(steps);
@@ -51,12 +53,12 @@ export function Replay({q}: {q: Question}): React.JSX.Element {
     <View testID={'witness-replay-' + q.n}>
       {steps.slice(0, shown).map((st, i) => (
         <View key={i} style={[s.stepRow, i === slip ? s.slipRow : null]}>
-          <Text style={s.time}>{clock(st.t)}</Text>
+          {timed ? <Text style={s.time}>{clock(st.t)}</Text> : null}
           <Text style={[s.step, st.crossed_out ? s.crossed : null]}>{st.wrote}</Text>
         </View>
       ))}
-      {slip >= 0 && shown > slip && q.diagnosis ? <Text style={s.diag}>At {clock(q.moment_s)}: {q.diagnosis}</Text> : null}
-      {steps.length > 1 ? <Btn label="Replay how I worked" onPress={play} small testID={'witness-replay-play-' + q.n} /> : null}
+      {slip >= 0 && shown > slip && q.diagnosis ? <Text style={s.diag}>{timed ? 'At ' + clock(q.moment_s) + ': ' : 'Here: '}{q.diagnosis}</Text> : null}
+      {timed && steps.length > 1 ? <Btn label="Replay how I worked" onPress={play} small testID={'witness-replay-play-' + q.n} /> : null}
     </View>
   );
 }
@@ -140,7 +142,7 @@ export function ProofView({env, paperId}: {env: WitnessEnv; paperId: string}): R
           ))}
         </View>
       ) : null}
-      <Text style={s.foot}>Read by {p.read_by.join(', ')}. The video was {p.video}.</Text>
+      <Text style={s.foot}>Read by {p.read_by.join(', ')}. {p.source === 'photo' ? 'Photographed after the exam: ' + p.pages + (p.pages === 1 ? ' page' : ' pages') + ', kept with the paper.' : 'Filmed with Witness; the video was ' + p.video + '.'}</Text>
     </View>
   );
 }

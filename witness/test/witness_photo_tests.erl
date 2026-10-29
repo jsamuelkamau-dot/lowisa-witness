@@ -74,10 +74,13 @@ photographed_paper_reaches_the_student_by_name_test() ->
     {ok, Row} = load(<<"teacher">>, {sitting, Id}),
     ?assertMatch(#{status := <<"marked">>, student := <<"Amani Wanjiru">>, student_uid := <<"amani">>, name_match := <<"read">>}, Row),
     %% the student's own step and the question's answer are cut from the right page, for every question in the plan
-    ?assert(lists:member({cropped, <<"https://store.example.com/a/", Id/binary, "/page-1.jpg">>, 0.0,
-                          #{x1 => 150, y1 => 218, x2 => 400, y2 => 243, w => 1000, h => 1000}}, events())),
-    ?assert(lists:member({cropped, <<"https://store.example.com/a/", Id/binary, "/page-2.jpg">>, 0.0,
-                          #{x1 => 150, y1 => 120, x2 => 400, y2 => 145, w => 1000, h => 1000}}, events())),
+    ?assert(lists:member({region, <<"https://store.example.com/a/", Id/binary, "/page-1.jpg">>,
+                          #{x1 => 135, y1 => 208, x2 => 425, y2 => 254, w => 1000, h => 1000}}, events())),
+    ?assert(lists:member({region, <<"https://store.example.com/a/", Id/binary, "/page-2.jpg">>,
+                          #{x1 => 135, y1 => 110, x2 => 425, y2 => 156, w => 1000, h => 1000}}, events())),
+    %% a mastered question keeps its answer, with no step cut for a Mastery Plan it is not in
+    ?assertMatch([#{n := 2, asset := <<"still-2.jpg">>}], [X || X = #{n := 2} <- maps:get(stills, maps:get(result, element(2, load(<<"teacher">>, {sitting, Id}))))]),
+    ?assertNot(lists:any(fun(#{n := 2} = X) -> maps:is_key(step, X); (_) -> false end, maps:get(stills, maps:get(result, element(2, load(<<"teacher">>, {sitting, Id})))))),
     ?assert(lists:member({region, <<"https://store.example.com/a/", Id/binary, "/page-1.jpg">>,
                           #{x1 => 30, y1 => 150, x2 => 970, y2 => 263, w => 1000, h => 1000}}, events())),
     Stills = maps:get(stills, maps:get(result, Row)),
@@ -99,7 +102,14 @@ photographed_paper_reaches_the_student_by_name_test() ->
     ?assertMatch(#{status := <<"released">>, result := #{questions := [_, _, _]}}, Mine),
     %% the pages are the paper: they stay (no clip is dropped) and the student may see their own pages once released
     ?assertEqual([], [E || {drop, _, _} = E <- events()]),
-    ?assertMatch({200, #{url := _}}, r(<<"GET">>, [<<"sitting">>, Id, <<"asset">>, <<"page-1.jpg">>], #{}, <<"amani">>)).
+    ?assertMatch({200, #{url := _}}, r(<<"GET">>, [<<"sitting">>, Id, <<"asset">>, <<"page-1.jpg">>], #{}, <<"amani">>)),
+    %% the Proof of Thinking record (printed for a student with no phone): the pages kept, each question's capabilities
+    %% and the student's own step, and no video
+    {200, Proof} = r(<<"GET">>, [<<"sitting">>, Id, <<"proof">>], #{}, <<"teacher">>),
+    ?assertMatch(#{source := <<"photo">>, pages := 2, student := <<"Amani Wanjiru">>}, Proof),
+    ?assertNot(maps:is_key(video, Proof)),
+    [P1 | _] = maps:get(questions, Proof),
+    ?assertMatch(#{n := 1, capabilities := [<<"Pattern Recognition">>], slip := 1, still := <<"still-1.jpg">>, step := <<"step-1.jpg">>}, P1).
 
 %% a name the paper cannot settle waits for the teacher, who links it; the student who joins later finds their paper
 an_unclear_name_waits_for_the_teacher_test() ->

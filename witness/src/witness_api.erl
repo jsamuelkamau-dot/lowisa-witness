@@ -1115,9 +1115,13 @@ page_still(Uid, Id, Urls, #{n := N} = Q, Host) ->
                 Sl when is_integer(Sl), Sl =< length(All) -> lists:nth(Sl, All);
                 _ -> lists:last(Steps)
             end,
-            Step = case Pick of
-                #{box := Box, page := Pp} ->
-                    case catch (cropper(Host))(maps:get(Pp, Urls, Url), 0.0, Box) of
+            %% only a question in the Mastery Plan opens on the student's own step; the cut hugs the line (29 Oct, live: the
+            %% video's padding took in the printed question above and the next line below)
+            Step = case {needs_level(Q), Pick} of
+                {true, #{box := #{x1 := Bx1, y1 := By1, x2 := Bx2, y2 := By2}, page := Pp}} ->
+                    Pad = (By2 - By1) * 0.3 + 3,
+                    Tight = #{x1 => max(0, Bx1 - 15), y1 => max(0, round(By1 - Pad)), x2 => min(1000, Bx2 + 25), y2 => min(1000, round(By2 + Pad)), w => 1000, h => 1000},
+                    case catch (regioner(Host))(maps:get(Pp, Urls, Url), Tight) of
                         {ok, J2} ->
                             F2 = <<"step-", (integer_to_binary(N))/binary, ".jpg">>,
                             case Host:put_asset(Uid, <<Id/binary, "/", F2/binary>>, J2, <<"image/jpeg">>) of ok -> #{step => F2}; _ -> #{} end;

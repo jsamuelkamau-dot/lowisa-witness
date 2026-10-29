@@ -10,7 +10,7 @@ import {cancelRecording, readRecording, recorderAvailable, removeRecording, RECO
 /** An explanation is a few sentences; the recording stops on its own after this. */
 export const SAY_SECONDS = 90;
 /** What the student is told before the microphone opens: the teacher can listen to it. */
-export const KEPT_WORDS = 'Witness records what you say, writes it down, and keeps the recording with your paper so your teacher can listen to it.';
+export const KEPT_WORDS = 'What you say is written down, and the recording is kept with your paper so your teacher can listen to it.';
 
 export function SayIt({onAudio, label, testID}: {onAudio(audio: string, mime: string): Promise<unknown>; label: string; testID?: string}): React.JSX.Element | null {
   const [mode, setMode] = useState<'idle' | 'recording' | 'sending'>('idle');
@@ -23,7 +23,7 @@ export function SayIt({onAudio, label, testID}: {onAudio(audio: string, mime: st
     if (Platform.OS === 'android') {
       try {
         const g = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO, {title: label, message: KEPT_WORDS, buttonPositive: 'Allow', buttonNegative: 'Not now'});
-        if (g !== PermissionsAndroid.RESULTS.GRANTED) { setSaid('Witness needs the microphone to hear you. You can write it instead.'); return; }
+        if (g !== PermissionsAndroid.RESULTS.GRANTED) { setSaid('LoWisa needs the microphone to hear you. You can write it instead.'); return; }
       } catch (e) { return; }
     }
     const st = await startRecording(SAY_SECONDS, 'phrase');
@@ -42,7 +42,7 @@ export function SayIt({onAudio, label, testID}: {onAudio(audio: string, mime: st
   };
   return (
     <View style={s.wrap}>
-      {mode === 'sending' ? <View style={s.row}><ActivityIndicator /><Text style={s.small}> Witness is listening…</Text></View>
+      {mode === 'sending' ? <View style={s.row}><ActivityIndicator /><Text style={s.small}> Listening…</Text></View>
         : mode === 'recording' ? (
           <View>
             <Text style={s.live}>Recording. Say it in your own words.</Text>

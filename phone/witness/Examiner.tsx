@@ -26,7 +26,7 @@ export function AsksView({env, paperId, title, examiner, onDone}: {env: WitnessE
   return (
     <View style={s.card} testID="witness-asks">
       <Text style={s.h}>{asks.length === 1 ? 'A question about your work' : 'Two questions about your work'}</Text>
-      <Text style={s.sub}>Before your teacher looks at {title || 'your paper'}, Witness asks about steps you wrote. Answer in your own words, out loud or in writing, in the language you think in.</Text>
+      <Text style={s.sub}>Before your teacher looks at {title || 'your paper'}, you're asked about steps you wrote. Answer in your own words, out loud or in writing, in the language you think in.</Text>
       {asks.map(a => <AskCard key={a.k} a={a} env={env} paperId={paperId} onAnswered={ex => setAsks(ex.asks)} />)}
       {left.length === 0 ? (
         <View style={{marginTop: 12}}>
@@ -68,7 +68,7 @@ function AskCard({a, env, paperId, onAnswered}: {a: Ask; env: WitnessEnv; paperI
         const g = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO, {
           title: 'Answer out loud', message: KEPT_WORDS,
           buttonPositive: 'Allow', buttonNegative: 'Not now'});
-        if (g !== PermissionsAndroid.RESULTS.GRANTED) { setSaid('Witness needs the microphone to hear you. You can write your answer instead.'); return; }
+        if (g !== PermissionsAndroid.RESULTS.GRANTED) { setSaid('LoWisa needs the microphone to hear you. You can write your answer instead.'); return; }
       } catch (e) { return; }
     }
     const st = await startRecording(ANSWER_SECONDS, 'phrase');
@@ -90,7 +90,7 @@ function AskCard({a, env, paperId, onAnswered}: {a: Ask; env: WitnessEnv; paperI
       {a.wrote ? <Text style={s.wrote}>{a.wrote}</Text> : null}
       <Btn label="Hear the question" onPress={() => tutorSay(a.ask)} small testID={'witness-ask-hear-' + a.k} />
       {mode === 'sending' ? (
-        <View style={s.row}><ActivityIndicator /><Text style={s.small}> Witness is listening to your answer…</Text></View>
+        <View style={s.row}><ActivityIndicator /><Text style={s.small}> Listening to your answer…</Text></View>
       ) : mode === 'recording' ? (
         <View>
           <Text style={s.live}>Recording. Say it in your own words.</Text>

@@ -12,7 +12,7 @@ import type {MirrorStorage} from '../state/storage';
 import {readCourseStore} from '../course/store';
 import {createCustomCourse, CustomCourseResult, CustomEnv, MasteryLevelText} from '../paths/custom/course';
 import type {Paper, Question, WitnessEnv} from './net';
-import {resultOf, witness} from './net';
+import {CAPABILITIES, capabilitiesOf, resultOf, witness} from './net';
 
 export {MASTERY_MODEL, MASTERY_DESIGN_PATH, MASTERY_KEY, masteryOfPath} from './metaRoute';
 import {MASTERY_MODEL, MASTERY_DESIGN_PATH, MASTERY_KEY} from './metaRoute';
@@ -47,7 +47,11 @@ export function masteryBrief(paper: Paper, q: Question, level?: string): {input:
     'HOW THE STUDENT WORKED IT, in the order written:\n' + working,
     'WHERE THE THINKING WENT WRONG: ' + idea,
     resultOf(q) === 'right_answer_wrong_thinking' ? 'The final answer was right, but the method was wrong: the level must show why the method fails on a case where it gives the wrong answer.' : '',
+    resultOf(q) === 'part_way' ? 'The student started right but did not show (or reach) the whole method: the level must make every step of the thinking visible.' : '',
     q.focus ? 'THE TEACHER\'S FOCUS NOTE: ' + q.focus : '',
+    // 29 Oct (owner): every level builds named thinking capabilities, whether the exam was passed or not
+    capabilitiesOf(q).length ? 'THE THINKING CAPABILITIES THIS LEVEL BUILDS (practise them by name in the real-world task): '
+      + capabilitiesOf(q).map(c => c + ' (' + CAPABILITIES[c] + ')').join('; ') : '',
     level ? 'THE STUDENT\'S LEVEL: ' + level : '',
   ].filter(Boolean).join('\n\n');
   return {input, context};

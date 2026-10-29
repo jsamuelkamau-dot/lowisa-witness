@@ -1,22 +1,26 @@
 /**
- * WITNESS ON THE PHONE — sit a teacher's exam on paper, with the phone watching the desk (2026-10-27, Meta hackathon;
+ * FROM EXAM TO MASTERY ON THE PHONE (2026-10-27, Meta hackathon; 29 Oct, owner: the product is From Exam to Mastery;
  * synced into the LoWisa app as src/witness/WitnessScreen.tsx).
  *
  *   1. The teacher's join code -> the exam's name.
- *   2. The student's name as the teacher knows it.
- *   3. Record the desk (the phone's camera app, up to ten minutes) or choose a video already made.
- *   4. The video goes straight to storage on a signed link, then Witness marks it. The paper is "with your teacher"
- *      until they release it; then it shows here, question by question, in words that never say "failed".
+ *   2. A student puts their name on the exam's class list.
+ *   3. After the exam ONE phone (a teacher's, or one the school owns) photographs each student's finished paper, page by
+ *      page. The name is read from the paper and finds the student on the class list.
+ *   4. Witness (optional, one student at a time, at home or homeschooled): the phone films the desk while the student
+ *      writes, so the thinking is seen as it happens.
+ *   5. The paper is "with your teacher" until they release it; then it shows here, question by question. No question
+ *      ends in a verdict: it is mastered, or it is in the student's Mastery Plan.
  *
  * Only shown when the edge's Witness doors answer (LOWISA_WITNESS_ACCESS); the caller checks witness.mine first.
  */
 import React, {useCallback, useEffect, useState} from 'react';
-import {ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View} from 'react-native';
+import {ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View} from 'react-native';
 import {Page} from '../ui/Page';
 import {Btn} from '../exam/print/ui';
 import {chooseVideo, doorMime, VideoFile} from '../community/video';
 import {DeviceEventEmitter, NativeModules} from 'react-native';
-import {marksOf, Paper, Question, RESULT_WORDS, resultOf, toMaster, typedCode, witness, WitnessEnv} from './net';
+import {capabilitiesOf, CAPABILITIES, marksOf, Paper, PLAN_WHY, Question, RESULT_WORDS, resultOf, Taken, toMaster, typedCode, witness, WitnessEnv} from './net';
+import {pickImagesSafely, takePhoto, PickedDocument} from '../career/documents';
 import type {MirrorStorage} from '../state/storage';
 import type {CustomEnv} from '../paths/custom/course';
 import {onBuildProgress} from '../paths/custom/course';
@@ -36,7 +40,10 @@ export const PHONE_FPS = 30;
 
 type Stage =
   | {kind: 'home'}
-  | {kind: 'joined'; code: string; title: string; level: string}
+  | {kind: 'joined'; code: string; title: string; level: string; practical?: boolean}
+  | {kind: 'listed'; title: string; name: string}
+  | {kind: 'photos'; code: string; title: string}
+  | {kind: 'witness'; code: string; title: string; level: string}
   | {kind: 'sending'; title: string; line: string}
   | {kind: 'sent'; title: string; id: string}
   | {kind: 'asks'; paper: Paper}
@@ -66,7 +73,7 @@ export const HAND_OVER_WORDS = "The Witness camera couldn't record on this phone
 export function spokenFeedback(q: Question): string {
   const parts = ['Question ' + q.n + '. ' + (turnedAround(q) ? 'Turned around.' : RESULT_WORDS[resultOf(q)] + '.'),
     'You got ' + marksOf(q) + ' of ' + q.out_of + ' marks.'];
-  if (q.diagnosis && !turnedAround(q)) parts.push('What went wrong: ' + q.diagnosis);
+  if (q.diagnosis && !turnedAround(q)) parts.push("What you'll master: " + q.diagnosis);
   if (q.comment && q.comment.text) parts.push('Your teacher says: ' + q.comment.text);
   return parts.join(' ');
 }
@@ -185,7 +192,7 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
       if (!live || !k) return;
       setName(k.pending.name);
       setUnsent(k.clip);
-      setStage({kind: 'joined', code: k.pending.code, title: k.pending.title, level: k.pending.level});
+      setStage({kind: 'witness', code: k.pending.code, title: k.pending.title, level: k.pending.level});
       setNotice('Your recording was kept. Send it to your teacher.');
     });
     return () => { live = false; };
@@ -204,11 +211,23 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
     const r = await witness.join(env, code);
     setBusy(false);
     if (!r.ok) { setError(r.error); return; }
-    setStage({kind: 'joined', code, title: r.value.pile.title, level: r.value.pile.level});
+    setStage({kind: 'joined', code, title: r.value.pile.title, level: r.value.pile.level, practical: r.value.pile.kind === 'practical'});
+  };
+
+  // a student puts their name on the exam's class list: the paper photographed after the exam finds them by it
+  const listMe = async () => {
+    if (stage.kind !== 'joined') return;
+    setError('');
+    if (!name.trim()) { setError('Write your name as you write it on your paper.'); return; }
+    setBusy(true);
+    const r = await witness.join(env, stage.code, name.trim());
+    setBusy(false);
+    if (!r.ok) { setError(r.error); return; }
+    setStage({kind: 'listed', title: stage.title, name: name.trim()});
   };
 
   const sit = async (source: 'camera' | 'gallery') => {
-    if (stage.kind !== 'joined') return;
+    if (stage.kind !== 'witness') return;
     setError('');
     if (!name.trim()) { setError('Write your name as your teacher knows it.'); return; }
     let file: VideoFile | null = null;
@@ -224,12 +243,12 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
   };
 
   const send = async (picked: VideoFile) => {
-    if (stage.kind !== 'joined') return;
+    if (stage.kind !== 'witness') return;
     setError('');
     if (!name.trim()) { setError('Write your name as your teacher knows it.'); return; }
     setNotice('');
     const {title} = stage;
-    const again = (why: string, file: VideoFile) => { setStage({kind: 'joined', code: stage.code, title, level: stage.level}); setUnsent(file); setError(why); };
+    const again = (why: string, file: VideoFile) => { setStage({kind: 'witness', code: stage.code, title, level: stage.level}); setUnsent(file); setError(why); };
     // 28 Oct, live: a resumed send made the kept copy again (a person off the page is always covered), so it was a new
     // file and the upload started over; the copy already made is sent as it is
     const resuming = !!resumeOf && resumeOf.uri === picked.uri;
@@ -268,14 +287,14 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
     setResumeOf(null);
     setUnsent(null);
     storage.removeItem(PENDING_KEY);
-    setStage({kind: 'sending', title, line: 'Witness is reading how you worked…'});
+    setStage({kind: 'sending', title, line: 'Reading how you worked…'});
     let marked = await witness.mark(env, id, PHONE_FPS);
     if (!marked.ok && marked.code === 'parts_missing') {
       // a part the store does not have yet (it answered, then lost it): sent once more before giving up
       const left = await witness.parts(env, id);
       if (left.ok && left.value.urls.length && await sendParts(file.uri, total, left.value.size, left.value.urls)) marked = await witness.mark(env, id, PHONE_FPS);
     }
-    if (!marked.ok) { setStage({kind: 'joined', code: stage.code, title, level: stage.level}); setError(marked.error); return; }
+    if (!marked.ok) { setStage({kind: 'witness', code: stage.code, title, level: stage.level}); setError(marked.error); return; }
     // 29 Oct audit ("the video is deleted once your paper is marked"): the server has it now, so the phone's own copies
     // go (the recording and the smaller copy it made; a video picked from the gallery is the student's and is left)
     forgetClips([picked.uri, file.uri]);
@@ -308,15 +327,15 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
   };
 
   return (
-    <Page title="Witness" subtitle="Exams on paper" onBack={back}>
+    <Page title="From Exam to Mastery" subtitle="Exams on paper" onBack={back}>
       <ScrollView contentContainerStyle={s.page} keyboardShouldPersistTaps="handled" testID="witness-screen">
         {error ? <Text style={s.error} accessibilityRole="alert" testID="witness-error">{error}</Text> : null}
 
         {stage.kind === 'home' ? (
           <>
             <View style={s.card}>
-              <Text style={s.h}>Sit your teacher's exam</Text>
-              <Text style={s.sub}>Work on paper as you always do. Your phone watches the desk, so your teacher sees how you worked, not only your answers.</Text>
+              <Text style={s.h}>Your exam on paper</Text>
+              <Text style={s.sub}>Sit the exam on paper as you always do. Afterwards it is marked for how you thought, not only your answers, and every question you didn't master becomes your Mastery Plan.</Text>
               <TextInput value={code} onChangeText={t => setCode(typedCode(t))} placeholder="Join code" autoCapitalize="characters" maxLength={6}
                 style={[s.input, s.code]} accessibilityLabel="Your teacher's join code" testID="witness-code" />
               <Btn label={busy ? 'Checking…' : 'Find the exam'} onPress={join} primary disabled={busy} testID="witness-join" />
@@ -326,9 +345,46 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
         ) : null}
 
         {stage.kind === 'joined' ? (
+          <>
+            <View style={s.card}>
+              <Text style={s.h} testID="witness-exam-title">{stage.title}</Text>
+              {stage.level ? <Text style={s.sub}>{stage.level}</Text> : null}
+              <Text style={s.rowTitle}>I'm sitting this exam</Text>
+              <Text style={s.sub}>Put your name on the class list, as you write it on your paper. Your marked paper and your Mastery Plan come back here.</Text>
+              <TextInput value={name} onChangeText={setName} placeholder="Your name" maxLength={80}
+                style={s.input} accessibilityLabel="Your name" testID="witness-list-name" />
+              <Btn label={busy ? 'Adding you…' : 'Put me on the class list'} onPress={listMe} primary disabled={busy} testID="witness-list-me" />
+            </View>
+            {!stage.practical ? (
+              <View style={s.card}>
+                <Text style={s.rowTitle}>Photograph the papers</Text>
+                <Text style={s.sub}>After the exam, a single phone photographs every student's paper: a teacher's phone, or one the school owns. Each paper's name is read from the paper itself.</Text>
+                <Btn label="Photograph the papers" onPress={() => { setError(''); setStage({kind: 'photos', code: stage.code, title: stage.title}); }} testID="witness-photos" />
+              </View>
+            ) : null}
+            <View style={s.card}>
+              <Text style={s.rowTitle}>Witness (optional)</Text>
+              <Text style={s.sub}>For one student working alone, at home or homeschooled: the phone films the desk while you write, so your thinking is seen as it happens{stage.practical ? '. A practical task is always filmed.' : ', not only the finished page.'}</Text>
+              <Btn label="Film my desk with Witness" onPress={() => { setError(''); setStage({kind: 'witness', code: stage.code, title: stage.title, level: stage.level}); }} testID="witness-film" />
+            </View>
+          </>
+        ) : null}
+
+        {stage.kind === 'listed' ? (
+          <View style={s.card} testID="witness-listed">
+            <Text style={s.h}>You're on the class list</Text>
+            <Text style={s.sub}>{stage.name}, for {stage.title}. After the exam your paper is photographed and marked. Every question you didn't master comes back here as your Mastery Plan.</Text>
+            <Btn label="Done" onPress={back} primary testID="witness-listed-done" />
+          </View>
+        ) : null}
+
+        {stage.kind === 'photos' ? <PhotoDesk env={env} code={stage.code} title={stage.title} /> : null}
+
+        {stage.kind === 'witness' ? (
           <View style={s.card}>
             <Text style={s.h} testID="witness-exam-title">{stage.title}</Text>
             {stage.level ? <Text style={s.sub}>{stage.level}</Text> : null}
+            <Text style={s.sub}>Witness films your desk while you write, so your teacher sees how you thought, step by step.</Text>
             <TextInput value={name} onChangeText={setName} placeholder="Your name, as your teacher knows it" maxLength={80}
               style={s.input} accessibilityLabel="Your name" testID="witness-name" />
             <Text style={s.how}>Prop your phone above the desk so it sees the whole page and your hand. Keep faces out of view: any face the camera catches is covered before the video leaves your phone. Then work through the paper and stop the recording when you finish.</Text>
@@ -357,13 +413,13 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
         {stage.kind === 'sent' ? (
           <View style={s.card} testID="witness-sent">
             <Text style={s.h}>Sent to your teacher</Text>
-            <Text style={s.sub}>Your paper for {stage.title} is with your teacher. Your marks show here once they release them, with what to master next.</Text>
+            <Text style={s.sub}>Your paper for {stage.title} is with your teacher. Your marks show here once they release them, with your Mastery Plan.</Text>
             {waitingAsks ? (
               <View style={{marginBottom: 10}}>
-                <Text style={s.sub}>Witness has {asksLeft(waitingAsks).length === 1 ? 'a question' : 'two questions'} about steps you wrote.</Text>
+                <Text style={s.sub}>There {asksLeft(waitingAsks).length === 1 ? 'is a question' : 'are two questions'} about steps you wrote.</Text>
                 <Btn label="Answer about my work" onPress={() => setStage({kind: 'asks', paper: waitingAsks})} primary testID="witness-open-asks" />
               </View>
-            ) : <Text style={s.small}>Witness may ask you about a step you wrote. Stay here a moment.</Text>}
+            ) : <Text style={s.small}>You may be asked about a step you wrote. Stay here a moment.</Text>}
             <Btn label="Done" onPress={back} testID="witness-done" />
           </View>
         ) : null}
@@ -387,7 +443,7 @@ function Mine({papers, onOpen}: {papers: Paper[] | null; onOpen(p: Paper): void}
       {papers.map(p => {
         const left = toMaster(p).length;
         const asks = asksLeft(p).length;
-        const line = p.status === 'released' ? (left ? left + ' to master next' : 'All mastered') : p.status === 'failed' ? (p.unseen ? 'Paper not in view: record it again' : 'Record it again')
+        const line = p.status === 'released' ? (left ? left + ' in your Mastery Plan' : 'All mastered') : p.status === 'failed' ? (p.unseen ? 'Paper not in view: record it again' : 'Record it again')
           : asks ? (asks === 1 ? 'A question about your work' : asks + ' questions about your work') : 'With your teacher';
         return (
           <Pressable key={p.id} onPress={() => (p.status === 'released' || asks) && onOpen(p)} style={s.row} accessibilityRole="button" testID={'witness-paper-' + p.id}>
@@ -412,21 +468,28 @@ function PaperView({paper, env, storage, onOpenPath, onProof}: {paper: Paper; en
   const qs = (paper.result && paper.result.questions) || [];
   const got = qs.reduce((a, q) => a + marksOf(q), 0);
   const of = qs.reduce((a, q) => a + (q.out_of || 0), 0);
+  // the Mastery Plan first: every question not mastered, then the ones mastered on the paper
+  const plan = qs.filter(q => resultOf(q) !== 'mastered');
+  const done = qs.filter(q => resultOf(q) === 'mastered');
   return (
     <>
       <View style={s.card} testID="witness-result">
         <Text style={s.h}>{paper.title || 'Your paper'}</Text>
-        <Text style={s.sub}>{got} of {of} marks · {toMaster(paper).length} to master next</Text>
+        <Text style={s.sub}>{got} of {of} marks · {toMaster(paper).length ? toMaster(paper).length + ' in your Mastery Plan' : 'all mastered'}</Text>
         <Btn label="My Proof of Thinking" onPress={onProof} small testID="witness-proof-open" />
       </View>
-      {qs.map(q => <QuestionCard key={q.n} q={q} paper={paper} env={env} storage={storage} onOpenPath={onOpenPath} />)}
+      {plan.length ? <Text style={s.section} testID="witness-plan-title">Your Mastery Plan</Text> : null}
+      {plan.map(q => <QuestionCard key={q.n} q={q} paper={paper} env={env} storage={storage} onOpenPath={onOpenPath} />)}
+      {done.length ? <Text style={s.section}>Mastered</Text> : null}
+      {done.map(q => <QuestionCard key={q.n} q={q} paper={paper} env={env} storage={storage} onOpenPath={onOpenPath} />)}
     </>
   );
 }
 
 function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper: Paper; env: CustomEnv & WitnessEnv; storage: MirrorStorage; onOpenPath?(pathId: string): void}): React.JSX.Element {
   const r = resultOf(q);
-  const next = r === 'not_yet' || r === 'right_answer_wrong_thinking';
+  // 29 Oct (owner): every question not mastered is in the Mastery Plan
+  const next = r !== 'mastered';
   const [path, setPath] = useState<string | null>(() => masteryPath(storage, paper.id, q.n) || (q.mastery && q.mastery.path) || null);
   const [m, setM] = useState<Mastery | undefined>(q.mastery);
   const act = async (action: 'event' | 'explain' | 'ask', body: Record<string, unknown>) => {
@@ -461,7 +524,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
     setFilming('Sending your answer…');
     const status = await sendClip(file.uri, r.value.fresh.put, mime);
     if (status < 200 || status >= 300) { setFilming(''); setSaid('The video did not go up. Check your connection, on Wi-Fi if you can, and try again.'); return; }
-    setFilming('Witness is reading how you worked…');
+    setFilming('Reading how you worked…');
     const marked = await witness.mark(env, r.value.fresh.id, PHONE_FPS);
     setFilming('');
     if (!marked.ok) { setSaid(marked.error); return; }
@@ -494,14 +557,22 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
         <Text style={[s.chip, next && !(m && m.status === 'badge') ? s.chipNext : s.chipOk]}>{m && m.status === 'badge' ? 'Turned around' : RESULT_WORDS[r]}</Text>
       </View>
       <Text style={s.sub}>{marksOf(q)} of {q.out_of} marks</Text>
+      {next && !(m && m.status === 'badge') && PLAN_WHY[r] ? <Text style={s.sub}>{PLAN_WHY[r]}</Text> : null}
       <Replay q={q} />
       {/* 28 Oct re-audit (the submission: each student's feedback comes "with a short spoken explanation") */}
       <Btn label="Hear it" onPress={() => tutorSay(spokenFeedback(q))} small testID={'witness-hear-' + q.n} />
-      {next && q.diagnosis && q.moment_s == null ? <Text style={s.diag}>{q.diagnosis}</Text> : null}
+      {next && q.diagnosis && q.moment_s == null && !(typeof q.slip === 'number' && q.slip >= 1) ? <Text style={s.diag}>What you'll master: {q.diagnosis}</Text> : null}
+      {next && capabilitiesOf(q).length ? (
+        <View style={s.caps} testID={'witness-caps-' + q.n}>
+          <Text style={s.capsHead}>Thinking it builds</Text>
+          {capabilitiesOf(q).map(c => <Text key={c} style={s.cap}><Text style={s.capName}>{c}</Text>: {CAPABILITIES[c]}</Text>)}
+        </View>
+      ) : null}
       {q.comment && q.comment.text ? <Text style={s.comment} testID={'witness-comment-' + q.n}>Your teacher: {q.comment.text}</Text> : null}
-      {next && (paper.result?.stills || []).some(x => x.n === q.n) ? (
-        <Picture env={env} paperId={paper.id} file={(paper.result?.stills || []).find(x => x.n === q.n)!.asset}
-          label={'Your desk at ' + clock(q.moment_s) + ', question ' + q.n} testID={'witness-still-' + q.n} />
+      {next && (paper.result?.stills || []).some(x => x.n === q.n && !!x.asset) ? (
+        <Picture env={env} paperId={paper.id} file={(paper.result?.stills || []).find(x => x.n === q.n)!.asset || ''}
+          label={(paper.result?.stills || []).find(x => x.n === q.n)!.t == null ? 'Your answer on your paper, question ' + q.n : 'Your desk at ' + clock(q.moment_s) + ', question ' + q.n}
+          testID={'witness-still-' + q.n} />
       ) : null}
       {q.drawn && q.drawn.status === 'done' && q.drawn.asset ? (
         <View>
@@ -525,9 +596,9 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
 
 /** After the level: the badge or the teacher's word, only the checks the teacher asked for, and ask my teacher. */
 const FRESH_WORDS: Record<string, string> = {
-  marking: 'Witness is reading it. Your teacher will see how you worked.',
+  marking: 'Reading it now. Your teacher will see how you worked.',
   marked: 'Sent. Your teacher has your answer.',
-  failed: 'Witness could not read that video. Film it again.',
+  failed: 'That video could not be read. Film it again.',
 };
 
 function AfterLevel({m, act, film, filming}: {m?: Mastery; act(action: 'explain' | 'ask', body: Record<string, unknown>): Promise<unknown>; film(source: 'camera' | 'gallery'): void; filming: string}): React.JSX.Element | null {
@@ -539,7 +610,7 @@ function AfterLevel({m, act, film, filming}: {m?: Mastery; act(action: 'explain'
   return (
     <View style={{marginTop: 12}}>
       {m && m.status === 'badge' ? <Text style={s.badge} testID="witness-badge">Turned around{m.badge && m.badge.note ? ' · ' + m.badge.note : ''}</Text> : null}
-      {m && m.status === 'not_yet' ? <Text style={s.diag}>Your teacher says not yet{m.badge && m.badge.note ? ': ' + m.badge.note : '.'}</Text> : null}
+      {m && m.status === 'not_yet' ? <Text style={s.diag}>Keep going: your teacher would like a little more{m.badge && m.badge.note ? ': ' + m.badge.note : '.'}</Text> : null}
       {m && m.status === 'completed' ? <Text style={s.small}>Level done. Your teacher will look at your work.</Text> : null}
       {asks.lo && (told.indexOf('lo') < 0 || m?.lo_next) ? (
         <View style={{marginTop: 10}}>
@@ -582,6 +653,125 @@ function AfterLevel({m, act, film, filming}: {m?: Mastery; act(action: 'explain'
   );
 }
 
+/** What a photographed paper's row says once it comes back: the name read from it, and whether it found its student. */
+export function takenLine(t: Taken): string {
+  if (t.status === 'uploading') return 'Pages still to send';
+  if (t.status === 'marking') return 'Marking: the name comes back here';
+  if (t.status === 'failed') return "Couldn't be marked. Photograph it again.";
+  const read = (t.read && t.read.name) || '';
+  switch (t.name_match) {
+    case 'read': return t.student + ' · on the class list';
+    case 'teacher': return t.student + ' · set by the teacher';
+    case 'unsure': return 'Name read: ' + read + ' · the teacher confirms whose it is';
+    case 'none': return 'Name read: ' + read + ' · not on the class list yet';
+    case 'unread': return 'No name could be read · the teacher says whose it is';
+    default: return t.student || read || 'Marked';
+  }
+}
+
+/** The largest paper one phone sends at a time, in pages (the server takes up to 20). */
+export const MAX_PAGES = 20;
+
+/**
+ * Photograph the papers (29 Oct, owner: From Exam to Mastery). After the exam a single phone, a teacher's or one the
+ * school owns, photographs each student's finished paper page by page and sends it; the name is read from the paper.
+ * Each page is a JPEG of at most 1600 pixels made on the phone (takePhoto / pickImages), sent one at a time, three tries
+ * each, so a weak classroom connection costs a page, not the paper.
+ */
+function PhotoDesk({env, code, title}: {env: WitnessEnv; code: string; title: string}): React.JSX.Element {
+  const [pages, setPages] = useState<PickedDocument[]>([]);
+  const [line, setLine] = useState('');
+  const [said, setSaid] = useState('');
+  const [taken, setTaken] = useState<Taken[] | null>(null);
+  const load = useCallback(async () => { const r = await witness.taken(env); if (r.ok) setTaken((r.value.papers || []).filter(p => p.title === title)); }, [env, title]);
+  useEffect(() => { load(); }, [load]);
+  // while a paper is still being marked, its name is looked for every five seconds (for up to three minutes)
+  const waiting = (taken || []).some(t => t.status === 'marking' || t.status === 'uploading');
+  useEffect(() => {
+    if (!waiting) return undefined;
+    let tries = 0; let live = true;
+    const tick = () => { if (!live || tries++ > 36) return; load().then(() => { if (live) timer = setTimeout(tick, 5000); }); };
+    let timer = setTimeout(tick, 5000);
+    return () => { live = false; clearTimeout(timer); };
+  }, [waiting, load]);
+
+  const add = async (source: 'camera' | 'gallery') => {
+    setSaid('');
+    if (pages.length >= MAX_PAGES) { setSaid('A paper holds up to ' + MAX_PAGES + ' pages. Send this one first.'); return; }
+    if (source === 'camera') {
+      const shot = await takePhoto();
+      if (shot && shot.base64) setPages(ps => [...ps, shot]);
+      return;
+    }
+    const got = await pickImagesSafely(MAX_PAGES - pages.length);
+    if (got.kind === 'ok') setPages(ps => [...ps, ...got.docs].slice(0, MAX_PAGES));
+    else if (got.kind === 'problem') setSaid(got.text);
+  };
+
+  const sendPaper = async () => {
+    if (!pages.length) return;
+    setSaid('');
+    setLine('Getting the paper ready…');
+    const started = await witness.startPhoto(env, code, pages.length);
+    if (!started.ok) { setLine(''); setSaid(started.error); return; }
+    const id = started.value.id;
+    for (let i = 0; i < pages.length; i++) {
+      setLine('Sending page ' + (i + 1) + ' of ' + pages.length + '…');
+      let ok = false; let why = '';
+      for (let t = 0; t < 3 && !ok; t++) {
+        const r = await witness.page(env, id, i + 1, pages[i].mime || 'image/jpeg', pages[i].base64);
+        ok = r.ok; if (!r.ok) { why = r.error; if (r.status && r.status >= 400 && r.status < 500) break; await new Promise(res => setTimeout(res, t === 0 ? 2000 : 6000)); }
+      }
+      if (!ok) { setLine(''); setSaid('Page ' + (i + 1) + ' did not go up: ' + why + ' The pages are kept here: send the paper again.'); return; }
+    }
+    setLine('Marking…');
+    const marked = await witness.mark(env, id, PHONE_FPS);
+    setLine('');
+    if (!marked.ok) { setSaid(marked.error); return; }
+    setPages([]);
+    setSaid('Sent. The name read from the paper comes back below. Next paper.');
+    load();
+  };
+
+  return (
+    <>
+      <View style={s.card} testID="witness-photo-desk">
+        <Text style={s.h}>{title}</Text>
+        <Text style={s.sub}>Photograph one student's paper at a time: every page, the page with the name first. Lay each page flat in good light, the whole page in the photo.</Text>
+        {pages.length ? (
+          <ScrollView horizontal style={s.thumbs} testID="witness-photo-pages">
+            {pages.map((pg, i) => (
+              <Pressable key={i} onPress={() => setPages(ps => ps.filter((_, j) => j !== i))} style={s.thumbWrap} accessibilityLabel={'Page ' + (i + 1) + '. Tap to take it out'} testID={'witness-photo-page-' + (i + 1)}>
+                <Image source={{uri: 'data:' + (pg.mime || 'image/jpeg') + ';base64,' + pg.base64}} style={s.thumb} resizeMode="cover" />
+                <Text style={s.thumbNo}>{i + 1}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        ) : null}
+        {line ? <View style={s.buildRow}><ActivityIndicator /><Text style={s.small}> {line}</Text></View> : (
+          <>
+            <Btn label={pages.length ? 'Photograph the next page' : 'Photograph page 1'} onPress={() => add('camera')} primary={!pages.length} testID="witness-photo-take" />
+            <View style={{height: 8}} />
+            <Btn label="Add pages from the gallery" onPress={() => add('gallery')} testID="witness-photo-pick" />
+            {pages.length ? (<><View style={{height: 8}} /><Btn label={'Send this paper (' + pages.length + (pages.length === 1 ? ' page)' : ' pages)')} onPress={sendPaper} primary testID="witness-photo-send" /></>) : null}
+          </>
+        )}
+        {pages.length ? <Text style={s.small}>Tap a page to take it out.</Text> : null}
+        {said ? <Text style={s.notice} accessibilityRole="alert" testID="witness-photo-said">{said}</Text> : null}
+      </View>
+      <View style={s.card} testID="witness-photo-taken">
+        <Text style={s.h}>Papers sent</Text>
+        {taken === null ? <ActivityIndicator /> : !taken.length ? <Text style={s.sub}>None yet.</Text> : taken.map(t => (
+          <View key={t.id} style={s.row} testID={'witness-taken-' + t.id}>
+            <Text style={s.rowTitle}>{t.pages} {t.pages === 1 ? 'page' : 'pages'}</Text>
+            <Text style={s.rowMeta}>{takenLine(t)}</Text>
+          </View>
+        ))}
+      </View>
+    </>
+  );
+}
+
 const s = StyleSheet.create({
   page: {padding: 16, paddingBottom: 40},
   card: {borderWidth: 1, borderColor: '#e2e0da', borderRadius: 12, padding: 14, marginBottom: 12, backgroundColor: '#ffffff'},
@@ -608,4 +798,13 @@ const s = StyleSheet.create({
   comment: {fontSize: 14, color: '#141a2e', marginTop: 8, fontStyle: 'italic', lineHeight: 20},
   badge: {fontSize: 15, fontWeight: '700', color: '#2e7d32', padding: 10, borderRadius: 8, backgroundColor: '#eaf3de', overflow: 'hidden'},
   diag: {fontSize: 14, color: '#1f1e1c', marginTop: 10, padding: 10, borderRadius: 8, backgroundColor: '#faeeda'},
+  section: {fontSize: 13, fontWeight: '800', letterSpacing: 0.6, color: '#1d4ed8', marginTop: 6, marginBottom: 8},
+  caps: {marginTop: 10, padding: 10, borderRadius: 8, backgroundColor: '#eef2fb'},
+  capsHead: {fontSize: 12, fontWeight: '800', color: '#1d4ed8', marginBottom: 4},
+  cap: {fontSize: 13, color: '#1f1e1c', lineHeight: 19},
+  capName: {fontWeight: '700'},
+  thumbs: {marginVertical: 10},
+  thumbWrap: {marginRight: 8},
+  thumb: {width: 84, height: 112, borderRadius: 6, backgroundColor: '#efeeea'},
+  thumbNo: {position: 'absolute', left: 6, top: 4, color: '#ffffff', fontWeight: '800', textShadowColor: '#000000', textShadowRadius: 3},
 });

@@ -1,7 +1,11 @@
 /**
  * WITNESS ON THE PHONE — the doors (2026-10-27, Meta hackathon; synced into the LoWisa app as src/witness/net.ts).
  *
- *   POST join                 {code}                 the teacher's exam, by its join code
+ *   POST join                 {code, name?}          the teacher's exam, by its join code; with a name the student is on
+ *                             the exam's class list, so the paper photographed after the exam reaches them by name
+ *   POST sitting/start        {kind: 'photo', pages, code}   From Exam to Mastery (29 Oct): one phone (a teacher's or one
+ *                             the school owns) photographs each finished paper; POST sitting/<id>/page sends each page
+ *   GET  taken                the papers this phone photographed, with the name read from each
  *   POST sitting/start        {mime, size, code?, student?}  a signed upload for the desk video
  *   PUT  <signed url>                                the video, straight to storage (LoWisaDocuments.uploadFile)
  *   POST sitting/<id>/mark    {fps}                  SAM 3.1 and Muse Spark read it; the clip is deleted after
@@ -26,7 +30,7 @@ const READ_MS = 15000;
 const WRITE_MS = 20000;
 
 export type Result = 'mastered' | 'right_answer_wrong_thinking' | 'part_way' | 'not_yet';
-export interface Step { t: number | null; wrote: string; crossed_out: boolean; line?: number }
+export interface Step { t: number | null; wrote: string; crossed_out: boolean; line?: number; page?: number }
 export interface Mastery {
   status: 'not_started' | 'building' | 'ready' | 'held' | 'completed' | 'badge' | 'not_yet';
   path?: string; asks?: {lo?: boolean; paper?: boolean; teacher?: boolean; fresh?: string}; explained?: string[]; lo_next?: string;
@@ -35,23 +39,32 @@ export interface Mastery {
 }
 export interface Ask { k: number; n: number; ask: string; wrote?: string; answered: boolean }
 export interface Examiner { status: string; asks: Ask[] }
-export interface Still { n: number; t: number; asset: string }
+export interface Still { n: number; t: number | null; asset?: string; step?: string; page?: number }
 export interface Question {
   mastery?: Mastery;
   comment?: {text: string; spoken?: boolean};
   drawn?: {status: 'drawing' | 'done' | 'failed'; asset?: string; lines?: string[]; changed?: number};
   n: number; result: Result; teacher_result?: Result; marks: number; teacher_marks?: number; out_of: number;
   final_answer: string; steps: Step[]; diagnosis: string; moment_s: number | null; confidence: number; focus?: string;
+  /** the one or two of the seven thinking capabilities its mastery level builds (29 Oct) */
+  capabilities?: string[];
+  /** a photographed paper: the step (1 for the first) where the thinking went wrong */
+  slip?: number | null;
 }
 /** A long video goes up in parts (2026-10-28): each part on its own link, so a dropped connection costs one part. */
 export interface PartUrl { n: number; url: string }
 export interface Parts { size: number; count: number; urls: PartUrl[] }
 /** A "Turned around" badge: the question, what was turned around, and the days from going wrong to mastered. */
 export interface Badge { question: string; fixed: string; exam: string; wrong_at: number | null; turned_at: number; note: string }
-export interface Paper { id: string; status: string; unseen?: boolean; title?: string; student?: string; result?: {questions: Question[]; stills?: Still[]}; examiner?: Examiner }
+export interface Paper { id: string; status: string; unseen?: boolean; title?: string; student?: string; kind?: 'photo' | 'video'; result?: {questions: Question[]; stills?: Still[]}; examiner?: Examiner }
+/** A paper this phone photographed for the class: the name read from it, and whether it found its student. */
+export interface Taken { id: string; status: string; pages: number; got: number[]; title: string; created_ms: number; student: string;
+  read: {name?: string; class?: string; number?: string; note?: string}; name_match: 'read' | 'teacher' | 'unsure' | 'none' | 'unread' | null }
 export interface Proof {
   record: 'proof_of_thinking'; id: string; exam: string; level: string; kind: string; student: string;
-  sat_ms: number | null; marked_ms: number | null; released_ms: number | null; marks: number; out_of: number; video: string; read_by: string[];
+  sat_ms: number | null; marked_ms: number | null; released_ms: number | null; marks: number; out_of: number; read_by: string[];
+  /** 29 Oct: a photographed paper keeps its pages; a filmed one (Witness) keeps no video */
+  source?: 'photo' | 'video'; pages?: number; video?: string;
   /** 28 Oct re-audit: mastered on the paper or turned around since, and how many were turned around */
   mastered?: number; turned_around?: number;
   questions: Array<{n: number; question: string; result: Result; teacher_result?: Result; marks: number; teacher_marks?: number; out_of: number;
@@ -63,19 +76,40 @@ export interface Proof {
 /** The examiner's questions still to answer on a paper. */
 export function asksLeft(p: Paper): Ask[] { return ((p.examiner && p.examiner.asks) || []).filter(a => !a.answered); }
 
-/** The words a student sees: a failed question is never "failed", it is the next thing they master. */
+/** The words a student sees (29 Oct, owner: From Exam to Mastery): no question ends in a verdict. A question is
+ *  mastered, or it is in the student's Mastery Plan. */
 export const RESULT_WORDS: Record<Result, string> = {
   mastered: 'Mastered',
-  right_answer_wrong_thinking: 'Right answer, thinking to fix',
-  part_way: 'Part way there',
-  not_yet: 'Next to master',
+  right_answer_wrong_thinking: 'In your Mastery Plan',
+  part_way: 'In your Mastery Plan',
+  not_yet: 'In your Mastery Plan',
 };
+/** Why a question is in the Mastery Plan, in one line (the diagnosis says what exactly). */
+export const PLAN_WHY: Record<Result, string> = {
+  mastered: '',
+  right_answer_wrong_thinking: 'Your answer was right. The way you reached it goes in your Mastery Plan.',
+  part_way: 'A good start. The rest of the thinking goes in your Mastery Plan.',
+  not_yet: 'This goes in your Mastery Plan.',
+};
+
+/** 29 Oct (owner): LoWisa's teaching builds seven thinking capabilities, whether the exam was passed or not. */
+export const CAPABILITIES: Record<string, string> = {
+  'Pattern Recognition': 'Identify patterns, relationships, trends and recurring structures in problems and real-world situations.',
+  'Probability & Uncertainty': "Understand likelihood, risk and uncertainty when outcomes aren't guaranteed.",
+  'Optimization': 'Find the most effective solution while considering resources, constraints, time and cost.',
+  'Systems Thinking': 'Understand how different components interact and how changes affect an entire system.',
+  'Trade-offs': 'Evaluate competing priorities and understand what is gained or sacrificed when choosing between alternatives.',
+  'Decision-Making': 'Apply evidence, logic and mathematical reasoning to select appropriate actions.',
+  'Root Cause Analysis': 'Investigate problems systematically to identify underlying causes rather than symptoms.',
+};
+export function capabilitiesOf(q: Question): string[] { return (q.capabilities || []).filter(c => !!CAPABILITIES[c]).slice(0, 2); }
 
 export function resultOf(q: Question): Result { return q.teacher_result || q.result; }
 export function marksOf(q: Question): number { return typeof q.teacher_marks === 'number' ? q.teacher_marks : q.marks; }
 export function toMaster(p: Paper): Question[] {
   // 28 Oct re-audit (the plan: a question turned around counts the same as one right the first time)
-  return ((p.result && p.result.questions) || []).filter(q => { const r = resultOf(q); return (r === 'not_yet' || r === 'right_answer_wrong_thinking') && !turnedAround(q); });
+  // 29 Oct (owner): every question not mastered is in the Mastery Plan, part way included
+  return ((p.result && p.result.questions) || []).filter(q => resultOf(q) !== 'mastered' && !turnedAround(q));
 }
 
 /** The teacher saw this question turned around (the badge). */
@@ -110,7 +144,7 @@ export async function door<T>(env: WitnessEnv, method: 'GET' | 'POST', path: str
   const code = typeof j.code === 'string' ? j.code : undefined;
   // the edge's unknown route (or the API behind it): Witness is not open on this account
   if (r.status === 404 && (code === 'not_found' || j.error === 'not_found' || (!code && typeof j.error !== 'string'))) {
-    return {ok: false, error: 'Witness is not open on this account.', code: 'closed', status: 404};
+    return {ok: false, error: 'From Exam to Mastery is not open on this account.', code: 'closed', status: 404};
   }
   return {ok: false, error: typeof j.error === 'string' ? j.error : 'Something went wrong. Try again.', code, status: r.status};
 }
@@ -118,7 +152,12 @@ export async function door<T>(env: WitnessEnv, method: 'GET' | 'POST', path: str
 export const witness = {
   mine: (env: WitnessEnv) => door<{papers: Paper[]}>(env, 'GET', 'mine'),
   badges: (env: WitnessEnv) => door<{badges: Badge[]}>(env, 'GET', 'badges'),
-  join: (env: WitnessEnv, code: string) => door<{pile: {title: string; level: string}}>(env, 'POST', 'join', {code}),
+  join: (env: WitnessEnv, code: string, name?: string) => door<{pile: {title: string; level: string; kind?: string}}>(env, 'POST', 'join', {code, ...(name ? {name} : {})}),
+  /** a finished paper photographed page by page: started, each page sent (a photo is a few hundred KB: give it time) */
+  startPhoto: (env: WitnessEnv, code: string, pages: number) => door<{id: string; pages: number}>(env, 'POST', 'sitting/start', {kind: 'photo', pages, code}),
+  page: (env: WitnessEnv, id: string, n: number, mime: string, base64: string) =>
+    door<{got: number[]; pages: number}>(env, 'POST', 'sitting/' + id + '/page', {n, mime, file: base64}, 90000),
+  taken: (env: WitnessEnv) => door<{papers: Taken[]}>(env, 'GET', 'taken'),
   start: (env: WitnessEnv, size: number, mime: string, code?: string, student?: string, parts?: boolean) =>
     door<{id: string; put?: string; headers?: Record<string, string>; parts?: Parts}>(env, 'POST', 'sitting/start', {size, mime, ...(code ? {code} : {}), ...(student ? {student} : {}), ...(parts ? {parts: true} : {})}),
   /** a video in parts: which arrived, and fresh links for the rest */

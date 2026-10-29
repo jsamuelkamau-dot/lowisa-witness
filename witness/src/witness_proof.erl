@@ -19,7 +19,12 @@ record(Id, Row, Pile, Viewer) ->
     Stills = maps:from_list([{N, S} || #{n := N} = S <- maps:get(stills, R, [])]),
     Qs = [question(Q, Texts, Stills, maps:get(created_ms, Row, null)) || Q <- maps:get(questions, R, [])],
     Asks = [ask(A, Viewer) || A <- maps:get(asks, maps:get(examiner, Row, #{}), [])],
-    #{record => <<"proof_of_thinking">>, id => Id,
+    %% 29 Oct (From Exam to Mastery): a photographed paper keeps its pages; a filmed one (Witness) keeps no video
+    Source = case maps:get(kind, Row, <<"video">>) of
+        <<"photo">> -> #{source => <<"photo">>, pages => length(maps:get(files, Row, []))};
+        _ -> #{source => <<"video">>, video => <<"deleted once the paper was marked">>}
+    end,
+    maps:merge(Source, #{record => <<"proof_of_thinking">>, id => Id,
       exam => maps:get(title, Pile, <<>>), level => maps:get(level, Pile, <<>>), kind => maps:get(kind, Pile, <<"paper">>),
       student => maps:get(student, Row, <<>>),
       sat_ms => maps:get(created_ms, Row, null), marked_ms => maps:get(marked_ms, Row, null), released_ms => maps:get(released_ms, Row, null),
@@ -27,8 +32,8 @@ record(Id, Row, Pile, Viewer) ->
       marks => lists:sum([num(maps:get(marks, Q, 0)) || Q <- Qs]), out_of => lists:sum([num(maps:get(out_of, Q, 0)) || Q <- Qs]),
       mastered => length([Q || Q <- Qs, mastered(Q)]), turned_around => length([Q || Q <- Qs, maps:is_key(turned_around, Q)]),
       pauses => maps:get(pauses, R, []), returns => maps:get(returns, R, []), lines => length(maps:get(lines, R, [])),
-      video => <<"deleted once the paper was marked">>, engine => maps:get(engine, R, <<"muse-spark-1.3">>),
-      read_by => read_by(R, Qs, Asks)}.
+      engine => maps:get(engine, R, <<"muse-spark-1.3">>),
+      read_by => read_by(R, Qs, Asks)}).
 
 %% The models that did something for this paper, and only those (28 Oct, the demo record named Voice Transcribe on a
 %% paper where nothing was said out loud): a record that is proof never claims a reading that did not happen.
@@ -49,9 +54,10 @@ question(Q, Texts, Stills, SatMs) ->
         #{status := <<"badge">>, badge := #{at := At} = Bd} -> #{from_ms => SatMs, at => At, note => maps:get(note, Bd, <<>>)};
         _ -> undefined
     end,
-    Base = maps:with([n, result, teacher_result, marks, teacher_marks, out_of, confidence, moment_s, diagnosis, final_answer, focus], Q),
+    Base = maps:with([n, result, teacher_result, marks, teacher_marks, out_of, confidence, moment_s, diagnosis, final_answer, focus, capabilities, slip], Q),
     Steps = [maps:with([t, wrote, crossed_out], S) || S <- maps:get(steps, Q, []), is_map(S)],
     Extra = maps:from_list([{K, V} || {K, V} <- [{still, maps:get(asset, Still, undefined)}, {clip, maps:get(clip, Still, undefined)},
+                                                  {step, maps:get(step, Still, undefined)},
                                                   {turned_around, Turned},
                                                   {comment, maps:get(text, maps:get(comment, Q, #{}), undefined)},
                                                   {drawn, case maps:get(drawn, Q, #{}) of #{status := <<"done">>} = D -> maps:with([asset, lines, changed], D); _ -> undefined end},
