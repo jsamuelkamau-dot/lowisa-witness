@@ -105,14 +105,28 @@ join([], Acc) -> lists:reverse(Acc);
 join([{A, Z} | T], [{Pa, Pz} | Acc]) when A - Pz =< 3 -> join(T, [{Pa, Z} | Acc]);
 join([B | T], Acc) -> join(T, [B | Acc]).
 
-%% the first and last column holding ink between rows Y0 and Y1
+%% the first and last column holding ink between rows Y0 and Y1; a column whose ink runs on above and below the line is
+%% a rule through it (a ruled page's margin, 29 Oct), not the student's writing
 cols(InkT, Y0, Y1, Xa, Xb) ->
-    Any = lists:foldl(fun(Y, Acc) -> lists:zipwith(fun erlang:max/2, Acc, lists:sublist(element(Y + 1, InkT), Xa + 1, Xb - Xa)) end,
-                      [0 || _ <- lists:seq(Xa, Xb - 1)], lists:seq(Y0, Y1 - 1)),
+    %% a row inked across most of the width is a ruled line inside the band, not writing
+    Rows = [R || Y <- lists:seq(Y0, Y1 - 1), R <- [lists:sublist(element(Y + 1, InkT), Xa + 1, Xb - Xa)], lists:sum(R) < 0.5 * (Xb - Xa)],
+    %% a stroke of writing crosses more than one row; a lone speck (a faint rule's dot, the paper's grain) does not count
+    Sum = lists:foldl(fun(R, Acc) -> lists:zipwith(fun erlang:'+'/2, Acc, R) end, [0 || _ <- lists:seq(Xa, Xb - 1)], Rows),
+    Any0 = [case C >= 2 of true -> 1; false -> 0 end || C <- Sum],
+    H = tuple_size(InkT),
+    Above = case Y0 - 4 >= 0 of true -> lists:sublist(element(Y0 - 4 + 1, InkT), Xa + 1, Xb - Xa); false -> [0 || _ <- Any0] end,
+    Below = case Y1 + 3 < H of true -> lists:sublist(element(Y1 + 3 + 1, InkT), Xa + 1, Xb - Xa); false -> [0 || _ <- Any0] end,
+    %% a photographed rule leans a little: it may sit a column or two over above and below
+    Any = [case {A, U, D} of {1, 1, 1} -> 0; _ -> A end || {A, U, D} <- lists:zip3(Any0, spread(Above), spread(Below))],
     case [I || {I, 1} <- lists:zip(lists:seq(0, length(Any) - 1), Any)] of
         [] -> none;
         Is -> {Xa + hd(Is), Xa + lists:last(Is) + 1}
     end.
+
+%% each column marked when it or one of the two each side is
+spread(L) ->
+    T = list_to_tuple(L), N = tuple_size(T),
+    [lists:max([element(J, T) || J <- lists:seq(max(1, I - 2), min(N, I + 2))]) || I <- lists:seq(1, N)].
 
 %% ---------------------------------------------------------------- reading order
 %% Items (their centres, in reading order) onto bands (top to bottom), in order, none shared, least distance in all:
