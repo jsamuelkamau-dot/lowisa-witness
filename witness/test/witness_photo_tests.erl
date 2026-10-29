@@ -245,6 +245,31 @@ page_keeps_a_picture_out_and_splits_touching_lines_test() ->
     ?assert(A1y1 >= 600 andalso A1y2 =< 632),
     ?assertMatch(#{y1 := 655, y2 := 680}, A2).
 
+%% 30 Oct (film take): Spark's boxes drift by more than a line, differently each marking; on a page in two inks the
+%% student's pen and the printed question are told apart by their colour, so the first answer line keeps its own line
+tint_page() ->
+    W = 200, H = 300,
+    Line = fun(Y, Y0, X, X0, X1) -> Y >= Y0 andalso Y < Y0 + 10 andalso X >= X0 andalso X < X1 andalso X rem 3 =:= 0 end,
+    Printed = fun(X, Y) -> Line(Y, 20, X, 10, 160) orelse Line(Y, 110, X, 10, 160) end,
+    Pen = fun(X, Y) -> Line(Y, 40, X, 20, 120) orelse Line(Y, 60, X, 20, 90) orelse Line(Y, 130, X, 20, 110) end,
+    G = << <<(case Printed(X, Y) orelse Pen(X, Y) of true -> 40; false -> 235 end)>> || Y <- lists:seq(0, H - 1), X <- lists:seq(0, W - 1) >>,
+    T = << <<(case Pen(X, Y) of true -> 160; false -> 126 end)>> || Y <- lists:seq(0, H - 1), X <- lists:seq(0, W - 1) >>,
+    {W, H, G, T}.
+
+page_tells_pen_from_print_test() ->
+    {W, H, G, T} = tint_page(),
+    %% every box well over a line high (Spark's drift), in reading order: question 1, two lines, question 2, a line
+    Items = [[50, 30, 800, 60], [100, 85, 600, 115], [100, 160, 450, 190], [50, 330, 800, 360], [100, 395, 550, 425]],
+    Kinds = [printed, hand, hand, printed, hand],
+    [Q1, L1, L2, Q2, L3] = witness_page:place(G, T, W, H, Items, Kinds),
+    ?assertMatch(#{y1 := 67, y2 := 100}, Q1),
+    ?assertMatch(#{y1 := 133, y2 := 167}, L1),
+    ?assertMatch(#{y1 := 200, y2 := 233}, L2),
+    ?assertMatch(#{y1 := 367, y2 := 400}, Q2),
+    ?assertMatch(#{y1 := 433, y2 := 467}, L3),
+    %% the same page with no tint places by the boxes alone, as before
+    ?assertEqual(length(Items), length(witness_page:place(G, none, W, H, Items, none))).
+
 %% ---------------------------------------------------------------- the marking
 photo_marking_reads_details_places_lines_and_names_capabilities_test() ->
     Text = <<"{\"student\":{\"name\":\"Sofia Ramírez\",\"class\":\"8B\",\"number\":\"\",\"date\":\"\",\"name_note\":\"\"},"/utf8,

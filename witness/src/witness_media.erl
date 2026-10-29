@@ -10,7 +10,7 @@
 %%% ffmpeg runs as a program with its arguments (no shell); it must be on the PATH. available/0 says whether it is.
 %%%-------------------------------------------------------------------
 -module(witness_media).
--export([step/3, wav/1, still/2, clip/3, last/1, frames/3, gray/4, gray_image/2, region/2, available/0]).
+-export([step/3, wav/1, still/2, clip/3, last/1, frames/3, gray/4, gray_image/2, tint_image/2, region/2, available/0]).
 
 -define(TIMEOUT_MS, 60000).
 -define(MAX_AUDIO, 25 * 1024 * 1024).
@@ -123,6 +123,26 @@ gray_image(Url, W) when is_integer(W), W > 0 ->
                   "-f", "rawvideo", Out]) of
             ok -> case file:read_file(Out) of
                       {ok, B} when byte_size(B) > 0, byte_size(B) rem W =:= 0 -> {ok, W, byte_size(B) div W, B};
+                      {ok, _} -> {error, short_frame};
+                      E -> E
+                  end;
+            E -> E
+        end
+    after
+        _ = file:delete(Out)
+    end.
+
+%% tint_image(Url, W) -> {ok, W, H, Pixels}: the same page, each byte 128 + blue - red (clamped): a pen's blue ink reads
+%% well above 128, a printer's black near it (30 Oct, film take: the student's lines are told from the printed questions
+%% by their ink)
+tint_image(Url, W) when is_integer(W), W > 0 ->
+    Out = tmp(".rgb"),
+    try
+        case run(["-v", "error", "-y", "-i", str(Url), "-frames:v", "1", "-vf", "scale=" ++ integer_to_list(W) ++ ":-2,format=rgb24",
+                  "-f", "rawvideo", Out]) of
+            ok -> case file:read_file(Out) of
+                      {ok, B} when byte_size(B) > 0, byte_size(B) rem (3 * W) =:= 0 ->
+                          {ok, W, byte_size(B) div (3 * W), << <<(max(0, min(255, 128 + Bl - R)))>> || <<R, _G, Bl>> <= B >>};
                       {ok, _} -> {error, short_frame};
                       E -> E
                   end;

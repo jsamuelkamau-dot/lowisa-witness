@@ -16,7 +16,7 @@
 %%%       Result = #{questions, student => #{name, class, number, date, note}, pages, cost_usd}
 %%%-------------------------------------------------------------------
 -module(witness_photo).
--export([prompt/1, mark/3, mark/4, place/3]).
+-export([prompt/1, mark/3, mark/4, place/3, place/4]).
 
 -define(SPARK, <<"muse-spark-1.3">>).
 
@@ -74,6 +74,8 @@ mark(Key, Pages, Sitting) -> mark(Key, Pages, Sitting, #{}).
 mark(Key, Pages, Sitting, Opts) ->
     Fetch = maps:get(fetch, Opts, fun witness_meta:fetch/1),
     Gray = maps:get(gray, Opts, fun(Url) -> witness_media:gray_image(Url, 600) end),
+    %% the page's ink colour, which tells a student's pen from the printed questions (a test's own pages give none)
+    Tint = maps:get(tint, Opts, case maps:is_key(gray, Opts) of true -> fun(_) -> none end; false -> fun(Url) -> witness_media:tint_image(Url, 600) end end),
     Read = maps:get(read, Opts, fun(K, Content, Effort) -> witness_meta:read_content(K, ?SPARK, Content, #{effort => Effort}) end),
     case content(Pages, Fetch) of
         {ok, Images} ->
@@ -85,7 +87,7 @@ mark(Key, Pages, Sitting, Opts) ->
                             Qs = witness_mark:fit(Qs0, Sitting),
                             Cost = witness_meta:cost({tokens, ?SPARK}, Usage),
                             Marked = again(Key, Content, Sitting, Read, #{questions => Qs, cost_usd => Cost}),
-                            {ok, Marked#{questions => place(maps:get(questions, Marked), Pages, Gray),
+                            {ok, Marked#{questions => place(maps:get(questions, Marked), Pages, Gray, Tint),
                                          student => maps:get(student, M, #{}), pages => length(Pages)}};
                         E -> E
                     end;
@@ -129,7 +131,8 @@ again(Key, Content, Sitting, Read, #{questions := Qs} = Marked) ->
     end.
 
 %% Every line put on its own ink, page by page; a page that cannot be read for its ink keeps Spark's boxes with room.
-place(Qs, Pages, Gray) ->
+place(Qs, Pages, Gray) -> place(Qs, Pages, Gray, fun(_) -> none end).
+place(Qs, Pages, Gray, Tint) ->
     Placed = lists:foldl(
         fun(#{n := P, url := Url}, Acc) ->
             Items = lists:append([[{{q, maps:get(n, Q)}, B} || #{page := Pp, box := B} <- [maps:get(printed, Q, #{})], Pp =:= P] ++
@@ -139,7 +142,10 @@ place(Qs, Pages, Gray) ->
             Boxes = case Items of
                 [] -> [];
                 _ -> try Gray(Url) of
-                         {ok, W, H, G} -> witness_page:place(G, W, H, [B || {_, B} <- Items]);
+                         {ok, W, H, G} ->
+                             T = case catch Tint(Url) of {ok, W, H, Tb} -> Tb; _ -> none end,
+                             witness_page:place(G, T, W, H, [B || {_, B} <- Items],
+                                                [case Key of {q, _} -> printed; _ -> hand end || {Key, _} <- Items]);
                          _ -> [none || _ <- Items]
                      catch _:_ -> [none || _ <- Items]
                      end

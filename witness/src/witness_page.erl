@@ -15,7 +15,7 @@
 %%%   bands(InkRows, X0, X1) -> [{Y0, Y1}]  rows holding ink between X0 and X1 (a ruled line across them does not count)
 %%%-------------------------------------------------------------------
 -module(witness_page).
--export([place/4, ink/3, bands/3, loose/1]).
+-export([place/4, place/6, ink/3, bands/3, loose/1]).
 
 %% the neighbourhood a pixel is compared with (pixels each way, at the 600-wide working size)
 -define(K, 12).
@@ -23,28 +23,41 @@
 -define(SHARE, 0.78).
 -define(DARK, 175).
 
-place(Gray, W, H, Items) when byte_size(Gray) =:= W * H, Items =/= [] ->
+place(Gray, W, H, Items) -> place(Gray, none, W, H, Items, none).
+
+%% place(Gray, Tint, W, H, Items, Kinds): with the page's tint (witness_media:tint_image/2) and each item's kind
+%% (printed | hand), a student's line goes on a band written in a pen's colour and a printed question on the printer's
+%% black, when the page has both (30 Oct, film take: Spark's boxes drift by a line or two, differently each marking,
+%% and a question's first answer line took its printed question's band). A page in one ink places as before.
+place(Gray, Tint, W, H, Items, Kinds) when byte_size(Gray) =:= W * H, Items =/= [] ->
     Ink = ink(Gray, W, H),
     L = lists:min([A || [A, _, _, _] <- Items]) * W / 1000, R = lists:max([C || [_, _, C, _] <- Items]) * W / 1000,
-    X0 = max(0, trunc(L - 0.04 * W)), X1 = min(W, trunc(R + 0.06 * W)),
+    %% lines are found inside the text's own columns: a margin past them reaches the paper's edge and the desk beside it,
+    %% which a turned page carries across every row (30 Oct, film take)
+    X0 = max(0, trunc(L + 0.005 * W)), X1 = min(W, trunc(R)),
     %% a picture printed on the paper (29 Oct, film take: the photo in question 3) is one tall band of ink, not a line:
     %% it would take a student's line and push every line after it one band down
-    Bands = tall_out(bands(Ink, X0, X1)),
+    Bands = bands(Ink, X0, X1),
     Centres0 = [(T + B) / 2000 * H || [_, T, _, B] <- Items],
     BandCs = [(A + Z) / 2 || {A, Z} <- Bands],
     %% Spark's boxes on one page sit off by about the same amount (29 Oct, film take: a line low all down page 2, so the
     %% first answer line took the band of the second): that shift is measured on a first pass and taken off
-    Shift = shift(Centres0, align(Centres0, BandCs), BandCs),
-    Centres = [C - Shift || C <- Centres0],
-    Picks = align(Centres, BandCs),
     InkT = list_to_tuple(Ink),
+    BandKinds = band_kinds(Bands, InkT, Tint, W, X0, X1),
+    Typ = case lists:sort([Z - A || {A, Z} <- Bands]) of [] -> 1; Hs -> lists:nth((length(Hs) + 1) div 2, Hs) end,
+    Miss = mismatch(Kinds, BandKinds, 4 * Typ),
+    Shift = shift(Centres0, align(Centres0, BandCs, Miss), BandCs),
+    Centres = [C - Shift || C <- Centres0],
+    Picks = align(Centres, BandCs, Miss),
+    %% on a page in two inks the kinds carry the order, so a line may sit further from Spark's box
+    Reach = case lists:member(hand, BandKinds) of true -> 4.0; false -> 2.5 end,
     [case Pick of
          none -> none;
          J ->
              {Y0, Y1} = lists:nth(J, Bands), Cy = (T + B) / 2000 * H - Shift, Bh = (B - T) / 1000 * H,
              %% the nearest free band is another line, or a block much taller than the line (a heading run into the
              %% question above it): Spark's own box is nearer the truth (29 Oct, film take: "Use it." sat on the header)
-             case abs(Cy - (Y0 + Y1) / 2) > 1.2 * Bh + 6 orelse (Y1 - Y0) > 2.2 * Bh + 8 of
+             case abs(Cy - (Y0 + Y1) / 2) > Reach * Bh + 6 orelse (Y1 - Y0) > 2.2 * Bh + 8 orelse Miss(I, J) > 0 of
                  true -> none;
                  false ->
                      Xa = max(0, trunc(Lb / 1000 * W - 0.06 * W)), Xb = min(W, trunc(Rb / 1000 * W + 0.1 * W)),
@@ -52,8 +65,33 @@ place(Gray, W, H, Items) when byte_size(Gray) =:= W * H, Items =/= [] ->
                      #{x1 => round(Xl * 1000 / W), y1 => round(Y0 * 1000 / H), x2 => round(Xr * 1000 / W),
                        y2 => round(Y1 * 1000 / H), w => 1000, h => 1000}
              end
-     end || {[Lb, T, Rb, B], Pick} <- lists:zip(Items, Picks)];
-place(_, _, _, Items) -> [none || _ <- Items].
+     end || {I, [Lb, T, Rb, B], Pick} <- lists:zip3(lists:seq(1, length(Items)), Items, Picks)];
+place(_, _, _, _, Items, _) -> [none || _ <- Items].
+
+%% each band hand (a pen's colour), print (the printer's black) or unknown; all unknown unless the page has both
+band_kinds(Bands, InkT, Tint, W, X0, X1) when is_binary(Tint), byte_size(Tint) =:= W * tuple_size(InkT) ->
+    Ks = [begin
+              Vs = [binary:at(Tint, Y * W + X) - 128 || Y <- lists:seq(Y0, Y1 - 1),
+                    {X, 1} <- lists:zip(lists:seq(X0, X1 - 1), lists:sublist(element(Y + 1, InkT), X0 + 1, X1 - X0))],
+              case Vs of
+                  [] -> unknown;
+                  _ -> M = lists:sum(Vs) / length(Vs), if M >= 14 -> hand; M =< 6 -> print; true -> unknown end
+              end
+          end || {Y0, Y1} <- Bands],
+    case lists:member(hand, Ks) andalso lists:member(print, Ks) of true -> Ks; false -> [unknown || _ <- Ks] end;
+band_kinds(Bands, _, _, _, _, _) -> [unknown || _ <- Bands].
+
+%% Miss(I, J): the cost, beyond their distance, of item I on band J: a student's line on print, a question on a pen's ink
+mismatch(Kinds, BandKinds, Pen) when is_list(Kinds) ->
+    KT = list_to_tuple(Kinds), BT = list_to_tuple(BandKinds),
+    fun(I, J) ->
+        case {element(I, KT), element(J, BT)} of
+            {hand, print} -> Pen;
+            {printed, hand} -> Pen;
+            _ -> 0
+        end
+    end;
+mismatch(_, _, _) -> fun(_, _) -> 0 end.
 
 %% Spark's own box with room around it, for a line the page could not place: half a line each way, so the printed
 %% question just above stays out of the student's step
@@ -67,13 +105,6 @@ shift(Centres, Picks, BandCs) ->
         [] -> 0;
         Offs -> lists:nth((length(Offs) + 1) div 2, Offs)
     end.
-
-%% Bands much taller than the page's own lines (pictures, a shaded box) are left out of the reading order.
-tall_out([]) -> [];
-tall_out(Bands) ->
-    Hs = lists:sort([Z - A || {A, Z} <- Bands]),
-    Typical = lists:nth((length(Hs) + 1) div 2, Hs),
-    [{A, Z} || {A, Z} <- Bands, Z - A =< 3 * Typical + 4].
 
 %% ---------------------------------------------------------------- ink
 ink(Gray, W, H) ->
@@ -112,8 +143,13 @@ vsum(HSums, H) ->
 
 %% ---------------------------------------------------------------- bands
 bands(Ink, X0, X1) when X1 > X0 ->
-    Wd = X1 - X0,
-    Counts = [lists:sum(lists:sublist(R, X0 + 1, Wd)) || R <- Ink],
+    %% a column inked down most of the page is the desk's edge beside the paper or a margin rule, not writing: it would
+    %% join every row into one band (30 Oct, film take: the wood at the page's left edge took the top of page 2)
+    Rows0 = [lists:sublist(R, X0 + 1, X1 - X0) || R <- Ink],
+    Freq = lists:foldl(fun(R, Acc) -> lists:zipwith(fun erlang:'+'/2, Acc, R) end, [0 || _ <- lists:seq(X0, X1 - 1)], Rows0),
+    Keep = [F < 0.35 * length(Ink) || F <- Freq],
+    Wd = max(1, length([K || K <- Keep, K])),
+    Counts = [lists:sum([P || {P, true} <- lists:zip(R, Keep)]) || R <- Rows0],
     Rows = [C >= 2 andalso C / Wd < 0.5 || C <- Counts],
     Runs = runs(Rows, 0, none, []),
     touching([B || {A, Z} = B <- join(Runs, []), Z - A >= 4], list_to_tuple(Counts));
@@ -121,12 +157,24 @@ bands(_, _, _) -> [].
 
 %% Two lines written close together run into one band (29 Oct, film take: the first answer line just under the printed
 %% question). A band much taller than the page's lines is split at its thinnest row, when that row is far thinner than
-%% the band (a picture has no such row and stays whole, for tall_out to leave out).
+%% the band (a picture has no such row: see tall/3).
 touching([], _) -> [];
 touching(Bands, CT) ->
     Hs = lists:sort([Z - A || {A, Z} <- Bands]),
     Typ = lists:nth((length(Hs) + 1) div 2, Hs),
-    lists:append([split(B, Typ, CT) || B <- Bands]).
+    lists:append([tall(B, Typ, CT) || B <- Bands]).
+
+%% A tall band that parts into a few pieces of a line's height is lines run together; one that does not, and is far
+%% taller than a line, is a picture and leaves the reading order whole (29 Oct, film take 2: cut into strips, the photo
+%% took the lines written under it).
+tall({A, Z} = B, Typ, CT) when Z - A > 1.6 * Typ + 2 ->
+    Pieces = split(B, Typ, CT),
+    Lines = length(Pieces) =< 4 andalso lists:all(fun({Pa, Pz}) -> Pz - Pa >= 0.4 * Typ andalso Pz - Pa =< 1.9 * Typ + 2 end, Pieces),
+    if Lines -> Pieces;
+       Z - A > 3 * Typ + 4 -> [];
+       true -> [B]
+    end;
+tall(B, _, _) -> [B].
 
 split({A, Z}, Typ, CT) when Z - A > 1.6 * Typ + 2 ->
     Lo = A + round(0.6 * Typ), Hi = Z - round(0.6 * Typ),
@@ -179,8 +227,8 @@ spread(L) ->
 %% ---------------------------------------------------------------- reading order
 %% Items (their centres, in reading order) onto bands (top to bottom), in order, none shared, least distance in all:
 %% [J | none] per item, J the band's place (1-based). Fewer bands than items: none are placed.
-align(Cs, Bs) when length(Bs) < length(Cs) -> [none || _ <- Cs];
-align(Cs, Bs) ->
+align(Cs, Bs, _) when length(Bs) < length(Cs) -> [none || _ <- Cs];
+align(Cs, Bs, Miss) ->
     N = length(Cs), M = length(Bs), CT = list_to_tuple(Cs), BT = list_to_tuple(Bs),
     Row0 = list_to_tuple([0.0 || _ <- lists:seq(0, M)]),
     %% D(i, j): least cost of the first i items on the first j bands; Take(i, j) whether item i sits on band j
@@ -189,7 +237,7 @@ align(Cs, Bs) ->
             {RowL, TakeL} = lists:foldl(
                 fun(J, {[Left | _] = R, Tk}) ->
                     Inf = 1.0e18,
-                    TakeC = case element(J, Prev) of P when P >= Inf -> Inf; P -> P + abs(element(I, CT) - element(J, BT)) end,
+                    TakeC = case element(J, Prev) of P when P >= Inf -> Inf; P -> P + abs(element(I, CT) - element(J, BT)) + Miss(I, J) end,
                     case TakeC =< Left of true -> {[TakeC | R], [true | Tk]}; false -> {[Left | R], [false | Tk]} end
                 end, {[1.0e18], []}, lists:seq(1, M)),
             {[list_to_tuple(lists:reverse(RowL)) | Ds], [list_to_tuple([false | lists:reverse(TakeL)]) | Ts]}
