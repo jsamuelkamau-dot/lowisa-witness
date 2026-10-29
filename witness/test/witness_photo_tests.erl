@@ -211,9 +211,39 @@ page_places_each_line_on_its_own_ink_in_reading_order_test() ->
     %% a line with no ink near it is not forced onto another
     [_, _, _, Lost] = witness_page:place(G, W, H, Items ++ [[200, 900, 400, 930]]),
     ?assertEqual(none, Lost),
-    ?assertMatch(#{y1 := 870, y2 := 960}, witness_page:loose([200, 900, 400, 930])),
+    ?assertMatch(#{y1 := 885, y2 := 945}, witness_page:loose([200, 900, 400, 930])),
     %% a page that isn't one leaves every line to Spark's box
     ?assertEqual([none, none], witness_page:place(<<1, 2, 3>>, W, H, [[1, 2, 3, 4], [1, 2, 3, 4]])).
+
+%% 29 Oct (film take): a picture printed on the paper, an answer line written right under the printed question, and
+%% Spark's boxes a line low all down the page
+picture_page() ->
+    W = 200, H = 400,
+    Line = fun(Y, Y0, X, X0, X1) -> Y >= Y0 andalso Y < Y0 + 10 andalso X >= X0 andalso X < X1 andalso X rem 3 =:= 0 end,
+    Px = fun(X, Y) ->
+        Ink = Line(Y, 20, X, 10, 150)                                                     %% printed question 1
+              orelse (Y >= 40 andalso Y < 140 andalso X >= 20 andalso X < 90 andalso (X + Y) rem 3 =:= 0)  %% the picture
+              orelse Line(Y, 150, X, 20, 60)                                              %% "Fake."
+              orelse Line(Y, 170, X, 20, 120)                                             %% "So many people shared it"
+              orelse Line(Y, 230, X, 10, 150)                                             %% printed question 2
+              orelse Line(Y, 242, X, 20, 110)                                             %% its answer, touching it
+              orelse Line(Y, 262, X, 20, 70),
+        case Ink of true -> 40; false -> 235 end
+    end,
+    {W, H, << <<(Px(X, Y))>> || Y <- lists:seq(0, H - 1), X <- lists:seq(0, W - 1) >>}.
+
+page_keeps_a_picture_out_and_splits_touching_lines_test() ->
+    {W, H, G} = picture_page(),
+    %% thousandths of the 400-row page, each a line (25 thousandths) low
+    Items = [[50, 75, 750, 100], [100, 400, 300, 425], [100, 450, 600, 475], [50, 600, 750, 625], [100, 630, 550, 655], [100, 680, 350, 705]],
+    [Q1, Fake, SoMany, Q2, A1, A2] = witness_page:place(G, W, H, Items),
+    ?assertMatch(#{y1 := 50, y2 := 75}, Q1),
+    ?assertMatch(#{y1 := 375, y2 := 400}, Fake),          %% not the picture above it
+    ?assertMatch(#{y1 := 425, y2 := 450}, SoMany),
+    ?assertMatch(#{y1 := 575, y2 := 600}, Q2),
+    #{y1 := A1y1, y2 := A1y2} = A1,                        %% its own line, apart from the question it touches
+    ?assert(A1y1 >= 600 andalso A1y2 =< 632),
+    ?assertMatch(#{y1 := 655, y2 := 680}, A2).
 
 %% ---------------------------------------------------------------- the marking
 photo_marking_reads_details_places_lines_and_names_capabilities_test() ->

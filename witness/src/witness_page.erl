@@ -27,16 +27,25 @@ place(Gray, W, H, Items) when byte_size(Gray) =:= W * H, Items =/= [] ->
     Ink = ink(Gray, W, H),
     L = lists:min([A || [A, _, _, _] <- Items]) * W / 1000, R = lists:max([C || [_, _, C, _] <- Items]) * W / 1000,
     X0 = max(0, trunc(L - 0.04 * W)), X1 = min(W, trunc(R + 0.06 * W)),
-    Bands = bands(Ink, X0, X1),
-    Centres = [(T + B) / 2000 * H || [_, T, _, B] <- Items],
-    Picks = align(Centres, [(A + Z) / 2 || {A, Z} <- Bands]),
+    %% a picture printed on the paper (29 Oct, film take: the photo in question 3) is one tall band of ink, not a line:
+    %% it would take a student's line and push every line after it one band down
+    Bands = tall_out(bands(Ink, X0, X1)),
+    Centres0 = [(T + B) / 2000 * H || [_, T, _, B] <- Items],
+    BandCs = [(A + Z) / 2 || {A, Z} <- Bands],
+    %% Spark's boxes on one page sit off by about the same amount (29 Oct, film take: a line low all down page 2, so the
+    %% first answer line took the band of the second): that shift is measured on a first pass and taken off
+    Shift = shift(Centres0, align(Centres0, BandCs), BandCs),
+    Centres = [C - Shift || C <- Centres0],
+    Picks = align(Centres, BandCs),
     InkT = list_to_tuple(Ink),
     [case Pick of
          none -> none;
          J ->
-             {Y0, Y1} = lists:nth(J, Bands), Cy = (T + B) / 2000 * H, Bh = (B - T) / 1000 * H,
-             case abs(Cy - (Y0 + Y1) / 2) > 2.5 * Bh + 6 of
-                 true -> none;                                         %% nearest free band is another line
+             {Y0, Y1} = lists:nth(J, Bands), Cy = (T + B) / 2000 * H - Shift, Bh = (B - T) / 1000 * H,
+             %% the nearest free band is another line, or a block much taller than the line (a heading run into the
+             %% question above it): Spark's own box is nearer the truth (29 Oct, film take: "Use it." sat on the header)
+             case abs(Cy - (Y0 + Y1) / 2) > 1.2 * Bh + 6 orelse (Y1 - Y0) > 2.2 * Bh + 8 of
+                 true -> none;
                  false ->
                      Xa = max(0, trunc(Lb / 1000 * W - 0.06 * W)), Xb = min(W, trunc(Rb / 1000 * W + 0.1 * W)),
                      {Xl, Xr} = case cols(InkT, Y0, Y1, Xa, Xb) of none -> {Xa, Xb}; E -> E end,
@@ -46,10 +55,25 @@ place(Gray, W, H, Items) when byte_size(Gray) =:= W * H, Items =/= [] ->
      end || {[Lb, T, Rb, B], Pick} <- lists:zip(Items, Picks)];
 place(_, _, _, Items) -> [none || _ <- Items].
 
-%% Spark's own box with room around it, for a line the page could not place.
+%% Spark's own box with room around it, for a line the page could not place: half a line each way, so the printed
+%% question just above stays out of the student's step
 loose([L, T, R, B]) when R > L, B > T ->
-    Ph = (B - T), #{x1 => max(0, L - 30), y1 => max(0, T - Ph), x2 => min(1000, R + 60), y2 => min(1000, B + Ph), w => 1000, h => 1000};
+    Ph = (B - T) div 2, #{x1 => max(0, L - 30), y1 => max(0, T - Ph), x2 => min(1000, R + 60), y2 => min(1000, B + Ph), w => 1000, h => 1000};
 loose(_) -> none.
+
+%% the middle of how far each placed line's box sits from its band (rows; 0 when nothing was placed)
+shift(Centres, Picks, BandCs) ->
+    case lists:sort([C - lists:nth(J, BandCs) || {C, J} <- lists:zip(Centres, Picks), J =/= none]) of
+        [] -> 0;
+        Offs -> lists:nth((length(Offs) + 1) div 2, Offs)
+    end.
+
+%% Bands much taller than the page's own lines (pictures, a shaded box) are left out of the reading order.
+tall_out([]) -> [];
+tall_out(Bands) ->
+    Hs = lists:sort([Z - A || {A, Z} <- Bands]),
+    Typical = lists:nth((length(Hs) + 1) div 2, Hs),
+    [{A, Z} || {A, Z} <- Bands, Z - A =< 3 * Typical + 4].
 
 %% ---------------------------------------------------------------- ink
 ink(Gray, W, H) ->
@@ -89,10 +113,34 @@ vsum(HSums, H) ->
 %% ---------------------------------------------------------------- bands
 bands(Ink, X0, X1) when X1 > X0 ->
     Wd = X1 - X0,
-    Rows = [begin C = lists:sum(lists:sublist(R, X0 + 1, Wd)), C >= 2 andalso C / Wd < 0.5 end || R <- Ink],
+    Counts = [lists:sum(lists:sublist(R, X0 + 1, Wd)) || R <- Ink],
+    Rows = [C >= 2 andalso C / Wd < 0.5 || C <- Counts],
     Runs = runs(Rows, 0, none, []),
-    [B || {A, Z} = B <- join(Runs, []), Z - A >= 4];
+    touching([B || {A, Z} = B <- join(Runs, []), Z - A >= 4], list_to_tuple(Counts));
 bands(_, _, _) -> [].
+
+%% Two lines written close together run into one band (29 Oct, film take: the first answer line just under the printed
+%% question). A band much taller than the page's lines is split at its thinnest row, when that row is far thinner than
+%% the band (a picture has no such row and stays whole, for tall_out to leave out).
+touching([], _) -> [];
+touching(Bands, CT) ->
+    Hs = lists:sort([Z - A || {A, Z} <- Bands]),
+    Typ = lists:nth((length(Hs) + 1) div 2, Hs),
+    lists:append([split(B, Typ, CT) || B <- Bands]).
+
+split({A, Z}, Typ, CT) when Z - A > 1.6 * Typ + 2 ->
+    Lo = A + round(0.6 * Typ), Hi = Z - round(0.6 * Typ),
+    case Hi > Lo of
+        false -> [{A, Z}];
+        true ->
+            {MinC, Y} = lists:min([{element(R + 1, CT), R} || R <- lists:seq(Lo, Hi)]),
+            Mean = lists:sum([element(R + 1, CT) || R <- lists:seq(A, Z - 1)]) / (Z - A),
+            case MinC < 0.35 * Mean of
+                true -> [P || {Pa, Pz} = P <- split({A, Y}, Typ, CT) ++ split({Y + 1, Z}, Typ, CT), Pz - Pa >= 4];
+                false -> [{A, Z}]
+            end
+    end;
+split(B, _, _) -> [B].
 
 runs([], Y, Start, Acc) -> lists:reverse(case Start of none -> Acc; _ -> [{Start, Y} | Acc] end);
 runs([true | T], Y, none, Acc) -> runs(T, Y + 1, Y, Acc);
