@@ -1,37 +1,49 @@
-# Witness
+# From Exam to Mastery
 
-**From a failed question to real-world mastery.**
+**Exam-to-Mastery: turning handwritten mistakes into demonstrated learning.**
 
-For a long time, failing a question has been read as "you can't do this". Witness turns each failed question into
-the next thing a student masters:
+The world fears AI will weaken how students think. The problem is older than AI: when a student fails an exam, many
+systems soften the label instead of fixing the thinking, and the student is left feeling incapable. From Exam to Mastery,
+part of [LoWisa](https://lowisa.dev), strengthens cognitive abilities instead, in four areas:
 
-1. A phone looks down at the desk while the student works on paper.
-2. Meta's models mark how each answer was made, not only what was written.
-3. The teacher writes what to focus on.
-4. Each failed question becomes one mastery level, made for that student.
-5. The teacher signs off the mastery.
+1. **The exam.** After the exam a single phone (a teacher's, or one the school owns) photographs each paper. Meta's models
+   read the name written on it, mark how each answer was reached as well as the answer, and send every question the
+   student didn't master into their **Mastery Plan**. There is no verdict.
+2. **What's taught, matched to the real world.** Each question in the plan becomes one mastery level, built from the
+   student's own working, that puts the idea to work where it is really used.
+3. **Teaching that builds seven thinking capabilities**: Pattern Recognition, Probability & Uncertainty, Optimization,
+   Systems Thinking, Trade-offs, Decision-Making and Root Cause Analysis. Each level names the ones it builds.
+4. **Repetition for retention.** Questions and flashcards before a level counts; the teacher's "Turned around" badge only
+   after it is finished.
+
+**Witness** is the other way in: for one student working alone (at home, homeschooled), a phone films the desk while
+they write, so the thinking is seen as it happens.
 
 It works for any subject and any level, anywhere.
 
-Built for the Meta Global AI Developer Hackathon (27 Oct – 4 Nov 2026) by the LoWisa team, as a new part of
-[LoWisa](https://lowisa.dev).
+Built for the Meta Global AI Developer Hackathon (27 Oct – 4 Nov 2026) by the LoWisa team.
 
 ## The loop
 
 ```
-Sit      the student works on paper; a phone watches the desk (paper and hands only)
-Mark     SAM 3.1 follows the ink → the order each answer was written in
-         Muse Spark marks the answer and the path:
-           mastered · right answer, wrong thinking · part way · not yet
-         plus a one-sentence diagnosis and the second it happened
+Join     students put their name on the exam's class list with its code
+Sit      the exam on paper, as always
+Photo    one phone photographs each finished paper, page by page
+Mark     Muse Spark reads the name, class and number written on the paper, and marks the answer and the path:
+           mastered · in the Mastery Plan (right answer by wrong thinking · part way · not reached)
+         with a one-sentence diagnosis, the step where it went wrong, and the thinking capabilities to build;
+         each line is placed on its own ink on the page, so the student's own step is cut from their paper
+Whose    the name finds the student on the class list; an unclear one waits for the teacher
 Check    a Muse Wonder examiner asks about the student's own step; Voice Transcribe hears the reply
-Record   a dated Proof of Thinking: the steps and their times, the marks, the answers, stills; the video deleted
-Desk     the teacher reviews (least certain first) and writes a focus note on each failed question
-Plan     one mastery level per failed question, checked by an agent before it reaches the student
-Master   the student plays the level; "ask my teacher" sits on every step
-Verify   only if the teacher asks for it: explain back to Lo, a fresh question watched again,
-         or explain back to the teacher
-Badge    the teacher issues "Turned around"
+Desk     the teacher reviews (least certain first) and writes a focus note on each question in the plan
+Plan     one mastery level per question in the Mastery Plan, checked by an agent before it reaches the student
+Master   the student plays the level: the real-world task, the capabilities, repeated questions and flashcards
+Verify   only if the teacher asks for it: explain back to Lo, a fresh question, or explain back to the teacher
+Badge    the teacher issues "Turned around" once the level is finished
+Record   a dated Proof of Thinking: the steps, the marks, the answers, the pages; printed for a student with no phone
+
+Witness  (optional) the desk filmed while one student writes: SAM 3.1 follows the ink, Muse Spark marks the
+         path with the second it went wrong; the video is deleted once marked
 ```
 
 ## Built during the hackathon
