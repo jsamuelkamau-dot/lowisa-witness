@@ -294,6 +294,7 @@
         chip(it.result) + '<span class="wd-sub">' + Math.round((it.confidence || 0) * 100) + '% sure</span></div>';
     }).join('') || '<div class="wd-sub">Nothing left to review.</div>';
     var released = j.pile && j.pile.released_ms;
+    var waiting = (j.sittings || []).filter(function (x) { return x.status === 'marked'; }).length;
     var roster = (j.pile && j.pile.roster) || [];
     var code = j.pile && j.pile.code ? '<div class="wd-card"><b>Join code: <span style="font-size:18px;letter-spacing:3px">' + esc(j.pile.code) + '</span></b>' +
       '<div class="wd-sub">Students enter it in the LoWisa phone app to put their name on the class list. After the exam, a single phone (yours, or one the school owns) ' +
@@ -301,7 +302,10 @@
       '<div class="wd-sub" style="margin-top:6px"><b>Class list: ' + roster.length + ' joined</b>' + (roster.length ? ' · ' + roster.map(function (r) { return esc(r.name); }).join(', ') : '') + '</div></div>' : '';
     return code + nums + measured() + patternsCard(j.pile || {}, toMaster + turned) + '<div class="wd-cols"><div class="wd-card"><h3>Papers</h3>' + papers + '</div>' +
       '<div class="wd-card"><h3>To review: what needs you first</h3>' + queue + '</div></div>' +
-      '<div style="margin-top:6px">' + (released ? '<span class="wd-chip ok">Released to students</span>' :
+      // a paper photographed after the release (a student who sat it late) waits for its own release (30 Oct, film take:
+      // the second paper stayed "marked" and the button was gone)
+      '<div style="margin-top:6px">' + (released && waiting ? '<button class="wd-btn wd-main" data-act="release">Release ' + waiting + ' new paper' + (waiting === 1 ? '' : 's') + '</button> ' +
+        '<span class="wd-chip ok">The rest are released</span>' : released ? '<span class="wd-chip ok">Released to students</span>' :
         '<button class="wd-btn wd-main" data-act="release">Release marks</button> <span class="wd-sub">Students see their marks, and every question they didn\'t master goes into their Mastery Plan.</span>') + '</div>';
   }
 
