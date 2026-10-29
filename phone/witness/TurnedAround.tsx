@@ -6,6 +6,7 @@
  */
 import React, {useEffect, useState} from 'react';
 import {StyleSheet, Text, View} from 'react-native';
+import {C} from '../ui/theme';
 import {Badge, witness, WitnessEnv} from './net';
 
 /** "12 Oct to 28 Oct", or the one date when it turned around the same day; in the phone's own way of writing dates. */
@@ -38,10 +39,10 @@ export function TurnedAround({env}: {env: WitnessEnv}): React.JSX.Element | null
 }
 
 const s = StyleSheet.create({
-  card: {backgroundColor: '#ffffff', borderRadius: 16, padding: 16, marginTop: 12, borderWidth: 1, borderColor: '#d9e2f2'},
-  h: {fontSize: 17, fontWeight: '700', color: '#0b3d2e', marginBottom: 6},
-  row: {paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#eef2f8'},
-  q: {fontSize: 15, fontWeight: '600', color: '#0f172a'},
-  sub: {fontSize: 13, color: '#475569', marginTop: 2},
-  when: {fontSize: 12, color: '#047857', marginTop: 4},
+  card: {backgroundColor: C.surface, borderRadius: 16, padding: 16, marginTop: 12, borderWidth: 1, borderColor: C.lineSolid},
+  h: {fontSize: 17, fontWeight: '700', color: C.teal, marginBottom: 6},
+  row: {paddingVertical: 8, borderTopWidth: 1, borderTopColor: C.lineSolid},
+  q: {fontSize: 15, fontWeight: '600', color: C.ink},
+  sub: {fontSize: 13, color: C.inkSoft, marginTop: 2},
+  when: {fontSize: 12, color: C.teal, marginTop: 4},
 });

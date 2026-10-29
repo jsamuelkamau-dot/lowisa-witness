@@ -14,7 +14,9 @@
  * Only shown when the edge's Witness doors answer (LOWISA_WITNESS_ACCESS); the caller checks witness.mine first.
  */
 import React, {useCallback, useEffect, useState} from 'react';
-import {ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View} from 'react-native';
+import {ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {C} from '../ui/theme';
+import {SoftInput} from '../ui/SoftInput';
 import {Page} from '../ui/Page';
 import {Btn} from '../exam/print/ui';
 import {chooseVideo, doorMime, VideoFile} from '../community/video';
@@ -25,7 +27,7 @@ import type {MirrorStorage} from '../state/storage';
 import type {CustomEnv} from '../paths/custom/course';
 import {onBuildProgress} from '../paths/custom/course';
 import {buildMastery, builtNews, masteryDone, masteryPath} from './mastery';
-import type {Mastery} from './net';
+import type {Fingerprint, Mastery} from './net';
 import {asksLeft} from './net';
 import {AsksView} from './Examiner';
 import {SayIt} from './SayIt';
@@ -336,7 +338,7 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
             <View style={s.card}>
               <Text style={s.h}>Your exam on paper</Text>
               <Text style={s.sub}>Sit the exam on paper as you always do. Afterwards it is marked for how you thought, not only your answers, and every question you didn't master becomes your Mastery Plan.</Text>
-              <TextInput value={code} onChangeText={t => setCode(typedCode(t))} placeholder="Join code" autoCapitalize="characters" maxLength={6}
+              <SoftInput value={code} onChangeText={t => setCode(typedCode(t))} placeholder="Join code" autoCapitalize="characters" maxLength={6}
                 style={[s.input, s.code]} accessibilityLabel="Your teacher's join code" testID="witness-code" />
               <Btn label={busy ? 'Checking…' : 'Find the exam'} onPress={join} primary disabled={busy} testID="witness-join" />
             </View>
@@ -351,7 +353,7 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
               {stage.level ? <Text style={s.sub}>{stage.level}</Text> : null}
               <Text style={s.rowTitle}>I'm sitting this exam</Text>
               <Text style={s.sub}>Put your name on the class list, as you write it on your paper. Your marked paper and your Mastery Plan come back here.</Text>
-              <TextInput value={name} onChangeText={setName} placeholder="Your name" maxLength={80}
+              <SoftInput value={name} onChangeText={setName} placeholder="Your name" maxLength={80}
                 style={s.input} accessibilityLabel="Your name" testID="witness-list-name" />
               <Btn label={busy ? 'Adding you…' : 'Put me on the class list'} onPress={listMe} primary disabled={busy} testID="witness-list-me" />
             </View>
@@ -385,7 +387,7 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
             <Text style={s.h} testID="witness-exam-title">{stage.title}</Text>
             {stage.level ? <Text style={s.sub}>{stage.level}</Text> : null}
             <Text style={s.sub}>Witness films your desk while you write, so your teacher sees how you thought, step by step.</Text>
-            <TextInput value={name} onChangeText={setName} placeholder="Your name, as your teacher knows it" maxLength={80}
+            <SoftInput value={name} onChangeText={setName} placeholder="Your name, as your teacher knows it" maxLength={80}
               style={s.input} accessibilityLabel="Your name" testID="witness-name" />
             <Text style={s.how}>Prop your phone above the desk so it sees the whole page and your hand. Keep faces out of view: any face the camera catches is covered before the video leaves your phone. Then work through the paper and stop the recording when you finish.</Text>
             {notice ? <Text style={s.notice} accessibilityRole="alert" testID="witness-kept">{notice}</Text> : null}
@@ -492,11 +494,27 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
   const next = r !== 'mastered';
   const [path, setPath] = useState<string | null>(() => masteryPath(storage, paper.id, q.n) || (q.mastery && q.mastery.path) || null);
   const [m, setM] = useState<Mastery | undefined>(q.mastery);
-  const act = async (action: 'event' | 'explain' | 'ask', body: Record<string, unknown>) => {
+  // 30 Oct (owner): the Misconception Fingerprint; while Lo still has a diagnostic question, it comes before the level
+  const [fp, setFp] = useState<Fingerprint | null | undefined>(q.fingerprint);
+  const asking = !path && !!fp && !!fp.ask && (fp.said || []).length < 2;
+  const act = async (action: 'event' | 'explain' | 'ask' | 'challenge_answer', body: Record<string, unknown>) => {
     const r = await witness.mastery(env, paper.id, q.n, action, body);
     if (r.ok) { setM(r.value.mastery); setSaid(''); } else setSaid(r.error);
     return r.ok ? r.value.mastery : null;
   };
+  // 30 Oct (owner): what the teacher sends after the level (a new challenge, a reply, Turned around) reaches an open screen
+  // too: looked for every 20 seconds while the question is still to turn around
+  useEffect(() => {
+    if (!next || (m && m.status === 'badge')) return undefined;
+    let live = true;
+    const timer = setInterval(async () => {
+      const r = await witness.mine(env);
+      const p = r.ok ? (r.value.papers || []).find(x => x.id === paper.id) : undefined;
+      const now = p && p.result ? p.result.questions.find(x => x.n === q.n) : undefined;
+      if (live && now && now.mastery) setM(prev => (JSON.stringify(prev) === JSON.stringify(now.mastery) ? prev : now.mastery));
+    }, 20000);
+    return () => { live = false; clearInterval(timer); };
+  }, [next, m && m.status, env, paper.id, q.n]); // eslint-disable-line react-hooks/exhaustive-deps
   // the exam's teacher looks at each level first: it opens once they let the student start (28 Oct)
   const held = !!m && m.status === 'held';
   // a level played to the end on this phone tells the teacher once
@@ -540,7 +558,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
     if (path) { if (onOpenPath) onOpenPath(path); return; }
     setSaid(''); setBuilding('Planning your level…');
     const off = onBuildProgress(st => setBuilding(st.stage === 'write' ? 'Writing your lessons…' : st.stage === 'check' ? 'Playing it through as you, to be sure it teaches this…' : st.stage === 'review' ? 'Checking the plan…' : st.stage === 'redesign' ? 'Making it sharper…' : 'Planning your level…'));
-    const made = await buildMastery(env, storage, paper, q);
+    const made = await buildMastery(env, storage, paper, {...q, fingerprint: fp});
     off(); setBuilding('');
     if (made.ok && made.pathId) {
       setPath(made.pathId);
@@ -587,6 +605,13 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
           {building ? <View style={s.buildRow}><ActivityIndicator /><Text style={s.small}> {building}</Text></View>
             : held ? <View><Text style={s.small} testID={'witness-held-' + q.n}>Your level is made. Your teacher is looking at it first; it opens here once they let you start.</Text>
                 <Btn label="Has my teacher let me start?" onPress={start} small testID={'witness-held-look-' + q.n} /></View>
+            : asking && fp ? <LoAsks fp={fp} send={async body => {
+                const r = await witness.mastery(env, paper.id, q.n, 'diagnose', body);
+                if (!r.ok) { setSaid(r.error); return false; }
+                setSaid('');
+                if (r.value.fingerprint) setFp(r.value.fingerprint);
+                return true;
+              }} />
             : <Btn label={path ? 'Open my mastery level' : 'Start my mastery level'} onPress={start} primary testID={'witness-master-' + q.n} />}
           {said ? <Text style={s.error}>{said}</Text> : null}
           <AfterLevel m={m} act={act} film={film} filming={filming} />
@@ -603,7 +628,83 @@ const FRESH_WORDS: Record<string, string> = {
   failed: 'That video could not be read. Film it again.',
 };
 
-function AfterLevel({m, act, film, filming}: {m?: Mastery; act(action: 'explain' | 'ask', body: Record<string, unknown>): Promise<unknown>; film(source: 'camera' | 'gallery'): void; filming: string}): React.JSX.Element | null {
+/**
+ * Lo asks first (owner, 30 Oct: the Misconception Fingerprint). When the paper alone was not enough evidence of which
+ * idea produced the answer, Lo asks one diagnostic question, out loud, before the level is built; the answer, written
+ * or spoken, completes the fingerprint the level is built around. At most two questions, then the level starts.
+ */
+export function LoAsks({fp, send}: {fp: Fingerprint; send(body: Record<string, unknown>): Promise<boolean>}): React.JSX.Element {
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { if (fp.ask) tutorSay(fp.ask); }, [fp.ask]);
+  const go = async (body: Record<string, unknown>) => {
+    if (busy) return;
+    setBusy(true);
+    const ok = await send(body);
+    setBusy(false);
+    if (ok) setText('');
+  };
+  return (
+    <View style={s.challenge} testID="witness-lo-asks">
+      <Text style={s.challengeHead}>Lo asks first</Text>
+      <Text style={s.challengeQ}>{fp.ask}</Text>
+      <Text style={s.sub}>Your answer tells Lo which idea to work on, so your level fixes exactly that.</Text>
+      <Btn label="Hear it again" onPress={() => tutorSay(fp.ask)} small testID="witness-lo-asks-hear" />
+      <SoftInput value={text} onChangeText={setText} multiline style={s.input} accessibilityLabel="Your answer for Lo" testID="witness-lo-asks-text" />
+      <Btn label={busy ? 'Lo is reading it…' : 'Tell Lo'} onPress={() => { if (text.trim()) void go({text: text.trim()}); }} primary small testID="witness-lo-asks-send" />
+      <SayIt label="Say it to Lo" onAudio={(audio, mime) => go({audio, mime})} testID="witness-lo-asks-say" />
+    </View>
+  );
+}
+
+/**
+ * The teacher's new challenge (owner, 30 Oct): the same idea in a new situation, to show the principle is understood and
+ * not the answer remembered. Lo reads it out on request; the student picks an answer and says why, once. Which option is
+ * right shows only with their own answer; what Muse Spark makes of the reason is the teacher's to read.
+ */
+export function ChallengeCard({c, act}: {c: NonNullable<Mastery['challenge']>; act(action: 'challenge_answer', body: Record<string, unknown>): Promise<unknown>}): React.JSX.Element {
+  const [pick, setPick] = useState<number | null>(null);
+  const [why, setWhy] = useState('');
+  const [sending, setSending] = useState(false);
+  const r = c.reply;
+  const send = async () => {
+    if (pick == null || !why.trim() || sending) return;
+    setSending(true);
+    await act('challenge_answer', {pick, why: why.trim()});
+    setSending(false);
+  };
+  return (
+    <View style={s.challenge} testID="witness-challenge">
+      <Text style={s.challengeHead}>A new challenge from your teacher</Text>
+      <Text style={s.challengeQ}>{c.q}</Text>
+      {!r ? <Btn label="Hear it" onPress={() => tutorSay(c.q + ' ' + c.options.map((o, i) => (i + 1) + ': ' + o + '.').join(' '))} small testID="witness-challenge-hear" /> : null}
+      {c.options.map((o, i) => {
+        const chosen = r ? r.pick === i : pick === i;
+        const right = !!r && r.answer === i;
+        return (
+          <Pressable key={i} onPress={() => { if (!r) setPick(i); }} disabled={!!r} accessibilityRole="button" accessibilityState={{selected: chosen}}
+            style={[s.option, chosen ? s.optionOn : null, right ? s.optionRight : null, r && chosen && !r.right ? s.optionWrong : null]} testID={'witness-challenge-option-' + i}>
+            <Text style={s.optionText}>{o}{r && right ? '  ✓' : ''}</Text>
+          </Pressable>
+        );
+      })}
+      {r ? (
+        <Text style={r.right ? s.challengeRight : s.diag} testID="witness-challenge-result">
+          {r.right ? 'Right. Your teacher has your answer and your reason.' : 'Not this time: the right answer is ' + c.options[r.answer] + '. Your teacher has your reason and will help.'}
+        </Text>
+      ) : (
+        <View>
+          <Text style={s.sub}>Why? In your own words, how you got it.</Text>
+          <SoftInput value={why} onChangeText={setWhy} multiline style={s.input} accessibilityLabel="Why, in your own words" testID="witness-challenge-why" />
+          <Btn label={sending ? 'Sending…' : 'Send my answer'} onPress={send} primary small testID="witness-challenge-send" />
+          {pick == null || !why.trim() ? <Text style={s.small}>Pick an answer and say why, then send it.</Text> : null}
+        </View>
+      )}
+    </View>
+  );
+}
+
+function AfterLevel({m, act, film, filming}: {m?: Mastery; act(action: 'explain' | 'ask' | 'challenge_answer', body: Record<string, unknown>): Promise<unknown>; film(source: 'camera' | 'gallery'): void; filming: string}): React.JSX.Element | null {
   const [toLo, setToLo] = useState('');
   const [toTeacher, setToTeacher] = useState('');
   const [question, setQuestion] = useState('');
@@ -618,7 +719,7 @@ function AfterLevel({m, act, film, filming}: {m?: Mastery; act(action: 'explain'
         <View style={{marginTop: 10}}>
           <Text style={s.rowTitle}>Explain it back to Lo</Text>
           {m && m.lo_next ? <Text style={s.sub}>Lo: {m.lo_next}</Text> : <Text style={s.sub}>In your own words: what went wrong, and what is right?</Text>}
-          <TextInput value={toLo} onChangeText={setToLo} multiline style={s.input} accessibilityLabel="Your explanation for Lo" testID="witness-explain-lo" />
+          <SoftInput value={toLo} onChangeText={setToLo} multiline style={s.input} accessibilityLabel="Your explanation for Lo" testID="witness-explain-lo" />
           <Btn label="Tell Lo" onPress={async () => { if (await act('explain', {to: 'lo', text: toLo})) setToLo(''); }} small />
           <SayIt label="Say it to Lo" onAudio={(audio, mime) => act('explain', {to: 'lo', audio, mime})} testID="witness-say-lo" />
         </View>
@@ -626,11 +727,12 @@ function AfterLevel({m, act, film, filming}: {m?: Mastery; act(action: 'explain'
       {asks.teacher && told.indexOf('teacher') < 0 ? (
         <View style={{marginTop: 10}}>
           <Text style={s.rowTitle}>Explain it back to your teacher</Text>
-          <TextInput value={toTeacher} onChangeText={setToTeacher} multiline style={s.input} accessibilityLabel="Your explanation for your teacher" testID="witness-explain-teacher" />
+          <SoftInput value={toTeacher} onChangeText={setToTeacher} multiline style={s.input} accessibilityLabel="Your explanation for your teacher" testID="witness-explain-teacher" />
           <Btn label="Send to my teacher" onPress={async () => { if (await act('explain', {to: 'teacher', text: toTeacher})) setToTeacher(''); }} small />
           <SayIt label="Say it to my teacher" onAudio={(audio, mime) => act('explain', {to: 'teacher', audio, mime})} testID="witness-say-teacher" />
         </View>
       ) : null}
+      {m && m.challenge ? <ChallengeCard key={m.challenge.at} c={m.challenge} act={act} /> : null}
       {asks.paper && asks.fresh ? (
         <View style={{marginTop: 10}} testID="witness-fresh">
           <Text style={s.rowTitle}>A fresh question from your teacher</Text>
@@ -648,7 +750,7 @@ function AfterLevel({m, act, film, filming}: {m?: Mastery; act(action: 'explain'
       ) : asks.paper ? <Text style={s.small}>Your teacher would like a fresh question on paper. They'll give it to you.</Text> : null}
       <View style={{marginTop: 10}}>
         {(m && m.thread || []).map((t, i) => <Text key={i} style={s.sub}>{t.from === 'teacher' ? 'Your teacher: ' : 'You: '}{t.text}</Text>)}
-        <TextInput value={question} onChangeText={setQuestion} placeholder="Stuck? Ask your teacher" style={s.input} accessibilityLabel="Ask your teacher" testID="witness-ask" />
+        <SoftInput value={question} onChangeText={setQuestion} placeholder="Stuck? Ask your teacher" style={s.input} accessibilityLabel="Ask your teacher" testID="witness-ask" />
         <Btn label="Ask my teacher" onPress={async () => { if (question.trim() && await act('ask', {text: question})) setQuestion(''); }} small />
       </View>
     </View>
@@ -777,37 +879,46 @@ function PhotoDesk({env, code, title}: {env: WitnessEnv; code: string; title: st
 
 const s = StyleSheet.create({
   page: {padding: 16, paddingBottom: 40},
-  card: {borderWidth: 1, borderColor: '#e2e0da', borderRadius: 12, padding: 14, marginBottom: 12, backgroundColor: '#ffffff'},
-  next: {borderColor: '#d9a441'},
+  card: {borderWidth: 1, borderColor: C.lineSolid, borderRadius: 12, padding: 14, marginBottom: 12, backgroundColor: C.surface},
+  next: {borderColor: C.amber},
   center: {alignItems: 'center'},
-  h: {fontSize: 17, fontWeight: '600', color: '#1f1e1c', marginBottom: 4},
-  sub: {fontSize: 14, color: '#5f5e5a', lineHeight: 20, marginBottom: 10},
-  how: {fontSize: 14, color: '#1f1e1c', lineHeight: 20, marginVertical: 10},
-  small: {fontSize: 12, color: '#5f5e5a', marginTop: 8},
-  input: {borderWidth: 1, borderColor: '#cfcdc5', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 16, marginBottom: 10, color: '#1f1e1c'},
+  h: {fontSize: 17, fontWeight: '600', color: C.ink, marginBottom: 4},
+  sub: {fontSize: 14, color: C.inkSoft, lineHeight: 20, marginBottom: 10},
+  how: {fontSize: 14, color: C.ink, lineHeight: 20, marginVertical: 10},
+  small: {fontSize: 12, color: C.inkSoft, marginTop: 8},
+  input: {borderWidth: 1, borderColor: C.lineSolid, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 16, marginBottom: 10, color: C.ink},
   code: {fontSize: 22, letterSpacing: 4, textAlign: 'center'},
-  error: {color: '#c62828', fontSize: 14, marginBottom: 10},
-  notice: {color: '#1b5e20', fontSize: 14, fontWeight: '600', marginBottom: 10},
-  row: {paddingVertical: 10, borderTopWidth: 1, borderTopColor: '#efeeea'},
+  error: {color: C.pink, fontSize: 14, marginBottom: 10},
+  notice: {color: C.teal, fontSize: 14, fontWeight: '600', marginBottom: 10},
+  row: {paddingVertical: 10, borderTopWidth: 1, borderTopColor: C.lineSolid},
   rowTop: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'},
-  rowTitle: {fontSize: 15, fontWeight: '600', color: '#1f1e1c'},
-  rowMeta: {fontSize: 13, color: '#5f5e5a', marginTop: 2},
+  rowTitle: {fontSize: 15, fontWeight: '600', color: C.ink},
+  rowMeta: {fontSize: 13, color: C.inkSoft, marginTop: 2},
   chip: {fontSize: 12, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, overflow: 'hidden'},
-  chipOk: {color: '#2e7d32', backgroundColor: '#eaf3de'},
-  chipNext: {color: '#8a5300', backgroundColor: '#faeeda'},
-  step: {fontSize: 15, color: '#1f1e1c', fontFamily: 'monospace', marginTop: 4},
-  crossed: {textDecorationLine: 'line-through', color: '#8a8984'},
+  chipOk: {color: C.teal, backgroundColor: C.tealWash},
+  chipNext: {color: C.amber, backgroundColor: C.amberWash},
+  step: {fontSize: 15, color: C.ink, fontFamily: 'monospace', marginTop: 4},
+  crossed: {textDecorationLine: 'line-through', color: C.inkFaint},
   buildRow: {flexDirection: 'row', alignItems: 'center'},
-  comment: {fontSize: 14, color: '#141a2e', marginTop: 8, fontStyle: 'italic', lineHeight: 20},
-  badge: {fontSize: 15, fontWeight: '700', color: '#2e7d32', padding: 10, borderRadius: 8, backgroundColor: '#eaf3de', overflow: 'hidden'},
-  diag: {fontSize: 14, color: '#1f1e1c', marginTop: 10, padding: 10, borderRadius: 8, backgroundColor: '#faeeda'},
-  section: {fontSize: 13, fontWeight: '800', letterSpacing: 0.6, color: '#1d4ed8', marginTop: 6, marginBottom: 8},
-  caps: {marginTop: 10, padding: 10, borderRadius: 8, backgroundColor: '#eef2fb'},
-  capsHead: {fontSize: 12, fontWeight: '800', color: '#1d4ed8', marginBottom: 4},
-  cap: {fontSize: 13, color: '#1f1e1c', lineHeight: 19},
+  comment: {fontSize: 14, color: C.ink, marginTop: 8, fontStyle: 'italic', lineHeight: 20},
+  badge: {fontSize: 15, fontWeight: '700', color: C.teal, padding: 10, borderRadius: 8, backgroundColor: C.tealWash, overflow: 'hidden'},
+  diag: {fontSize: 14, color: C.ink, marginTop: 10, padding: 10, borderRadius: 8, backgroundColor: C.amberWash},
+  challenge: {marginTop: 12, padding: 12, borderRadius: 10, backgroundColor: C.brandWash, borderWidth: 1, borderColor: C.lineSolid},
+  challengeHead: {fontSize: 13, fontWeight: '800', color: C.brand, textTransform: 'uppercase', letterSpacing: 0.5},
+  challengeQ: {fontSize: 17, fontWeight: '700', color: C.ink, marginTop: 6, marginBottom: 8, lineHeight: 24},
+  option: {borderWidth: 1, borderColor: C.lineSolid, borderRadius: 10, paddingVertical: 12, paddingHorizontal: 14, marginBottom: 8, backgroundColor: C.surface},
+  optionOn: {borderColor: C.brand, borderWidth: 2},
+  optionRight: {borderColor: C.teal, borderWidth: 2, backgroundColor: C.tealWash},
+  optionWrong: {borderColor: C.pink, backgroundColor: C.pinkWash},
+  optionText: {fontSize: 16, color: C.ink, fontWeight: '600'},
+  challengeRight: {fontSize: 15, fontWeight: '700', color: C.teal, marginTop: 6, padding: 10, borderRadius: 8, backgroundColor: C.tealWash, overflow: 'hidden'},
+  section: {fontSize: 13, fontWeight: '800', letterSpacing: 0.6, color: C.brand, marginTop: 6, marginBottom: 8},
+  caps: {marginTop: 10, padding: 10, borderRadius: 8, backgroundColor: C.brandWash},
+  capsHead: {fontSize: 12, fontWeight: '800', color: C.brand, marginBottom: 4},
+  cap: {fontSize: 13, color: C.ink, lineHeight: 19},
   capName: {fontWeight: '700'},
   thumbs: {marginVertical: 10},
   thumbWrap: {marginRight: 8},
-  thumb: {width: 84, height: 112, borderRadius: 6, backgroundColor: '#efeeea'},
+  thumb: {width: 84, height: 112, borderRadius: 6, backgroundColor: C.surfaceAlt},
   thumbNo: {position: 'absolute', left: 6, top: 4, color: '#ffffff', fontWeight: '800', textShadowColor: '#000000', textShadowRadius: 3},
 });

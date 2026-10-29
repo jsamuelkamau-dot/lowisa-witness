@@ -36,7 +36,16 @@ export interface Mastery {
   path?: string; asks?: {lo?: boolean; paper?: boolean; teacher?: boolean; fresh?: string}; explained?: string[]; lo_next?: string;
   fresh?: {status: 'uploading' | 'marking' | 'marked' | 'failed'};
   thread?: Array<{from: 'student' | 'teacher'; text: string; at: number}>; badge?: {issued: boolean; note: string; at: number};
+  /** the teacher's new challenge (30 Oct): which option is right comes only with the student's own answer */
+  challenge?: Challenge;
 }
+/** The Misconception Fingerprint (owner, 30 Oct): what reasoning produced the answer, the evidence, the repair; `ask`
+ *  is Lo's diagnostic question when the paper alone was not enough, `said` the student's answers to it. */
+export interface Fingerprint {
+  reasoning: string; evidence: string[]; misconception: string; intervention: string; ask: string;
+  said?: Array<{ask: string; text: string; at: number}>;
+}
+export interface Challenge { q: string; options: string[]; at: number; reply?: {pick: number; right: boolean; answer: number} }
 export interface Ask { k: number; n: number; ask: string; wrote?: string; answered: boolean }
 export interface Examiner { status: string; asks: Ask[] }
 export interface Still { n: number; t: number | null; asset?: string; step?: string; page?: number }
@@ -46,6 +55,7 @@ export interface Question {
   drawn?: {status: 'drawing' | 'done' | 'failed'; asset?: string; lines?: string[]; changed?: number};
   n: number; result: Result; teacher_result?: Result; marks: number; teacher_marks?: number; out_of: number;
   final_answer: string; steps: Step[]; diagnosis: string; moment_s: number | null; confidence: number; focus?: string;
+  fingerprint?: Fingerprint | null;
   /** the one or two of the seven thinking capabilities its mastery level builds (29 Oct) */
   capabilities?: string[];
   /** a photographed paper: the step (1 for the first) where the thinking went wrong */
@@ -164,8 +174,10 @@ export const witness = {
   parts: (env: WitnessEnv, id: string) => door<{status?: string; size: number; count: number; done: number[]; urls: PartUrl[]}>(env, 'GET', 'sitting/' + id + '/parts'),
   mark: (env: WitnessEnv, id: string, fps: number) => door<{status: string}>(env, 'POST', 'sitting/' + id + '/mark', {fps}),
   paper: (env: WitnessEnv, id: string) => door<Paper>(env, 'GET', 'sitting/' + id),
-  mastery: (env: WitnessEnv, paperId: string, n: number, action: 'event' | 'explain' | 'ask' | 'fresh', body: Record<string, unknown>) =>
-    door<{mastery: Mastery; fresh?: {id: string; put: string}}>(env, 'POST', 'mastery/' + paperId + '/' + n + '/' + action, body),
+  // a challenge's answer is read by Muse Spark before the reply: give it longer
+  mastery: (env: WitnessEnv, paperId: string, n: number, action: 'event' | 'explain' | 'ask' | 'fresh' | 'challenge_answer' | 'diagnose', body: Record<string, unknown>) =>
+    door<{mastery: Mastery; fresh?: {id: string; put: string}; fingerprint?: Fingerprint}>(env, 'POST', 'mastery/' + paperId + '/' + n + '/' + action, body,
+      action === 'challenge_answer' || action === 'diagnose' ? 45000 : undefined),
   check: (env: WitnessEnv, body: Record<string, unknown>) => door<{id: string}>(env, 'POST', 'check', body),
   // a spoken answer is heard (Voice Transcribe) and judged (Muse Spark) before the reply: give it longer
   answer: (env: WitnessEnv, id: string, body: {k: number; audio?: string; mime?: string; text?: string}) =>

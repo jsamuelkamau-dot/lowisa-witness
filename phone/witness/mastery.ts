@@ -11,7 +11,7 @@
 import type {MirrorStorage} from '../state/storage';
 import {readCourseStore} from '../course/store';
 import {createCustomCourse, CustomCourseResult, CustomEnv, MasteryLevelText} from '../paths/custom/course';
-import type {Paper, Question, WitnessEnv} from './net';
+import type {Fingerprint, Paper, Question, WitnessEnv} from './net';
 import {CAPABILITIES, capabilitiesOf, resultOf, witness} from './net';
 
 export {MASTERY_MODEL, MASTERY_DESIGN_PATH, MASTERY_KEY, masteryOfPath} from './metaRoute';
@@ -77,6 +77,8 @@ export function masteryBrief(paper: Paper, q: Question, level?: string): {input:
     'THE QUESTION: question ' + q.n + (paper.title ? ' of "' + paper.title + '"' : '') + (q.final_answer ? ' (the student answered ' + q.final_answer + ')' : '') + '.',
     'HOW THE STUDENT WORKED IT, in the order written:\n' + working,
     'WHERE THE THINKING WENT WRONG: ' + idea,
+    // 30 Oct (owner): the Misconception Fingerprint. The level repairs THIS idea, by its intervention, not the topic
+    ...fingerprintLines(q.fingerprint),
     resultOf(q) === 'right_answer_wrong_thinking' ? 'The final answer was right, but the method was wrong: the level must show why the method fails on a case where it gives the wrong answer.' : '',
     resultOf(q) === 'part_way' ? 'The student started right but did not show (or reach) the whole method: the level must make every step of the thinking visible.' : '',
     q.focus ? 'THE TEACHER\'S FOCUS NOTE: ' + q.focus : '',
@@ -86,6 +88,19 @@ export function masteryBrief(paper: Paper, q: Question, level?: string): {input:
     level ? 'THE STUDENT\'S LEVEL: ' + level : '',
   ].filter(Boolean).join('\n\n');
   return {input, context};
+}
+
+/** The fingerprint for the level's writer: the named idea, the evidence, what the student told Lo, the repair. */
+export function fingerprintLines(f?: Fingerprint | null): string[] {
+  if (!f) return [];
+  const said = (f.said || []).map(x => 'Lo asked "' + x.ask + '"; the student said: "' + x.text + '"').join('\n');
+  return [
+    f.misconception ? 'THE MISCONCEPTION (from the evidence below; the whole level repairs this one idea): ' + f.misconception : '',
+    f.reasoning ? 'THE REASONING THAT PRODUCED THE ANSWER: ' + f.reasoning : '',
+    (f.evidence || []).length ? 'THE EVIDENCE, in the student\'s own words:\n' + (f.evidence || []).join('\n') : '',
+    said ? 'WHAT THE STUDENT TOLD LO:\n' + said : '',
+    f.intervention ? 'THE INTERVENTION (build the lessons around it): ' + f.intervention : '',
+  ].filter(Boolean);
 }
 
 /** The self-check waits at most this long for Muse Wonder's verdict, then the level is kept as written. */

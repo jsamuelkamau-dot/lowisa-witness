@@ -7,7 +7,9 @@
  * sees a verdict here: their marks come when the teacher releases the paper.
  */
 import React, {useEffect, useRef, useState} from 'react';
-import {ActivityIndicator, PermissionsAndroid, Platform, StyleSheet, Text, TextInput, View} from 'react-native';
+import {ActivityIndicator, PermissionsAndroid, Platform, StyleSheet, Text, View} from 'react-native';
+import {C} from '../ui/theme';
+import {SoftInput} from '../ui/SoftInput';
 import {Btn} from '../exam/print/ui';
 import {cancelRecording, readRecording, recorderAvailable, removeRecording, RECORDING_MIME, startRecording, stopRecording} from '../voice/recorder';
 import {Ask, Examiner, witness, WitnessEnv} from './net';
@@ -99,7 +101,7 @@ function AskCard({a, env, paperId, onAnswered}: {a: Ask; env: WitnessEnv; paperI
       ) : (
         <View>
           {recorderAvailable() ? <Btn label="Answer out loud" onPress={record} primary testID={'witness-ask-say-' + a.k} /> : null}
-          <TextInput value={text} onChangeText={setText} placeholder="Or write your answer" multiline maxLength={2000}
+          <SoftInput value={text} onChangeText={setText} placeholder="Or write your answer" multiline maxLength={2000}
             style={s.input} accessibilityLabel={'Your answer to: ' + a.ask} testID={'witness-ask-text-' + a.k} />
           <Btn label="Send my answer" onPress={() => { if (text.trim()) send({text: text.trim()}); else setSaid('Say or write your answer first.'); }} small testID={'witness-ask-send-' + a.k} />
         </View>
@@ -110,16 +112,16 @@ function AskCard({a, env, paperId, onAnswered}: {a: Ask; env: WitnessEnv; paperI
 }
 
 const s = StyleSheet.create({
-  card: {backgroundColor: '#fff', borderRadius: 12, padding: 14, marginTop: 12, borderWidth: 1, borderColor: '#e6e8ef'},
-  h: {fontSize: 17, fontWeight: '700', color: '#141a2e'},
-  sub: {fontSize: 14, color: '#4a5266', marginTop: 4, lineHeight: 20},
-  small: {fontSize: 13, color: '#4a5266', marginTop: 6},
-  ask: {marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#eef0f5'},
-  q: {fontSize: 16, fontWeight: '600', color: '#141a2e', lineHeight: 22},
+  card: {backgroundColor: C.surface, borderRadius: 12, padding: 14, marginTop: 12, borderWidth: 1, borderColor: C.lineSolid},
+  h: {fontSize: 17, fontWeight: '700', color: C.ink},
+  sub: {fontSize: 14, color: C.inkSoft, marginTop: 4, lineHeight: 20},
+  small: {fontSize: 13, color: C.inkSoft, marginTop: 6},
+  ask: {marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.lineSolid},
+  q: {fontSize: 16, fontWeight: '600', color: C.ink, lineHeight: 22},
   wrote: {fontFamily: 'monospace', fontSize: 14, color: '#1b2a6b', backgroundColor: '#f4efe2', padding: 8, borderRadius: 6, marginTop: 8, marginBottom: 8, overflow: 'hidden'},
-  input: {borderWidth: 1, borderColor: '#d6d9e3', borderRadius: 8, padding: 10, marginTop: 10, marginBottom: 6, minHeight: 60, fontSize: 15, color: '#141a2e', textAlignVertical: 'top'},
+  input: {borderWidth: 1, borderColor: C.lineSolid, borderRadius: 8, padding: 10, marginTop: 10, marginBottom: 6, minHeight: 60, fontSize: 15, color: C.ink, textAlignVertical: 'top'},
   row: {flexDirection: 'row', alignItems: 'center', marginTop: 8},
-  live: {fontSize: 14, color: '#b3261e', fontWeight: '600', marginBottom: 8},
-  done: {fontSize: 15, color: '#2e7d32', fontWeight: '600', marginBottom: 8},
-  error: {fontSize: 14, color: '#b3261e', marginTop: 8},
+  live: {fontSize: 14, color: C.pink, fontWeight: '600', marginBottom: 8},
+  done: {fontSize: 15, color: C.teal, fontWeight: '600', marginBottom: 8},
+  error: {fontSize: 14, color: C.pink, marginTop: 8},
 });

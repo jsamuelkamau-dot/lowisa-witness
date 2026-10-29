@@ -58,14 +58,15 @@ prompt(Sitting) ->
         "- the diagnosis is ONE plain sentence naming the exact misconception, never just \"wrong\"; empty when mastered;\n"
         "- \"slip\" is the number of the step (1 for the first) where the thinking went wrong; null when mastered;\n"
         "- \"capabilities\": for every question that is not mastered, the one or two of these seven thinking capabilities\n"
-        "  its mastery work should build, by name: ", capability_list(), "; empty when mastered;\n"
+        "  its mastery work should build, by name: ", capability_list(), "; empty when mastered;\n",
+        witness_mark:fingerprint_rule(),
         "- confidence is how sure you are of the result, 0 to 1.\n"
         "Return JSON only:\n"
         "{\"student\":{\"name\":\"...\",\"class\":\"...\",\"number\":\"...\",\"date\":\"...\",\"name_note\":\"\"},"
         "\"questions\":[{\"n\":1,\"printed\":{\"page\":1,\"box\":[0,0,0,0]},\"final_answer\":\"...\","
         "\"steps\":[{\"wrote\":\"...\",\"crossed_out\":false,\"page\":1,\"box\":[0,0,0,0]}],"
         "\"result\":\"mastered|right_answer_wrong_thinking|part_way|not_yet\",\"marks\":0,\"out_of\":2,\"diagnosis\":\"...\","
-        "\"slip\":null,\"capabilities\":[\"...\"],\"confidence\":0.9}]}"]).
+        "\"slip\":null,\"capabilities\":[\"...\"],", witness_mark:fingerprint_json(), "\"confidence\":0.9}]}"]).
 
 capability_list() -> lists:join(", ", witness_mark:capabilities()).
 

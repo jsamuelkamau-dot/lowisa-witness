@@ -3,7 +3,7 @@
 -behaviour(witness_host).
 -export([meta_key/0, put_url/4, get_url/2, drop_clip/2, save/3, load/2, list/2, spend/3, run/1, marker/0, checker/0, design/2, judger/0,
          put_asset/4, asset_url/2, stiller/0, examiner/0, answer_judge/0, drawer/0, hearer/0, open_engine/0, open_marker/0, retry_waits/0, cropper/0, painter/0, parts_start/3, part_url/4, parts_done/3, parts_finish/4,
-         reader/0, patterner/0, recommender/0, clipper/0, clip_tag/2]).
+         reader/0, patterner/0, recommender/0, clipper/0, clip_tag/2, suggester/0, challenge_judger/0, fingerprinter/0]).
 
 %% An in-memory host: rows and events in an ets table, marking run at once, a canned marker.
 meta_key() -> <<"test-key">>.
@@ -82,6 +82,12 @@ patterner() -> fun(<<"test-key">>, Exam, Items) -> ev({patterns, Exam, Items}),
     {ok, #{patterns => [#{idea => <<"Cancels digits">>, students => [<<"Amara">>], questions => [3], turned_around => 0, reteach => <<"r">>}],
            tomorrow => <<"t">>, next_exam => [#{text => <<"Simplify 18/48">>, marks => 2}]}, 0.05} end.
 recommender() -> fun(<<"test-key">>, Q) -> ev({recommend, maps:get(question, Q, none)}), {ok, #{recommend => <<"issue">>, why => <<"The fresh question was right.">>, missing => <<>>}, 0.004} end.
+suggester() -> fun(<<"test-key">>, Q, Note) -> ev({suggest, maps:get(question, Q, none), Note}),
+                   {ok, #{q => <<"Simplify 18/72">>, options => [<<"1/4">>, <<"1/2">>, <<"8/7">>], answer => 0, checks => <<"Divides by a common factor.">>}, 0.003} end.
+challenge_judger() -> fun(<<"test-key">>, _Q, {Pick, Why}) -> ev({judge_challenge, Pick, Why}), {ok, #{understood => true, why => <<"Divides by 18.">>}, 0.001} end.
+fingerprinter() -> fun(<<"test-key">>, Q, Text) -> ev({fingerprint, maps:get(question, Q, none), Text}),
+                       {ok, #{reasoning => <<"Halves $100 both times.">>, evidence => [<<"said: half of 100 both times">>],
+                              misconception => <<"takes the second percentage of the original amount">>, intervention => <<"Find the base.">>, ask => <<>>}, 0.002} end.
 clipper() -> fun(Url, From, Secs) -> case on(clips) of true -> ev({clip, Url, From, Secs}), {ok, <<"mp4clip">>}; false -> {error, off} end end.
 clip_tag(_Uid, _Id) -> case on(cache) of true -> {ok, <<"etag-same-video">>}; false -> {error, off} end.
 
@@ -776,3 +782,75 @@ a_long_video_goes_up_in_parts_and_resumes_test() ->
     save(<<"u1">>, {sitting, Id2}, Row#{created_ms => maps:get(created_ms, Row) - 1300000}),
     ?assertMatch({200, #{status := <<"uploading">>}}, r(<<"GET">>, [<<"sitting">>, Id2], #{}, <<"u1">>)).
 
+
+%% 30 Oct (owner): after the level, the teacher sends a new challenge (the same idea, a new situation) and the student
+%% answers it on the phone with a reason; Spark drafts it for the teacher and reads the reason, for the teacher only
+the_teacher_sends_a_new_challenge_and_the_student_answers_it_test() ->
+    setup(),
+    {_P, S} = released_paper(#{questions => [q(1, <<"mastered">>, 0.9), q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
+    M = fun(Who, Action, Body) -> r(<<"POST">>, [<<"mastery">>, S, <<"3">>, Action], Body, Who) end,
+    %% nothing set yet: the student cannot answer
+    ?assertMatch({400, #{code := <<"not_asked">>}}, M(<<"stud">>, <<"challenge_answer">>, #{<<"pick">> => 0, <<"why">> => <<"x">>})),
+    %% Spark drafts one for the teacher; nothing is kept until the teacher sends it
+    {200, #{suggestion := #{q := <<"Simplify 18/72">>, answer := 0}, mastery := TV0}} = M(<<"teacher">>, <<"challenge_suggest">>, #{<<"note">> => <<"bigger numbers">>}),
+    ?assertNot(maps:is_key(challenge, TV0)),
+    ?assert(lists:member({suggest, <<"Simplify 16/64">>, <<"bigger numbers">>}, events())),
+    ?assert(lists:member({spend, <<"teacher">>, <<"witness_challenge">>, 0.003}, events())),
+    ?assertMatch({403, _}, M(<<"stud">>, <<"challenge_suggest">>, #{})),
+    ?assertMatch({403, _}, M(<<"stud">>, <<"challenge">>, #{<<"q">> => <<"x">>, <<"options">> => [<<"a">>, <<"b">>], <<"answer">> => 0})),
+    %% a challenge needs a question, 2 to 5 different options and the right one
+    ?assertMatch({400, #{code := <<"bad_challenge">>}}, M(<<"teacher">>, <<"challenge">>, #{<<"q">> => <<"x">>, <<"options">> => [<<"a">>], <<"answer">> => 0})),
+    ?assertMatch({400, #{code := <<"bad_challenge">>}}, M(<<"teacher">>, <<"challenge">>, #{<<"q">> => <<"x">>, <<"options">> => [<<"a">>, <<"A">>], <<"answer">> => 0})),
+    ?assertMatch({400, #{code := <<"bad_challenge">>}}, M(<<"teacher">>, <<"challenge">>, #{<<"q">> => <<"x">>, <<"options">> => [<<"a">>, <<"b">>], <<"answer">> => 2})),
+    ?assertMatch({400, #{code := <<"empty">>}}, M(<<"teacher">>, <<"challenge">>, #{<<"q">> => <<" ">>, <<"options">> => [<<"a">>, <<"b">>], <<"answer">> => 0})),
+    Water = #{<<"q">> => <<"A town starts with 1,000 litres of stored water. The supply falls by 30%, then rises by 30%. How much water is there?">>,
+              <<"options">> => [<<"910 litres">>, <<"1,000 litres">>, <<"1,090 litres">>], <<"answer">> => 0},
+    {200, _} = M(<<"teacher">>, <<"challenge">>, Water),
+    %% the student sees the question and the options, never which is right before answering
+    {200, #{mastery := #{challenge := SC}}} = M(<<"stud">>, <<"ask">>, #{<<"text">> => <<"hi">>}),
+    ?assertMatch(#{options := [<<"910 litres">>, _, _]}, SC),
+    ?assertNot(maps:is_key(answer, SC)),
+    ?assertMatch({400, #{code := <<"bad_pick">>}}, M(<<"stud">>, <<"challenge_answer">>, #{<<"pick">> => 3, <<"why">> => <<"x">>})),
+    ?assertMatch({400, #{code := <<"empty">>}}, M(<<"stud">>, <<"challenge_answer">>, #{<<"pick">> => 0, <<"why">> => <<"">>})),
+    ?assertNot(lists:keymember(judge_challenge, 1, events())),                  %% a refused answer never reaches a model
+    Why = <<"30% of 1,000 is 300, so 700. Then 30% of 700 is only 210, so 910.">>,
+    {200, #{mastery := #{challenge := #{reply := Rp}} = SV}} = M(<<"stud">>, <<"challenge_answer">>, #{<<"pick">> => 0, <<"why">> => Why}),
+    ?assertEqual(#{pick => 0, right => true, answer => 0}, Rp),
+    ?assertNot(maps:is_key(recommendation, SV)),
+    ?assert(lists:member({judge_challenge, 0, Why}, events())),
+    ?assertMatch({400, #{code := <<"answered">>}}, M(<<"stud">>, <<"challenge_answer">>, #{<<"pick">> => 1, <<"why">> => <<"again">>})),
+    %% the teacher reads the answer, the reason and Spark's reading of it
+    {ok, Row} = load(<<"teacher">>, {sitting, S}),
+    [Q3] = [Q || Q = #{n := 3} <- maps:get(questions, maps:get(result, Row))],
+    ?assertMatch(#{challenge := #{reply := #{pick := 0, right := true, why := Why, verdict := #{understood := true}}}}, maps:get(mastery, Q3)),
+    %% and Spark's badge recommendation is given it
+    ?assertNotEqual(nomatch, binary:match(witness_recommend:prompt(Q3), <<"answered right, saying">>)),
+    %% a new challenge replaces the last; the last is kept
+    {200, _} = M(<<"teacher">>, <<"challenge">>, Water#{<<"q">> => <<"A shop raises a price by 20%, then cuts it by 20%. What happens?">>}),
+    {ok, Row2} = load(<<"teacher">>, {sitting, S}),
+    [Q3b] = [Q || Q = #{n := 3} <- maps:get(questions, maps:get(result, Row2))],
+    ?assertMatch(#{challenge := #{q := <<"A shop raises", _/binary>>}, past := [#{reply := _}]}, maps:get(mastery, Q3b)),
+    %% a mastered question has nothing to challenge
+    ?assertMatch({400, #{code := <<"not_to_master">>}}, r(<<"POST">>, [<<"mastery">>, S, <<"1">>, <<"challenge">>], Water, <<"teacher">>)).
+
+%% 30 Oct (owner): the Misconception Fingerprint. When the paper was not enough evidence, Lo asks one diagnostic
+%% question in the Mastery Plan; the answer is read by Spark with the ink and completes the fingerprint
+lo_asks_when_the_paper_is_not_enough_evidence_test() ->
+    setup(),
+    Fp = #{reasoning => <<"An intuition with no numbers.">>, evidence => [<<"Half up, half down. Same price.">>], misconception => <<>>,
+           intervention => <<>>, ask => <<"You wrote half up, half down. Half of what, each time?">>},
+    {_P, S} = released_paper(#{questions => [(q(3, <<"not_yet">>, 0.9))#{fingerprint => Fp}], pauses => [], lines => [], cost_usd => 0.0}),
+    M = fun(Who, Body) -> r(<<"POST">>, [<<"mastery">>, S, <<"3">>, <<"diagnose">>], Body, Who) end,
+    ?assertMatch({400, #{code := <<"empty">>}}, M(<<"stud">>, #{<<"text">> => <<" ">>})),
+    ?assertNot(lists:keymember(fingerprint, 1, events())),
+    ?assertMatch({403, _}, M(<<"teacher">>, #{<<"text">> => <<"x">>})),
+    {200, #{fingerprint := F}} = M(<<"stud">>, #{<<"text">> => <<"Half of 100, both times.">>}),
+    ?assertMatch(#{misconception := <<"takes the second percentage of the original amount">>, ask := <<>>,
+                   said := [#{ask := <<"You wrote half up, half down. Half of what, each time?">>, text := <<"Half of 100, both times.">>}]}, F),
+    ?assert(lists:member({fingerprint, <<"Simplify 16/64">>, <<"Half of 100, both times.">>}, events())),
+    ?assert(lists:member({spend, <<"teacher">>, <<"witness_fingerprint">>, 0.002}, events())),
+    %% the teacher's paper carries it; Lo asks no more
+    {ok, Row} = load(<<"teacher">>, {sitting, S}),
+    [Q3] = [Q || Q = #{n := 3} <- maps:get(questions, maps:get(result, Row))],
+    ?assertMatch(#{fingerprint := #{misconception := <<"takes the second percentage", _/binary>>}}, Q3),
+    ?assertMatch({400, #{code := <<"not_asked">>}}, M(<<"stud">>, #{<<"text">> => <<"again">>})).

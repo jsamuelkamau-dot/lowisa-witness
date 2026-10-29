@@ -18,7 +18,8 @@
 %%%     thread => [#{from => student | teacher, text, at}],
 %%%     activity => [#{title, right, asked, at}] (each lesson of the level the student finished),
 %%%     recommendation => #{recommend => issue | not_yet, why, at} (Muse Spark's, for the teacher only),
-%%%     badge => #{issued, note, at}}
+%%%     badge => #{issued, note, at},
+%%%     challenge, past (the teacher's new challenge: witness_challenge)}
 %%%
 %%% Every function here is pure: a question in, the question changed (or a refusal) out. witness_api does the reading,
 %%% saving and checking who may do what.
@@ -182,7 +183,8 @@ view(Q, student) ->
         _ -> #{}
     end,
     Fresh = case M of #{fresh := #{status := FS}} -> #{fresh => #{status => FS}}; _ -> #{} end,     %% the marks are the teacher's to give
-    maps:merge(maps:merge((maps:with([status, path, asks, thread, badge, world], M))#{explained => maps:keys(Explain)}, LoNext), Fresh).
+    maps:merge(maps:merge(maps:merge((maps:with([status, path, asks, thread, badge, world], M))#{explained => maps:keys(Explain)}, LoNext), Fresh),
+               witness_challenge:view(M)).
 
 %% Spark judges an explanation back to Lo against the diagnosis: the idea in the student's own words, not the lesson's.
 judge_prompt(Q, Text) ->

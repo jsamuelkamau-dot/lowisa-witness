@@ -5,6 +5,7 @@
  */
 import React, {useEffect, useRef, useState} from 'react';
 import {ActivityIndicator, PermissionsAndroid, Platform, Pressable, StyleSheet, Text, View} from 'react-native';
+import {C} from '../ui/theme';
 import {cancelRecording, readRecording, recorderAvailable, removeRecording, RECORDING_MIME, startRecording, stopRecording} from '../voice/recorder';
 
 /** An explanation is a few sentences; the recording stops on its own after this. */
@@ -62,11 +63,11 @@ export function SayIt({onAudio, label, testID}: {onAudio(audio: string, mime: st
 const s = StyleSheet.create({
   wrap: {marginTop: 6},
   row: {flexDirection: 'row', alignItems: 'center'},
-  btn: {borderWidth: 1, borderColor: '#1d4ed8', borderRadius: 10, paddingVertical: 9, paddingHorizontal: 12, alignSelf: 'flex-start', marginTop: 4},
-  btnText: {color: '#1d4ed8', fontWeight: '700', fontSize: 14},
-  main: {backgroundColor: '#1d4ed8'},
-  mainText: {color: '#ffffff', fontWeight: '700', fontSize: 14},
-  live: {color: '#b91c1c', fontWeight: '700', marginTop: 4},
-  small: {color: '#475569', fontSize: 12, marginTop: 4},
-  err: {color: '#b91c1c', fontSize: 13, marginTop: 4},
+  btn: {borderWidth: 1, borderColor: C.brand, borderRadius: 10, paddingVertical: 9, paddingHorizontal: 12, alignSelf: 'flex-start', marginTop: 4},
+  btnText: {color: C.brand, fontWeight: '700', fontSize: 14},
+  main: {backgroundColor: C.brandFill},
+  mainText: {color: C.onFill, fontWeight: '700', fontSize: 14},
+  live: {color: C.pink, fontWeight: '700', marginTop: 4},
+  small: {color: C.inkSoft, fontSize: 12, marginTop: 4},
+  err: {color: C.pink, fontSize: 13, marginTop: 4},
 });

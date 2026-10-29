@@ -6,6 +6,7 @@
  */
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, Image, Pressable, StyleSheet, Text, View} from 'react-native';
+import {C} from '../ui/theme';
 import {witness, WitnessEnv} from './net';
 
 export function OwnStep({env, paperId, n, onGo}: {env: WitnessEnv; paperId: string; n: number; onGo(shown: boolean): void}): React.JSX.Element {
@@ -32,11 +33,11 @@ export function OwnStep({env, paperId, n, onGo}: {env: WitnessEnv; paperId: stri
 }
 
 const s = StyleSheet.create({
-  wrap: {flex: 1, padding: 20, justifyContent: 'center', backgroundColor: '#eef2fb'},
-  eyebrow: {fontSize: 13, fontWeight: '800', letterSpacing: 1, color: '#1d4ed8', marginBottom: 12},
-  picture: {width: '100%', height: 220, borderRadius: 12, backgroundColor: '#ffffff'},
-  sub: {fontSize: 16, color: '#0f172a', marginTop: 14},
+  wrap: {flex: 1, padding: 20, justifyContent: 'center', backgroundColor: C.brandWash},
+  eyebrow: {fontSize: 13, fontWeight: '800', letterSpacing: 1, color: C.brand, marginBottom: 12},
+  picture: {width: '100%', height: 220, borderRadius: 12, backgroundColor: C.surface},
+  sub: {fontSize: 16, color: C.ink, marginTop: 14},
   world: {width: '100%', height: 180, borderRadius: 12, marginTop: 10},
-  go: {marginTop: 18, backgroundColor: '#1d4ed8', borderRadius: 14, paddingVertical: 14, alignItems: 'center'},
-  goText: {color: '#ffffff', fontSize: 17, fontWeight: '700'},
+  go: {marginTop: 18, backgroundColor: C.brandFill, borderRadius: 14, paddingVertical: 14, alignItems: 'center'},
+  goText: {color: C.onFill, fontSize: 17, fontWeight: '700'},
 });

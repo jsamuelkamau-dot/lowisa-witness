@@ -8,6 +8,7 @@
  */
 import React, {useEffect, useRef, useState} from 'react';
 import {ActivityIndicator, Image, StyleSheet, Text, View} from 'react-native';
+import {C} from '../ui/theme';
 import {WebView} from 'react-native-webview';
 import {Btn} from '../exam/print/ui';
 import {Proof, Question, RESULT_WORDS, Step, witness, WitnessEnv} from './net';
@@ -156,23 +157,23 @@ export function ProofView({env, paperId}: {env: WitnessEnv; paperId: string}): R
 }
 
 const s = StyleSheet.create({
-  card: {backgroundColor: '#fff', borderRadius: 12, padding: 14, marginTop: 12, borderWidth: 1, borderColor: '#e6e8ef'},
-  h: {fontSize: 17, fontWeight: '700', color: '#141a2e'},
-  sub: {fontSize: 14, color: '#4a5266', marginTop: 4, lineHeight: 20},
-  meta: {fontSize: 13, color: '#6b7389', marginTop: 4},
-  block: {marginTop: 14, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#eef0f5'},
-  qh: {fontSize: 15, fontWeight: '700', color: '#141a2e'},
-  q: {fontSize: 14, fontWeight: '600', color: '#141a2e'},
+  card: {backgroundColor: C.surface, borderRadius: 12, padding: 14, marginTop: 12, borderWidth: 1, borderColor: C.lineSolid},
+  h: {fontSize: 17, fontWeight: '700', color: C.ink},
+  sub: {fontSize: 14, color: C.inkSoft, marginTop: 4, lineHeight: 20},
+  meta: {fontSize: 13, color: C.inkSoft, marginTop: 4},
+  block: {marginTop: 14, paddingTop: 10, borderTopWidth: 1, borderTopColor: C.lineSolid},
+  qh: {fontSize: 15, fontWeight: '700', color: C.ink},
+  q: {fontSize: 14, fontWeight: '600', color: C.ink},
   stepRow: {flexDirection: 'row', alignItems: 'baseline', marginTop: 4, paddingLeft: 6, borderLeftWidth: 3, borderLeftColor: 'transparent'},
-  slipRow: {borderLeftColor: '#d9a441', backgroundColor: '#fdf6e8'},
-  time: {width: 44, fontSize: 12, color: '#6b7389', fontVariant: ['tabular-nums']},
-  step: {flex: 1, fontFamily: 'monospace', fontSize: 14, color: '#1b2a6b'},
-  crossed: {textDecorationLine: 'line-through', color: '#8a90a2'},
-  diag: {fontSize: 14, color: '#1f1e1c', marginTop: 6, lineHeight: 20},
-  comment: {fontSize: 14, color: '#141a2e', marginTop: 6, fontStyle: 'italic'},
+  slipRow: {borderLeftColor: C.amber, backgroundColor: C.amberWash},
+  time: {width: 44, fontSize: 12, color: C.inkSoft, fontVariant: ['tabular-nums']},
+  step: {flex: 1, fontFamily: 'monospace', fontSize: 14, color: C.ink},
+  crossed: {textDecorationLine: 'line-through', color: C.inkFaint},
+  diag: {fontSize: 14, color: C.ink, marginTop: 6, lineHeight: 20},
+  comment: {fontSize: 14, color: C.ink, marginTop: 6, fontStyle: 'italic'},
   picture: {width: '100%', aspectRatio: 1, marginTop: 10, borderRadius: 8, backgroundColor: '#f4efe2'},
   clip: {width: '100%', height: 320, marginTop: 8, borderRadius: 8, overflow: 'hidden', backgroundColor: '#000'},
-  turned: {fontSize: 14, color: '#166534', marginTop: 8, fontWeight: '600'},
-  foot: {fontSize: 12, color: '#6b7389', marginTop: 14, lineHeight: 18},
-  error: {fontSize: 14, color: '#b3261e', marginTop: 12},
+  turned: {fontSize: 14, color: C.teal, marginTop: 8, fontWeight: '600'},
+  foot: {fontSize: 12, color: C.inkSoft, marginTop: 14, lineHeight: 18},
+  error: {fontSize: 14, color: C.pink, marginTop: 12},
 });

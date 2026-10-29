@@ -508,7 +508,7 @@ route(<<"POST">>, [<<"mastery">>, Sid, NBin, Action], B, Uid, Host) ->
             %% 28 Oct, live: a teacher who sits their own exam (one account, both sides) was refused every student step;
             %% the steps a student takes are theirs when they are this paper's student, the teacher's steps the owner's
             IsStudent = maps:get(student_uid, Row, undefined) =:= Uid,
-            Role = case {Owner =:= Uid, IsStudent, lists:member(Action, [<<"fresh">>, <<"event">>, <<"explain">>, <<"ask">>])} of
+            Role = case {Owner =:= Uid, IsStudent, lists:member(Action, [<<"fresh">>, <<"event">>, <<"explain">>, <<"ask">>, <<"challenge_answer">>, <<"diagnose">>])} of
                        {_, true, true} -> student;
                        {true, _, _} -> teacher;
                        {false, true, _} -> student;
@@ -532,6 +532,9 @@ route(<<"POST">>, [<<"mastery">>, Sid, NBin, Action], B, Uid, Host) ->
                         {student, <<"explain">>} -> explain_step(Q, B, #{owner => Owner, sid => Sid, n => N}, Host);
                         {teacher, <<"approve">>} -> witness_mastery:approve(Q, now_ms());
                         {teacher, <<"recommend">>} -> recommend_step(Q, Row, Owner, Host);
+                        {teacher, <<"challenge_suggest">>} -> suggest_step(Q, Row, Owner, B, Host);
+                        {student, <<"challenge_answer">>} -> challenge_step(Q, B, Owner, Host);
+                        {student, <<"diagnose">>} -> diagnose_step(Q, B, Owner, Row, Host);
                         _ -> mastery_step(Role, Action, Q, B, Host)
                     end,
                     case Step of
@@ -653,6 +656,69 @@ recommend_step(Q, Row, Owner, Host) ->
             end
     end.
 
+%% 30 Oct (owner): the teacher's new challenge. Muse Spark drafts one for the teacher to edit (nothing is kept until the
+%% teacher sends it); the student's answer is checked first and only then is its reason read by Spark, for the teacher.
+suggest_step(Q, Row, Owner, B, Host) ->
+    case {witness_mastery:needs(Q), Host:meta_key()} of
+        {false, _} -> {error, not_to_master};
+        {_, undefined} -> {error, not_configured};
+        {true, Key} ->
+            Note = clean(maps:get(<<"note">>, B, <<>>), 300),
+            case again(Host, fun() -> (suggester(Host))(Key, Q#{question => question_text(Q, Row, Owner, Host)}, Note) end) of
+                {ok, S, Cost} -> Host:spend(Owner, <<"witness_challenge">>, Cost), {Q, #{suggestion => S}};
+                {error, W} -> case busy(W) of true -> {error, busy}; false -> {error, no_suggestion} end;
+                _ -> {error, no_suggestion}
+            end
+    end.
+
+challenge_step(Q, B, Owner, Host) ->
+    case witness_challenge:answer(Q, B, undefined, now_ms()) of
+        {error, _} = E -> E;
+        Q0 ->
+            Reply = maps:get(reply, maps:get(challenge, maps:get(mastery, Q0))),
+            Verdict = case Host:meta_key() of
+                undefined -> undefined;
+                Key ->
+                    case catch (challenge_judger(Host))(Key, Q, {maps:get(pick, Reply), maps:get(why, Reply)}) of
+                        {ok, V, Cost} -> Host:spend(Owner, <<"witness_challenge">>, Cost), V;
+                        _ -> undefined
+                    end
+            end,
+            witness_challenge:answer(Q, B, Verdict, maps:get(at, Reply))
+    end.
+
+%% 30 Oct (owner): the Misconception Fingerprint. When the paper alone was not enough evidence, Lo asked one diagnostic
+%% question; the student's answer (written, or spoken and written down) is read by Muse Spark with the ink. Nothing
+%% reaches a model unless Lo is still asking; a model that fails keeps their words and the level still builds.
+diagnose_step(Q, B, Owner, Row, Host) ->
+    case witness_fingerprint:pending(Q) of
+        false -> {error, not_asked};
+        true ->
+            case heard(Owner, B, Host) of
+                {error, _} = E -> E;
+                {<<>>, _} -> {error, empty};
+                {Text, _Spoken} ->
+                    Read = case Host:meta_key() of
+                        undefined -> undefined;
+                        Key ->
+                            case catch (fingerprinter(Host))(Key, Q#{question => question_text(Q, Row, Owner, Host)}, Text) of
+                                {ok, F, Cost} -> Host:spend(Owner, <<"witness_fingerprint">>, Cost), F;
+                                _ -> undefined
+                            end
+                    end,
+                    case witness_fingerprint:answer(Q, Text, Read, now_ms()) of
+                        {error, _} = E -> E;
+                        Q1 -> {Q1, #{fingerprint => maps:get(fingerprint, Q1)}}
+                    end
+            end
+    end.
+
+question_text(Q, Row, Owner, Host) ->
+    case Host:load(Owner, {pile, maps:get(pile, Row, <<>>)}) of
+        {ok, P} -> hd([maps:get(text, X, <<>>) || X <- maps:get(questions, P, []), is_map(X), maps:get(n, X, -1) =:= maps:get(n, Q)] ++ [<<>>]);
+        none -> <<>>
+    end.
+
 %% The recording of a spoken answer, kept beside the paper for the teacher (its name in Into's `audio`).
 keep_audio(_Owner, _Sid, _Name, false, _B, _Host, Into) -> Into;
 keep_audio(Owner, Sid, Name, true, B, Host, Into) ->
@@ -687,6 +753,7 @@ turned(Q) -> maps:get(status, maps:get(mastery, Q, #{}), <<>>) =:= <<"badge">>.
 mastery_step(student, <<"ask">>, Q, B, _Host) ->
     witness_mastery:ask(Q, maps:get(<<"text">>, B, <<>>), now_ms(), case maps:get(<<"where">>, B, <<>>) of W when is_binary(W) -> W; _ -> <<>> end);
 mastery_step(teacher, <<"verify">>, Q, B, _Host) -> witness_mastery:verify(Q, B);
+mastery_step(teacher, <<"challenge">>, Q, B, _Host) -> witness_challenge:set(Q, B, now_ms());
 mastery_step(teacher, <<"reply">>, Q, B, _Host) -> witness_mastery:reply(Q, maps:get(<<"text">>, B, <<>>), now_ms());
 mastery_step(teacher, <<"badge">>, Q, B, _Host) ->
     witness_mastery:badge(Q, maps:get(<<"issue">>, B, false) =:= true, #{note => maps:get(<<"note">>, B, <<>>), at => now_ms()});
@@ -705,6 +772,10 @@ mastery_words(empty) -> <<"Write something first.">>;
 mastery_words(not_to_master) -> <<"This question was mastered already.">>;
 mastery_words(not_completed) -> <<"Turned around opens once the student has finished the level: every lesson's questions and the flashcards.">>;
 mastery_words(not_held) -> <<"This level already reached the student.">>;
+mastery_words(bad_challenge) -> <<"A challenge needs a question, 2 to 5 different options and the right one marked.">>;
+mastery_words(answered) -> <<"You've answered this challenge. Your teacher has it.">>;
+mastery_words(bad_pick) -> <<"Pick one of the answers first.">>;
+mastery_words(no_suggestion) -> <<"Couldn't draft a challenge this time. Try again, or write your own.">>;
 mastery_words(_) -> <<"That can't be done here.">>.
 
 %% The fresh question on paper: a sitting of one question in the teacher's store, pointing back at the question it
@@ -886,6 +957,9 @@ painter(Host) -> seam(Host, painter, fun witness_meta:image/2).
 reader(Host) -> seam(Host, reader, fun witness_read:run/3).
 patterner(Host) -> seam(Host, patterner, fun witness_patterns:run/3).
 recommender(Host) -> seam(Host, recommender, fun witness_recommend:run/2).
+suggester(Host) -> seam(Host, suggester, fun witness_challenge:suggest/3).
+fingerprinter(Host) -> seam(Host, fingerprinter, fun witness_fingerprint:run/3).
+challenge_judger(Host) -> seam(Host, challenge_judger, fun witness_challenge:judge/3).
 clipper(Host) -> seam(Host, clipper, case witness_media:available() of true -> fun witness_media:clip/3; false -> fun(_, _, _) -> {error, no_ffmpeg} end end).
 photo_marker(Host) -> seam(Host, photo_marker, fun witness_photo:mark/3).
 regioner(Host) -> seam(Host, regioner, case witness_media:available() of true -> fun witness_media:region/2; false -> fun(_, _) -> {error, no_ffmpeg} end end).

@@ -16,7 +16,8 @@
 %%%   needs_level(Q) -> boolean              every question not mastered goes to the Mastery Plan
 %%%-------------------------------------------------------------------
 -module(witness_mark).
--export([fit/2, unsure/1, reconcile/2, decide/4, split/1, prompt/1, parse/1, needs_level/1, results/0, capabilities/0]).
+-export([fit/2, unsure/1, reconcile/2, decide/4, split/1, prompt/1, parse/1, needs_level/1, results/0, capabilities/0,
+         fingerprint_rule/0, fingerprint_json/0]).
 
 %% 27 Oct, emulator: a video of no paper at all (the camera pointed at a picture) was marked "to master" on every
 %% question at 20% sure, so each would have become a mastery level for a paper nobody filmed. A video that does not
@@ -37,6 +38,46 @@ results() -> [<<"mastered">>, <<"right_answer_wrong_thinking">>, <<"part_way">>,
 %% question in the Mastery Plan names the one or two its level builds.
 capabilities() -> [<<"Pattern Recognition">>, <<"Probability & Uncertainty">>, <<"Optimization">>, <<"Systems Thinking">>,
                    <<"Trade-offs">>, <<"Decision-Making">>, <<"Root Cause Analysis">>].
+
+%% 30 Oct (owner): the Misconception Fingerprint. Not only whether the answer is right, but what reasoning produced it,
+%% what evidence on the paper supports the diagnosis, and which intervention can repair it. A misconception is named
+%% only when the student's own ink holds enough evidence for it; otherwise Lo asks one diagnostic question first.
+fingerprint_rule() ->
+    "- \"fingerprint\", for every question that is not mastered (null when mastered). The same wrong answer can come from\n"
+    "  different wrong ideas, and each needs a different repair, so read WHICH idea from the ink alone:\n"
+    "  \"reasoning\" is the reasoning that produced this answer, in one sentence; \"evidence\" is the student's own lines\n"
+    "  that show it, copied exactly as written; \"misconception\" is a short name for the wrong idea that evidence shows,\n"
+    "  and ONLY what it shows. For example, combining the percentages themselves (\"+50% - 50% = 0%\") is one idea;\n"
+    "  working the numbers but taking the second change of the original amount (\"150 - 50 = 100\") is another; a stated\n"
+    "  intuition with no numbers (\"half up, half down, same price\") shows only that the steps were never worked out,\n"
+    "  not which calculation the student believes. Never name an idea the ink does not show; a bare answer names none.\n"
+    "  \"intervention\" repairs THAT idea only, never a re-teach of the whole method (one or two sentences a tutor can\n"
+    "  act on): for combining the percentages, two changes on different starting amounts and predicting what happens\n"
+    "  when the order changes; for the wrong base, only finding which amount the second change is of; for an\n"
+    "  intuition, writing each step as numbers. \"ask\" is ONE short diagnostic question for the student, about their own\n"
+    "  words, whenever the ink does not show which calculation lies behind the answer (a bare answer, an intuition with\n"
+    "  no numbers, working that fits two ideas); it never gives the right answer away; otherwise \"ask\" is empty.\n".
+
+fingerprint_json() ->
+    "\"fingerprint\":{\"reasoning\":\"...\",\"evidence\":[\"...\"],\"misconception\":\"...\",\"intervention\":\"...\",\"ask\":\"\"},".
+
+%% The fingerprint as kept: a named misconception needs evidence; with neither, Lo asks. A named one may still carry a
+%% question, when the ink shows the idea but not the calculation behind it (an intuition with no numbers).
+fingerprint(<<"mastered">>, _) -> null;
+fingerprint(_, #{} = F) ->
+    Evidence = [E || E <- [str(X) || X <- list(maps:get(<<"evidence">>, F, []))], E =/= <<>>],
+    Named = str(maps:get(<<"misconception">>, F, <<>>)),
+    Ask = str(maps:get(<<"ask">>, F, <<>>)),
+    Talk = <<"Talk me through how you got your answer, step by step.">>,
+    {M, A} = case {Named, Evidence, Ask} of
+        {_, [], <<>>} -> {<<>>, Talk};
+        {_, [], _} -> {<<>>, Ask};
+        {<<>>, _, <<>>} -> {<<>>, Talk};
+        _ -> {Named, Ask}
+    end,
+    #{reasoning => str(maps:get(<<"reasoning">>, F, <<>>)), evidence => lists:sublist(Evidence, 4), misconception => M,
+      intervention => str(maps:get(<<"intervention">>, F, <<>>)), ask => A};
+fingerprint(_, _) -> null.
 
 %% Practical mode: the same engine on a practical task (a science practical, a technical or workplace task). The
 %% teacher's rubric is a list of procedure steps, each marked like a question, so the desk, the queue, the release
@@ -104,12 +145,13 @@ prompt(Sitting) ->
         "- the diagnosis is ONE plain sentence naming the exact misconception, never just \"wrong\"; empty when mastered;\n"
         "- moment_s is the second the thinking went wrong (null when mastered);\n"
         "- \"capabilities\": for every question that is not mastered, the one or two of these seven thinking capabilities\n"
-        "  its mastery work should build, by name: ", lists:join(", ", capabilities()), "; empty when mastered;\n"
+        "  its mastery work should build, by name: ", lists:join(", ", capabilities()), "; empty when mastered;\n",
+        fingerprint_rule(),
         "- confidence is how sure you are of the result, 0 to 1.\n"
         "Return JSON only:\n"
         "{\"questions\":[{\"n\":1,\"final_answer\":\"...\",\"steps\":[{\"t\":0,\"wrote\":\"...\",\"crossed_out\":false}],"
         "\"result\":\"mastered|right_answer_wrong_thinking|part_way|not_yet\",\"marks\":0,\"out_of\":2,"
-        "\"diagnosis\":\"...\",\"moment_s\":null,\"capabilities\":[\"...\"],\"confidence\":0.9}],\"pauses\":[{\"from_s\":0,\"to_s\":0}],"
+        "\"diagnosis\":\"...\",\"moment_s\":null,\"capabilities\":[\"...\"],", fingerprint_json(), "\"confidence\":0.9}],\"pauses\":[{\"from_s\":0,\"to_s\":0}],"
         "\"returns\":[{\"to_q\":1,\"from_q\":2,\"at_s\":0}]}\n"
         "List a pause only when nothing was written for 5 seconds or more. List a return only when the student went back "
         "to write on an earlier question after starting a later one (to_q the earlier question, from_q the one they "
@@ -163,6 +205,7 @@ question(Q) ->
       marks => Marks,
       out_of => OutOf,
       diagnosis => case Result of <<"mastered">> -> <<>>; _ -> Diagnosis end,
+      fingerprint => fingerprint(Result, maps:get(<<"fingerprint">>, Q, null)),
       moment_s => case Result of <<"mastered">> -> null; _ -> num(maps:get(<<"moment_s">>, Q, null)) end,
       %% an unknown result is never trusted: it goes to the top of the teacher's queue
       confidence => case {Result =:= Result0, Torn} of

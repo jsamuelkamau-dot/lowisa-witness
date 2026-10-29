@@ -1,6 +1,6 @@
 /**
  * WITNESS — the Exam Desk's doors (2026-10-27, Meta hackathon; the desk itself is lowisa-witness's desk/witness-desk.js,
- * synced in as src/renderer-parts/27-witness-desk.js).
+ * synced in as src/renderer-parts/26-witness-desk.js).
  *
  * The edge holds the switch (LOWISA_WITNESS_ACCESS): off it every /api/witness/ path answers the unknown route, so the
  * desk asks `witness:hello` (GET /api/witness/piles) once per account and adds nothing to the IDE unless it gets a 200.
@@ -41,7 +41,7 @@ const DOORS: Array<[string, RegExp]> = [
   ['GET', new RegExp(`^/api/witness/sitting/${HEX16}/proof$`)],
   ['GET', new RegExp(`^/api/witness/pile/${HEX16}/measure$`)],
   // the teacher's side of a question after release: which checks, an answer in the thread, the badge
-  ['POST', new RegExp(`^/api/witness/mastery/${HEX16}/[0-9]{1,3}/(verify|reply|badge|approve|recommend)$`)],
+  ['POST', new RegExp(`^/api/witness/mastery/${HEX16}/[0-9]{1,3}/(verify|reply|badge|approve|recommend|challenge|challenge_suggest)$`)],
 ];
 const MAX_BODY = 64 * 1024;
 // 28 Oct re-audit: a photo or PDF of the teacher's paper or scheme (10 MB on the edge), as base64
@@ -52,7 +52,7 @@ const CALL_TIMEOUT_MS = 30000;
 // 30 Oct (film take): Muse Spark reading a teacher's whole exam file, or weighing a level, can pass 30 s; those
 // calls get the edge's own minute and a half, every other desk call stays at 30 s
 const LONG_CALL_MS = 90000;
-const LONG_CALLS = [/^\/api\/witness\/pile\/read$/, /^\/api\/witness\/pile\/[0-9a-f]+\/patterns$/, /^\/api\/witness\/mastery\/[0-9a-f]+\/\d+\/recommend$/];
+const LONG_CALLS = [/^\/api\/witness\/pile\/read$/, /^\/api\/witness\/pile\/[0-9a-f]+\/patterns$/, /^\/api\/witness\/mastery\/[0-9a-f]+\/\d+\/(recommend|challenge_suggest)$/];
 
 export function witnessDoor(method: unknown, p: unknown): { method: 'GET' | 'POST'; path: string } | null {
   if ((method !== 'GET' && method !== 'POST') || typeof p !== 'string' || p.length > 200) return null;

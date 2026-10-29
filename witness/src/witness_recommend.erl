@@ -34,14 +34,20 @@ prompt(Q) ->
         "decides; you recommend, from the evidence only.\n\n",
         "THE QUESTION: ", str(maps:get(question, Q, maps:get(text, Q, <<>>))), "\n",
         "WHAT WENT WRONG IN THE EXAM: ", str(maps:get(diagnosis, Q, <<>>)), "\n",
+        case maps:get(fingerprint, Q, null) of
+            #{misconception := Mc, reasoning := Rs} when Mc =/= <<>> -> ["THE MISCONCEPTION FINGERPRINT: ", Mc, " (", Rs, ")\n"];
+            _ -> ""
+        end,
         case str(maps:get(focus, Q, <<>>)) of <<>> -> ""; F -> ["THE TEACHER'S FOCUS NOTE: ", F, "\n"] end,
         "THE MASTERY LEVEL: ", str(maps:get(status, M, <<"not_started">>)), "\n",
         case Activity of [] -> "LESSONS FINISHED: none recorded\n"; _ -> ["LESSONS FINISHED:\n", Activity] end,
         "EXPLAINED BACK TO LO: ", explained(maps:get(lo, Ex, undefined), maps:get(lo, Asks, false), true), "\n",
         "EXPLAINED BACK TO THE TEACHER: ", explained(maps:get(teacher, Ex, undefined), maps:get(teacher, Asks, false), false), "\n",
         "THE FRESH QUESTION ON PAPER: ", Fresh, "\n",
+        "THE TEACHER'S NEW CHALLENGE (the same idea in a new situation): ", witness_challenge:evidence(M), "\n",
         "QUESTIONS THE STUDENT ASKED: ", integer_to_list(length([T || T = #{from := student} <- maps:get(thread, M, [])])), "\n\n",
-        "Recommend \"issue\" only when the evidence shows the right idea now (a correct fresh question, or an explanation ",
+        "Recommend \"issue\" only when the evidence shows the right idea now (a correct fresh question, a new challenge ",
+        "answered right for the right reason, or an explanation ",
         "that names why the first way was wrong). A finished level alone is not proof. Name what is missing when you say ",
         "\"not_yet\". Return JSON only: {\"recommend\":\"issue\",\"why\":\"one or two sentences\",\"missing\":\"what would settle it, or empty\"}"]).
 
