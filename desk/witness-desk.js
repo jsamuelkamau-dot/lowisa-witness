@@ -250,7 +250,7 @@
     var papers = ss.map(function (s) {
       var st = s.status === 'marked' ? '<span class="wd-sub">' + num(s.marks) + ' / ' + num(s.out_of) + '</span>' :
         s.status === 'released' ? '<span class="wd-chip ok">Released</span>' :
-        s.status === 'failed' ? '<span class="wd-chip err">' + (s.unreadable ? 'Paper not in view: film again' : s.kept ? 'Not marked yet: mark again' : 'Record again') + '</span>' : '<span class="wd-chip">' + (s.status === 'uploading' ? 'Uploading' : 'Marking') + '</span>';
+        s.status === 'failed' ? '<span class="wd-chip err">' + (s.unreadable ? 'Paper not in view: film again' : s.kept ? 'Not marked yet: mark again' : s.kind === 'photo' ? 'Photograph again' : 'Record again') + '</span>' : '<span class="wd-chip">' + (s.status === 'uploading' ? 'Uploading' : 'Marking') + '</span>';
       return '<div class="wd-row" data-paper="' + esc(s.id) + '"><span class="wd-grow">' + esc(s.student || 'Paper') + '</span>' + whoseChip(s) + st +
         (s.to_master ? '<span class="wd-chip warn">' + s.to_master + ' in Mastery Plan</span>' : '') +
         (s.turned_around ? '<span class="wd-chip ok">' + s.turned_around + ' turned around</span>' : '') + '</div>';
@@ -567,7 +567,7 @@
     await loadPaper(S.sid);
     S.draft = {};
     say(j.paper && j.paper.linked ? 'This paper is with ' + (j.paper.student || 'the student') + ' now: their marks and Mastery Plan reach their phone.' :
-        'Saved as ' + ((j.paper && j.paper.student) || 'that name') + '. Print their Mastery Plan from the Proof of Thinking record.');
+        'Saved as ' + ((j.paper && j.paper.student) || 'that name') + '. Print their Proof of Thinking record for them: it holds their Mastery Plan questions.');
     render();
   }
 
@@ -762,7 +762,7 @@
     if (!j.ok) { say(errText(j), 'err'); return render(); }
     S.draft = {};
     if (await loadPile(j.id)) S.view = 'pile';
-    say('Exam created. Give your students the join code ' + (j.code || '') + ', or record each paper yourself from the LoWisa phone app.');
+    say('Exam created. Students join with the code ' + (j.code || '') + ' to put their name on the class list; after the exam, photograph each paper with it from the LoWisa phone app.');
     render();
   }
   async function save() {
