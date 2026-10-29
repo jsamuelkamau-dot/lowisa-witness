@@ -665,7 +665,7 @@ export function takenLine(t: Taken): string {
     case 'unsure': return 'Name read: ' + read + ' · the teacher confirms whose it is';
     case 'none': return 'Name read: ' + read + ' · not on the class list yet';
     case 'unread': return 'No name could be read · the teacher says whose it is';
-    default: return t.student || read || 'Marked';
+    default: return 'Marked: finding whose it is';
   }
 }
 
@@ -686,7 +686,8 @@ function PhotoDesk({env, code, title}: {env: WitnessEnv; code: string; title: st
   const load = useCallback(async () => { const r = await witness.taken(env); if (r.ok) setTaken((r.value.papers || []).filter(p => p.title === title)); }, [env, title]);
   useEffect(() => { load(); }, [load]);
   // while a paper is still being marked, its name is looked for every five seconds (for up to three minutes)
-  const waiting = (taken || []).some(t => t.status === 'marking' || t.status === 'uploading');
+  // the name is matched a moment after the marking: a marked paper with no name result yet is still waited for (29 Oct, live)
+  const waiting = (taken || []).some(t => t.status === 'marking' || t.status === 'uploading' || ((t.status === 'marked' || t.status === 'released') && !t.name_match));
   useEffect(() => {
     if (!waiting) return undefined;
     let tries = 0; let live = true;

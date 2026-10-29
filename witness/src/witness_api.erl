@@ -183,8 +183,9 @@ route(<<"POST">>, [<<"join">>], B, Uid, Host) ->
         none -> refuse(404, <<"no_code">>, <<"That code doesn't match an exam. Check it with your teacher.">>)
     end;
 route(<<"GET">>, [<<"mine">>], _B, Uid, Host) ->
-    Papers = [mine_view(Id, M, Host) || {Id, M} <- Host:list(Uid, mine)],
-    {200, #{ok => true, papers => [P || P <- Papers, P =/= none]}};
+    Papers = [P || {Id, M} <- Host:list(Uid, mine), P <- [mine_view(Id, M, Host)], P =/= none],
+    %% the newest paper first (29 Oct, live: the exam just sat was last in the list)
+    {200, #{ok => true, papers => lists:sort(fun(A, B) -> maps:get(sat_ms, A, 0) >= maps:get(sat_ms, B, 0) end, Papers)}};
 %% The student's "Turned around" badges, newest first, for their profile (28 Oct audit: the plan puts them on the
 %% profile and the record, first; they showed inside Witness only): the idea, the exam, when it went wrong and when
 %% the teacher saw it turned around.
@@ -952,12 +953,12 @@ mine_view(Id, #{owner := O}, Host) ->
             V = view(Id, R),
             Qs = [case Q of #{mastery := _} -> Q#{mastery => witness_mastery:view(Q, student)}; _ -> Q end
                   || Q <- maps:get(questions, maps:get(result, V))],
-            V1 = V#{title => Title, result => (maps:get(result, V))#{questions => Qs}},
+            V1 = V#{title => Title, result => (maps:get(result, V))#{questions => Qs}, sat_ms => maps:get(created_ms, R, 0)},
             case maps:get(examiner, R, undefined) of undefined -> V1; Ex -> V1#{examiner => examiner_view(Ex, student)} end;
         {ok, R} ->
             %% before release the student sees no marks, only the examiner's questions about their own steps
             Title = case Host:load(O, {pile, maps:get(pile, R, <<>>)}) of {ok, P} -> maps:get(title, P); none -> <<>> end,
-            V = #{id => Id, title => Title, status => case maps:get(status, R) of <<"failed">> when map_get(kept, R) =:= true -> <<"with_teacher">>; <<"failed">> -> <<"failed">>; <<"uploading">> -> <<"uploading">>; _ -> <<"with_teacher">> end},
+            V = #{id => Id, title => Title, sat_ms => maps:get(created_ms, R, 0), status => case maps:get(status, R) of <<"failed">> when map_get(kept, R) =:= true -> <<"with_teacher">>; <<"failed">> -> <<"failed">>; <<"uploading">> -> <<"uploading">>; _ -> <<"with_teacher">> end},
             %% a refused video says why (the paper was not in view), never what the model said about it
             V2 = case R of #{status := <<"failed">>, unreadable := _} -> V#{unseen => true}; _ -> V end,
             case maps:get(examiner, R, undefined) of undefined -> V2; Ex -> V2#{examiner => examiner_view(Ex, student)} end;

@@ -57,7 +57,7 @@ export function Replay({q}: {q: Question}): React.JSX.Element {
           <Text style={[s.step, st.crossed_out ? s.crossed : null]}>{st.wrote}</Text>
         </View>
       ))}
-      {slip >= 0 && shown > slip && q.diagnosis ? <Text style={s.diag}>{timed ? 'At ' + clock(q.moment_s) + ': ' : 'Here: '}{q.diagnosis}</Text> : null}
+      {slip >= 0 && shown > slip && q.diagnosis ? <Text style={s.diag}>{timed ? 'At ' + clock(q.moment_s) + ': ' : "What you'll master: "}{q.diagnosis}</Text> : null}
       {timed && steps.length > 1 ? <Btn label="Replay how I worked" onPress={play} small testID={'witness-replay-play-' + q.n} /> : null}
     </View>
   );
@@ -66,14 +66,22 @@ export function Replay({q}: {q: Question}): React.JSX.Element {
 export function Picture({env, paperId, file, label, testID}: {env: WitnessEnv; paperId: string; file: string; label: string; testID?: string}): React.JSX.Element | null {
   const [url, setUrl] = useState<string | null>(null);
   const [gone, setGone] = useState(false);
+  // the picture takes its own shape (29 Oct, live: a wide answer cut from a photographed page sat in a square of paper)
+  const [ratio, setRatio] = useState(1);
   useEffect(() => {
     let live = true;
     witness.asset(env, paperId, file).then(r => { if (!live) return; if (r.ok) setUrl(r.value.url); else setGone(true); });
     return () => { live = false; };
   }, [env, paperId, file]);
+  useEffect(() => {
+    if (!url) return undefined;
+    let live = true;
+    Image.getSize(url, (w, h) => { if (live && w > 0 && h > 0) setRatio(Math.max(0.5, Math.min(6, w / h))); }, () => undefined);
+    return () => { live = false; };
+  }, [url]);
   if (gone) return null;
   if (!url) return <ActivityIndicator style={{marginVertical: 10}} />;
-  return <Image source={{uri: url}} style={s.picture} resizeMode="contain" accessibilityLabel={label} testID={testID} />;
+  return <Image source={{uri: url}} style={[s.picture, {aspectRatio: ratio}]} resizeMode="contain" accessibilityLabel={label} testID={testID} />;
 }
 
 /** Six seconds of the desk around a moment that matters (28 Oct re-audit: the research's record keeps "short clips at the
@@ -156,11 +164,11 @@ const s = StyleSheet.create({
   qh: {fontSize: 15, fontWeight: '700', color: '#141a2e'},
   q: {fontSize: 14, fontWeight: '600', color: '#141a2e'},
   stepRow: {flexDirection: 'row', alignItems: 'baseline', marginTop: 4, paddingLeft: 6, borderLeftWidth: 3, borderLeftColor: 'transparent'},
-  slipRow: {borderLeftColor: '#b3261e', backgroundColor: '#fdf0ef'},
+  slipRow: {borderLeftColor: '#d9a441', backgroundColor: '#fdf6e8'},
   time: {width: 44, fontSize: 12, color: '#6b7389', fontVariant: ['tabular-nums']},
   step: {flex: 1, fontFamily: 'monospace', fontSize: 14, color: '#1b2a6b'},
   crossed: {textDecorationLine: 'line-through', color: '#8a90a2'},
-  diag: {fontSize: 14, color: '#b3261e', marginTop: 6, lineHeight: 20},
+  diag: {fontSize: 14, color: '#1f1e1c', marginTop: 6, lineHeight: 20},
   comment: {fontSize: 14, color: '#141a2e', marginTop: 6, fontStyle: 'italic'},
   picture: {width: '100%', aspectRatio: 1, marginTop: 10, borderRadius: 8, backgroundColor: '#f4efe2'},
   clip: {width: '100%', height: 320, marginTop: 8, borderRadius: 8, overflow: 'hidden', backgroundColor: '#000'},
