@@ -64,11 +64,42 @@ place(Gray, Tint, W, H, Items, Kinds) when byte_size(Gray) =:= W * H, Items =/= 
                  false ->
                      Xa = max(0, trunc(Lb / 1000 * W - 0.06 * W)), Xb = min(W, trunc(Rb / 1000 * W + 0.1 * W)),
                      {Xl, Xr} = case cols(InkT, Y0, Y1, Xa, Xb) of none -> {Xa, Xb}; E -> E end,
-                     #{x1 => round(Xl * 1000 / W), y1 => round(Y0 * 1000 / H), x2 => round(Xr * 1000 / W),
-                       y2 => round(Y1 * 1000 / H), w => 1000, h => 1000}
+                     {Ya, Yz} = case is_list(Kinds) andalso lists:nth(I, Kinds) =:= hand of
+                                    true -> trim_print(Tint, InkT, W, Y0, Y1, Xl, Xr);
+                                    false -> {Y0, Y1}
+                                end,
+                     #{x1 => round(Xl * 1000 / W), y1 => round(Ya * 1000 / H), x2 => round(Xr * 1000 / W),
+                       y2 => round(Yz * 1000 / H), w => 1000, h => 1000}
              end
      end || {I, [Lb, T, Rb, B], Pick} <- lists:zip3(lists:seq(1, length(Items)), Items, Picks)];
 place(_, _, _, _, Items, _) -> [none || _ <- Items].
+
+%% A student's line parted from the printed line it touched keeps the print's last rows at its top (30 Oct, take 4: the
+%% crop that opens the level showed half of "Explain why. (2 marks)" over "Use it."): rows whose ink is the printer's
+%% black are taken off its top and bottom.
+trim_print(Tint, InkT, W, Y0, Y1, X0, X1) when is_binary(Tint), byte_size(Tint) =:= W * tuple_size(InkT), Y1 - Y0 > 4 ->
+    Kind = fun(Y) ->
+        Vs = [binary:at(Tint, Y * W + X) - 128 || {X, 1} <- lists:zip(lists:seq(X0, X1 - 1), lists:sublist(element(Y + 1, InkT), X0 + 1, X1 - X0))],
+        case length(Vs) < 2 of
+            true -> empty;
+            false -> case length([V || V <- Vs, V >= 14]) / length(Vs) < 0.3 of true -> print; false -> hand end
+        end
+    end,
+    Top = drop_print(lists:seq(Y0, Y1 - 1), Kind),
+    Bottom = drop_print(lists:reverse(lists:seq(Y0, Y1 - 1)), Kind),
+    case {Top, Bottom} of
+        {Ya, Yb} when is_integer(Ya), is_integer(Yb), Yb + 1 - Ya >= 4 -> {Ya, Yb + 1};
+        _ -> {Y0, Y1}
+    end;
+trim_print(_, _, _, Y0, Y1, _, _) -> {Y0, Y1}.
+
+%% the first row of a pen's ink, past rows of print and empty rows that sit before any pen's ink
+drop_print([], _) -> none;
+drop_print([Y | T], Kind) ->
+    case Kind(Y) of
+        hand -> Y;
+        _ -> drop_print(T, Kind)
+    end.
 
 %% each band hand (a pen's colour), print (the printer's black) or unknown; all unknown unless the page has both
 band_kinds(Bands, InkT, Tint, W, X0, X1) when is_binary(Tint), byte_size(Tint) =:= W * tuple_size(InkT) ->

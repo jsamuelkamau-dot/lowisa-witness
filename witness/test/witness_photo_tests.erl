@@ -75,9 +75,9 @@ photographed_paper_reaches_the_student_by_name_test() ->
     ?assertMatch(#{status := <<"marked">>, student := <<"Amani Wanjiru">>, student_uid := <<"amani">>, name_match := <<"read">>}, Row),
     %% the student's own step and the question's answer are cut from the right page, for every question in the plan
     ?assert(lists:member({region, <<"https://store.example.com/a/", Id/binary, "/page-1.jpg">>,
-                          #{x1 => 135, y1 => 208, x2 => 425, y2 => 254, w => 1000, h => 1000}}, events())),
+                          #{x1 => 135, y1 => 213, x2 => 425, y2 => 254, w => 1000, h => 1000}}, events())),
     ?assert(lists:member({region, <<"https://store.example.com/a/", Id/binary, "/page-2.jpg">>,
-                          #{x1 => 135, y1 => 110, x2 => 425, y2 => 156, w => 1000, h => 1000}}, events())),
+                          #{x1 => 135, y1 => 115, x2 => 425, y2 => 156, w => 1000, h => 1000}}, events())),
     %% a mastered question keeps its answer, with no step cut for a Mastery Plan it is not in
     ?assertMatch([#{n := 2, asset := <<"still-2.jpg">>}], [X || X = #{n := 2} <- maps:get(stills, maps:get(result, element(2, load(<<"teacher">>, {sitting, Id}))))]),
     ?assertNot(lists:any(fun(#{n := 2} = X) -> maps:is_key(step, X); (_) -> false end, maps:get(stills, maps:get(result, element(2, load(<<"teacher">>, {sitting, Id})))))),

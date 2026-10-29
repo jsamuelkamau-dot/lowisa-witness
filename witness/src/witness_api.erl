@@ -1120,8 +1120,10 @@ page_still(Uid, Id, Urls, #{n := N} = Q, Host) ->
             %% video's padding took in the printed question above and the next line below)
             Step = case {needs_level(Q), Pick} of
                 {true, #{box := #{x1 := Bx1, y1 := By1, x2 := Bx2, y2 := By2}, page := Pp}} ->
-                    Pad = (By2 - By1) * 0.3 + 3,
-                    Tight = #{x1 => max(0, Bx1 - 15), y1 => max(0, round(By1 - Pad)), x2 => min(1000, Bx2 + 25), y2 => min(1000, round(By2 + Pad)), w => 1000, h => 1000},
+                    %% less room above: the box holds the pen's whole ink, and a printed line can sit right on top of it
+                    %% (30 Oct, take 4: half of "Explain why. (2 marks)" over "Use it.")
+                    Pad = (By2 - By1) * 0.3 + 3, PadTop = (By2 - By1) * 0.12 + 2,
+                    Tight = #{x1 => max(0, Bx1 - 15), y1 => max(0, round(By1 - PadTop)), x2 => min(1000, Bx2 + 25), y2 => min(1000, round(By2 + Pad)), w => 1000, h => 1000},
                     case catch (regioner(Host))(maps:get(Pp, Urls, Url), Tight) of
                         {ok, J2} ->
                             F2 = <<"step-", (integer_to_binary(N))/binary, ".jpg">>,
