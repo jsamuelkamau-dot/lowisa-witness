@@ -154,11 +154,14 @@ say(Q, Who, Text0, At) ->
             put_m(Q, M#{thread => Thread})
     end.
 
-%% The teacher issues the badge (or not yet, with a note): only for a question that was to master.
+%% The teacher issues the badge (or not yet, with a note): only for a question that was to master. 29 Oct (owner): the
+%% badge replaces a level's certificate, so it is issued only once the student completed the level (every lesson's
+%% questions and its flashcards, the checkpoint the app holds before a level counts as done); the game is optional.
 badge(Q, Issue, #{note := Note0, at := At}) ->
-    case needs(Q) of
-        false -> {error, not_to_master};
-        true ->
+    case {needs(Q), Issue =:= true andalso not is_map_key(completed_ms, m(Q))} of
+        {false, _} -> {error, not_to_master};
+        {_, true} -> {error, not_completed};
+        {true, false} ->
             Note = clean(Note0),
             M = m(Q),
             put_m(Q, M#{status => case Issue of true -> <<"badge">>; false -> <<"not_yet">> end,

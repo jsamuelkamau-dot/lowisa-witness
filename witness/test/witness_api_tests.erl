@@ -296,6 +296,10 @@ the_badge_review_has_the_activity_the_recording_and_a_recommendation_test() ->
     ?assertNot(maps:is_key(activity, SV)),
     %% before the badge it is to master; after it, turned around and no longer to master
     {200, #{sittings := [#{to_master := 1, turned_around := 0}]}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>),
+    %% 29 Oct (owner): the badge replaces the level's certificate, so it waits for the level to be finished (its lessons'
+    %% questions and the flashcards); the teacher's "keep going" with a note does not
+    ?assertMatch({400, #{code := <<"not_completed">>}}, M(<<"teacher">>, <<"badge">>, #{<<"issue">> => true})),
+    {200, _} = M(<<"stud">>, <<"event">>, #{<<"event">> => <<"completed">>}),
     {200, _} = M(<<"teacher">>, <<"badge">>, #{<<"issue">> => true, <<"note">> => <<"Proved it on paper.">>}),
     {200, #{sittings := [#{to_master := 0, turned_around := 1}]}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>),
     {200, Rec} = r(<<"GET">>, [<<"sitting">>, S, <<"proof">>], #{}, <<"stud">>),

@@ -702,6 +702,7 @@ mastery_words(storage) -> <<"Couldn't get the upload ready. Try again in a momen
 mastery_words(not_asked) -> <<"Your teacher hasn't asked for that.">>;
 mastery_words(empty) -> <<"Write something first.">>;
 mastery_words(not_to_master) -> <<"This question was mastered already.">>;
+mastery_words(not_completed) -> <<"The badge opens once the student has finished the level: every lesson's questions and the flashcards.">>;
 mastery_words(not_held) -> <<"This level already reached the student.">>;
 mastery_words(_) -> <<"That can't be done here.">>.
 
