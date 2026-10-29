@@ -100,9 +100,12 @@
     '#lowisaWitnessDesk .wd-head,#lowisaWitnessDesk .wd-btn,#lowisaWitnessDesk video,#lowisaWitnessDesk audio{display:none!important}' +
     '#lowisaWitnessDesk .wd-body{overflow:visible!important;padding:0!important}#lowisaWitnessDesk .wd-card{break-inside:avoid}}';
 
-  function panelEl() {
+  // the desk draws only into its own panel; `take` (opening it) makes a panel already there its own. A desk left behind
+  // by a reload never draws over the one in front (29 Oct: a late answer redrew the page with the old desk's state)
+  function panelEl(take) {
     var p = document.getElementById('lowisaWitnessDesk');
-    if (p) return p;
+    if (p && (take || p === S.el)) { S.el = p; return p; }
+    if (p) return null;
     if (!document.getElementById('lowisaWitnessCss')) {
       var st = document.createElement('style');
       st.id = 'lowisaWitnessCss';
@@ -117,13 +120,14 @@
     p.addEventListener('input', onInput);
     p.addEventListener('change', onInput);
     document.body.appendChild(p);
+    S.el = p;   // this desk's own panel: its timers stop once another panel stands in its place
     return p;
   }
   function onKey(e) { if (e.key === 'Escape' && document.getElementById('lowisaWitnessDesk')) { e.stopPropagation(); back(); } }
 
   async function open() {
     if (!S.on) return false;
-    panelEl();
+    panelEl(true);
     document.addEventListener('keydown', onKey, true);
     await loadPiles();
     render();
@@ -182,7 +186,7 @@
   function poll() {
     if (S.timer) return;
     S.timer = setInterval(function () {
-      if (S.view !== 'pile' || !document.getElementById('lowisaWitnessDesk')) { stopPoll(); return; }
+      if (S.view !== 'pile' || document.getElementById('lowisaWitnessDesk') !== S.el) { stopPoll(); return; }
       loadPile(S.pid).then(render);
     }, 5000);
   }
@@ -193,7 +197,7 @@
   function watchPaper() {
     if (S.ptimer) return;
     S.ptimer = setInterval(async function () {
-      if (S.view !== 'paper' || !document.getElementById('lowisaWitnessDesk')) { stopWatch(); return; }
+      if (S.view !== 'paper' || document.getElementById('lowisaWitnessDesk') !== S.el) { stopWatch(); return; }
       var sid = S.sid, n = S.n;
       var j = await api('GET', '/api/witness/sitting/' + sid);
       if (!j.ok || S.view !== 'paper' || S.sid !== sid || S.n !== n) return;
@@ -212,6 +216,7 @@
   // ---------------------------------------------------------------- drawing
   function render() {
     var p = panelEl();
+    if (!p) return;
     var crumb = S.view === 'home' ? '' : S.view === 'new' ? 'New exam' : esc(S.pile && S.pile.pile ? S.pile.pile.title : '');
     var head = '<div class="wd-head"><b>From Exam to Mastery</b>' + (crumb ? '<span class="wd-crumb">/ ' + crumb + '</span>' : '') +
       (S.view === 'paper' && S.paper ? '<span class="wd-crumb">/ ' + esc(S.paper.student || 'Paper') + '</span>' : '') +
@@ -752,8 +757,13 @@
     var d = S.draft;
     if (j.title && !String(d.title || '').trim()) d.title = j.title;
     if (j.level && !String(d.level || '').trim()) d.level = j.level;
-    if ((j.questions || []).length) d.qs = j.questions.map(function (q) { return q.n + '. ' + q.text + ' (' + q.marks + ')'; }).join('\n');
-    if (j.scheme) d.scheme = j.scheme;
+    // the paper's own "(2 marks)" is the mark already: kept once (29 Oct, film take: "(2 marks) (2)")
+    if ((j.questions || []).length) d.qs = j.questions.map(function (q) {
+      var text = String(q.text || '').replace(/\s*\(\s*(\d+)\s*marks?\s*\)\s*$/i, function (all, n) { return Number(n) === Number(q.marks) ? '' : all; });
+      return q.n + '. ' + text + ' (' + q.marks + ')';
+    }).join('\n');
+    // each question's rule on its own line, as a scheme is written
+    if (j.scheme) d.scheme = String(j.scheme).replace(/\s+(Q\d+\s*[:.)])/g, '\n$1').trim();
     say('Read ' + (j.questions || []).length + ' question' + ((j.questions || []).length === 1 ? '' : 's') + (j.scheme ? ' and your scheme' : '') + '. Check them, then create the exam.');
     render();
   }
