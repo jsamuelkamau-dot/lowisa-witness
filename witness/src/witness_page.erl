@@ -45,7 +45,9 @@ place(Gray, Tint, W, H, Items, Kinds) when byte_size(Gray) =:= W * H, Items =/= 
     InkT = list_to_tuple(Ink),
     BandKinds = band_kinds(Bands, InkT, Tint, W, X0, X1),
     Typ = case lists:sort([Z - A || {A, Z} <- Bands]) of [] -> 1; Hs -> lists:nth((length(Hs) + 1) div 2, Hs) end,
-    Miss = mismatch(Kinds, BandKinds, 4 * Typ),
+    %% a band of the other ink is taken only when no band of its own ink is left (30 Oct, take 3: at four lines' cost the
+    %% first answer line under a picture went on a printed row and every line under it slid down one)
+    Miss = mismatch(Kinds, BandKinds, 50 * Typ),
     Shift = shift(Centres0, align(Centres0, BandCs, Miss), BandCs),
     Centres = [C - Shift || C <- Centres0],
     Picks = align(Centres, BandCs, Miss),
