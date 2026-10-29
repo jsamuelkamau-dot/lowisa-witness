@@ -10,7 +10,7 @@
 %%% ffmpeg runs as a program with its arguments (no shell); it must be on the PATH. available/0 says whether it is.
 %%%-------------------------------------------------------------------
 -module(witness_media).
--export([step/3, wav/1, still/2, clip/3, last/1, frames/3, gray/4, available/0]).
+-export([step/3, wav/1, still/2, clip/3, last/1, frames/3, gray/4, gray_image/2, region/2, available/0]).
 
 -define(TIMEOUT_MS, 60000).
 -define(MAX_AUDIO, 25 * 1024 * 1024).
@@ -81,6 +81,21 @@ step(Url, Seconds, #{x1 := X1, y1 := Y1, x2 := X2, y2 := Y2, w := W, h := H}) wh
     end;
 step(_, _, _) -> {error, no_box}.
 
+%% region(Url, Box) -> {ok, Jpeg}: a part of a photographed page as it is (a question's answer, from its printed line to
+%% its last written one), the box in the page's own fractions (w and h its scale), at most 1000 pixels wide.
+region(Url, #{x1 := X1, y1 := Y1, x2 := X2, y2 := Y2, w := W, h := H}) when X2 > X1, Y2 > Y1 ->
+    Crop = io_lib:format("crop=iw*~b/~b:ih*~b/~b:iw*~b/~b:ih*~b/~b,scale='min(1000,iw)':-2", [X2 - X1, W, Y2 - Y1, H, X1, W, Y1, H]),
+    Out = tmp(".jpg"),
+    try
+        case run(["-v", "error", "-y", "-i", str(Url), "-frames:v", "1", "-vf", lists:flatten(Crop), "-q:v", "3", Out]) of
+            ok -> file:read_file(Out);
+            E -> E
+        end
+    after
+        _ = file:delete(Out)
+    end;
+region(_, _) -> {error, no_box}.
+
 %% gray(Url, first | last, W, H) -> {ok, Pixels}: the clip's first or last frame as W x H grey bytes, one a pixel, row
 %% by row (W x H = SAM's frame, so SAM's boxes index it directly). witness_timeline:printed/4 reads which of SAM's lines
 %% already held ink before anything was written.
@@ -98,6 +113,25 @@ gray(Url, Which, W, H) when is_integer(W), is_integer(H), W > 0, H > 0 ->
         _ = file:delete(Out)
     end;
 gray(_, _, _, _) -> {error, bad_size}.
+
+%% gray_image(Url, W) -> {ok, W, H, Pixels}: a photographed page W pixels wide (its own shape kept), grey bytes row by
+%% row, for witness_page to find the ink lines (29 Oct, From Exam to Mastery).
+gray_image(Url, W) when is_integer(W), W > 0 ->
+    Out = tmp(".gray"),
+    try
+        case run(["-v", "error", "-y", "-i", str(Url), "-frames:v", "1", "-vf", "scale=" ++ integer_to_list(W) ++ ":-2,format=gray",
+                  "-f", "rawvideo", Out]) of
+            ok -> case file:read_file(Out) of
+                      {ok, B} when byte_size(B) > 0, byte_size(B) rem W =:= 0 -> {ok, W, byte_size(B) div W, B};
+                      {ok, _} -> {error, short_frame};
+                      E -> E
+                  end;
+            E -> E
+        end
+    after
+        _ = file:delete(Out)
+    end.
+
 
 %% last(Url) -> {ok, Jpeg}: the clip's final frame (the finished page, whatever the frame rate).
 last(Url) ->

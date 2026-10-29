@@ -14,7 +14,7 @@
 %%% Keys come from the host (witness_host); nothing here reads configuration.
 %%%-------------------------------------------------------------------
 -module(witness_meta).
--export([chat_request/3, ssl_opts/0, upload/4, sam_video/3, sam_video/4, read_video/5, video/1, responses/2, text_of/1, cost/2, multipart/4, range/3,
+-export([chat_request/3, ssl_opts/0, upload/4, sam_video/3, sam_video/4, read_video/5, read_content/4, fetch/1, video/1, responses/2, text_of/1, cost/2, multipart/4, range/3,
          image/2, transcribe/2, transcribe_body/2]).
 
 -define(API, "https://api.meta.ai/v1").
@@ -82,6 +82,26 @@ read_video(Key, Model, FileId, Prompt, Opts) ->
                 #{type => input_text, text => Prompt}, video(FileId)]}]},
     case responses(Key, Req) of
         {ok, R} -> {ok, text_of(R), maps:get(<<"usage">>, R, #{})};
+        E -> E
+    end.
+
+%% read_content(Key, Model, Content, Opts) -> {ok, Text, Usage}: one reading of any content parts (a photographed paper's
+%% labelled pages, 29 Oct).
+read_content(Key, Model, Content, Opts) ->
+    Req = #{model => Model, reasoning => #{effort => maps:get(effort, Opts, <<"medium">>)},
+            max_output_tokens => maps:get(max_output_tokens, Opts, 16000),
+            input => [#{type => message, role => user, content => Content}]},
+    case responses(Key, Req) of
+        {ok, R} -> {ok, text_of(R), maps:get(<<"usage">>, R, #{})};
+        E -> E
+    end.
+
+%% fetch(Url) -> {ok, Bytes}: a file behind a signed link (a photographed page), at most 12 MB.
+fetch(Url) ->
+    case httpc:request(get, {str(Url), []}, [{timeout, 30000}, {connect_timeout, 10000}, {ssl, ssl_opts()}], [{body_format, binary}]) of
+        {ok, {{_, 200, _}, _, Body}} when byte_size(Body) =< 12582912 -> {ok, Body};
+        {ok, {{_, 200, _}, _, _}} -> {error, too_big};
+        {ok, {{_, S, _}, _, _}} -> {error, {fetch_status, S}};
         E -> E
     end.
 

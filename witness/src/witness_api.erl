@@ -13,6 +13,13 @@
 %%%   POST sitting/start            {mime, size, pile? | code?, student?}  -> 201 {id, put, headers, expiresIn}
 %%%        with `code` the paper is the teacher's (in their pile) and the student keeps a pointer to it
 %%%        the phone uploads the clip straight to the signed URL
+%%%   POST sitting/start {kind: "photo", pages, pile? | code?}  -> 201 {id, pages}   From Exam to Mastery (29 Oct): one
+%%%        phone (a teacher's or one the school owns) photographs each student's finished paper after the exam; the name
+%%%        is read from the paper and matched to the class list (witness_photo, witness_names)
+%%%   POST sitting/<id>/page        {n, mime, file (base64)} -> 200 {got}   one photographed page, kept with the paper
+%%%   GET  taken                    -> 200 {papers}   the papers this phone photographed, with the names read from them
+%%%   POST sitting/<id>/student     {uid} | {name}   the teacher confirms or changes whose paper it is
+%%%   POST join                     {code, name?}   a student who joins with their name is on the exam's class list
 %%%   POST sitting/<id>/mark        {fps?, questions?, scheme?, level?}  -> 202 {status: "marking"}
 %%%        a sitting in a pile is marked with the pile's questions and scheme
 %%%   POST sitting/<id>/review      {n, result?, marks?, focus?}  -> 200 {question}   the teacher's word, kept beside
@@ -69,6 +76,11 @@
 %% A video over one part goes up in parts of this size (S3's least is 5 MB), when the phone asks for parts.
 -define(PART_BYTES, 8388608).
 -define(MIMES, [<<"video/mp4">>, <<"video/quicktime">>]).
+%% a photographed paper: up to this many pages, each a photo of at most this size
+-define(MAX_PAGES, 20).
+-define(PAGE_BYTES, 8388608).
+-define(PAGE_MIMES, [<<"image/jpeg">>, <<"image/png">>, <<"image/webp">>]).
+-define(MAX_ROSTER, 400).
 -define(MAX_PILE, 200).
 -define(CODES, <<"witness-codes">>).
 
@@ -158,9 +170,16 @@ route(<<"POST">>, [<<"pile">>, Id, <<"patterns">>], _B, Uid, Host) ->
     end;
 
 %% ---------------------------------------------------------------- students
-route(<<"POST">>, [<<"join">>], B, _Uid, Host) ->
+route(<<"POST">>, [<<"join">>], B, Uid, Host) ->
     case by_code(maps:get(<<"code">>, B, null), Host) of
-        {ok, _Owner, _PileId, P} -> {200, #{ok => true, pile => #{title => maps:get(title, P), level => maps:get(level, P, <<>>)}}};
+        {ok, Owner, PileId, P} ->
+            %% 29 Oct (From Exam to Mastery): a student who joins with their name is on the exam's class list, so the paper
+            %% photographed after the exam reaches them by the name written on it
+            case clean(maps:get(<<"name">>, B, <<>>), 80) of
+                <<>> -> ok;
+                Name -> roster_add(Owner, PileId, Uid, Name, Host)
+            end,
+            {200, #{ok => true, pile => #{title => maps:get(title, P), level => maps:get(level, P, <<>>), kind => maps:get(kind, P, <<"paper">>)}}};
         none -> refuse(404, <<"no_code">>, <<"That code doesn't match an exam. Check it with your teacher.">>)
     end;
 route(<<"GET">>, [<<"mine">>], _B, Uid, Host) ->
@@ -174,6 +193,85 @@ route(<<"GET">>, [<<"badges">>], _B, Uid, Host) ->
     {200, #{ok => true, badges => lists:sort(fun(A, B) -> maps:get(turned_at, A) >= maps:get(turned_at, B) end, Badges)}};
 
 %% ---------------------------------------------------------------- sittings
+%% From Exam to Mastery (29 Oct): a finished paper photographed after the exam, page by page, by any phone with the
+%% exam's code (a teacher's, or one the school owns). The phone that takes it is not the student: whose paper it is
+%% comes from the name written on it.
+route(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"kind">> := <<"photo">>} = B, Uid0, Host) ->
+    Pages = maps:get(<<"pages">>, B, 0),
+    {Uid, Pile, PileId} = case maps:get(<<"code">>, B, null) of
+        C when is_binary(C) -> case by_code(C, Host) of {ok, O, P0, PR0} -> {O, {ok, PR0}, P0}; none -> {Uid0, none, undefined} end;
+        _ -> case maps:get(<<"pile">>, B, null) of P1 when is_binary(P1) -> {Uid0, Host:load(Uid0, {pile, P1}), P1}; _ -> {Uid0, none, undefined} end
+    end,
+    case {is_integer(Pages) andalso Pages >= 1 andalso Pages =< ?MAX_PAGES, Pile} of
+        {false, _} -> refuse(400, <<"bad_pages">>, <<"Photograph between 1 and 20 pages of one paper.">>);
+        {_, none} -> refuse(404, <<"no_pile">>, <<"That exam isn't here.">>);
+        {_, {ok, #{kind := <<"practical">>}}} ->
+            refuse(400, <<"practical">>, <<"A practical task is marked from a video of it being done: film it with Witness.">>);
+        {_, {ok, #{sittings := Have}}} when length(Have) >= ?MAX_PILE ->
+            refuse(400, <<"pile_full">>, <<"This exam already holds 200 papers. Start another one.">>);
+        {true, {ok, PR}} ->
+            Id = new_id(),
+            ok = Host:save(Uid, {pile, PileId}, PR#{sittings => maps:get(sittings, PR, []) ++ [Id]}),
+            ok = Host:save(Uid, {sitting, Id}, #{status => <<"uploading">>, kind => <<"photo">>, pages => Pages, got => [], files => [],
+                                                 created_ms => now_ms(), pile => PileId, taken_by => Uid0,
+                                                 student => clean(maps:get(<<"student">>, B, <<>>), 80)}),
+            Uid =:= Uid0 orelse Host:save(Uid0, {mine, Id}, #{owner => Uid, pile => PileId, taken => true, created_ms => now_ms()}),
+            {201, #{ok => true, id => Id, pages => Pages}}
+    end;
+route(<<"POST">>, [<<"sitting">>, Id, <<"page">>], B, Uid0, Host) ->
+    Uid = owner_of(Uid0, Id, Host),
+    Mime = maps:get(<<"mime">>, B, <<"image/jpeg">>),
+    Bytes = try base64:decode(maps:get(<<"file">>, B, <<>>)) catch _:_ -> <<>> end,
+    N = maps:get(<<"n">>, B, 0),
+    case Host:load(Uid, {sitting, Id}) of
+        {ok, #{kind := <<"photo">>, status := <<"uploading">>, pages := Pages} = Row} ->
+            case {is_integer(N) andalso N >= 1 andalso N =< Pages, lists:member(Mime, ?PAGE_MIMES), byte_size(Bytes)} of
+                {false, _, _} -> refuse(400, <<"bad_page">>, <<"That page isn't part of this paper.">>);
+                {_, false, _} -> refuse(400, <<"bad_type">>, <<"Send each page as a JPEG, PNG or WebP photo.">>);
+                {_, _, 0} -> refuse(400, <<"empty">>, <<"That photo is empty.">>);
+                {_, _, Size} when Size > ?PAGE_BYTES -> refuse(413, <<"too_big">>, <<"That photo is over 8 MB. Take it again a little further away.">>);
+                _ ->
+                    File = page_file(N, Mime),
+                    case Host:put_asset(Uid, <<Id/binary, "/", File/binary>>, Bytes, Mime) of
+                        ok ->
+                            Got = lists:usort([N | maps:get(got, Row, [])]),
+                            Files = [F || F = #{n := Fn} <- maps:get(files, Row, []), Fn =/= N] ++ [#{n => N, file => File, mime => Mime}],
+                            ok = Host:save(Uid, {sitting, Id}, Row#{got => Got, files => lists:sort(fun(A, Bf) -> maps:get(n, A) =< maps:get(n, Bf) end, Files)}),
+                            {200, #{ok => true, n => N, got => Got, pages => Pages}};
+                        _ -> refuse(503, <<"storage">>, <<"Couldn't keep that photo. Try again in a moment.">>)
+                    end
+            end;
+        {ok, #{kind := <<"photo">>}} -> refuse(409, <<"not_open">>, <<"This paper already has all its pages.">>);
+        {ok, _} -> refuse(409, <<"not_photo">>, <<"This paper isn't photographed page by page.">>);
+        none -> refuse(404, <<"no_sitting">>, <<"That paper isn't here.">>)
+    end;
+%% the papers this phone photographed for a class, newest first, with the name read from each (the phone that takes
+%% them sees the names come back and can fix a wrong page before the next paper)
+route(<<"GET">>, [<<"taken">>], _B, Uid, Host) ->
+    Mine = [{Id, O} || {Id, #{taken := true, owner := O}} <- Host:list(Uid, mine)],
+    Own = [{Id, Uid} || {Id, #{kind := <<"photo">>, taken_by := T}} <- Host:list(Uid, sitting), T =:= Uid],
+    Papers = [taken_view(Id, O, R, Host) || {Id, O} <- Mine ++ Own, {ok, R} <- [Host:load(O, {sitting, Id})]],
+    {200, #{ok => true, papers => lists:sublist(lists:sort(fun(A, B) -> maps:get(created_ms, A) >= maps:get(created_ms, B) end, Papers), 100)}};
+%% the teacher says whose paper it is: a student on the class list (uid), or a name with no account (printed for them)
+route(<<"POST">>, [<<"sitting">>, Id, <<"student">>], B, Uid, Host) ->
+    case Host:load(Uid, {sitting, Id}) of
+        none -> refuse(404, <<"no_sitting">>, <<"That paper isn't here.">>);
+        {ok, Row} ->
+            Roster = case Host:load(Uid, {pile, maps:get(pile, Row, <<>>)}) of {ok, P} -> maps:get(roster, P, []); none -> [] end,
+            case {maps:get(<<"uid">>, B, null), clean(maps:get(<<"name">>, B, <<>>), 80)} of
+                {S, _} when is_binary(S) ->
+                    case [E || E = #{uid := U} <- Roster, U =:= S] of
+                        [#{name := Name} | _] -> Row1 = link_student(Uid, Id, Row, S, Name, <<"teacher">>, Host), {200, #{ok => true, paper => summary(Id, Row1)}};
+                        [] -> refuse(404, <<"not_on_list">>, <<"That student hasn't joined this exam.">>)
+                    end;
+                {_, <<>>} -> refuse(400, <<"no_name">>, <<"Choose a student or type a name.">>);
+                {_, Name} ->
+                    unlink_student(Uid, Id, Row, Host),
+                    Row1 = (maps:without([student_uid, candidates], Row))#{student => Name, name_match => <<"teacher">>},
+                    ok = Host:save(Uid, {sitting, Id}, Row1),
+                    {200, #{ok => true, paper => summary(Id, Row1)}}
+            end
+    end;
 route(<<"POST">>, [<<"sitting">>, <<"start">>], B, Uid0, Host) ->
     Mime = maps:get(<<"mime">>, B, <<"video/mp4">>),
     Size = maps:get(<<"size">>, B, 0),
@@ -254,6 +352,11 @@ route(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], B, Uid0, Host) ->
                         Missing -> refuse(409, <<"parts_missing">>, <<"Part of the video hasn't arrived yet. Send it again.">>, #{missing => Missing})
                     end;
                 _ -> refuse(503, <<"storage">>, <<"Couldn't check the upload. Try again in a moment.">>)
+            end;
+        {ok, #{kind := <<"photo">>, status := <<"uploading">>, pages := Pages} = Row} ->
+            case lists:seq(1, Pages) -- maps:get(got, Row, []) of
+                [] -> start_marking(Uid, Id, Row, B, Host);
+                Missing -> refuse(409, <<"pages_missing">>, <<"A page of this paper hasn't arrived yet. Send it again.">>, #{missing => Missing})
             end;
         {ok, #{status := <<"uploading">>} = Row} -> start_marking(Uid, Id, Row, B, Host);
         %% a clip kept because Meta could not mark it, or a marking that never came back, is marked again
@@ -368,7 +471,7 @@ route(<<"GET">>, [<<"sitting">>, Id, <<"asset">>, File], _B, Uid, Host) ->
     Safe = binary:match(File, [<<"/">>, <<"\\">>, <<"..">>]) =:= nomatch andalso
            (binary:longest_common_prefix([File, <<"still-">>]) =:= 6 orelse binary:longest_common_prefix([File, <<"drawn-">>]) =:= 6
             orelse binary:longest_common_prefix([File, <<"step-">>]) =:= 5 orelse binary:longest_common_prefix([File, <<"world-">>]) =:= 6
-            orelse lists:any(fun(Pre) -> binary:longest_common_prefix([File, Pre]) =:= byte_size(Pre) end, [<<"clip-">>, <<"answer-">>, <<"explain-">>])),
+            orelse lists:any(fun(Pre) -> binary:longest_common_prefix([File, Pre]) =:= byte_size(Pre) end, [<<"clip-">>, <<"answer-">>, <<"explain-">>, <<"page-">>])),
     case {Safe, Host:load(Owner, {sitting, Id})} of
         {true, {ok, Row}} when Owner =:= Uid; map_get(status, Row) =:= <<"released">> ->
             case Host:asset_url(Owner, <<Id/binary, "/", File/binary>>) of
@@ -782,6 +885,8 @@ reader(Host) -> seam(Host, reader, fun witness_read:run/3).
 patterner(Host) -> seam(Host, patterner, fun witness_patterns:run/3).
 recommender(Host) -> seam(Host, recommender, fun witness_recommend:run/2).
 clipper(Host) -> seam(Host, clipper, case witness_media:available() of true -> fun witness_media:clip/3; false -> fun(_, _, _) -> {error, no_ffmpeg} end end).
+photo_marker(Host) -> seam(Host, photo_marker, fun witness_photo:mark/3).
+regioner(Host) -> seam(Host, regioner, case witness_media:available() of true -> fun witness_media:region/2; false -> fun(_, _) -> {error, no_ffmpeg} end end).
 cropper(Host) -> seam(Host, cropper, case witness_media:available() of true -> fun witness_media:step/3; false -> fun(_, _, _) -> {error, no_ffmpeg} end end).
 stiller(Host) -> seam(Host, stiller, case witness_media:available() of true -> fun witness_media:still/2; false -> fun(_, _) -> {error, no_ffmpeg} end end).
 examiner(Host) -> seam(Host, examiner, fun witness_examiner:run/3).
@@ -815,7 +920,7 @@ spark_judge(Key, Q, Text) ->
         E -> E
     end.
 
-badges_of(Id, #{owner := O} = M, Host) when not is_map_key(fresh, M) ->
+badges_of(Id, #{owner := O} = M, Host) when not is_map_key(fresh, M), not is_map_key(taken, M), not is_map_key(unlinked, M) ->
     case Host:load(O, {sitting, Id}) of
         {ok, #{status := <<"released">>, result := #{questions := Qs}} = R} ->
             Exam = case Host:load(O, {pile, maps:get(pile, R, <<>>)}) of {ok, P} -> P; none -> #{} end,
@@ -831,11 +936,14 @@ badges_of(_, _, _) -> [].
 owner_of(Uid, Id, Host) ->
     case Host:load(Uid, {sitting, Id}) of
         {ok, _} -> Uid;
-        none -> case Host:load(Uid, {mine, Id}) of {ok, #{owner := O}} -> O; _ -> Uid end
+        %% a paper the teacher said is someone else's is no longer this student's door to it
+        none -> case Host:load(Uid, {mine, Id}) of {ok, #{owner := O} = M} when not is_map_key(unlinked, M) -> O; _ -> Uid end
     end.
 
 %% What a student sees of their own paper: its status, and the marks only once the teacher released them.
 mine_view(_, #{fresh := true}, _) -> none;     %% a fresh question shows on the question it checks, not as a paper
+mine_view(_, #{taken := true}, _) -> none;     %% a paper this phone photographed for the class is not this person's
+mine_view(_, #{unlinked := true}, _) -> none;  %% the teacher said this paper is someone else's
 mine_view(Id, #{owner := O}, Host) ->
     case live(Host:load(O, {sitting, Id})) of
         {ok, #{status := <<"released">>} = R} ->
@@ -899,7 +1007,12 @@ start_marking(Uid, Id, Row, B, Host) ->
     end.
 
 mark(Uid, Id, Key, Fps, Sitting, Host) ->
-    {ok, Row} = Host:load(Uid, {sitting, Id}),
+    case Host:load(Uid, {sitting, Id}) of
+        {ok, #{kind := <<"photo">>} = Row} -> mark_photo(Uid, Id, Key, Sitting, Row, Host);
+        {ok, Row} -> mark_video(Uid, Id, Key, Fps, Sitting, Row, Host)
+    end.
+
+mark_video(Uid, Id, Key, Fps, Sitting, Row, Host) ->
     %% 28 Oct re-audit (the submission: "caching by image hash"): the same video for the same exam, sent again, is not
     %% marked again; its fingerprint (the store's tag for the clip) finds the marking already made
     Cache = case has(Host, clip_tag, 2) andalso Host:clip_tag(Uid, Id) of
@@ -932,6 +1045,138 @@ mark(Uid, Id, Key, Fps, Sitting, Host) ->
             end;
         _ -> ok = Host:drop_clip(Uid, Id), done(Uid, Id, Key, Sitting, Row, Outcome, Stills, Host)
     end.
+
+%% A photographed paper: read and marked from its pages (witness_photo), tried again while Meta is busy; the pages stay
+%% with the paper either way, so a paper Meta could not mark is marked again without taking the photos again.
+mark_photo(Uid, Id, Key, Sitting, Row, Host) ->
+    Outcome = again(Host, fun() ->
+        case pages(Uid, Id, Row, Host) of
+            {ok, Pages} -> try (photo_marker(Host))(Key, Pages, Sitting) catch C:R -> {error, {C, R}} end;
+            E -> E
+        end
+    end),
+    case Outcome of
+        {ok, Res0} ->
+            Res = maps:merge(#{engine => <<"muse-spark-1.3">>}, Res0),
+            Stills = case pages(Uid, Id, Row, Host) of {ok, Ps} -> page_stills(Uid, Id, Ps, Res, Host); _ -> [] end,
+            done(Uid, Id, Key, Sitting, Row, {ok, Res}, Stills, Host),
+            name_paper(Uid, Id, Host);
+        {error, Busy} ->
+            case busy(Busy) of
+                true -> ok = Host:save(Uid, {sitting, Id}, Row#{status => <<"failed">>, kept => true, marked_ms => now_ms(),
+                                                                 reason => iolist_to_binary(io_lib:format("~0p", [Busy]))});
+                false -> done(Uid, Id, Key, Sitting, Row, Outcome, [], Host)
+            end;
+        Other -> done(Uid, Id, Key, Sitting, Row, {error, Other}, [], Host)
+    end.
+
+pages(Uid, Id, Row, Host) ->
+    Ls = [{N, Host:asset_url(Uid, <<Id/binary, "/", F/binary>>), M} || #{n := N, file := F, mime := M} <- maps:get(files, Row, [])],
+    case [E || {_, {error, _} = E, _} <- Ls] of
+        [] -> {ok, [#{n => N, url => U, mime => M} || {N, {ok, U}, M} <- Ls]};
+        [E | _] -> E
+    end.
+
+page_file(N, Mime) ->
+    Ext = case Mime of <<"image/png">> -> <<"png">>; <<"image/webp">> -> <<"webp">>; _ -> <<"jpg">> end,
+    <<"page-", (integer_to_binary(N))/binary, ".", Ext/binary>>.
+
+%% For each question (those in the Mastery Plan first, at most 20): its answer as written, cut from its page
+%% (still-N.jpg: the printed question to its last line), and the student's own step where the thinking went wrong
+%% (step-N.jpg), the same files a filmed paper keeps, so the desk and the Mastery Plan show them the same way.
+page_stills(Uid, Id, Pages, #{questions := Qs}, Host) ->
+    Urls = maps:from_list([{N, U} || #{n := N, url := U} <- Pages]),
+    Order = [Q || Q <- Qs, needs_level(Q)] ++ [Q || Q <- Qs, not needs_level(Q)],
+    lists:append([page_still(Uid, Id, Urls, Q, Host) || Q <- lists:sublist(Order, 20)]);
+page_stills(_, _, _, _, _) -> [].
+
+page_still(Uid, Id, Urls, #{n := N} = Q, Host) ->
+    Steps = [S || S = #{box := #{}, page := _} <- maps:get(steps, Q, [])],
+    case Steps of
+        [] -> [];
+        [#{page := P} | _] ->
+            On = [S || S = #{page := Sp} <- Steps, Sp =:= P],
+            Top = case maps:get(printed, Q, null) of
+                #{page := P, place := #{y1 := Y}} -> Y;
+                _ -> lists:min([maps:get(y1, maps:get(box, S)) || S <- On])
+            end,
+            Bottom = lists:max([maps:get(y2, maps:get(box, S)) || S <- On]),
+            Url = maps:get(P, Urls, undefined),
+            Region = #{x1 => 30, y1 => max(0, Top - 15), x2 => 970, y2 => min(1000, Bottom + 20), w => 1000, h => 1000},
+            File = <<"still-", (integer_to_binary(N))/binary, ".jpg">>,
+            Still = case Url =/= undefined andalso catch (regioner(Host))(Url, Region) of
+                {ok, Jpeg} -> case Host:put_asset(Uid, <<Id/binary, "/", File/binary>>, Jpeg, <<"image/jpeg">>) of ok -> #{asset => File}; _ -> #{} end;
+                _ -> #{}
+            end,
+            %% the student's own step: where the thinking went wrong, else the question's last line
+            All = maps:get(steps, Q, []),
+            Pick = case maps:get(slip, Q, null) of
+                Sl when is_integer(Sl), Sl =< length(All) -> lists:nth(Sl, All);
+                _ -> lists:last(Steps)
+            end,
+            Step = case Pick of
+                #{box := Box, page := Pp} ->
+                    case catch (cropper(Host))(maps:get(Pp, Urls, Url), 0.0, Box) of
+                        {ok, J2} ->
+                            F2 = <<"step-", (integer_to_binary(N))/binary, ".jpg">>,
+                            case Host:put_asset(Uid, <<Id/binary, "/", F2/binary>>, J2, <<"image/jpeg">>) of ok -> #{step => F2}; _ -> #{} end;
+                        _ -> #{}
+                    end;
+                _ -> #{}
+            end,
+            case maps:merge(Still, Step) of
+                M when map_size(M) =:= 0 -> [];
+                M -> [M#{n => N, t => null, page => P}]
+            end
+    end.
+
+%% Whose paper it is: the name read from it, matched to the exam's class list (witness_names). One clear match links
+%% the paper to that student (their Mastery Plan reaches them); otherwise it waits for the teacher, with the likely names.
+name_paper(Uid, Id, Host) ->
+    case Host:load(Uid, {sitting, Id}) of
+        {ok, #{status := S, result := Res} = Row} when (S =:= <<"marked">> orelse S =:= <<"released">>), not is_map_key(student_uid, Row) ->
+            Read = maps:get(student, Res, #{}),
+            Name = maps:get(name, Read, <<>>),
+            Roster = case Host:load(Uid, {pile, maps:get(pile, Row, <<>>)}) of {ok, P} -> maps:get(roster, P, []); none -> [] end,
+            Row1 = case maps:get(student, Row, <<>>) of <<>> -> Row#{student => Name}; _ -> Row end,
+            case witness_names:match(Name, Roster) of
+                {match, #{uid := Su, name := Listed}} -> link_student(Uid, Id, Row1, Su, Listed, <<"read">>, Host), ok;
+                {close, Cands} -> ok = Host:save(Uid, {sitting, Id}, Row1#{name_match => <<"unsure">>, candidates => [maps:get(uid, C) || C <- Cands]});
+                none -> ok = Host:save(Uid, {sitting, Id}, Row1#{name_match => case Name of <<>> -> <<"unread">>; _ -> <<"none">> end})
+            end;
+        _ -> ok
+    end.
+
+link_student(Uid, Id, Row, S, Name, How, Host) ->
+    case maps:get(student_uid, Row, undefined) of S -> ok; _ -> unlink_student(Uid, Id, Row, Host) end,
+    ok = Host:save(S, {mine, Id}, #{owner => Uid, pile => maps:get(pile, Row, <<>>), created_ms => maps:get(created_ms, Row, now_ms())}),
+    Row1 = (maps:without([candidates], Row))#{student_uid => S, student => Name, name_match => How},
+    ok = Host:save(Uid, {sitting, Id}, Row1),
+    Row1.
+
+unlink_student(Uid, Id, #{student_uid := S0}, Host) -> Host:save(S0, {mine, Id}, #{owner => Uid, unlinked => true});
+unlink_student(_, _, _, _) -> ok.
+
+%% the class list: one line per student who joined with their name (the same student joining again keeps one line)
+roster_add(Owner, PileId, Uid, Name, Host) ->
+    case Host:load(Owner, {pile, PileId}) of
+        {ok, P} ->
+            Roster = [E || E = #{uid := U} <- maps:get(roster, P, []), U =/= Uid] ++ [#{uid => Uid, name => Name, at => now_ms()}],
+            ok = Host:save(Owner, {pile, PileId}, P#{roster => lists:sublist(Roster, ?MAX_ROSTER)}),
+            %% a paper already photographed and waiting for its name finds this student now
+            _ = [name_paper(Owner, S, Host) || S <- maps:get(sittings, P, []),
+                                               {ok, #{kind := <<"photo">>, name_match := M}} <- [Host:load(Owner, {sitting, S})],
+                                               M =:= <<"none">> orelse M =:= <<"unsure">>],
+            ok;
+        none -> ok
+    end.
+
+taken_view(Id, Owner, R, Host) ->
+    Title = case Host:load(Owner, {pile, maps:get(pile, R, <<>>)}) of {ok, P} -> maps:get(title, P); none -> <<>> end,
+    Read = case R of #{result := #{student := St}} -> St; _ -> #{} end,
+    #{id => Id, status => maps:get(status, R), pages => maps:get(pages, R, 0), got => maps:get(got, R, []), title => Title,
+      created_ms => maps:get(created_ms, R, 0), student => maps:get(student, R, <<>>), read => Read,
+      name_match => maps:get(name_match, R, null)}.
 
 %% One marking, tried again after each wait while the failure is Meta's (busy, down, out of reach), each time
 %% with a fresh signed link, so a clip is not lost to a moment's outage.
@@ -1017,7 +1262,9 @@ marker(Host) ->
 
 %% What the phone and the desk see of a sitting (never the reason a model call failed).
 view(Id, #{status := S, result := R} = Row) when S =:= <<"marked">>; S =:= <<"released">> ->
-    V = #{ok => true, id => Id, status => S, student => maps:get(student, Row, <<>>),
+    V = #{ok => true, id => Id, status => S, student => maps:get(student, Row, <<>>), kind => maps:get(kind, Row, <<"video">>),
+          read => maps:get(student, R, #{}), name_match => maps:get(name_match, Row, null), linked => maps:is_key(student_uid, Row),
+          pages => [maps:get(file, F) || F <- maps:get(files, Row, [])],
           result => #{questions => maps:get(questions, R, []), pauses => maps:get(pauses, R, []), returns => maps:get(returns, R, []), lines => maps:get(lines, R, []),
                       stills => maps:get(stills, R, []), engine => maps:get(engine, R, <<"muse-spark-1.3">>)}},
     case maps:get(examiner, Row, undefined) of undefined -> V; Ex -> V#{examiner => examiner_view(Ex, teacher)} end;
@@ -1037,7 +1284,10 @@ summary(Id, Row) ->
     Marks = lists:sum([num(maps:get(teacher_marks, Q, maps:get(marks, Q, 0))) || Q <- Qs]),
     OutOf = lists:sum([num(maps:get(out_of, Q, 0)) || Q <- Qs]),
     Seen = case Row of #{unreadable := W} -> #{unreadable => W}; #{kept := true} -> #{kept => true}; _ -> #{} end,
-    Seen#{id => Id, student => maps:get(student, Row, <<>>), status => maps:get(status, Row),
+    Read = case Row of #{result := #{student := St}} -> St; _ -> #{} end,
+    Seen#{id => Id, student => maps:get(student, Row, <<>>), status => maps:get(status, Row), kind => maps:get(kind, Row, <<"video">>),
+      read => Read, name_match => maps:get(name_match, Row, null), linked => maps:is_key(student_uid, Row),
+      candidates => maps:get(candidates, Row, []),
       %% 28 Oct re-audit (the plan: "a turned-around question counts toward the record the same as one right the first
       %% time"): a question turned around is no longer to master
       marks => Marks, out_of => OutOf, to_master => length([Q || Q <- Qs, needs_level(Q), not turned(Q)]),
@@ -1099,11 +1349,13 @@ now_ms() -> erlang:system_time(millisecond).
 %% a dropped connection left one on the teacher's desk as "Uploading" for good (27 Oct, emulator).
 %% a video in parts can be resumed (fresh links each time it asks), so it waits as long as a kept clip
 lapsed(#{status := <<"uploading">>, upload := _, created_ms := C}) -> now_ms() - C > ?KEEP_MS;
+lapsed(#{status := <<"uploading">>, kind := <<"photo">>, created_ms := C}) -> now_ms() - C > ?KEEP_MS;
 lapsed(#{status := <<"uploading">>, created_ms := C}) -> now_ms() - C > ?LINK_MS + 300000;
 lapsed(_) -> false.
 
 %% settle(Uid, Id, Row, Host) -> Row: a clip kept past KEEP_MS is dropped (kept false: film it again); a marking that
 %% never came back (the node went away under it) becomes a kept failure after STUCK_MS, so it can be marked again.
+settle(_, _, #{kind := <<"photo">>, status := <<"failed">>} = R, _) -> R;     %% the pages are the paper: always kept
 settle(Uid, Id, #{status := <<"failed">>, kept := true, marked_ms := M} = R, Host) ->
     case now_ms() - M > ?KEEP_MS of
         true -> ok = Host:drop_clip(Uid, Id), R1 = R#{kept => false}, ok = Host:save(Uid, {sitting, Id}, R1), R1;

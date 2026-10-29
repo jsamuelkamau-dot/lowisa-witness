@@ -13,10 +13,10 @@
 %%%       Marking = #{questions => [Q], pauses => [#{from_s, to_s}]}
 %%%       Q = #{n, final_answer, steps => [#{t, wrote, crossed_out}], result, marks, out_of, diagnosis,
 %%%             moment_s, confidence}
-%%%   needs_level(Q) -> boolean              a mastery level is offered for "not yet" and "wrong thinking"
+%%%   needs_level(Q) -> boolean              every question not mastered goes to the Mastery Plan
 %%%-------------------------------------------------------------------
 -module(witness_mark).
--export([fit/2, unsure/1, reconcile/2, decide/4, split/1, prompt/1, parse/1, needs_level/1, results/0]).
+-export([fit/2, unsure/1, reconcile/2, decide/4, split/1, prompt/1, parse/1, needs_level/1, results/0, capabilities/0]).
 
 %% 27 Oct, emulator: a video of no paper at all (the camera pointed at a picture) was marked "to master" on every
 %% question at 20% sure, so each would have become a mastery level for a paper nobody filmed. A video that does not
@@ -32,6 +32,11 @@
         "{\"readable\":false,\"why\":\"one plain sentence of what the camera shows\"}.\n\n").
 
 results() -> [<<"mastered">>, <<"right_answer_wrong_thinking">>, <<"part_way">>, <<"not_yet">>].
+
+%% 29 Oct (owner): LoWisa's teaching builds seven thinking capabilities, whether or not the exam was passed. Every
+%% question in the Mastery Plan names the one or two its level builds.
+capabilities() -> [<<"Pattern Recognition">>, <<"Probability & Uncertainty">>, <<"Optimization">>, <<"Systems Thinking">>,
+                   <<"Trade-offs">>, <<"Decision-Making">>, <<"Root Cause Analysis">>].
 
 %% Practical mode: the same engine on a practical task (a science practical, a technical or workplace task). The
 %% teacher's rubric is a list of procedure steps, each marked like a question, so the desk, the queue, the release
@@ -98,11 +103,13 @@ prompt(Sitting) ->
         "- out_of is what the question is worth as listed (\"(2 marks)\" is out_of 2); marks is how many of those were earned;\n"
         "- the diagnosis is ONE plain sentence naming the exact misconception, never just \"wrong\"; empty when mastered;\n"
         "- moment_s is the second the thinking went wrong (null when mastered);\n"
+        "- \"capabilities\": for every question that is not mastered, the one or two of these seven thinking capabilities\n"
+        "  its mastery work should build, by name: ", lists:join(", ", capabilities()), "; empty when mastered;\n"
         "- confidence is how sure you are of the result, 0 to 1.\n"
         "Return JSON only:\n"
         "{\"questions\":[{\"n\":1,\"final_answer\":\"...\",\"steps\":[{\"t\":0,\"wrote\":\"...\",\"crossed_out\":false}],"
         "\"result\":\"mastered|right_answer_wrong_thinking|part_way|not_yet\",\"marks\":0,\"out_of\":2,"
-        "\"diagnosis\":\"...\",\"moment_s\":null,\"confidence\":0.9}],\"pauses\":[{\"from_s\":0,\"to_s\":0}],"
+        "\"diagnosis\":\"...\",\"moment_s\":null,\"capabilities\":[\"...\"],\"confidence\":0.9}],\"pauses\":[{\"from_s\":0,\"to_s\":0}],"
         "\"returns\":[{\"to_q\":1,\"from_q\":2,\"at_s\":0}]}\n"
         "List a pause only when nothing was written for 5 seconds or more. List a return only when the student went back "
         "to write on an earlier question after starting a later one (to_q the earlier question, from_q the one they "
@@ -113,6 +120,8 @@ parse(Text) ->
         #{<<"readable">> := false} = M -> {error, {unreadable, str(maps:get(<<"why">>, M, <<>>))}};
         #{<<"questions">> := Qs} = M when is_list(Qs) ->
             {ok, #{questions => [question(Q) || Q <- Qs, is_map(Q)],
+                   %% a photographed paper's own details (witness_photo): the name as the student wrote it
+                   student => student(maps:get(<<"student">>, M, #{})),
                    pauses => [#{from_s => num(maps:get(<<"from_s">>, P, 0)), to_s => num(maps:get(<<"to_s">>, P, 0))}
                               || P <- list(maps:get(<<"pauses">>, M, [])), is_map(P)],
                    %% going back to an earlier question (28 Oct audit: in the plan's timeline, never built)
@@ -138,9 +147,18 @@ question(Q) ->
     end,
     #{n => num(maps:get(<<"n">>, Q, maps:get(<<"q">>, Q, 0))),
       final_answer => str(maps:get(<<"final_answer">>, Q, <<>>)),
-      steps => [#{t => num(maps:get(<<"t">>, S, null)), wrote => str(maps:get(<<"wrote">>, S, <<>>)),
-                  crossed_out => maps:get(<<"crossed_out">>, S, false) =:= true}
+      steps => [maps:merge(#{t => num(maps:get(<<"t">>, S, null)), wrote => str(maps:get(<<"wrote">>, S, <<>>)),
+                             crossed_out => maps:get(<<"crossed_out">>, S, false) =:= true}, spot(S))
                 || S <- list(maps:get(<<"steps">>, Q, [])), is_map(S)],
+      printed => case maps:get(<<"printed">>, Q, null) of
+                     #{<<"page">> := Pp, <<"box">> := Pb} when is_integer(Pp) -> case box(Pb) of none -> null; B -> #{page => Pp, box => B} end;
+                     _ -> null
+                 end,
+      capabilities => case Result of
+                          <<"mastered">> -> [];
+                          _ -> [C || C <- capabilities(), lists:member(C, [str(X) || X <- list(maps:get(<<"capabilities">>, Q, []))])]
+                      end,
+      slip => case {Result, num(maps:get(<<"slip">>, Q, null))} of {<<"mastered">>, _} -> null; {_, Sl} when is_integer(Sl), Sl > 0 -> Sl; _ -> null end,
       result => Result,
       marks => Marks,
       out_of => OutOf,
@@ -153,7 +171,30 @@ question(Q) ->
           {false, false} -> 0.0
       end}.
 
-needs_level(#{result := R}) -> R =:= <<"not_yet">> orelse R =:= <<"right_answer_wrong_thinking">>.
+%% where a photographed line is: its page and Spark's box (thousandths), kept as `spot` until witness_page places it
+spot(S) ->
+    case {maps:get(<<"page">>, S, null), box(maps:get(<<"box">>, S, null))} of
+        {P, B} when is_integer(P), P > 0, B =/= none -> #{page => P, spot => B};
+        _ -> #{}
+    end.
+
+box([L, T, R, B] = Box) when is_number(L), is_number(T), is_number(R), is_number(B), R > L, B > T, L >= 0, T >= 0, R =< 1000, B =< 1000 ->
+    [round(V) || V <- Box];
+box(_) -> none.
+
+student(#{} = S) ->
+    maps:filter(fun(_, V) -> V =/= <<>> end,
+                #{name => string:slice(string:trim(str(maps:get(<<"name">>, S, <<>>))), 0, 80),
+                  class => string:slice(str(maps:get(<<"class">>, S, <<>>)), 0, 40),
+                  number => string:slice(str(maps:get(<<"number">>, S, <<>>)), 0, 40),
+                  date => string:slice(str(maps:get(<<"date">>, S, <<>>)), 0, 40),
+                  note => string:slice(str(maps:get(<<"name_note">>, S, <<>>)), 0, 200)});
+student(_) -> #{}.
+
+%% 29 Oct (owner, From Exam to Mastery): no question ends in a verdict. Every question not mastered goes to the student's
+%% Mastery Plan: a wrong answer, a right answer by wrong thinking, and part way (a right start, or an answer with its
+%% thinking never shown).
+needs_level(#{result := R}) -> R =/= <<"mastered">>.
 
 %% The model is asked for JSON only; a code fence or a sentence around the object is tolerated.
 decode(Text) ->

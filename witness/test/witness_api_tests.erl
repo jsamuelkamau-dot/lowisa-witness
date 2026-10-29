@@ -165,7 +165,7 @@ pile_queue_review_release_test() ->
     {200, #{pile := Pile, sittings := Ss, queue := Queue}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"t1">>),
     ?assertMatch(#{title := <<"Fractions quiz">>, id := P}, Pile),
     ?assertMatch([#{id := SA, student := <<"Amara">>, marks := 2, out_of := 4, to_master := 1},
-                  #{id := SB, student := <<"Ben">>, to_master := 1}], Ss),
+                  #{id := SB, student := <<"Ben">>, to_master := 2}], Ss),   %% part way is in the Mastery Plan too
     %% anything not mastered first, least certain first among them; mastered last
     ?assertEqual([{SB, 1}, {SA, 2}, {SB, 2}, {SA, 1}], [{maps:get(sitting, I), maps:get(n, I)} || I <- Queue]),
     %% a mastered answer the model is unsure of still comes after every answer that needs teaching
@@ -178,7 +178,7 @@ pile_queue_review_release_test() ->
     {200, #{question := Same}} = r(<<"POST">>, [<<"sitting">>, SB, <<"review">>], #{<<"n">> => 1, <<"marks">> => 9}, <<"t1">>),
     ?assertEqual(1, maps:get(teacher_marks, Same)),                          %% more than the question is worth: ignored
     ?assertMatch({404, _}, r(<<"POST">>, [<<"sitting">>, SB, <<"review">>], #{<<"n">> => 7}, <<"t1">>)),
-    {200, #{sittings := [_, #{id := SB, marks := 1, to_master := 0}], queue := Q2}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"t1">>),
+    {200, #{sittings := [_, #{id := SB, marks := 1, to_master := 2}], queue := Q2}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"t1">>),
     ?assertEqual(3, length(Q2)),
     %% release: both papers go out, the pile says so
     ?assertMatch({200, #{released := 2}}, r(<<"POST">>, [<<"pile">>, P, <<"release">>], #{}, <<"t1">>)),
