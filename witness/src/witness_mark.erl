@@ -107,6 +107,14 @@ settle(_, _, <<_, _/binary>> = Ask) -> {<<>>, Ask};
 settle(<<_, _/binary>> = Named, [_ | _], _) -> {Named, <<>>};
 settle(_, _, _) -> {<<>>, <<"Talk me through how you got your answer, step by step.">>}.
 
+%% What the page shows while Lo asks: the answer and that the working behind it is not on the page.
+held_words(Steps, Final) ->
+    Answer = case Final of <<>> -> <<"this answer">>; _ -> <<"the answer ", Final/binary>> end,
+    case [W || #{wrote := W} <- Steps, W =/= <<>>, W =/= Final] of
+        [] -> <<"Only ", Answer/binary, " is on the page, not the working behind it. Lo asks first.">>;
+        _ -> <<"The page shows ", Answer/binary, " but not which calculation led to it. Lo asks first.">>
+    end.
+
 %% A quoted line is the student's own when it is (part of) a line read from their page, or a line read is part of it;
 %% the final answer by itself is no evidence of the reasoning behind it.
 in_ink(<<>>, _, _) -> false;
@@ -236,8 +244,10 @@ question(Q) ->
     Fp = fingerprint(Result, maps:get(<<"fingerprint">>, Q, null), Steps, Final),
     %% while Lo has a question, the diagnosis is what the page shows (the reasoning, which may name two ideas); the
     %% marking's one-idea reading waits beside it for the teacher, and the student's answer to Lo settles it
+    %% 30 Oct, rehearsal: the reasoning itself can name the guess ("thinks the rise and fall cancel"), so while Lo asks
+    %% the diagnosis says only what the page shows, and the model's reading waits beside it for the teacher
     {Diag, Draft} = case Fp of
-        #{ask := <<_, _/binary>>, reasoning := <<_, _/binary>> = Rsn} -> {Rsn, Diagnosis};
+        #{ask := <<_, _/binary>>, misconception := <<>>} -> {held_words(Steps, Final), Diagnosis};
         _ -> {Diagnosis, <<>>}
     end,
     #{n => num(maps:get(<<"n">>, Q, maps:get(<<"q">>, Q, 0))),

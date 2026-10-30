@@ -12,7 +12,7 @@
 %%%   judge_prompt(Ask, Q, Answer) / judge(Text) -> {ok, #{own_work, understood, why}}
 %%%-------------------------------------------------------------------
 -module(witness_examiner).
--export([prompt/2, parse/1, run/3, judge_prompt/3, judge/1, judge_run/4]).
+-export([focus/1, prompt/2, parse/1, run/3, judge_prompt/3, judge/1, judge_run/4]).
 
 -define(WONDER, <<"muse-wonder-1.0">>).
 -define(SPARK, <<"muse-spark-1.3">>).
@@ -45,7 +45,16 @@ parse(Text) ->
         _ -> {error, no_asks}
     end.
 
-run(Key, Sitting, Qs) ->
+%% 30 Oct (judges' panel, and the rehearsal: Muse Wonder asked Leo about his mastered questions 1 and 2, not the
+%% one he got wrong): when any question is not mastered, only those are put to the examiner.
+focus(Qs) ->
+    case [Q || Q <- Qs, maps:get(result, Q, <<>>) =/= <<"mastered">>] of
+        [] -> Qs;
+        Open -> Open
+    end.
+
+run(Key, Sitting, Qs0) ->
+    Qs = focus(Qs0),
     Req = #{model => ?WONDER, reasoning => #{effort => <<"low">>}, max_output_tokens => 6000,
             input => [#{type => message, role => user, content => [#{type => input_text, text => prompt(Sitting, Qs)}]}]},
     case witness_meta:responses(Key, Req) of

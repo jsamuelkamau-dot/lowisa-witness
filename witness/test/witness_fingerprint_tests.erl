@@ -82,8 +82,8 @@ the_recorded_learner_c_reply_names_nothing_while_lo_asks_test() ->
     ?assert(witness_fingerprint:pending(Q)),
     %% the final answer alone is no evidence; the intuition is the student's own line
     ?assertEqual([<<"Half up, half down. Same price.">>], maps:get(evidence, F)),
-    %% the student sees what the page shows; the one-idea reading waits for the teacher
-    ?assertEqual(<<"Reasoned that half up then half down must return to the same price without calculating each change.">>, maps:get(diagnosis, Q)),
+    %% the diagnosis says only what the page shows (the reasoning itself can name the guess); the one-idea reading waits
+    ?assertEqual(<<"The page shows the answer A $100 but not which calculation led to it. Lo asks first.">>, maps:get(diagnosis, Q)),
     ?assertEqual(<<"Thought a 50% increase and a 50% decrease cancel to return to the original price.">>, maps:get(diagnosis_draft, Q)).
 
 %% evidence the model wrote itself is not the student's ink: the label goes, Lo asks
@@ -107,7 +107,7 @@ the_settled_fingerprint_becomes_the_diagnosis_test() ->
         "\"misconception\":\"second change taken of the original amount\",\"intervention\":\"Find the base.\",\"ask\":\"\"}">>),
     Q1 = witness_fingerprint:answer(Q, <<"Both halves of 100.">>, Read, 2),
     ?assertEqual(<<"second change taken of the original amount: Takes both halves of the original $100.">>, maps:get(diagnosis, Q1)),
-    ?assertEqual(<<"Could be cancelling, or both halves of $100.">>, maps:get(diagnosis_first, Q1)),
+    ?assertEqual(<<"The page shows the answer $100 but not which calculation led to it. Lo asks first.">>, maps:get(diagnosis_first, Q1)),
     ?assertNot(maps:is_key(possible, maps:get(fingerprint, Q1))),
     %% a reply that names an idea and still asks names nothing yet
     {ok, Unsure} = witness_fingerprint:parse(<<"{\"reasoning\":\"r\",\"evidence\":[\"said: x\"],\"misconception\":\"m\",\"intervention\":\"\",\"ask\":\"And then?\"}">>),
@@ -138,3 +138,9 @@ a_numeric_answer_with_no_calculation_on_the_page_is_asked_test() ->
     ?assertEqual(1, witness_mark:numbers(<<"Tails is due after 5 heads">>)),
     ?assertEqual(3, witness_mark:numbers(<<"+50% - 50% = 0%">>)),
     ?assertEqual(2, witness_mark:numbers(<<"0.25 is bigger than 0.3">>)).
+
+%% the examiner asks about what was not mastered when there is any (30 Oct, rehearsal: it asked about mastered 1 and 2)
+the_examiner_asks_about_what_was_not_mastered_test() ->
+    Qs = [#{n => 1, result => <<"mastered">>}, #{n => 4, result => <<"not_yet">>}, #{n => 5, result => <<"mastered">>}],
+    ?assertEqual([4], [N || #{n := N} <- witness_examiner:focus(Qs)]),
+    ?assertEqual(2, length(witness_examiner:focus([#{n => 1, result => <<"mastered">>}, #{n => 2, result => <<"mastered">>}]))).

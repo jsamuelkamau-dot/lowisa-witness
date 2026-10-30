@@ -524,12 +524,14 @@
   function fingerprintCard(f) {
     if (!f) return '';
     var row = function (label, html) { return html ? '<div style="margin-top:6px"><b style="font-size:12px">' + label + '</b><div>' + html + '</div></div>' : ''; };
+    // while Lo still asks, the marking's reading is a guess, and says so
+    var guessing = !f.misconception && !!f.ask && !(f.said || []).length;
     var said = (f.said || []).map(function (x) { return '<div class="wd-sub">Lo asked: ' + esc(x.ask) + '</div><div>They said: “' + esc(x.text) + '”</div>' + listen(x.audio, 'Their answer to Lo, out loud'); }).join('');
     return '<div class="wd-card" style="margin:8px 0"><b>Misconception fingerprint</b> ' +
       (f.misconception ? '<span class="wd-chip warn">' + esc(f.misconception) + '</span>' : '<span class="wd-chip">Not named yet: the paper is not enough evidence</span>') +
       // 30 Oct (judges' panel): nothing is named while Lo asks; the model's guess waits here, for the teacher only
       (!f.misconception && f.possible ? row('Possible, until they answer Lo (not shown to the student)', esc(f.possible)) : '') +
-      row('The reasoning that produced it', esc(f.reasoning || '')) +
+      row(guessing ? 'What the marking read (a guess until they answer Lo)' : 'The reasoning that produced it', esc(f.reasoning || '')) +
       row('The evidence, in their own writing', (f.evidence || []).map(function (e) { return '<div class="wd-step" style="opacity:1">' + esc(e) + '</div>'; }).join('')) +
       row('What they told Lo', said) +
       (f.ask ? row('Lo asks them first', esc(f.ask)) : '') +
