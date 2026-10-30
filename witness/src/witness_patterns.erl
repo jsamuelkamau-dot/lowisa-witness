@@ -20,16 +20,23 @@
 -define(MODEL, <<"muse-wonder-1.0">>).
 
 prompt(Exam, Items) ->
-    Lines = [io_lib:format("~b. ~ts, question ~b (~ts~ts): ~ts~n", [I, maps:get(student, It, <<>>), maps:get(n, It, 0), maps:get(question, It, <<>>),
-                                                                     case maps:get(turned_around, It, false) of true -> "; turned around since"; false -> "" end,
-                                                                     maps:get(diagnosis, It, <<>>)])
+    %% 30 Oct rehearsal: the fingerprint's named idea goes on the line, so two diagnoses that share words but not the
+    %% reasoning ("they cancel" and "kept the first base") are told apart
+    Lines = [io_lib:format("~b. ~ts, question ~b (~ts~ts): ~ts~ts~n", [I, maps:get(student, It, <<>>), maps:get(n, It, 0), maps:get(question, It, <<>>),
+                                                                       case maps:get(turned_around, It, false) of true -> "; turned around since"; false -> "" end,
+                                                                       maps:get(diagnosis, It, <<>>),
+                                                                       case maps:get(idea, It, <<>>) of <<>> -> ""; Idea -> [" [named idea: ", Idea, "]"] end])
              || {I, It} <- lists:zip(lists:seq(1, length(Items)), Items)],
     unicode:characters_to_binary([
         "You help a teacher after an exam. Below is every question a student did not master, one a line, numbered, with ",
         "what went wrong in their working.\n\nTHE EXAM: ", str(maps:get(title, Exam, <<>>)),
         case str(maps:get(level, Exam, <<>>)) of <<>> -> ""; L -> [" (", L, ")"] end, "\n\n", Lines, "\n",
         "1. Group the lines by the SAME misconception (the same wrong idea, even on different questions). Name each idea in ",
-        "plain words a teacher would say to the class, most common first. A line belongs to one group.\n",
+        "plain words a teacher would say to the class, most common first. A line belongs to one group. Group by the ",
+        "reasoning each line names, never by the answer: lines with the same wrong answer but different reasoning are ",
+        "different groups, because each needs a different repair. A line's [named idea], when it has one, is the idea it ",
+        "was diagnosed with: lines with different named ideas are different groups. When unsure that two lines name the ",
+        "same idea, keep them apart.\n",
         "2. For each group, one sentence on what to reteach tomorrow, with a concrete example to use in class.\n",
         "3. In two or three sentences, the plan for tomorrow's lesson: what first, what to practise.\n",
         "4. Up to four questions for the next exam that bring back these ideas in a new form, with their marks.\n",

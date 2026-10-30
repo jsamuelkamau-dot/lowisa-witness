@@ -176,7 +176,7 @@ route(<<"POST">>, [<<"pile">>, Id, <<"patterns">>], _B, Uid, Host) ->
             Texts = maps:from_list([{maps:get(n, Q), maps:get(text, Q, <<>>)} || Q <- maps:get(questions, P, []), is_map(Q)]),
             Items = [#{student => maps:get(student, R, <<>>), n => maps:get(n, Q), question => maps:get(maps:get(n, Q), Texts, <<>>),
                        result => maps:get(teacher_result, Q, maps:get(result, Q)), diagnosis => maps:get(diagnosis, Q, <<>>),
-                       turned_around => turned(Q)}
+                       idea => maps:get(misconception, maps:get(fingerprint, Q, #{}), <<>>), turned_around => turned(Q)}
                      || S <- maps:get(sittings, P, []), {ok, R = #{result := #{questions := Qs}}} <- [Host:load(Uid, {sitting, S})],
                         Q <- Qs, needs_level(Q)],
             case Items of

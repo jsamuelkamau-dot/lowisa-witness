@@ -20,7 +20,9 @@ patterns_count_from_the_papers_not_the_model_test() ->
     ?assertEqual({error, no_patterns}, witness_patterns:parse(<<"no">>, items())),
     P = witness_patterns:prompt(#{title => <<"Fractions">>, level => <<"Year 7">>}, items()),
     ?assertEqual(P, unicode:characters_to_binary(P)),
-    [?assertNotEqual(nomatch, binary:match(P, X)) || X <- [<<"1. Amara, question 3 (Simplify 16/64; turned around since)">>, <<"3/4 ÷ 1/2"/utf8>>, <<"what to reteach tomorrow">>]],
+    [?assertNotEqual(nomatch, binary:match(P, X)) || X <- [<<"1. Amara, question 3 (Simplify 16/64; turned around since)">>, <<"3/4 ÷ 1/2"/utf8>>, <<"what to reteach tomorrow">>,
+                                                    %% 30 Oct rehearsal: three different reasons for one answer came back as one group
+                                                    <<"never by the answer">>]],
     ?assertEqual({error, nothing_to_master}, witness_patterns:run(<<"k">>, #{}, [])).
 
 recommendation_reads_every_piece_of_evidence_test() ->
@@ -48,3 +50,9 @@ the_exam_is_read_as_the_teacher_wrote_it_test() ->
     ?assertEqual({error, unreadable}, witness_read:parse(<<"{\"readable\":false}">>)),
     ?assertEqual({error, unreadable}, witness_read:parse(<<"{\"questions\":[],\"scheme\":\"\"}">>)),
     ?assertNotEqual(nomatch, binary:match(witness_read:prompt(), <<"Never invent a question">>)).
+
+%% 30 Oct rehearsal: the fingerprint's named idea rides on each line, so diagnoses that share words stay apart
+patterns_line_carries_the_named_idea_test() ->
+    P = witness_patterns:prompt(#{title => <<"Percentages">>}, [#{student => <<"Leo">>, n => 4, question => <<"Q">>, diagnosis => <<"D">>,
+                                                                 idea => <<"kept the first base">>}]),
+    ?assertNotEqual(nomatch, binary:match(P, <<"D [named idea: kept the first base]">>)).
