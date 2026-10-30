@@ -101,3 +101,14 @@ with "cancel"). Each was checked against the code before anything changed.
 - Also from the panel, in the server: preview on by default and a level its self-check did not pass always waits for
   the teacher; "completed" needs each lesson seen; delete routes for a paper and an exam; a ceiling on a
   teacher-paid level's design calls; a paper read again before a slow step writes back.
+
+## 30 Oct, the full live rehearsal
+
+- **Class patterns grouped by the answer, not the reasoning.** Priya (they cancel), Tomás (50% as a fixed $50) and Leo
+  (kept the first base) all wrote $100 and came back as one group, the opposite of what the fingerprint shows. Each
+  line now carries the fingerprint's named idea, and the prompt keeps different reasoning apart. Live against Muse
+  Wonder: three groups in 3 of 3 runs, then on the deployed edge (`evidence/screens/desk-class-patterns.png`).
+- **The self-check passed a false claim** (a shop "loses $25" by charging $100 for a $75 price). It now works out every
+  number and every gain or loss claim (`true_claims` in `witness_check.erl`). The questions written inside each lesson
+  as it opens are still not checked one by one (README, limits).
+- **The settled diagnosis carried the model's notes on its evidence.** It is now the named idea alone.
