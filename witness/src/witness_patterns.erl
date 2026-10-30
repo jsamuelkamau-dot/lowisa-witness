@@ -22,7 +22,10 @@
 prompt(Exam, Items) ->
     %% 30 Oct rehearsal: the fingerprint's named idea goes on the line, so two diagnoses that share words but not the
     %% reasoning ("they cancel" and "kept the first base") are told apart
-    Lines = [io_lib:format("~b. ~ts, question ~b (~ts~ts): ~ts~ts~n", [I, witness_text:data(maps:get(student, It, <<>>)), maps:get(n, It, 0), maps:get(question, It, <<>>),
+    %% 31 Oct (privacy): the model never needs a name to group reasoning, so each student is a number here; the names
+    %% come back from the items (group/3), never from the model
+    Who = maps:from_list(lists:zip(lists:usort([maps:get(student, It, <<>>) || It <- Items]), lists:seq(1, length(lists:usort([maps:get(student, It, <<>>) || It <- Items]))))),
+    Lines = [io_lib:format("~b. Student ~b, question ~b (~ts~ts): ~ts~ts~n", [I, maps:get(maps:get(student, It, <<>>), Who), maps:get(n, It, 0), maps:get(question, It, <<>>),
                                                                        case maps:get(turned_around, It, false) of true -> "; turned around since"; false -> "" end,
                                                                        maps:get(diagnosis, It, <<>>),
                                                                        case maps:get(idea, It, <<>>) of <<>> -> ""; Idea -> [" [named idea: ", Idea, "]"] end])
@@ -79,7 +82,9 @@ run(Key, Exam, Items) ->
     %% at 4,000 tokens Wonder thought for all of them (27 Oct); medium effort with room to answer, as the self-check
     Req = #{model => ?MODEL, max_output_tokens => 16000, reasoning => #{effort => <<"medium">>},
             input => [#{type => message, role => user, content => [#{type => input_text, text => prompt(Exam, Items)}]}]},
-    case witness_meta:responses(Key, Req) of
+    O = fun witness_meta:object/1,
+    Shape = O(#{patterns => #{type => array, items => O(#{idea => #{type => string}, lines => #{type => array, items => #{type => integer}}, reteach => #{type => string}})}, tomorrow => #{type => string}, next_exam => #{type => array, items => O(#{text => #{type => string}, marks => #{type => integer}})}}),
+    case witness_meta:structured(Key, Req, <<"class_patterns">>, Shape) of
         {ok, #{<<"status">> := <<"incomplete">>}} -> {error, incomplete};
         {ok, R} ->
             Cost = witness_meta:cost({tokens, ?MODEL}, maps:get(<<"usage">>, R, #{})),

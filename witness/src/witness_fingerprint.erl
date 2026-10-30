@@ -140,12 +140,15 @@ witness_mark_fp(J) ->
 run(Key, Q, Text) ->
     Req = #{model => ?MODEL, reasoning => #{effort => <<"medium">>}, max_output_tokens => 4000,
             input => [#{type => message, role => user, content => [#{type => input_text, text => prompt(Q, Text)}]}]},
-    case witness_meta:responses(Key, Req) of
+    case witness_meta:structured(Key, Req, <<"fingerprint">>, schema()) of
         {ok, R} ->
             Cost = witness_meta:cost({tokens, ?MODEL}, maps:get(<<"usage">>, R, #{})),
             case parse(witness_meta:text_of(R)) of {ok, F} -> {ok, F, Cost}; E -> E end;
         E -> E
     end.
+
+schema() ->
+    witness_meta:object(#{reasoning => #{type => string}, evidence => #{type => array, items => #{type => string}}, rivals => #{type => array, items => #{type => string}}, misconception => #{type => string}, intervention => #{type => string}, ask => #{type => string}}).
 
 decode(Text) ->
     T = iolist_to_binary(Text),

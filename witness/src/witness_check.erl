@@ -92,7 +92,7 @@ run(Key, In) ->
     %% at medium effort with room to answer.
     Req = #{model => ?MODEL, max_output_tokens => 16000, reasoning => #{effort => <<"medium">>},
             input => [#{type => message, role => user, content => [#{type => input_text, text => prompt(In)}]}]},
-    case witness_meta:responses(Key, Req) of
+    case witness_meta:structured(Key, Req, <<"self_check">>, schema()) of
         {ok, #{<<"status">> := <<"incomplete">>}} -> {error, incomplete};
         {ok, R} ->
             Cost = witness_meta:cost({tokens, ?MODEL}, maps:get(<<"usage">>, R, #{})),
@@ -102,6 +102,14 @@ run(Key, In) ->
             end;
         E -> E
     end.
+
+% the verdict's shape, held by the API (witness_meta:structured/4)
+schema() ->
+    O = fun witness_meta:object/1,
+    Play = O(#{lesson => #{type => [integer, null]}, check => #{type => string}, answered => #{type => string}, right => #{type => boolean}}),
+    O(#{caught => #{type => boolean}, cleared => #{type => boolean}, on_idea => #{type => boolean}, work_task => #{type => boolean}, true_claims => #{type => boolean}, why => #{type => string},
+        holds => #{type => array, items => Play}, knows => #{type => array, items => Play}, false_claims => #{type => array, items => #{type => string}},
+        problems => #{type => array, items => O(#{lesson => #{type => [integer, null]}, fix => #{type => string}})}}).
 
 decode(Text) ->
     T = iolist_to_binary(Text),

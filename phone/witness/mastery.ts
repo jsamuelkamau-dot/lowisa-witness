@@ -90,9 +90,17 @@ export function masteryBrief(paper: Paper, q: Question, level?: string): {input:
     resultOf(q) === 'right_answer_wrong_thinking' ? 'The final answer was right, but the method was wrong: the level must show why the method fails on a case where it gives the wrong answer.' : '',
     resultOf(q) === 'part_way' ? 'The student started right but did not show (or reach) the whole method: the level must make every step of the thinking visible.' : '',
     q.focus ? 'THE TEACHER\'S FOCUS NOTE: ' + q.focus : '',
-    // 29 Oct (owner): every level builds named thinking capabilities, whether the exam was passed or not
-    capabilitiesOf(q).length ? 'THE THINKING CAPABILITIES THIS LEVEL BUILDS (practise them by name in the real-world task): '
-      + capabilitiesOf(q).map(c => c + ' (' + CAPABILITIES[c] + ')').join('; ') : '',
+    // 29 Oct (owner): every level builds named thinking capabilities, whether the exam was passed or not. 31 Oct (judges'
+    // panel: "Use Systems Thinking to take 50 percent off" in a Year 9 lesson): the level practises that thinking through
+    // the concrete skill, and never names a capability in its own text
+    capabilitiesOf(q).length ? 'THE THINKING THIS LEVEL PRACTISES (through the skill below, in the real-world task; never write these names '
+      + 'in any lesson, beat, question or task): ' + capabilitiesOf(q).map(c => c + ' (' + CAPABILITIES[c] + ')').join('; ') : '',
+    q.skill ? 'THE CONCRETE SKILL: ' + q.skill : '',
+    // 31 Oct (judges' panel: the level gave its answers away and asked little): what every check must make the student do
+    'THE CHECKS: no title, beat name, banner or question gives its own answer away (never "The $75 Surprise" over a question '
+      + 'whose answer is $75); at least one question has the student work out a NEW case on their own (different numbers, '
+      + 'or the order changed) before anything shows the answer; the practical task ends in one number the student types, '
+      + 'which the lesson checks, never a box they tick.',
     level ? 'THE STUDENT\'S LEVEL: ' + level : '',
   ].filter(Boolean).join('\n\n');
   return {input, context};
@@ -114,11 +122,14 @@ export function fingerprintLines(f?: Fingerprint | null): string[] {
 /** The self-check waits at most this long for Muse Wonder's verdict, then the level is kept as written. */
 export const CHECK_WAIT_MS = 120000;
 
-/** Muse Wonder plays the written level as both students (the edge's POST check, then its verdict). */
+/** Muse Wonder plays the written level as both students (the edge's POST check, then its verdict). 31 Oct (judges'
+ *  panel): the check names the paper and question it is for, and its id goes with the built level, so the server holds
+ *  the teacher to its own verdict, never the phone's word. */
 export function selfCheck(env: WitnessEnv, paper: Paper, q: Question, wait: (ms: number) => Promise<void> = ms => new Promise(r => setTimeout(r, ms))) {
-  return async (level: MasteryLevelText): Promise<{passes: boolean; problems: string[]} | null> => {
+  return async (level: MasteryLevelText): Promise<SelfCheck | null> => {
     const working = (q.steps || []).map(s => (s.crossed_out ? '(crossed out) ' : '') + s.wrote).join('\n');
-    const asked = await witness.check(env, {question: 'Question ' + q.n + (paper.title ? ' of ' + paper.title : ''), working, diagnosis: ideaOf(q), focus: q.focus || '', level});
+    const asked = await witness.check(env, {question: 'Question ' + q.n + (paper.title ? ' of ' + paper.title : ''), working, diagnosis: ideaOf(q),
+      focus: q.focus || '', level, for: {sitting: paper.id, n: q.n}});
     if (!asked.ok) return null;
     for (let waited = 0; waited < CHECK_WAIT_MS; waited += 4000) {
       await wait(4000);
@@ -126,7 +137,7 @@ export function selfCheck(env: WitnessEnv, paper: Paper, q: Question, wait: (ms:
       if (!r.ok || r.value.status === 'failed') return null;
       if (r.value.status === 'done' && r.value.verdict) {
         const v = r.value.verdict;
-        return {passes: v.passes === true, problems: (v.problems || []).map(p => (p.lesson ? 'lesson ' + p.lesson + ': ' : '') + p.fix)};
+        return {passes: v.passes === true, problems: (v.problems || []).map(p => (p.lesson ? 'lesson ' + p.lesson + ': ' : '') + p.fix), id: asked.value.id};
       }
     }
     return null;
@@ -134,7 +145,7 @@ export function selfCheck(env: WitnessEnv, paper: Paper, q: Question, wait: (ms:
 }
 
 /** Builds the level with the Master any topic build, checks it as both students, and remembers it for the question. */
-export type SelfCheck = {passes: boolean; problems: string[]};
+export type SelfCheck = {passes: boolean; problems: string[]; id?: string};
 
 /** Builds the level with the Master any topic build, checks it as both students, and remembers it for the question.
  * `checked` is the kept level's last verdict (the build checks its final rewrite too), null when no check answered. */

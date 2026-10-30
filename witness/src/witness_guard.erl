@@ -41,7 +41,7 @@ parse(Text) ->
 check(Key, Text) ->
     Req = #{model => ?MODEL, reasoning => #{effort => <<"low">>}, max_output_tokens => 1500,
             input => [#{type => message, role => user, content => [#{type => input_text, text => prompt(Text)}]}]},
-    case witness_meta:responses(Key, Req) of
+    case witness_meta:structured(Key, Req, <<"safety">>, witness_meta:object(#{safe => #{type => boolean}, why => #{type => string}})) of
         {ok, R} ->
             Cost = witness_meta:cost({tokens, ?MODEL}, maps:get(<<"usage">>, R, #{})),
             case parse(witness_meta:text_of(R)) of

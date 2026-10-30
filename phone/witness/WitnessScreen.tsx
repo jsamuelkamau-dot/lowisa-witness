@@ -27,7 +27,8 @@ import type {MirrorStorage} from '../state/storage';
 import type {CustomEnv} from '../paths/custom/course';
 import {onBuildProgress} from '../paths/custom/course';
 import {buildMastery, builtNews, masteryDone, masteryPath} from './mastery';
-import type {Fingerprint, Mastery} from './net';
+import type {Fingerprint, Mastery, Recheck} from './net';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {asksLeft} from './net';
 import {AsksView} from './Examiner';
 import {SayIt} from './SayIt';
@@ -192,6 +193,7 @@ export async function keptRecording(storage: MirrorStorage, now = Date.now()): P
 
 export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessEnv & CustomEnv; storage: MirrorStorage; onBack(): void; onOpenPath?(pathId: string): void}): React.JSX.Element {
   const [stage, setStage] = useState<Stage>({kind: 'home'});
+  const insets = useSafeAreaInsets();
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
@@ -346,7 +348,8 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
 
   return (
     <Page title="From Exam to Mastery" subtitle="Exams on paper" onBack={back}>
-      <ScrollView contentContainerStyle={s.page} keyboardShouldPersistTaps="handled" testID="witness-screen">
+      {/* 31 Oct (judges' panel): the system's navigation bar covered the last line ("Turned a◀ound") */}
+      <ScrollView contentContainerStyle={[s.page, {paddingBottom: 40 + insets.bottom}]} keyboardShouldPersistTaps="handled" testID="witness-screen">
         {error ? <Text style={s.error} accessibilityRole="alert" testID="witness-error">{error}</Text> : null}
 
         {stage.kind === 'home' ? (
@@ -519,7 +522,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
   const asking = !path && !!fp && !!fp.ask && (fp.said || []).length < 2;
   // Lo answers the answer: the learner hears that it landed (30 Oct, rehearsal: the card just vanished)
   const [loThanks, setLoThanks] = useState('');
-  const act = async (action: 'event' | 'explain' | 'ask' | 'challenge_answer', body: Record<string, unknown>) => {
+  const act = async (action: 'event' | 'explain' | 'ask' | 'challenge_answer' | 'recheck_open' | 'recheck_answer', body: Record<string, unknown>) => {
     const r = await witness.mastery(env, paper.id, q.n, action, body);
     if (r.ok) { setM(r.value.mastery); setSaid(''); } else setSaid(r.error);
     return r.ok ? r.value.mastery : null;
@@ -527,7 +530,8 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
   // 30 Oct (owner): what the teacher sends after the level (a new challenge, a reply, Turned around) reaches an open screen
   // too: looked for every 20 seconds while the question is still to turn around
   useEffect(() => {
-    if (!next || turned) return undefined;
+    // 31 Oct: and after Turned around, while its re-check is still to come back
+    if (!next || (turned && m && m.recheck && (m.recheck.status === 'passed' || m.recheck.status === 'not_yet'))) return undefined;
     let live = true;
     const timer = setInterval(async () => {
       const r = await witness.mine(env);
@@ -593,7 +597,8 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
     off(); setBuilding('');
     if (made.ok && made.pathId) {
       setPath(made.pathId);
-      const news = {event: 'built', path: made.pathId, check: made.checked, level: made.outline};
+      // 31 Oct (judges' panel): the server takes its own verdict for the check this level names, never the phone's word
+      const news = {event: 'built', path: made.pathId, check_id: made.checked ? made.checked.id : undefined, level: made.outline};
       // one dropped connection must not lose the teacher's news: asked once more before the student is told to try again
       const after = (await act('event', news)) || (await new Promise(res => setTimeout(res, 3000)).then(() => act('event', news)));
       if (after && after.status !== 'held' && onOpenPath) onOpenPath(made.pathId);
@@ -607,7 +612,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
         {/* once the teacher issues the badge, the question reads as turned around, not as still to fix */}
         <Text style={[s.chip, next && !turned ? s.chipNext : s.chipOk]}>{turned ? 'Turned around' : RESULT_WORDS[r]}</Text>
       </View>
-      <Text style={s.sub}>{turned ? 'On the exam: ' + marksOf(q) + ' of ' + q.out_of + ' marks. Since then, turned around: your teacher saw you master it.' : marksOf(q) + ' of ' + q.out_of + ' marks'}</Text>
+      <Text style={s.sub}>{turned ? 'On the exam: ' + marksOf(q) + ' of ' + q.out_of + ' marks. Since then, turned around: ' + recheckWords(m && m.recheck) : marksOf(q) + ' of ' + q.out_of + ' marks'}</Text>
       {next && !turned && PLAN_WHY[r] ? <Text style={s.sub}>{PLAN_WHY[r]}</Text> : null}
       <Replay q={q} shows={whatShows(qd, fp)} />
       {/* 28 Oct re-audit (the submission: each student's feedback comes "with a short spoken explanation") */}
@@ -616,7 +621,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
       {next && capabilitiesOf(q).length ? (
         <View style={s.caps} testID={'witness-caps-' + q.n}>
           <Text style={s.capsHead}>Thinking it builds</Text>
-          {capabilitiesOf(q).map(c => <Text key={c} style={s.cap}><Text style={s.capName}>{c}</Text>: {CAPABILITIES[c]}</Text>)}
+          {capabilitiesOf(q).map(c => <Text key={c} style={s.cap}><Text style={s.capName}>{c}</Text>{q.skill ? ', here: ' + q.skill : ': ' + CAPABILITIES[c]}</Text>)}
         </View>
       ) : null}
       {q.comment && q.comment.text ? <Text style={s.comment} testID={'witness-comment-' + q.n}>Your teacher: {q.comment.text}</Text> : null}
@@ -741,7 +746,50 @@ export function ChallengeCard({c, act}: {c: NonNullable<Mastery['challenge']>; a
   );
 }
 
-function AfterLevel({m, act, film, filming}: {m?: Mastery; act(action: 'explain' | 'ask' | 'challenge_answer', body: Record<string, unknown>): Promise<unknown>; film(source: 'camera' | 'gallery'): void; filming: string}): React.JSX.Element | null {
+/** What "Turned around" says while its re-check is still to come, and once it came back (31 Oct, judges' panel: one
+ *  immediate challenge was called mastery). */
+export function recheckWords(r?: Recheck): string {
+  if (!r) return 'your teacher saw you solve a new one.';
+  if (r.status === 'passed') return 'your teacher saw you solve a new one, and you were still right on the re-check.';
+  if (r.status === 'not_yet') return 'your teacher saw you solve a new one; the re-check showed it needs one more look.';
+  if (r.status === 'open') return 'your teacher saw you solve a new one. Your re-check is ready.';
+  return 'your teacher saw you solve a new one. Re-check on ' + new Date(r.due_ms || 0).toLocaleDateString(undefined, {day: 'numeric', month: 'short'}) + '.';
+}
+
+/**
+ * The re-check (31 Oct, judges' panel): a few days after Turned around, a new problem on the same idea in a different
+ * shape, answered with the student's own number and how they got it. No options to pick from; the right value shows
+ * only with their answer.
+ */
+export function RecheckCard({r, act}: {r: Recheck; act(action: 'recheck_open' | 'recheck_answer', body: Record<string, unknown>): Promise<unknown>}): React.JSX.Element {
+  const [value, setValue] = useState('');
+  const [working, setWorking] = useState('');
+  const [busy, setBusy] = useState(false);
+  const go = async (action: 'recheck_open' | 'recheck_answer', body: Record<string, unknown>) => { if (busy) return; setBusy(true); await act(action, body); setBusy(false); };
+  useEffect(() => { if (r.status === 'open' && r.q) tutorSay('Your re-check. ' + r.q); }, [r.status, r.q]);
+  return (
+    <View style={s.challenge} testID="witness-recheck">
+      <Text style={s.challengeHead}>Your re-check</Text>
+      {r.status === 'scheduled' ? <Btn label={busy ? 'Getting it ready…' : 'Start my re-check'} onPress={() => go('recheck_open', {})} primary small testID="witness-recheck-open" /> : null}
+      {r.q ? <Text style={s.challengeQ}>{r.q}</Text> : null}
+      {r.status === 'open' ? (
+        <View>
+          <SoftInput value={value} onChangeText={setValue} style={s.input} keyboardType="numbers-and-punctuation" accessibilityLabel={'Your answer' + (r.unit ? ', in ' + r.unit : '')} testID="witness-recheck-value" />
+          <Text style={s.sub}>How did you get it? Each step, in your own words.</Text>
+          <SoftInput value={working} onChangeText={setWorking} multiline style={s.input} accessibilityLabel="How you got it" testID="witness-recheck-working" />
+          <Btn label={busy ? 'Sending…' : 'Send my answer'} onPress={() => { if (value.trim() && working.trim()) void go('recheck_answer', {value: value.trim(), working: working.trim()}); }} primary small testID="witness-recheck-send" />
+        </View>
+      ) : null}
+      {r.reply ? (
+        <Text style={r.reply.right ? s.challengeRight : s.diag} testID="witness-recheck-result">
+          {r.reply.right ? 'Right. Still yours, days later.' : 'Not this time: it is ' + r.reply.answer + (r.unit ? ' ' + r.unit : '') + '. Your teacher will help with one more look.'}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
+function AfterLevel({m, act, film, filming}: {m?: Mastery; act(action: 'explain' | 'ask' | 'challenge_answer' | 'recheck_open' | 'recheck_answer', body: Record<string, unknown>): Promise<unknown>; film(source: 'camera' | 'gallery'): void; filming: string}): React.JSX.Element | null {
   const [toLo, setToLo] = useState('');
   const [toTeacher, setToTeacher] = useState('');
   const [question, setQuestion] = useState('');
@@ -770,6 +818,8 @@ function AfterLevel({m, act, film, filming}: {m?: Mastery; act(action: 'explain'
         </View>
       ) : null}
       {m && m.challenge ? <ChallengeCard key={m.challenge.at} c={m.challenge} act={act} /> : null}
+      {m && m.recheck && m.recheck.status !== 'scheduled' ? <RecheckCard r={m.recheck} act={act} /> : null}
+      {m && m.recheck && m.recheck.status === 'scheduled' && (m.recheck.due_ms || 0) <= Date.now() ? <RecheckCard r={m.recheck} act={act} /> : null}
       {asks.paper && asks.fresh ? (
         <View style={{marginTop: 10}} testID="witness-fresh">
           <Text style={s.rowTitle}>A fresh question from your teacher</Text>

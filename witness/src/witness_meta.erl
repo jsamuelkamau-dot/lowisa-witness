@@ -15,7 +15,7 @@
 %%%-------------------------------------------------------------------
 -module(witness_meta).
 -export([chat_request/3, ssl_opts/0, upload/4, sam_video/3, sam_video/4, read_video/5, read_content/4, fetch/1, video/1, responses/2, text_of/1, cost/2, multipart/4, range/3,
-         image/2, transcribe/2, transcribe_body/2]).
+         image/2, transcribe/2, transcribe_body/2, structured/4, object/1]).
 
 -define(API, "https://api.meta.ai/v1").
 -define(TIMEOUT_MS, 300000).
@@ -86,11 +86,13 @@ read_video(Key, Model, FileId, Prompt, Opts) ->
     end.
 
 %% read_content(Key, Model, Content, Opts) -> {ok, Text, Usage}: one reading of any content parts (a photographed paper's
-%% labelled pages, 29 Oct).
+%% labelled pages, 29 Oct). Opts may carry cache_key: 31 Oct (probe, harness/probes/results-31oct): /responses takes
+%% prompt_cache_key, and a second reading of the same pages came back with 5,603 of 5,612 input tokens cached.
 read_content(Key, Model, Content, Opts) ->
-    Req = #{model => Model, reasoning => #{effort => maps:get(effort, Opts, <<"medium">>)},
-            max_output_tokens => maps:get(max_output_tokens, Opts, 16000),
-            input => [#{type => message, role => user, content => Content}]},
+    Req0 = #{model => Model, reasoning => #{effort => maps:get(effort, Opts, <<"medium">>)},
+             max_output_tokens => maps:get(max_output_tokens, Opts, 16000),
+             input => [#{type => message, role => user, content => Content}]},
+    Req = case maps:get(cache_key, Opts, undefined) of undefined -> Req0; CK -> Req0#{prompt_cache_key => CK} end,
     case responses(Key, Req) of
         {ok, R} -> {ok, text_of(R), maps:get(<<"usage">>, R, #{})};
         E -> E
@@ -140,6 +142,19 @@ video({url, Url}) -> #{type => input_video, video_url => Url};
 video(FileId) -> #{type => input_video, file_id => FileId}.
 
 responses(Key, Req) -> http(Key, "/responses", "application/json", iolist_to_binary(json:encode(Req))).
+
+%% structured(Key, Req, Name, Schema): a call whose reply must be one JSON object of Schema (31 Oct, judges' panel: every
+%% reply was cut from the first "{" to the last "}"; the probe in harness/probes/results-31oct showed Muse Spark on
+%% /responses holding a strict json_schema). The callers keep their tolerant parsers, so a reply that still is not
+%% the shape is read as before; a model or endpoint that refuses the format (a 400) is asked again without it.
+structured(Key, Req, Name, Schema) ->
+    case responses(Key, Req#{text => #{format => #{type => json_schema, name => Name, strict => true, schema => Schema}}}) of
+        {error, {400, _}} -> responses(Key, Req);
+        R -> R
+    end.
+
+%% A strict schema's object: every property required, nothing else allowed (pure).
+object(Props) -> #{type => object, additionalProperties => false, required => maps:keys(Props), properties => Props}.
 
 text_of(#{<<"output">> := Out}) ->
     iolist_to_binary([T || #{<<"content">> := Cs} <- Out, is_list(Cs), #{<<"type">> := <<"output_text">>, <<"text">> := T} <- Cs]);

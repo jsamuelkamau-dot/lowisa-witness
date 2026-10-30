@@ -1,6 +1,12 @@
 // The Exam Desk outside the IDE: serves desk/witness-desk.js on a plain page and passes its calls to a Witness host.
 //
 //   WITNESS_URL=https://your-host WITNESS_TOKEN=... node demo/desk-server.js      then open http://localhost:4747
+//   node demo/desk-server.js --replay                                            no key, no account, no network
+//
+// 31 Oct (the 12-judge panel: nothing could be opened without the private LoWisa host): --replay answers the desk's
+// reads from a recorded exam (evidence/replay/: the rehearsal's own answers from the production edge, names kept as
+// they are on the sample papers, tokens and signed links removed), so the desk, the fingerprints, the class patterns,
+// the challenge and the badge can be looked at locally. Anything that would change the exam is answered read-only.
 //
 // The page gets the same seam the IDE gives the desk (window.__lowisaWitnessIpc); this server adds the bearer token
 // so it never reaches the page, and forwards only /api/witness/ paths.
@@ -11,6 +17,13 @@ const path = require('path');
 const PORT = Number(process.env.PORT || 4747);
 const HOST = process.env.WITNESS_URL || 'http://localhost:8080';
 const TOKEN = process.env.WITNESS_TOKEN || '';
+const REPLAY = process.argv.includes('--replay') ? path.join(__dirname, '..', 'evidence', 'replay') : null;
+// a recorded answer for a read: the path's own file (/api/witness/pile/<id> -> pile_<id>.json), else 404
+function replayed(route) {
+  const name = route.replace(/^\/api\/witness\//, '').replace(/\//g, '_') + '.json';
+  const file = path.join(REPLAY, name);
+  return file.startsWith(REPLAY) && fs.existsSync(file) ? fs.readFileSync(file) : null;
+}
 const DESK = path.join(__dirname, '..', 'desk', 'witness-desk.js');
 
 const PAGE = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -47,8 +60,23 @@ http.createServer((req, res) => {
   const route = (req.url || '').split('?')[0];
   if (route === '/' || route === '/index.html') { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); return res.end(PAGE); }
   if (req.url === '/witness-desk.js') { res.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8' }); return res.end(fs.readFileSync(DESK)); }
+  if (REPLAY && /^\/replay-asset\/[A-Za-z0-9._-]+$/.test(route)) {
+    const f = path.join(REPLAY, 'assets', route.slice('/replay-asset/'.length));
+    if (!fs.existsSync(f)) { res.writeHead(404); return res.end(); }
+    res.writeHead(200, { 'content-type': /\.png$/.test(f) ? 'image/png' : /\.webp$/.test(f) ? 'image/webp' : /\.m4a$/.test(f) ? 'audio/mp4' : 'image/jpeg' });
+    return res.end(fs.readFileSync(f));
+  }
   // a paper's pictures (still-1.jpg, drawn-2.webp) and the record pass too; nothing outside /api/witness/
   if (!/^\/api\/witness\/[a-z0-9/._-]+$/.test(req.url || '') || (req.url || '').indexOf('..') >= 0) { res.writeHead(404); return res.end(); }
+  if (REPLAY) {
+    if (req.method !== 'GET') { res.writeHead(200, { 'content-type': 'application/json' }); return res.end('{"ok":false,"code":"replay","error":"This is a recorded exam: it can be read, not changed."}'); }
+    // a picture of a paper: the recorded file itself, served from the replay folder
+    const asset = /\/asset\/([A-Za-z0-9._-]+)$/.exec(route);
+    if (asset) { res.writeHead(200, { 'content-type': 'application/json' }); return res.end(JSON.stringify({ ok: true, url: '/replay-asset/' + asset[1] })); }
+    const body = replayed(route);
+    res.writeHead(body ? 200 : 404, { 'content-type': 'application/json' });
+    return res.end(body || '{"ok":false,"error":"Not in this recording."}');
+  }
   const cap = /\/voice$/.test(route) ? 6 * 1024 * 1024 : 65536;   // a spoken comment is base64 audio
   let body = '';
   req.on('data', (c) => { body += c; if (body.length > cap) req.destroy(); });
@@ -60,4 +88,4 @@ http.createServer((req, res) => {
       res.end(await r.text());
     } catch (e) { res.writeHead(502, { 'content-type': 'application/json' }); res.end('{"ok":false,"error":"The Witness host did not answer."}'); }
   });
-}).listen(PORT, () => console.log('Exam Desk demo on http://localhost:' + PORT + ' -> ' + HOST));
+}).listen(PORT, () => console.log('Exam Desk demo on http://localhost:' + PORT + ' -> ' + (REPLAY ? 'the recording in evidence/replay/' : HOST)));

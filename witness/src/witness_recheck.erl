@@ -129,7 +129,7 @@ parse_item(Text) ->
     end.
 
 write(Key, Q) ->
-    case call(Key, write_prompt(Q), <<"medium">>) of
+    case call(Key, write_prompt(Q), <<"medium">>, {<<"recheck">>, witness_meta:object(#{q => #{type => string}, answer => #{type => number}, unit => #{type => string}, working => #{type => string}})}) of
         {ok, Text, Cost} -> case parse_item(Text) of {ok, I} -> {ok, I, Cost}; E -> E end;
         E -> E
     end.
@@ -156,15 +156,15 @@ parse_verdict(Text) ->
     end.
 
 judge(Key, Q, {Value, Working}) ->
-    case call(Key, judge_prompt(Q, {Value, Working}), <<"medium">>) of
+    case call(Key, judge_prompt(Q, {Value, Working}), <<"medium">>, {<<"working">>, witness_meta:object(#{understood => #{type => boolean}, why => #{type => string}})}) of
         {ok, Text, Cost} -> case parse_verdict(Text) of {ok, V} -> {ok, V, Cost}; E -> E end;
         E -> E
     end.
 
-call(Key, Prompt, Effort) ->
+call(Key, Prompt, Effort, {Name, Schema}) ->
     Req = #{model => ?MODEL, reasoning => #{effort => Effort}, max_output_tokens => 6000,
             input => [#{type => message, role => user, content => [#{type => input_text, text => Prompt}]}]},
-    case witness_meta:responses(Key, Req) of
+    case witness_meta:structured(Key, Req, Name, Schema) of
         {ok, R} -> {ok, witness_meta:text_of(R), witness_meta:cost({tokens, ?MODEL}, maps:get(<<"usage">>, R, #{}))};
         E -> E
     end.

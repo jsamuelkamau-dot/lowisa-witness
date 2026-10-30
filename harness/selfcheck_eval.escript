@@ -57,7 +57,7 @@ summary(Rs) ->
       fault_named => wilson(length([x || #{named_the_fault := true} <- Faulty]), length(Faulty)),
       by_fault => maps:from_list([{F, #{held => length([x || #{fault := F1, passes := false} <- Faulty, F1 =:= F]),
                                         named => length([x || #{fault := F1, named_the_fault := true} <- Faulty, F1 =:= F]),
-                                        of => length([x || #{fault := F1} <- Faulty, F1 =:= F])}}
+                                        total => length([x || #{fault := F1} <- Faulty, F1 =:= F])}}
                                   || F <- lists:usort([F || #{fault := F} <- Faulty])])}.
 
 wilson(_, 0) -> #{k => 0, n => 0};

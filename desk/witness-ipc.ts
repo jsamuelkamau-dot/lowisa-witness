@@ -44,7 +44,9 @@ const DOORS: Array<[string, RegExp]> = [
   ['GET', new RegExp(`^/api/witness/sitting/${HEX16}/proof$`)],
   ['GET', new RegExp(`^/api/witness/pile/${HEX16}/measure$`)],
   // the teacher's side of a question after release: which checks, an answer in the thread, the badge
-  ['POST', new RegExp(`^/api/witness/mastery/${HEX16}/[0-9]{1,3}/(verify|reply|badge|approve|recommend|challenge|challenge_suggest)$`)],
+  ['POST', new RegExp(`^/api/witness/mastery/${HEX16}/[0-9]{1,3}/(verify|reply|badge|approve|recommend|challenge|challenge_suggest|recheck_now)$`)],
+  // 31 Oct (judges' panel): the class list, joining, and one action on many questions at once
+  ['POST', new RegExp(`^/api/witness/pile/${HEX16}/(joining|bulk|roster/remove)$`)],
 ];
 const MAX_BODY = 64 * 1024;
 // 28 Oct re-audit: a photo or PDF of the teacher's paper or scheme (10 MB on the edge), as base64

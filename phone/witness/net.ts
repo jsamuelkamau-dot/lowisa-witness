@@ -38,6 +38,12 @@ export interface Mastery {
   thread?: Array<{from: 'student' | 'teacher'; text: string; at: number}>; badge?: {issued: boolean; note: string; at: number};
   /** the teacher's new challenge (30 Oct): which option is right comes only with the student's own answer */
   challenge?: Challenge;
+  /** the re-check a few days after Turned around (31 Oct, judges' panel): the right value comes only with their answer */
+  recheck?: Recheck;
+}
+export interface Recheck {
+  status: 'scheduled' | 'open' | 'passed' | 'not_yet'; due_ms?: number; q?: string; unit?: string; made_ms?: number;
+  reply?: {value: number; right: boolean; answer: number};
 }
 /** The Misconception Fingerprint (owner, 30 Oct): what reasoning produced the answer, the evidence, the repair; `ask`
  *  is Lo's diagnostic question when the paper alone was not enough, `said` the student's answers to it. */
@@ -60,6 +66,8 @@ export interface Question {
   fingerprint?: Fingerprint | null;
   /** the one or two of the seven thinking capabilities its mastery level builds (29 Oct) */
   capabilities?: string[];
+  /** the concrete skill the question needs, shown beside the capability (31 Oct, judges' panel) */
+  skill?: string;
   /** a photographed paper: the step (1 for the first) where the thinking went wrong */
   slip?: number | null;
 }
@@ -177,7 +185,7 @@ export const witness = {
   mark: (env: WitnessEnv, id: string, fps: number) => door<{status: string}>(env, 'POST', 'sitting/' + id + '/mark', {fps}),
   paper: (env: WitnessEnv, id: string) => door<Paper>(env, 'GET', 'sitting/' + id),
   // a challenge's answer is read by Muse Spark before the reply: give it longer
-  mastery: (env: WitnessEnv, paperId: string, n: number, action: 'event' | 'explain' | 'ask' | 'fresh' | 'challenge_answer' | 'diagnose', body: Record<string, unknown>) =>
+  mastery: (env: WitnessEnv, paperId: string, n: number, action: 'event' | 'explain' | 'ask' | 'fresh' | 'challenge_answer' | 'diagnose' | 'recheck_open' | 'recheck_answer', body: Record<string, unknown>) =>
     door<{mastery: Mastery; fresh?: {id: string; put: string}; fingerprint?: Fingerprint; diagnosis?: string}>(env, 'POST', 'mastery/' + paperId + '/' + n + '/' + action, body,
       action === 'challenge_answer' || action === 'diagnose' ? 45000 : undefined),
   check: (env: WitnessEnv, body: Record<string, unknown>) => door<{id: string}>(env, 'POST', 'check', body),

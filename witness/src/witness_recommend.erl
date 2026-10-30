@@ -69,7 +69,8 @@ parse(Text) ->
 run(Key, Q) ->
     Req = #{model => ?MODEL, reasoning => #{effort => <<"medium">>}, max_output_tokens => 4000,
             input => [#{type => message, role => user, content => [#{type => input_text, text => prompt(Q)}]}]},
-    case witness_meta:responses(Key, Req) of
+    Shape = witness_meta:object(#{recommend => #{type => string, enum => [<<"issue">>, <<"not_yet">>]}, why => #{type => string}, missing => #{type => string}}),
+    case witness_meta:structured(Key, Req, <<"recommendation">>, Shape) of
         {ok, R} ->
             Cost = witness_meta:cost({tokens, ?MODEL}, maps:get(<<"usage">>, R, #{})),
             case parse(witness_meta:text_of(R)) of {ok, Rec} -> {ok, Rec, Cost}; E -> E end;

@@ -79,7 +79,10 @@ mark(Key, Pages, Sitting, Opts) ->
     Gray = maps:get(gray, Opts, fun(Url) -> witness_media:gray_image(Url, 600) end),
     %% the page's ink colour, which tells a student's pen from the printed questions (a test's own pages give none)
     Tint = maps:get(tint, Opts, case maps:is_key(gray, Opts) of true -> fun(_) -> none end; false -> fun(Url) -> witness_media:tint_image(Url, 600) end end),
-    Read = maps:get(read, Opts, fun(K, Content, Effort) -> witness_meta:read_content(K, ?SPARK, Content, #{effort => Effort}) end),
+    %% every reading of one paper (the first, and an unsure question's second and third) shares one cache key, so the
+    %% pages sent again are read from Meta's prompt cache (31 Oct, judges' panel: rereads sent every page again)
+    CacheKey = <<"witness-paper-", (integer_to_binary(erlang:phash2([maps:get(url, P, <<>>) || P <- Pages])))/binary>>,
+    Read = maps:get(read, Opts, fun(K, Content, Effort) -> witness_meta:read_content(K, ?SPARK, Content, #{effort => Effort, cache_key => CacheKey}) end),
     %% 31 Oct: the engine that reads it (Muse Spark on the Meta Model API, or Muse Spark Open through witness_open), for
     %% its price and its name on the result
     Price = maps:get(price, Opts, {tokens, ?SPARK}),

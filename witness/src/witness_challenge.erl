@@ -123,7 +123,8 @@ parse_suggestion(Text) ->
     end.
 
 suggest(Key, Q, Note) ->
-    case call(Key, suggest_prompt(Q, Note), <<"medium">>) of
+    Shape = {<<"challenge">>, witness_meta:object(#{q => #{type => string}, options => #{type => array, items => #{type => string}}, answer => #{type => integer}, checks => #{type => string}})},
+    case call(Key, suggest_prompt(Q, Note), <<"medium">>, Shape) of
         {ok, Text, Cost} -> case parse_suggestion(Text) of {ok, S} -> {ok, S, Cost}; E -> E end;
         E -> E
     end.
@@ -153,17 +154,18 @@ parse_verdict(Text) ->
 judge(Key, Q, {Pick, Why}) ->
     case maps:get(challenge, m(Q), undefined) of
         #{} ->
-            case call(Key, judge_prompt(Q, {Pick, Why}), <<"low">>) of
+            case call(Key, judge_prompt(Q, {Pick, Why}), <<"low">>, {<<"reason">>, witness_meta:object(#{understood => #{type => boolean}, why => #{type => string}})}) of
                 {ok, Text, Cost} -> case parse_verdict(Text) of {ok, V} -> {ok, V, Cost}; E -> E end;
                 E -> E
             end;
         _ -> {error, not_asked}
     end.
 
-call(Key, Prompt, Effort) ->
+call(Key, Prompt, Effort, Schema) ->
     Req = #{model => ?MODEL, reasoning => #{effort => Effort}, max_output_tokens => 4000,
             input => [#{type => message, role => user, content => [#{type => input_text, text => Prompt}]}]},
-    case witness_meta:responses(Key, Req) of
+    {Name, Sc} = Schema,
+    case witness_meta:structured(Key, Req, Name, Sc) of
         {ok, R} -> {ok, witness_meta:text_of(R), witness_meta:cost({tokens, ?MODEL}, maps:get(<<"usage">>, R, #{}))};
         E -> E
     end.

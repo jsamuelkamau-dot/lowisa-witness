@@ -20,9 +20,10 @@ patterns_count_from_the_papers_not_the_model_test() ->
     ?assertEqual({error, no_patterns}, witness_patterns:parse(<<"no">>, items())),
     P = witness_patterns:prompt(#{title => <<"Fractions">>, level => <<"Year 7">>}, items()),
     ?assertEqual(P, unicode:characters_to_binary(P)),
-    [?assertNotEqual(nomatch, binary:match(P, X)) || X <- [<<"1. <<<Amara>>>, question 3 (Simplify 16/64; turned around since)">>, <<"3/4 ÷ 1/2"/utf8>>, <<"what to reteach tomorrow">>,
+    [?assertNotEqual(nomatch, binary:match(P, X)) || X <- [<<"1. Student 1, question 3 (Simplify 16/64; turned around since)">>, <<"3/4 ÷ 1/2"/utf8>>, <<"what to reteach tomorrow">>,
                                                     %% 30 Oct rehearsal: three different reasons for one answer came back as one group
                                                     <<"never by the answer">>]],
+    ?assertEqual(nomatch, binary:match(P, <<"Amara">>)),          %% 31 Oct (privacy): no name reaches the model
     ?assertEqual({error, nothing_to_master}, witness_patterns:run(<<"k">>, #{}, [])).
 
 recommendation_reads_every_piece_of_evidence_test() ->

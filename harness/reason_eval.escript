@@ -21,7 +21,7 @@ main([Out, RunsS]) ->
                 false_accepts => wilson(length([x || #{understood := true} <- Wrong]), length(Wrong)),
                 false_rejects => wilson(length([x || #{understood := false} <- Right]), length(Right)),
                 by_kind => maps:from_list([{K, #{accepted => length([x || #{kind := K1, understood := true} <- Ok, K1 =:= K]),
-                                                 of => length([x || #{kind := K1} <- Ok, K1 =:= K])}}
+                                                 total => length([x || #{kind := K1} <- Ok, K1 =:= K])}}
                                            || K <- lists:usort([K || #{kind := K} <- Ok])]),
                 cost_usd => lists:sum([maps:get(cost_usd, X, 0.0) || X <- Ok])},
     Meta = #{commit => list_to_binary(string:trim(os:cmd("git rev-parse HEAD"))), runs => list_to_integer(RunsS),

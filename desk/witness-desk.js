@@ -287,20 +287,41 @@
       return '<div class="wd-row" data-paper="' + esc(s.id) + '"><span class="wd-grow">' + esc(s.student || 'Paper') + '</span>' + whoseChip(s) + st +
         (s.to_master ? '<span class="wd-chip warn">' + s.to_master + ' in Mastery Plan</span>' : '') +
         (s.turned_around ? '<span class="wd-chip ok">' + s.turned_around + ' turned around</span>' : '') + '</div>';
-    }).join('') || '<div class="wd-sub">No papers yet. After the exam, photograph them from the LoWisa phone app with this exam\'s code.</div>';
+    }).join('') || '<div class="wd-sub">No papers yet. After the exam, photograph them from the LoWisa phone app with this exam\'s photographing code.</div>';
     var queue = q.map(function (it) {
       return '<div class="wd-row" data-paper="' + esc(it.sitting) + '" data-n="' + esc(it.n) + '"><span class="wd-grow">' + esc(it.student || 'Paper') + ' · Q' + esc(it.n) +
         (it.diagnosis ? '<div class="wd-sub" style="white-space:normal">' + esc(it.diagnosis) + '</div>' : '') + '</span>' +
         chip(it.result) + '<span class="wd-sub">' + Math.round((it.confidence || 0) * 100) + '% sure</span></div>';
     }).join('') || '<div class="wd-sub">Nothing left to review.</div>';
+    // 31 Oct (judges' panel, the school leader: forty papers, one question at a time)
+    var sure = q.filter(function (it) { return it.result === 'mastered' && (it.confidence || 0) >= 0.9; });
+    if (sure.length) queue = '<div class="wd-row" style="cursor:default"><span class="wd-grow wd-sub">' + sure.length + ' marked mastered, Muse Spark 90% sure or more</span>' +
+      '<button class="wd-btn" data-act="acceptsure">Accept all ' + sure.length + '</button></div>' + queue;
+    var ready = (j.ready || []);
+    var readyCard = ready.length ? '<div class="wd-card"><h3>Ready for Turned around: ' + ready.length + '</h3>' +
+      '<div class="wd-sub">The level finished and your challenge answered right. Read each reason, untick any you are not sure of, then issue them together.</div>' +
+      ready.map(function (r, i) {
+        return '<label style="display:flex;gap:8px;align-items:flex-start;margin-top:6px;color:var(--tx)"><input type="checkbox" data-ready="' + i + '" checked style="width:auto;margin-top:3px">' +
+          '<span><b>' + esc(r.student || 'Paper') + ' · Q' + esc(r.n) + '</b> <span class="wd-sub">' + esc(r.idea || '') + '</span><div>“' + esc(r.why || '') + '”</div>' +
+          (r.verdict ? '<div class="wd-sub">Muse Spark: ' + (r.verdict.understood ? 'the reason holds. ' : 'the reason does not hold. ') + esc(r.verdict.why || '') + '</div>' : '') + '</span></label>';
+      }).join('') + '<div style="margin-top:8px"><button class="wd-btn wd-main" data-act="readybadge">Issue Turned around for the ticked ones</button></div></div>' : '';
     var released = j.pile && j.pile.released_ms;
     var waiting = (j.sittings || []).filter(function (x) { return x.status === 'marked'; }).length;
     var roster = (j.pile && j.pile.roster) || [];
+    // 31 Oct (judges' panel): the phone that photographs uses its own code, which students never see; joining closes
+    // once the class has joined; a name that should not be on the list comes off it
+    var closed = j.pile && j.pile.joining === 'closed';
     var code = j.pile && j.pile.code ? '<div class="wd-card"><b>Join code: <span style="font-size:18px;letter-spacing:3px">' + esc(j.pile.code) + '</span></b>' +
-      '<div class="wd-sub">Students enter it in the LoWisa phone app to put their name on the class list. After the exam, a single phone (yours, or one the school owns) ' +
-      'photographs each paper with it: the name on each paper finds its student. Desk filming (optional): a student working alone films their desk while they write.</div>' +
-      '<div class="wd-sub" style="margin-top:6px"><b>Class list: ' + roster.length + ' joined</b>' + (roster.length ? ' · ' + roster.map(function (r) { return esc(r.name); }).join(', ') : '') + '</div></div>' : '';
-    return code + nums + measured() + patternsCard(j.pile || {}, toMaster + turned) + '<div class="wd-cols"><div class="wd-card"><h3>Papers</h3>' + papers + '</div>' +
+      (closed ? ' <span class="wd-chip warn">Joining closed</span>' : '') +
+      '<div class="wd-sub">Students enter it in the LoWisa phone app to put their name on the class list.</div>' +
+      (j.pile.photo_code ? '<div style="margin-top:6px"><b>Photographing code: <span style="font-size:18px;letter-spacing:3px">' + esc(j.pile.photo_code) + '</span></b>' +
+        '<div class="wd-sub">Only for the one phone that photographs the papers after the exam (yours, or one the school owns). Never give it to students.</div></div>' : '') +
+      '<div class="wd-sub" style="margin-top:6px"><b>Class list: ' + roster.length + ' joined</b></div>' +
+      (roster.length ? '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">' + roster.map(function (r) {
+        return '<span class="wd-chip">' + esc(r.name) + ' <button class="wd-btn" data-act="unroster" data-uid="' + esc(r.uid) + '" aria-label="Take ' + esc(r.name) + ' off the class list" style="padding:0 6px;margin-left:4px">×</button></span>'; }).join('') + '</div>' : '') +
+      '<div style="margin-top:6px"><button class="wd-btn" data-act="joining" data-open="' + (closed ? '1' : '0') + '">' + (closed ? 'Open joining again' : 'Close joining') + '</button>' +
+      ' <span class="wd-sub">Desk filming (optional): a student working alone films their desk while they write.</span></div></div>' : '';
+    return code + nums + measured() + readyCard + patternsCard(j.pile || {}, toMaster + turned) + '<div class="wd-cols"><div class="wd-card"><h3>Papers</h3>' + papers + '</div>' +
       '<div class="wd-card"><h3>To review: what needs you first</h3>' + queue + '</div></div>' +
       // a paper photographed after the release (a student who sat it late) waits for its own release (30 Oct, film take:
       // the second paper stayed "marked" and the button was gone)
@@ -320,18 +341,67 @@
       (pt && pt.status === 'making' ? '<span class="wd-chip">Muse Wonder is reading the class…</span>' :
         '<button class="wd-btn" data-act="patterns">' + (pt && pt.status === 'ready' ? 'Find them again' : 'Find the class\'s patterns') + '</button>') + '</div>';
     if (!pt || pt.status !== 'ready') return '<div class="wd-card">' + head + (pt && pt.status === 'failed' ? '<div class="wd-sub" style="margin-top:6px">That did not come back. Try again in a moment.</div>' : '') + '</div>';
-    var groups = (pt.patterns || []).map(function (g) {
+    var groups = (pt.patterns || []).map(function (g, gi) {
       var n = (g.students || []).length;
       return '<div style="margin-top:10px"><b>' + n + ' student' + (n === 1 ? '' : 's') + ': ' + esc(g.idea) + '</b>' +
         (g.turned_around ? ' <span class="wd-chip ok">' + g.turned_around + ' turned around</span>' : '') +
         '<div class="wd-sub">' + esc((g.students || []).join(', ')) + ' · ' + unit().toLowerCase() + ((g.questions || []).length === 1 ? ' ' : 's ') + esc((g.questions || []).join(', ')) + '</div>' +
-        (g.reteach ? '<div style="margin-top:2px">Reteach: ' + esc(g.reteach) + '</div>' : '') + '</div>';
+        (g.reteach ? '<div style="margin-top:2px">Reteach: ' + esc(g.reteach) + '</div>' : '') +
+        // 31 Oct (judges' panel): one challenge to the whole group, the same idea in a new situation
+        ((g.items || []).length > 1 && pile.released_ms ? groupChallenge(g, gi) : '') + '</div>';
     }).join('');
     var next = (pt.next_exam || []);
     return '<div class="wd-card">' + head + groups +
       (pt.tomorrow ? '<div style="margin-top:10px"><b style="font-size:12px">Tomorrow</b><div>' + esc(pt.tomorrow) + '</div></div>' : '') +
       (next.length ? '<div style="margin-top:10px"><b style="font-size:12px">For the next exam</b>' + next.map(function (x, i) { return '<div class="wd-sub">' + (i + 1) + '. ' + esc(x.text) + ' (' + esc(x.marks) + ')</div>'; }).join('') +
         '<div style="margin-top:6px"><button class="wd-btn wd-main" data-act="nextexam">Start the next exam with these</button></div></div>' : '') + '</div>';
+  }
+
+  function groupChallenge(g, gi) {
+    var d = S.draft, open = d.groupOpen === gi;
+    if (!open) return '<div style="margin-top:6px"><button class="wd-btn" data-act="groupopen" data-g="' + gi + '">One challenge for all ' + g.items.length + '</button></div>';
+    var opts = [0, 1, 2, 3].map(function (i) {
+      return '<div style="display:flex;gap:6px;align-items:center;margin-top:4px"><input type="radio" name="wdGroupAns" data-f="gAns" value="' + i + '"' + (String(d.gAns) === String(i) ? ' checked' : '') + ' style="width:auto" aria-label="Option ' + (i + 1) + ' is right">' +
+        '<input data-f="gOpt' + i + '" value="' + esc(d['gOpt' + i] || '') + '" placeholder="Option ' + (i + 1) + '" aria-label="Option ' + (i + 1) + '"></div>';
+    }).join('');
+    return '<div class="wd-card" style="margin-top:6px"><b>One challenge for ' + g.items.length + ' students</b>' +
+      '<textarea data-f="gQ" rows="3" placeholder="The same idea in a new situation" aria-label="The challenge">' + esc(d.gQ || '') + '</textarea>' + opts +
+      '<div class="wd-sub">Tick the right option. Each student answers on their phone and says why; you read every reason.</div>' +
+      '<div style="margin-top:6px"><button class="wd-btn" data-act="groupdraft" data-g="' + gi + '">Draft one with Muse Spark</button> ' +
+      '<button class="wd-btn wd-main" data-act="groupsend" data-g="' + gi + '">Send to all ' + g.items.length + '</button></div></div>';
+  }
+
+  // one call on the open exam (31 Oct): the class list, joining, and the actions on many questions at once
+  async function pileDo(path, body, done) {
+    var id = S.pile && S.pile.pile && S.pile.pile.id; if (!id) return;
+    var j = await api('POST', '/api/witness/pile/' + id + '/' + path, body);
+    if (j.ok) { say(done + (j.results ? countNot(j.results) : '')); } else { say(j.error || 'That did not go through. Try again.', 'err'); }
+    await loadPile(id); return render();
+  }
+  function countNot(rs) {
+    var not = rs.filter(function (r) { return r.result !== 'ok'; }).length;
+    return not ? ' ' + not + ' could not yet (the level not finished, or already done).' : '';
+  }
+  function groupOf(gi) { return ((((S.pile || {}).pile || {}).patterns || {}).patterns || [])[gi] || null; }
+  async function groupDraft(gi) {
+    var g = groupOf(gi); if (!g || !(g.items || []).length) return;
+    var first = g.items[0];
+    say('Muse Spark is drafting one challenge for the group…'); render();
+    var j = await api('POST', '/api/witness/mastery/' + first.sitting + '/' + first.n + '/challenge_suggest', { note: 'for the whole group: ' + (g.idea || '') });
+    if (j.ok && j.suggestion) {
+      var sg = j.suggestion; S.draft.gQ = sg.q; S.draft.gAns = sg.answer;
+      (sg.options || []).forEach(function (o, i) { S.draft['gOpt' + i] = o; });
+      say('Here is a draft. Change anything, then send it.');
+    } else say(j.error || 'No draft came back. Write your own.', 'err');
+    return render();
+  }
+  async function groupSend(gi) {
+    var g = groupOf(gi), d = S.draft; if (!g) return;
+    var options = [0, 1, 2, 3].map(function (i) { return (d['gOpt' + i] || '').trim(); }).filter(Boolean);
+    var answer = Number(d.gAns);
+    if (!(d.gQ || '').trim() || options.length < 2 || !(answer >= 0 && answer < options.length)) { say('A challenge needs a question, at least two options and the right one ticked.', 'err'); return render(); }
+    S.draft.groupOpen = null;
+    return pileDo('bulk', { action: 'challenge', challenge: { q: d.gQ.trim(), options: options, answer: answer }, items: g.items }, 'Sent to ' + g.items.length + ' students.');
   }
 
   function viewPaper() {
@@ -377,7 +447,9 @@
 
   // From Exam to Mastery (29 Oct): who a photographed paper is, read from the paper and matched to the class list; the
   // teacher confirms it, picks another student, or types the name of a student with no phone (printed for them)
-  var MATCH = { read: ['ok', 'Name read'], teacher: ['ok', 'Set by you'], unsure: ['warn', 'Whose? Confirm'], none: ['warn', 'Not on the class list'], unread: ['warn', 'No name read'] };
+  // 31 Oct (judges' panel): a name that joined the list after the paper was photographed waits for the teacher
+  var MATCH = { read: ['ok', 'Name read'], teacher: ['ok', 'Set by you'], unsure: ['warn', 'Whose? Confirm'], confirm: ['warn', 'Joined after the photo: confirm'],
+                none: ['warn', 'Not on the class list'], unread: ['warn', 'No name read'] };
   function whoseChip(s) {
     if (s.kind !== 'photo' || !(s.status === 'marked' || s.status === 'released')) return '';
     var m = MATCH[s.name_match] || null;
@@ -422,14 +494,15 @@
     var opts = Object.keys(RESULT).map(function (k) { return '<option value="' + k + '"' + (k === res ? ' selected' : '') + '>' + RESULT[k] + '</option>'; }).join('');
     return '<div class="wd-card"><div class="wd-row" style="cursor:default;padding:0"><span class="wd-grow"><h3 style="margin:0">' + unit() + ' ' + esc(q.n) +
       (q.final_answer ? (practical() ? ' · result ' : ' · answer ') + esc(q.final_answer) : '') + '</h3></span>' + chip(q.result) +
-      '<span class="wd-sub">' + Math.round((q.confidence || 0) * 100) + '% sure</span></div>' +
+      // 31 Oct (judges' panel: "95% sure" beside "Not named yet"): how sure the marking is, only once an idea is named
+      (q.fingerprint && !q.fingerprint.misconception ? '' : '<span class="wd-sub">' + Math.round((q.confidence || 0) * 100) + '% sure</span>') + '</div>' +
       '<div style="margin:10px 0 4px;display:flex;gap:8px;align-items:center"><b style="font-size:12px">' + (practical() ? 'What was done' : 'How it was written') + '</b>' +
       (timed ? '<button class="wd-btn" data-act="replay">Replay</button>' : '') + '</div><div class="wd-steps" id="wdSteps">' + steps + '</div>' +
       (q.diagnosis ? '<div class="wd-diag"><b>Where the thinking went wrong' + (q.moment_s != null ? ' (' + fmtT(q.moment_s) + ')' : '') + '</b><div>' + esc(q.diagnosis) + '</div></div>' : '') +
       fingerprintCard(q.fingerprint) +
       (q.diagnosis_first ? '<div class="wd-sub" style="margin:4px 0">The marking first read: ' + esc(q.diagnosis_first) + '</div>' : '') +
       (caps.length && inPlan(q.teacher_result || q.result) ? '<div class="wd-card" style="margin:8px 0"><b style="font-size:12px">Thinking capabilities its level builds</b>' +
-        caps.map(function (c) { return '<div class="wd-sub" style="margin-top:3px"><b style="color:var(--tx)">' + esc(c) + '</b>: ' + esc(CAPS[c]) + '</div>'; }).join('') + '</div>' : '') +
+        caps.map(function (c) { return '<div class="wd-sub" style="margin-top:3px"><b style="color:var(--tx)">' + esc(c) + '</b>' + (q.skill ? ', here: ' + esc(q.skill) : ': ' + esc(CAPS[c])) + '</div>'; }).join('') + '</div>' : '') +
       stillOf(q) + '</div>' + drawnCard(q) + '<div class="wd-card"><h3>Your word</h3>' +
       '<label for="wdRes">Result</label><select id="wdRes" data-f="res">' + opts + '</select>' +
       '<label for="wdMarks">Marks out of ' + esc(q.out_of) + '</label><input id="wdMarks" data-f="marks" type="number" min="0" max="' + esc(q.out_of) + '" value="' + esc(marks) + '">' +
@@ -538,6 +611,16 @@
       row('The intervention their level is built on', esc(f.intervention || '')) + '</div>';
   }
 
+  // what Muse Wonder answered as each student, and where the misconception was caught (31 Oct, judges' panel)
+  function playsOf(c) {
+    var pl = c.plays || {}, holds = pl.holds || [], knows = pl.knows || [];
+    if (!holds.length && !knows.length) return '';
+    var rows = function (list) { return list.map(function (x) {
+      return '<div class="wd-sub" style="margin:2px 0">' + (x.right ? '✓' : '✗') + ' Lesson ' + esc(x.lesson == null ? '?' : x.lesson) + ': ' + esc(x.check) + ' · answered ' + esc(x.answered) + '</div>'; }).join(''); };
+    return '<div class="wd-cols" style="margin-top:6px"><div><b style="font-size:12px">Played as the student who still holds the idea</b>' + rows(holds) + '</div>' +
+      '<div><b style="font-size:12px">Played as a student who has it right</b>' + rows(knows) + '</div></div>';
+  }
+
   function masteryCard(q) {
     var released = S.paper && S.paper.status === 'released';
     var res = q.teacher_result || q.result;
@@ -575,11 +658,21 @@
     // questions and the flashcards; the game is optional)
     var finished = !!m.completed_ms || m.status === 'completed';
     // the level's own self-check (Muse Wonder played it as both students); a level that still fails is the teacher's to know
-    var chk = m.check ? (m.check.passes ? '<div class="wd-sub" style="margin-top:6px">Self-check: passed. Wonder played the level as both students.</div>' :
+    var chk = m.check ? (m.check.passes ? '<div class="wd-sub" style="margin-top:6px">Self-check: passed. Muse Wonder played the level as both students.</div>' + playsOf(m.check) :
       '<div class="wd-card" style="margin-top:8px;border-color:var(--warn)"><b>Self-check: still not right</b><div class="wd-sub">After its rewrites the level still had these. Look before you rely on it, or answer them in the thread.</div>' +
-      (m.check.problems || []).map(function (p) { return '<div class="wd-sub" style="margin:3px 0">· ' + esc(p) + '</div>'; }).join('') + '</div>') : '';
+      (m.check.problems || []).map(function (p) { return '<div class="wd-sub" style="margin:3px 0">· ' + esc(p) + '</div>'; }).join('') +
+      (m.check.false_claims || []).map(function (f) { return '<div class="wd-sub" style="margin:3px 0;color:var(--err)">Not true: ' + esc(f) + '</div>'; }).join('') + playsOf(m.check) + '</div>') : '';
+    // 31 Oct (judges' panel): the re-check a few days after Turned around
+    var rk = m.recheck;
+    var recheck = !rk ? '' : '<div class="wd-card" style="margin-top:8px"><b>The re-check</b> ' +
+      (rk.status === 'scheduled' ? '<span class="wd-chip">Due ' + esc(new Date(rk.due_ms || 0).toLocaleDateString()) + '</span> <button class="wd-btn" data-act="recheck">Send it now</button>' :
+        rk.status === 'open' ? '<span class="wd-chip">With the student</span><div>' + esc(rk.q || '') + '</div>' :
+        '<span class="wd-chip ' + (rk.status === 'passed' ? 'ok' : 'warn') + '">' + (rk.status === 'passed' ? 'Still right' : 'Needs one more look') + '</span><div>' + esc(rk.q || '') + '</div>' +
+          (rk.reply ? '<div class="wd-sub">They answered ' + esc(rk.reply.value) + (rk.unit ? ' ' + esc(rk.unit) : '') + ' (right: ' + esc(rk.answer) + '): “' + esc(rk.reply.working || '') + '”</div>' +
+            (rk.reply.verdict ? '<div class="wd-sub">Muse Spark: ' + (rk.reply.verdict.understood ? 'the working holds. ' : 'the working does not hold. ') + esc(rk.reply.verdict.why || '') + '</div>' : '') : '') +
+          (rk.status === 'not_yet' ? '<div style="margin-top:6px"><button class="wd-btn" data-act="recheck">Send another re-check</button></div>' : '')) + '</div>';
     return '<div class="wd-card"><div class="wd-row" style="cursor:default;padding:0"><span class="wd-grow"><h3 style="margin:0">Mastery</h3></span>' +
-      '<span class="wd-chip ' + (done ? 'ok' : '') + '">' + esc(STATUS[m.status] || m.status) + '</span></div>' + chk + levelOutline(m) +
+      '<span class="wd-chip ' + (done ? 'ok' : '') + '">' + esc(STATUS[m.status] || m.status) + '</span></div>' + chk + recheck + levelOutline(m) +
       (thread ? '<div style="margin-top:8px"><b style="font-size:12px">Questions to you</b>' + thread + '</div>' : '') +
       '<label for="wdReply">Answer in the thread</label><input id="wdReply" data-f="reply" placeholder="Your answer to their question">' +
       '<div style="margin-top:6px"><button class="wd-btn" data-act="reply">Send</button></div>' +
@@ -674,6 +767,22 @@
     if (act === 'notyet') return masteryDo('badge', { issue: false, note: S.draft.badgeNote || '' });
     if (act === 'whose') return whose({ uid: S.draft.whose || ((document.querySelector('#lowisaWitnessDesk [data-f="whose"]') || {}).value) || '' });
     if (act === 'whosename') return whose({ name: S.draft.whoseName || '' });
+    // 31 Oct (judges' panel)
+    if (act === 'unroster') return pileDo('roster/remove', { uid: t.getAttribute('data-uid') }, 'Taken off the class list.');
+    if (act === 'joining') return pileDo('joining', { open: t.getAttribute('data-open') === '1' }, t.getAttribute('data-open') === '1' ? 'Joining is open again.' : 'Joining is closed.');
+    if (act === 'acceptsure') {
+      var sure = ((S.pile && S.pile.queue) || []).filter(function (it) { return it.result === 'mastered' && (it.confidence || 0) >= 0.9; });
+      return pileDo('bulk', { action: 'accept', items: sure.map(function (it) { return { sitting: it.sitting, n: it.n }; }) }, 'Accepted ' + sure.length + ' as marked.');
+    }
+    if (act === 'readybadge') {
+      var ready = (S.pile && S.pile.ready) || [];
+      var ticked = ready.filter(function (r, i) { var b = document.querySelector('#lowisaWitnessDesk [data-ready="' + i + '"]'); return !b || b.checked; });
+      return pileDo('bulk', { action: 'badge', note: 'Turned around', items: ticked.map(function (r) { return { sitting: r.sitting, n: r.n }; }) }, 'Turned around issued for ' + ticked.length + '.');
+    }
+    if (act === 'groupopen') { S.draft.groupOpen = Number(t.getAttribute('data-g')); return render(); }
+    if (act === 'groupdraft') return groupDraft(Number(t.getAttribute('data-g')));
+    if (act === 'groupsend') return groupSend(Number(t.getAttribute('data-g')));
+    if (act === 'recheck') return masteryDo('recheck_now', {});
     if (t.hasAttribute('data-pile')) { if (await loadPile(t.getAttribute('data-pile'))) { S.view = 'pile'; } return render(); }
     if (t.hasAttribute('data-paper')) {
       var n = t.getAttribute('data-n');
@@ -849,12 +958,17 @@
     var m = S.measure; if (!m || !m.marked) return '';
     var pct = m.agreement == null ? '—' : Math.round(m.agreement * 100) + '%';
     var secs = function (x) { return x && x.n ? Math.round(x.median) + ' s' : '—'; };
-    return '<div class="wd-card"><h3>Measured on this exam</h3><div class="wd-nums">' +
-      '<div><b>' + pct + '</b>you agreed with Muse Spark (' + m.teacher_agreed + ' of ' + m.reviewed + ' reviewed)</div>' +
-      '<div><b>' + m.wrong_thinking_caught + '</b>right answers by wrong thinking caught</div>' +
-      '<div><b>' + secs(m.marking_seconds) + '</b>to mark a paper (median)</div>' +
-      '<div><b>' + secs(m.teacher_seconds_per_paper) + '</b>of your time per paper (median)</div>' +
-      '<div><b>' + m.examiner_answered + ' / ' + m.examiner_asks + '</b>examiner questions answered</div></div>' +
+    // 31 Oct (judges' panel: dashes and zeros read as broken): a tile only for what was measured
+    var rk = m.rechecks || {};
+    var tiles = [m.reviewed ? '<div><b>' + pct + '</b>you agreed with Muse Spark (' + m.teacher_agreed + ' of ' + m.reviewed + ' reviewed)</div>' : '',
+      m.wrong_thinking_caught ? '<div><b>' + m.wrong_thinking_caught + '</b>right answers by wrong thinking caught</div>' : '',
+      m.marking_seconds && m.marking_seconds.n ? '<div><b>' + secs(m.marking_seconds) + '</b>to mark a paper (median)</div>' : '',
+      m.teacher_seconds_per_paper && m.teacher_seconds_per_paper.n ? '<div><b>' + secs(m.teacher_seconds_per_paper) + '</b>of your time per paper (median)</div>' : '',
+      m.examiner_asks ? '<div><b>' + m.examiner_answered + ' / ' + m.examiner_asks + '</b>examiner questions answered</div>' : '',
+      m.turned_around ? '<div><b>' + m.turned_around + '</b>turned around</div>' : '',
+      (rk.passed || rk.not_yet) ? '<div><b>' + (rk.passed || 0) + ' / ' + ((rk.passed || 0) + (rk.not_yet || 0)) + '</b>still right on the re-check</div>' : ''].join('');
+    if (!tiles) return '';
+    return '<div class="wd-card"><h3>Measured on this exam</h3><div class="wd-nums">' + tiles + '</div>' +
       ((m.changed_by_teacher || []).length ? '<div class="wd-sub">You changed: ' + m.changed_by_teacher.map(function (c) { return 'Q' + c.n + ' ' + (RESULT[c.witness] || c.witness) + ' → ' + (RESULT[c.teacher] || c.teacher); }).join('; ') + '</div>' : '') + '</div>';
   }
 
@@ -916,7 +1030,7 @@
     if (!j.ok) { say(errText(j), 'err'); return render(); }
     S.draft = {};
     if (await loadPile(j.id)) S.view = 'pile';
-    say('Exam created. Students join with the code ' + (j.code || '') + ' to put their name on the class list; after the exam, photograph each paper with it from the LoWisa phone app.');
+    say('Exam created. Students join with the code ' + (j.code || '') + ' to put their name on the class list; after the exam, photograph each paper from the LoWisa phone app with the photographing code ' + (j.photo_code || '') + '.');
     render();
   }
   async function save() {
