@@ -785,7 +785,7 @@ export function RecheckCard({r, act}: {r: Recheck; act(action: 'recheck_open' | 
       ) : null}
       {r.reply ? (
         <Text style={r.reply.right ? s.challengeRight : s.diag} testID="witness-recheck-result">
-          {r.reply.right ? 'Right. Still yours, days later.' : 'Not this time: it is ' + r.reply.answer + (r.unit ? ' ' + r.unit : '') + '. Your teacher will help with one more look.'}
+          {r.reply.right ? (r.days && r.days >= 1 ? 'Right. Still yours, ' + r.days + (r.days === 1 ? ' day' : ' days') + ' later.' : 'Right. Still yours.') : 'Not this time: it is ' + r.reply.answer + (r.unit ? ' ' + r.unit : '') + '. Your teacher will help with one more look.'}
         </Text>
       ) : null}
     </View>

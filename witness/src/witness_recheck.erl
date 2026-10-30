@@ -91,8 +91,14 @@ value_of(_) -> none.
 %% What the student sees: when it is due, the problem, and after they answer, the right value and whether they had it.
 view(#{recheck := #{status := <<"scheduled">>, due_ms := D}}) -> #{recheck => #{status => <<"scheduled">>, due_ms => D}};
 view(#{recheck := #{status := <<"open">>} = R}) -> #{recheck => maps:with([status, q, unit, made_ms], R)};
-view(#{recheck := #{reply := #{value := V, right := Rt}} = R}) ->
-    #{recheck => (maps:with([status, q, unit, made_ms], R))#{reply => #{value => V, right => Rt, answer => maps:get(answer, R)}}};
+%% 31 Oct (rehearsal): "days later" was said of a re-check the teacher sent the same day; `days` is how long after the
+%% badge it was opened, so the phone says it only when it is true
+view(#{recheck := #{reply := #{value := V, right := Rt}} = R} = M) ->
+    Days = case {maps:get(made_ms, R, null), maps:get(badge, M, #{})} of
+        {Made, #{at := Turned}} when is_integer(Made), is_integer(Turned) -> max(0, (Made - Turned) div 86400000);
+        _ -> null
+    end,
+    #{recheck => (maps:with([status, q, unit, made_ms], R))#{reply => #{value => V, right => Rt, answer => maps:get(answer, R)}, days => Days}};
 view(_) -> #{}.
 
 %% For witness_measure: how the re-checks stand on a set of questions.

@@ -57,3 +57,10 @@ patterns_line_carries_the_named_idea_test() ->
     P = witness_patterns:prompt(#{title => <<"Percentages">>}, [#{student => <<"Leo">>, n => 4, question => <<"Q">>, diagnosis => <<"D">>,
                                                                  idea => <<"kept the first base">>}]),
     ?assertNotEqual(nomatch, binary:match(P, <<"D [named idea: kept the first base]">>)).
+
+%% 31 Oct rehearsal: a line read "Lo asks first" and the reteach said "Ask Lo first to explain how he got $100"
+patterns_know_lo_is_the_tutor_test() ->
+    P = witness_patterns:prompt(#{title => <<"Percentages">>}, [#{student => <<"Leo">>, n => 4, question => <<"Q">>,
+                                                                 diagnosis => <<"Only the answer is on the page. Lo asks first.">>}]),
+    ?assertNotEqual(nomatch, binary:match(P, <<"Lo is the app's tutor, never a student">>)),
+    ?assertNotEqual(nomatch, binary:match(P, <<"never he or she">>)).

@@ -40,7 +40,8 @@ async function page() {
 function clean(v) {
   if (typeof v === 'string') return /^https?:\/\//.test(v) && /X-Amz-|Signature=|token=/i.test(v) ? '' : v;
   if (Array.isArray(v)) return v.map(clean);
-  if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, clean(x)]));
+  // an account id (a class list's uid, a paper's student_uid) never leaves the account
+  if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).filter(([k]) => !/(^|_)uid$|^owner$|^taken_by$/.test(k)).map(([k, x]) => [k, clean(x)]));
   return v;
 }
 const ASSET = /^[A-Za-z0-9._-]+\.(jpg|jpeg|png|webp|m4a|mp4|wav)$/i;
@@ -69,7 +70,7 @@ const fileOf = (route) => route.replace(/^\/api\/witness\//, '').replace(/\//g, 
   }
   const pile = await save('/api/witness/pile/' + PILE);
   await save('/api/witness/pile/' + PILE + '/measure');
-  const sittings = ((pile && (pile.pile || pile).sittings) || []).map((s) => (typeof s === 'string' ? s : s.id)).filter(Boolean);
+  const sittings = ((pile && (pile.sittings || (pile.pile || {}).sittings)) || []).map((s) => (typeof s === 'string' ? s : s.id)).filter(Boolean);
   for (const sid of sittings) {
     const s = await save('/api/witness/sitting/' + sid);
     await save('/api/witness/sitting/' + sid + '/proof');

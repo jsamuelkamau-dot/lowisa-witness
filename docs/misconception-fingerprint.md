@@ -61,8 +61,7 @@ the system still named (below).
 **Learner C.** "Half up, half down. Same price." states a result, not a calculation: C might halve $100 twice (B's
 idea) or believe the halves cancel (A's idea). The model guesses "cancel" every time; the code does not let it name
 that, because no quoted line shows a calculation. Lo asks, out loud, without suggesting an answer. In the rehearsal
-Leo wrote back *"Both halves are of 10 Half of 100 is 50, so up 50 then down 50"* (the text as captured, typed on an
-emulator), and Muse Spark settled the fingerprint on the base: B's idea, not A's, which the page alone could not have
+Leo wrote back *"Both halves are of 100 dollars. Half of 100 is 50, so up 50 then down 50."*, and Muse Spark settled the fingerprint on the base: B's idea, not A's, which the page alone could not have
 shown.
 
 ## The development set: 36 papers, and the held-out set written after the rule froze

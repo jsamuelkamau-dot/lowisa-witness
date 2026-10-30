@@ -154,9 +154,8 @@ product's own code (31 Oct 2026; every reply in [`evidence/misconceptions/runs-3
 **Why C is asked.** Muse Spark's guess for C was "cancel" every time. **The code does not let it name that**, because no
 line read from the page shows a calculation. The student sees no label at all. Lo asks a question that suggests nothing.
 
-In the rehearsal, Leo (the sample student C) wrote back *"Both halves are of 10 Half of 100 is 50, so up 50 then down
-50"*. That is the text as captured, typed on an emulator. Muse Spark settled his fingerprint on the base: **B's idea, not
-the "cancel" it had guessed.** The page alone could not have shown it. The class view then groups Leo with B.
+In the rehearsal, Leo (the sample student C) wrote back *"Both halves are of 100 dollars. Half of 100 is 50, so up 50
+then down 50."* Muse Spark settled his fingerprint on the base: **B's idea, not the "cancel" it had guessed.** The page alone could not have shown it. The class view then groups Leo with B.
 
 **What the code decides** ([`witness_mark:fingerprint/4`](witness/src/witness_mark.erl), [`witness_fingerprint`](witness/src/witness_fingerprint.erl)):
 
@@ -245,7 +244,30 @@ flowchart LR
   T --> R[Re-check days later<br/>a different structure]
 ```
 
-⟪REHEARSAL⟫
+**One continuous run, 31 Oct 2026** (the production edge `vb1031c`–`d` and the release build of the phone app on an
+emulator, test account, the three sample papers; every screen in [`evidence/screens/`](evidence/screens/) is from it):
+
+1. **The teacher's file.** The desk read the exam from the PDF: six questions, their marks and the scheme. It made a join code and a photographing code.
+2. **Join and photograph.** Leo joined with the join code. The photographing phone typed the photographing code and sent three two-page papers from the gallery.
+3. **Marked in about 16 s a paper.** Every name was read and matched. The teacher accepted the 15 confident marks in one step; the desk measured 15 of 15 agreed.
+4. **The fingerprints.** Priya: the changes cancel. Tomás: 50% taken as a fixed $50. Leo: nothing named; the class patterns made three groups.
+5. **Lo asks first.** Leo wrote back *"Both halves are of 100 dollars. Half of 100 is 50, so up 50 then down 50."* Muse Spark settled his fingerprint on the base: both changes taken of the original $100.
+6. **The level.** Muse Wonder played it as both students and it passed. The teacher let it start. Leo played three lessons (5 of 6, 6 of 6, 6 of 6 right first time), a checked practical ($37.50 typed and checked) and the flashcards. The server recorded the level completed.
+7. **The challenge.** Muse Spark drafted 160 rabbits, down 25% then up 25%. Leo chose 150 with the reason *"The second 25% is of 120, not 160."* Muse Spark judged the reason sound and recommended. The teacher issued **Turned around**.
+8. **The re-check**, brought forward by the teacher: a tank down 40% then up 20% to 90 L, worked backwards. Leo typed 125 with his working: right.
+
+**What the run found, fixed the same day** (`harness/FINDINGS.md`):
+- the phone had nowhere to type the photographing code;
+- "Keep going" reported the next lesson as finished before it was played;
+- a level's practical task lost its typed check;
+- a lead or a screen title stated the answer a question then asked;
+- the last lesson promised a next lesson;
+- "days later" was said of a re-check sent the same day;
+- the class patterns called Lo "a student".
+
+Each fix has a test. The phone's fixes are in the next store build; the last four reach levels made after the edge release that follows this run.
+
+Look at it without an account: `node demo/desk-server.js --replay` (this exam, recorded from the desk; no account ids or signed links).
 
 ## 6. How it meets the judging criteria
 
@@ -341,7 +363,7 @@ flowchart TB
 | 40/40 names, 240/240 sound, no-calculation asked 5/5, 6 groups, $1.01 | a class of 40, two-page papers marked at once, then grouped | `harness/class/results/class-of-40.json` |
 | page 64/64, SAM 52/64, Spark 1/64 | where each handwritten line is on the photo | `harness/bench/results/line_placement.json` |
 | Voice Transcribe $0.0003; Muse Image $0.015–0.021; structured output; 99.8% cached | the live API probe | `harness/probes/results-31oct/` |
-| the loop, photo to re-check | one continuous run on the production edge | `evidence/` (⟪REHEARSAL-FILES⟫) |
+| the loop, photo to re-check | one continuous run on the production edge | `evidence/` (`evidence/screens/`, `evidence/replay/`) |
 
 Every bench number is recomputed from the raw files by `python harness/bench/summary.py`; every result file records
 the commit it ran on. Notes for Meta's API team, and what each run found: [`harness/FINDINGS.md`](harness/FINDINGS.md).

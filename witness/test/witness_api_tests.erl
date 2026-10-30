@@ -1042,7 +1042,7 @@ the_badge_starts_a_recheck_a_week_later_test() ->
     ?assertNot(maps:is_key(answer, Open)),                                   %% the answer is never sent before they answer
     ?assertMatch({400, #{code := <<"bad_value">>}}, M(<<"stud">>, <<"recheck_answer">>, #{<<"value">> => <<"fifty">>, <<"working">> => <<"w">>})),
     ?assertMatch({400, #{code := <<"empty">>}}, M(<<"stud">>, <<"recheck_answer">>, #{<<"value">> => <<"$50">>})),
-    {200, #{mastery := #{recheck := #{status := <<"passed">>, reply := #{right := true, answer := 50}}}}} =
+    {200, #{mastery := #{recheck := #{status := <<"passed">>, reply := #{right := true, answer := 50}, days := 0}}}} =
         M(<<"stud">>, <<"recheck_answer">>, #{<<"value">> => <<"$50.00">>, <<"working">> => <<"60 / 1.2 = 50">>}),
     ?assert(lists:member({recheck_judged, 50.0, <<"60 / 1.2 = 50">>}, events())),
     ?assertMatch({400, #{code := <<"answered">>}}, M(<<"stud">>, <<"recheck_answer">>, #{<<"value">> => 50, <<"working">> => <<"again">>})),

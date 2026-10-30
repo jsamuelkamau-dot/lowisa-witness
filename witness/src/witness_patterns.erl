@@ -43,6 +43,9 @@ prompt(Exam, Items) ->
         "the second term when expanding\" are one idea); ideas that need different repairs are different groups. When unsure ",
         "whether one repair fixes both, keep them apart.\n",
         "2. For each group, one sentence on what to reteach tomorrow, with a concrete example to use in class.\n",
+        %% 31 Oct, rehearsal: a line read "Lo asks first" and the reteach said "Ask Lo first to explain how he got $100"
+        "Lo is the app's tutor, never a student: a line that says Lo asks first means that student has not yet said how ",
+        "they got their answer. Write about students as \"the student\" or \"these students\", never he or she.\n",
         "3. In two or three sentences, the plan for tomorrow's lesson: what first, what to practise.\n",
         "4. Up to four questions for the next exam that bring back these ideas in a new form, with their marks.\n",
         "Return JSON only: {\"patterns\":[{\"idea\":\"...\",\"lines\":[1,3],\"reteach\":\"...\"}],\"tomorrow\":\"...\",",

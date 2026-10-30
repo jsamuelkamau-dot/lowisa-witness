@@ -138,3 +138,20 @@ Then every evaluation was run again on the committed code.
 - **Where a line is on the photo** (`harness/bench/line_bench.escript`, 64 lines): `witness_page` 64 of 64 at an
   overlap of 0.5 or more with the ink (mean 0.92), SAM 3.1's word boxes 52 of 64 (0.75), Muse Spark's own boxes 1 of
   64 (0.06). Spark's boxes are loose and drift; the product never cuts a step with them.
+
+## 31 Oct, evening: one continuous run on the production edge, and what it found
+
+From the teacher's PDF to the re-check, on a fresh exam (README §5). Fixed the same day, each with a test:
+- **The phone could not photograph.** Since the panel fixes the server refuses the join code for photographing, and the
+  phone had nowhere to type the photographing code. The code box now takes either code; an exam opened with the join
+  code asks for the photographing code. Two exams with one title also showed each other's papers: now matched by code.
+- **"Keep going" told the teacher the next lesson was finished** (6 of 6) before it was played: the lesson player still
+  held the last lesson's finished run. A lesson is now told finished only by its own run.
+- **A level's practical task lost its typed check** when the model wrote the result as text ("$56.25"), or when its
+  number appeared inside another ("6" in "$60"). Both kept now.
+- **A lead or a screen title stated the answer a question then asked** ("at $120" over a guess of $120; "Ring the $60
+  Ticket" over a typed $60). The prompt rule alone did not hold; code now takes out such a guess or typed question.
+- **The last lesson promised "The next lesson answers it"**; **"days later"** was said of a re-check sent the same day;
+  **the class patterns called Lo a student** ("Ask Lo first to explain how he got $100"). All reworded at the source.
+- **Bulk accept failed in the desktop app** that had run since before the panel fixes: its compiled door list predated
+  the route. Rebuilt; a release build compiles it.

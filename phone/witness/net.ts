@@ -44,6 +44,8 @@ export interface Mastery {
 export interface Recheck {
   status: 'scheduled' | 'open' | 'passed' | 'not_yet'; due_ms?: number; q?: string; unit?: string; made_ms?: number;
   reply?: {value: number; right: boolean; answer: number};
+  /** how many days after "Turned around" it was opened (31 Oct: "days later" only when it is true) */
+  days?: number | null;
 }
 /** The Misconception Fingerprint (owner, 30 Oct): what reasoning produced the answer, the evidence, the repair; `ask`
  *  is Lo's diagnostic question when the paper alone was not enough, `said` the student's answers to it. */
