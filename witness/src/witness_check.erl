@@ -41,9 +41,11 @@ prompt(In) ->
         "4. Is LESSON 3 a real task someone does at work with this idea (pricing a sale, fixing a stock order, sizing a part, ",
         "checking a report), done in the lesson, with a title that names that task? An exercise, a worked example, a ",
         "counterexample, a quiz or a review is not a work task. That is \"work_task\".\n",
-        "The level passes only when caught, cleared and work_task are all true and 3 holds. When it does not pass, name ",
-        "what to change, lesson by lesson, so a writer can fix it in one pass.\n",
-        "Return JSON only: {\"caught\":true,\"cleared\":true,\"on_idea\":true,\"work_task\":true,\"why\":\"one sentence\",",
+        "5. Work out every number and every claim in the level yourself, including who gains, loses, pays or saves and by ",
+        "how much. Is each one true? A level that teaches one false thing is not ready. That is \"true_claims\".\n",
+        "The level passes only when caught, cleared, work_task and true_claims are all true and 3 holds. When it does not ",
+        "pass, name what to change, lesson by lesson, so a writer can fix it in one pass.\n",
+        "Return JSON only: {\"caught\":true,\"cleared\":true,\"on_idea\":true,\"work_task\":true,\"true_claims\":true,\"why\":\"one sentence\",",
         "\"problems\":[{\"lesson\":1,\"fix\":\"what to change\"}]}"]).
 
 parse(Text) ->
@@ -58,8 +60,12 @@ parse(Text) ->
             Problems = [#{lesson => case maps:get(<<"lesson">>, P, null) of N when is_integer(N) -> N; _ -> null end,
                           fix => str(maps:get(<<"fix">>, P, <<>>))}
                         || P <- list(maps:get(<<"problems">>, M, [])), is_map(P), str(maps:get(<<"fix">>, P, <<>>)) =/= <<>>],
-            Passes = Caught andalso Cleared andalso OnIdea andalso WorkTask,
-            {ok, #{passes => Passes, caught => Caught, cleared => Cleared, on_idea => OnIdea, work_task => WorkTask, why => str(maps:get(<<"why">>, M, <<>>)),
+            %% 30 Oct rehearsal: a percentages level passed saying the shop "loses $25" by charging $100 for a $75
+            %% price (the shop gains it); a claim the check found false stops the level
+            TrueClaims = maps:get(<<"true_claims">>, M, true) =/= false,
+            Passes = Caught andalso Cleared andalso OnIdea andalso WorkTask andalso TrueClaims,
+            {ok, #{passes => Passes, caught => Caught, cleared => Cleared, on_idea => OnIdea, work_task => WorkTask, true_claims => TrueClaims,
+                   why => str(maps:get(<<"why">>, M, <<>>)),
                    %% a level that fails with nothing named to change still gets one thing to change
                    problems => case {Passes, Problems} of
                                    {false, []} -> [#{lesson => null, fix => <<"Make the level's checks catch the misconception and let the right idea pass.">>}];

@@ -28,3 +28,9 @@ lesson_three_must_be_a_work_task_test() ->
     P = witness_check:prompt(#{question => <<"Simplify 16/64">>, level => #{title => <<"L">>, lessons => []}}),
     ?assertNotEqual(nomatch, binary:match(P, <<"counterexample, a quiz or a review is not a work task">>)).
 
+
+%% 30 Oct rehearsal: "the shop loses $25" by charging $100 for a $75 price passed the check; a false claim now stops it
+a_false_claim_stops_the_level_test() ->
+    ?assertMatch({ok, #{passes := false, true_claims := false}},
+                 witness_check:parse(<<"{\"caught\":true,\"cleared\":true,\"on_idea\":true,\"work_task\":true,\"true_claims\":false,\"problems\":[{\"lesson\":3,\"fix\":\"Charging $100 for a $75 price gains the shop $25.\"}]}">>)),
+    ?assertNotEqual(nomatch, binary:match(witness_check:prompt(#{}), <<"who gains, loses, pays or saves">>)).
