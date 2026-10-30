@@ -1479,8 +1479,9 @@ refuse(Code, Kind, Msg, Extra) -> {Code, maps:merge(Extra, #{ok => false, code =
 forget(Uid, Id, Row, Host) ->
     _ = [catch Host:drop_asset(Uid, <<Id/binary, "/", F/binary>>) || has(Host, drop_asset, 2), F <- files_of(Row)],
     _ = catch Host:drop_clip(Uid, Id),
+    %% the student's pointer to it, whoever they are (a teacher who sat their own exam keeps one too)
     case maps:get(student_uid, Row, undefined) of
-        Stu when is_binary(Stu), Stu =/= Uid -> catch Host:delete(Stu, {mine, Id});
+        Stu when is_binary(Stu) -> catch Host:delete(Stu, {mine, Id});
         _ -> ok
     end,
     _ = [catch Host:delete(Uid, {mark_cache, K}) || {K, #{sitting := S}} <- Host:list(Uid, mark_cache), S =:= Id],

@@ -929,3 +929,15 @@ a_teacher_paid_level_has_a_ceiling_on_its_calls_test() ->
     ok = save(<<"teacher">>, {mark_cache, <<"calls:", S/binary, ":stud">>}, #{calls => 3, sitting => S}),
     ?assertMatch({200, #{success := true}}, r(<<"POST">>, [<<"design">>], Body, <<"stud">>)),
     ?assertMatch({ok, #{calls := 4}}, load(<<"teacher">>, {mark_cache, <<"calls:", S/binary, ":stud">>})).
+
+%% a teacher who sat their own exam (one account, both sides): deleting the paper takes their own pointer too
+deleting_a_paper_one_account_sat_takes_its_pointer_test() ->
+    setup(),
+    {201, #{code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Self">>}, <<"teacher">>),
+    persistent_term:put(witness_api_result, #{questions => [q(3, <<"not_yet">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code}, <<"teacher">>),
+    {ok, Row} = load(<<"teacher">>, {sitting, S}),
+    ok = save(<<"teacher">>, {sitting, S}, Row#{student_uid => <<"teacher">>}),
+    ok = save(<<"teacher">>, {mine, S}, #{owner => <<"teacher">>}),
+    {200, _} = r(<<"POST">>, [<<"sitting">>, S, <<"delete">>], #{}, <<"teacher">>),
+    ?assertEqual(none, load(<<"teacher">>, {mine, S})).
