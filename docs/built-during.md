@@ -1,7 +1,8 @@
 # Built during the hackathon (26 Oct – 4 Nov 2026)
 
-Everything in this repository was written during the event: the build began on 27 Oct at 3:30 AM in our time zone,
-which is the 26 Oct 12:00 PM ET kickoff; see the commit history. The table grows as the work lands.
+Everything in this repository was written during the event. The kickoff, 26 Oct at 12:00 PM ET, was 27 Oct at 2:30 AM in
+our time zone (Adelaide, UTC+10:30); the first commit is 27 Oct at 10:36 AM there, eight hours after it. See the commit
+history. The table grows as the work lands. Code built this week that lives inside LoWisa is copied into `host/`.
 
 | Part | Where | Status |
 |---|---|---|
@@ -47,3 +48,14 @@ which is the 26 Oct 12:00 PM ET kickoff; see the commit history. The table grows
 | Deleting a paper or an exam, for good: rows, pages, recordings, pictures, the clip, the student's pointer, the cached marking, the join code | `witness/src/witness_api.erl`, `desk/witness-desk.js` | done 30 Oct |
 | The benchmark, its cases, its raw results and the script that recomputes every number | `harness/bench/` | committed 30 Oct (run 27–28 Oct) |
 | Tests from a fresh clone, and CI | `scripts/test.sh`, `.github/workflows/test.yml` | done 30 Oct |
+| **After the 12-judge panel (31 Oct)**: the evidence rule tightened in code: a quote must be in a line read from the page (small reading slips only), a calculation is an operation, an "=" or a comparison, and after Lo asks the evidence must be the ink or the student's own words | `witness/src/witness_mark.erl`, `witness/src/witness_fingerprint.erl` | done 31 Oct |
+| The self-check is the server's: its verdict and the outline Muse Wonder played are bound to the level by `check_id`; lessons count only from that outline; Muse Wonder's two playthroughs and any false claim are kept for the teacher | `witness/src/witness_check.erl`, `witness/src/witness_mastery.erl`, `witness/src/witness_api.erl`, `desk/witness-desk.js` | done 31 Oct |
+| Access closed: a photographing code separate from the join code; a name that joins after the photo waits for the teacher; the photographing phone reads nothing; the class list can be edited and joining closed; a daily ceiling on every route that calls a model; the design route only for the caller's own released level, with the server's scope and a per-question ceiling | `witness/src/witness_api.erl`, `desk/` | done 31 Oct |
+| Lo's live turns read for safety before they reach a student; every student-written text marked as data in every prompt; students sent to class patterns as numbers | `witness/src/witness_guard.erl`, `witness/src/witness_text.erl`, `witness/src/witness_patterns.erl` | done 31 Oct |
+| Conditional writes: concurrent joins all land, a paper deleted while marking stays deleted | `witness/src/witness_host.erl` (`update/3`), `witness/src/witness_api.erl`, `host/lowisa_edge_witness.erl` | done 31 Oct |
+| **The re-check**: a few days after "Turned around", a new problem on the same idea in a different structure, answered with the student's own number and working | `witness/src/witness_recheck.erl`, `phone/witness/WitnessScreen.tsx`, `desk/witness-desk.js` | done 31 Oct |
+| One teacher action on many questions: accept the confident marks, send one challenge to a pattern group, issue "Turned around" after one review | `witness/src/witness_api.erl`, `desk/witness-desk.js` | done 31 Oct |
+| A mastery level's practical task ends in a number the learner types, checked by the player | `host/scene-checked-task.txt` | done 31 Oct |
+| Structured output on every small JSON reply; prompt caching across the readings of one paper; explicit prices; Muse Spark Open on the photographed paper too | `witness/src/witness_meta.erl`, `witness/src/witness_photo.erl`, `witness/src/witness_open.erl` | done 31 Oct |
+| Held-out v2 (53 papers, written before any run), the self-check and reason-judge evaluations, the effort ablation, the live API probe | `harness/heldout/items_v2.py`, `harness/selfcheck/`, `harness/reasons/`, `harness/probes/results-31oct/` | done 31 Oct |
+| A local replay of the desk with no key; the privacy document | `demo/desk-server.js --replay`, `docs/privacy.md` | done 31 Oct |

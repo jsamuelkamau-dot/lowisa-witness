@@ -39,7 +39,7 @@ run(Key, {Id, Clip, C}) ->
     Sitting1 = case S0 of #{<<"scheme">> := Sc} -> Sitting#{scheme => Sc}; _ -> Sitting end,
     {ok, Bin} = file:read_file(Clip),
     T0 = erlang:monotonic_time(millisecond),
-    R = (catch witness_sitting:mark(Key, #{name => list_to_binary(filename:basename(Clip)), bytes => Bin}, Sitting1)),
+    R = try witness_sitting:mark(Key, #{name => list_to_binary(filename:basename(Clip)), bytes => Bin}, Sitting1) catch Cl:Er -> {'EXIT', {Cl, Er}} end,
     Ms = erlang:monotonic_time(millisecond) - T0,
     Base = #{id => Id, clip => list_to_binary(filename:basename(Clip)), bytes => byte_size(Bin), ms => Ms},
     case R of

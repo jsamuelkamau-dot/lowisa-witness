@@ -33,7 +33,7 @@ one(Key, Cs, I, #{<<"c">> := C, <<"pick">> := Pick, <<"why">> := Why, <<"holds">
     #{<<"diagnosis">> := D, <<"q">> := QT, <<"options">> := Os, <<"answer">> := A} = maps:get(C, Cs),
     Q = #{diagnosis => D, mastery => #{challenge => #{q => QT, options => Os, answer => A, at => 0}}},
     Base = #{i => I, run => Run, challenge => C, kind => Kind, holds => Holds, pick_right => Pick =:= A},
-    case catch witness_challenge:judge(Key, Q, {Pick, Why}) of
+    case (try witness_challenge:judge(Key, Q, {Pick, Why}) catch Cl:Er -> {Cl, Er} end) of
         {ok, #{understood := U, why := W}, Cost} -> Base#{understood => U, why => W, cost_usd => Cost};
         Other -> Base#{error => unicode:characters_to_binary(io_lib:format("~0p", [Other]))}
     end.

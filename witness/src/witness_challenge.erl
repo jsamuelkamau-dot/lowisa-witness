@@ -142,7 +142,9 @@ judge_prompt(Q, {Pick, Why}) ->
             "THE RIGHT OPTION: ", integer_to_list(A + 1), "\n",
             "THE STUDENT PICKED: ", integer_to_list(Pick + 1), "\n",
             "THEIR REASON, IN THEIR OWN WORDS: ", witness_text:data(Why), "\n\n",
-            "Does the reason show they now apply the right principle (not luck, not the old way)? Judge the reasoning, not ",
+            %% 31 Oct (harness/reasons: "The base changes." with the right pick was accepted 12 times of 12)
+            "Does the reason show they now apply the right principle (not luck, not the old way)? Naming the rule is not ",
+            "enough: the reason must apply it to THIS question's numbers or situation. Judge the reasoning, not ",
             "the wording. Return JSON only: {\"understood\":true,\"why\":\"one sentence for the teacher\"}"]).
 
 parse_verdict(Text) ->

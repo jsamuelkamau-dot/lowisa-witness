@@ -146,7 +146,8 @@ judge_prompt(Q, {Value, Working}) ->
         "THE RIGHT ANSWER: ", num(A), "\n",
         "THEIR ANSWER: ", num(Value), "\n",
         "HOW THEY GOT IT, IN THEIR OWN WORDS: ", witness_text:data(Working), "\n\n",
-        "Does the working apply the right idea (not luck, not the old way)? Judge the reasoning, not the wording. ",
+        "Does the working apply the right idea to these numbers (not luck, not the old way, not the rule named without being ",
+        "used)? Judge the reasoning, not the wording. ",
         "Return JSON only: {\"understood\":true,\"why\":\"one sentence for the teacher\"}"]).
 
 parse_verdict(Text) ->
