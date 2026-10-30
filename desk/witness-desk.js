@@ -500,7 +500,7 @@
   function fingerprintCard(f) {
     if (!f) return '';
     var row = function (label, html) { return html ? '<div style="margin-top:6px"><b style="font-size:12px">' + label + '</b><div>' + html + '</div></div>' : ''; };
-    var said = (f.said || []).map(function (x) { return '<div class="wd-sub">Lo asked: ' + esc(x.ask) + '</div><div>They said: “' + esc(x.text) + '”</div>'; }).join('');
+    var said = (f.said || []).map(function (x) { return '<div class="wd-sub">Lo asked: ' + esc(x.ask) + '</div><div>They said: “' + esc(x.text) + '”</div>' + listen(x.audio, 'Their answer to Lo, out loud'); }).join('');
     return '<div class="wd-card" style="margin:8px 0"><b>Misconception fingerprint</b> ' +
       (f.misconception ? '<span class="wd-chip warn">' + esc(f.misconception) + '</span>' : '<span class="wd-chip">Not named yet: the paper is not enough evidence</span>') +
       row('The reasoning that produced it', esc(f.reasoning || '')) +

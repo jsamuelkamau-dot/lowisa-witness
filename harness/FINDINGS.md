@@ -56,3 +56,26 @@ marking prompt worded for a photo, and the same scheme.
   medium effort), which failed the sitting; the budget is 16,000 now and such a reply is read again. And two readings
   that split always ended part way at 40%, so right one-word answers read 1 of 2 once became "part way"; a third
   reading now decides (two of three agree), and the benchmark is back to 46 of 46 exact.
+
+## 30 Oct: the Misconception Fingerprint, live (`harness/fingerprint_check.escript`, `evidence/misconceptions/`)
+
+One question, three photographed papers, all circling $100 for +50% then −50%:
+
+- **A** "+50% - 50% = 0%": named "percentages cancel"; no question. **B** "100 + 50 = 150 / 150 - 50 = 100": named
+  "second percentage taken of original amount"; 1 of 3 kept for the right increase. **C** "Half up, half down. Same
+  price.": an intuition, so Lo asks "which price is each half taken from?".
+- The first rule labelled C "cancelling" from the intuition alone. The rule now names only what the ink shows and asks
+  whenever the calculation behind an answer is not on the page; three re-runs gave C a question each time.
+- C answered "Both halves are of 100 dollars…": Muse Spark completed the fingerprint as B's idea (the base), from the
+  page and the answer together. The page alone could not have told it.
+- Muse Wonder's class view grouped Leo and Priya (cancel) and Tomás ("50% always means $50") with a reteach for each.
+
+## 30 Oct: the rehearsal on the real edge found three things, all fixed the same day
+
+- **A released paper vanished from its exam** after the student answered Lo. Rows are read with
+  `binary_to_term(.., [safe])`; the host loaded a hand-kept list of Witness modules first, and it missed the day's two
+  new modules, so a row holding their atoms (`said`) read as missing on a node that had not loaded them. Reproduced
+  offline on the stored row (fails cold, reads once the 24 modules are loaded). The list is now the application's own.
+- **Lo's question vanished without a word** once answered: Lo now says the answer was heard, out loud.
+- **"The recording is kept for your teacher"** was shown under a spoken answer to Lo, whose recording was not kept. It is
+  now, and the desk plays it.

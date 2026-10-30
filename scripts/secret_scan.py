@@ -6,7 +6,7 @@ import hashlib, pathlib, re, subprocess, sys
 
 PATTERNS = {
     "Meta/LLM key": r"LLM[A-Za-z0-9_\-|]{30,}",
-    "OpenAI key": r"sk-[A-Za-z0-9_\-]{20,}",
+    "OpenAI key": r"(?<![A-Za-z0-9])sk-[A-Za-z0-9_\-]{20,}",   # not inside a word ("desk-fingerprint-...")
     "AWS access key": r"AKIA[0-9A-Z]{16}",
     "bearer token": r"Bearer [A-Za-z0-9_\-\.|]{24,}",
     "private key": r"-----BEGIN [A-Z ]*PRIVATE KEY-----",

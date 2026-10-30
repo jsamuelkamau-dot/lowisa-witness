@@ -854,3 +854,14 @@ lo_asks_when_the_paper_is_not_enough_evidence_test() ->
     [Q3] = [Q || Q = #{n := 3} <- maps:get(questions, maps:get(result, Row))],
     ?assertMatch(#{fingerprint := #{misconception := <<"takes the second percentage", _/binary>>}}, Q3),
     ?assertMatch({400, #{code := <<"not_asked">>}}, M(<<"stud">>, #{<<"text">> => <<"again">>})).
+
+%% the answer to Lo out loud: Voice Transcribe writes it down, and the recording is kept beside the paper for the
+%% teacher, as the phone tells the student it is
+a_spoken_answer_to_lo_is_kept_for_the_teacher_test() ->
+    setup(),
+    Fp = #{reasoning => <<"r">>, evidence => [<<"Half up, half down.">>], misconception => <<>>, intervention => <<>>, ask => <<"Half of what?">>},
+    {_P, S} = released_paper(#{questions => [(q(3, <<"not_yet">>, 0.9))#{fingerprint => Fp}], pauses => [], lines => [], cost_usd => 0.0}),
+    {200, #{fingerprint := #{said := [Said]}}} =
+        r(<<"POST">>, [<<"mastery">>, S, <<"3">>, <<"diagnose">>], #{<<"audio">> => base64:encode(<<"audio-bytes">>), <<"mime">> => <<"audio/mp4">>}, <<"stud">>),
+    ?assertMatch(#{text := <<"Because I divided by the common factor 16.">>, audio := <<"diagnose-3-1.m4a">>}, Said),
+    ?assertMatch([_], ets:lookup(witness_api_t, {asset, <<"teacher">>, <<S/binary, "/diagnose-3-1.m4a">>})).

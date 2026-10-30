@@ -13,7 +13,7 @@
 %%%   answer(Q, Text, Read, At) (pure) / prompt(Q, Text) / parse(ModelText) / run(Key, Q, Text) -> {ok, F, Cost}
 %%%-------------------------------------------------------------------
 -module(witness_fingerprint).
--export([answer/4, prompt/2, parse/1, run/3, pending/1]).
+-export([answer/4, answer/5, prompt/2, parse/1, run/3, pending/1]).
 
 -define(MODEL, <<"muse-spark-1.3">>).
 -define(MAX_ASKS, 2).
@@ -24,14 +24,17 @@ pending(#{fingerprint := #{ask := A} = F}) when A =/= <<>> -> length(maps:get(sa
 pending(_) -> false.
 
 %% The student's answer, kept with the question it answered; Read is Spark's reading (a fingerprint map) or undefined.
-answer(Q, Text0, Read, At) ->
+answer(Q, Text0, Read, At) -> answer(Q, Text0, Read, At, #{}).
+
+%% Kept: what was kept of a spoken answer (#{audio => File}), noted with the answer.
+answer(Q, Text0, Read, At, Kept) ->
     Text = case Text0 of B when is_binary(B) -> string:slice(string:trim(B), 0, ?MAX_TEXT); _ -> <<>> end,
     case {pending(Q), Text} of
         {false, _} -> {error, not_asked};
         {_, <<>>} -> {error, empty};
         {true, _} ->
             F = maps:get(fingerprint, Q),
-            Said = maps:get(said, F, []) ++ [#{ask => maps:get(ask, F), text => Text, at => At}],
+            Said = maps:get(said, F, []) ++ [maps:merge(#{ask => maps:get(ask, F), text => Text, at => At}, maps:with([audio], Kept))],
             F1 = case Read of
                 #{} -> maps:merge(F, maps:with([reasoning, evidence, misconception, intervention, ask], Read));
                 _ -> F

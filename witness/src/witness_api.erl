@@ -534,7 +534,7 @@ route(<<"POST">>, [<<"mastery">>, Sid, NBin, Action], B, Uid, Host) ->
                         {teacher, <<"recommend">>} -> recommend_step(Q, Row, Owner, Host);
                         {teacher, <<"challenge_suggest">>} -> suggest_step(Q, Row, Owner, B, Host);
                         {student, <<"challenge_answer">>} -> challenge_step(Q, B, Owner, Host);
-                        {student, <<"diagnose">>} -> diagnose_step(Q, B, Owner, Row, Host);
+                        {student, <<"diagnose">>} -> diagnose_step(Q, B, #{owner => Owner, sid => Sid, n => N, row => Row}, Host);
                         _ -> mastery_step(Role, Action, Q, B, Host)
                     end,
                     case Step of
@@ -690,14 +690,17 @@ challenge_step(Q, B, Owner, Host) ->
 %% 30 Oct (owner): the Misconception Fingerprint. When the paper alone was not enough evidence, Lo asked one diagnostic
 %% question; the student's answer (written, or spoken and written down) is read by Muse Spark with the ink. Nothing
 %% reaches a model unless Lo is still asking; a model that fails keeps their words and the level still builds.
-diagnose_step(Q, B, Owner, Row, Host) ->
+diagnose_step(Q, B, #{owner := Owner, sid := Sid, n := N, row := Row}, Host) ->
     case witness_fingerprint:pending(Q) of
         false -> {error, not_asked};
         true ->
             case heard(Owner, B, Host) of
                 {error, _} = E -> E;
                 {<<>>, _} -> {error, empty};
-                {Text, _Spoken} ->
+                {Text, Spoken} ->
+                    %% a spoken answer is kept beside the paper, as every spoken answer is, for the teacher to hear
+                    Nth = length(maps:get(said, maps:get(fingerprint, Q), [])) + 1,
+                    Kept = keep_audio(Owner, Sid, <<"diagnose-", (integer_to_binary(N))/binary, "-", (integer_to_binary(Nth))/binary>>, Spoken, B, Host, #{}),
                     Read = case Host:meta_key() of
                         undefined -> undefined;
                         Key ->
@@ -706,7 +709,7 @@ diagnose_step(Q, B, Owner, Row, Host) ->
                                 _ -> undefined
                             end
                     end,
-                    case witness_fingerprint:answer(Q, Text, Read, now_ms()) of
+                    case witness_fingerprint:answer(Q, Text, Read, now_ms(), Kept) of
                         {error, _} = E -> E;
                         Q1 -> {Q1, #{fingerprint => maps:get(fingerprint, Q1)}}
                     end

@@ -35,7 +35,7 @@ const DOORS: Array<[string, RegExp]> = [
   // 29 Oct (From Exam to Mastery): a photographed paper's pages, and the teacher saying whose paper it is
   ['GET', new RegExp(`^/api/witness/sitting/${HEX16}/asset/page-[0-9]{1,2}\.(jpg|png|webp)$`)],
   ['POST', new RegExp(`^/api/witness/sitting/${HEX16}/student$`)],
-  ['GET', new RegExp(`^/api/witness/sitting/${HEX16}/asset/(answer-[0-9]{1,3}|explain-(lo|teacher)-[0-9]{1,3})\.(m4a|aac|wav|webm|ogg|mp3)$`)],
+  ['GET', new RegExp(`^/api/witness/sitting/${HEX16}/asset/(answer-[0-9]{1,3}|explain-(lo|teacher)-[0-9]{1,3}|diagnose-[0-9]{1,3}-[0-9])\.(m4a|aac|wav|webm|ogg|mp3)$`)],
   ['POST', new RegExp(`^/api/witness/pile/read$`)],
   ['POST', new RegExp(`^/api/witness/pile/${HEX16}/patterns$`)],
   ['GET', new RegExp(`^/api/witness/sitting/${HEX16}/proof$`)],

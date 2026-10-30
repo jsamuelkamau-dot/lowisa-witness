@@ -1,0 +1,37 @@
+{
+ "title": "Mathematics: Percentages and Money",
+ "level": "Year 9",
+ "questions": [
+  {
+   "n": 1,
+   "text": "Work out 25% of 80.",
+   "marks": 1
+  },
+  {
+   "n": 2,
+   "text": "A jacket costs $60. In a sale it is 20% off. What is the sale price? Show your working.",
+   "marks": 2
+  },
+  {
+   "n": 3,
+   "text": "Write 3/5 as a percentage.",
+   "marks": 1
+  },
+  {
+   "n": 4,
+   "text": "A product costs $100. Its price increases by 50%, then decreases by 50%. What is its final price? Circle one answer and explain your thinking. Options: A   $100 — back to the original price; B   $75 — lower than the original price; C   $50 — half the original price; D   $150 — higher than the original price",
+   "marks": 3
+  },
+  {
+   "n": 5,
+   "text": "A salary of $2,000 a month rises by 10%. What is the new salary?",
+   "marks": 2
+  },
+  {
+   "n": 6,
+   "text": "Share $45 between Ana and Ben in the ratio 2 : 3.",
+   "marks": 2
+  }
+ ],
+ "scheme": "Q1: 20 (1).\nQ2: 20% of $60 = $12 (1); $60 - $12 = $48 (1).\nQ3: 60% (1).\nQ4: B, $75 (1). Method (2): the 50% increase is on $100, giving $150 (1); the 50% decrease is on the new price $150, so $75 is taken off, giving $75 (1). The two percentages are of different amounts, so they do not cancel. Saying +50% and -50% cancel gets no method marks.\nQ5: 10% of $2,000 = $200 (1); $2,200 (1).\nQ6: $45 / 5 = $9 a part (1); Ana $18, Ben $27 (1)."
+}

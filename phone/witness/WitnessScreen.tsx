@@ -71,11 +71,21 @@ export async function record(n: Native, onHandOver?: () => void): Promise<VideoF
 /** Said when the Witness camera hands over to the phone's camera app. */
 export const HAND_OVER_WORDS = "The Witness camera couldn't record on this phone, so your phone's own camera opens instead. Record your paper there.";
 
+/** What the student is shown went wrong (pure): once Lo's question has completed the fingerprint, what their working AND
+ *  their answer showed; until then the marking's own reading (30 Oct, rehearsal: the card still said "cancel" after
+ *  Leo's answer showed the base was the idea to fix). */
+export function whatShows(q: Question, fp?: Fingerprint | null): {label: string; text: string} | null {
+  const f = fp === undefined ? q.fingerprint : fp;
+  if (f && f.misconception && (f.said || []).length) return {label: 'What your working and your answer to Lo show', text: f.misconception};
+  return q.diagnosis ? {label: 'What your working shows', text: q.diagnosis} : null;
+}
+
 /** What Lo says for "Hear it" on a question: the result, the marks, what went wrong and the teacher's words (pure). */
-export function spokenFeedback(q: Question): string {
+export function spokenFeedback(q: Question, fp?: Fingerprint | null): string {
   const parts = ['Question ' + q.n + '. ' + (turnedAround(q) ? 'Turned around.' : RESULT_WORDS[resultOf(q)] + '.'),
     'You got ' + marksOf(q) + ' of ' + q.out_of + ' marks.'];
-  if (q.diagnosis && !turnedAround(q)) parts.push("What your working shows: " + q.diagnosis);
+  const shows = whatShows(q, fp);
+  if (shows && !turnedAround(q)) parts.push(shows.label + ': ' + shows.text);
   if (q.comment && q.comment.text) parts.push('Your teacher says: ' + q.comment.text);
   return parts.join(' ');
 }
@@ -497,6 +507,8 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
   // 30 Oct (owner): the Misconception Fingerprint; while Lo still has a diagnostic question, it comes before the level
   const [fp, setFp] = useState<Fingerprint | null | undefined>(q.fingerprint);
   const asking = !path && !!fp && !!fp.ask && (fp.said || []).length < 2;
+  // Lo answers the answer: the learner hears that it landed (30 Oct, rehearsal: the card just vanished)
+  const [loThanks, setLoThanks] = useState('');
   const act = async (action: 'event' | 'explain' | 'ask' | 'challenge_answer', body: Record<string, unknown>) => {
     const r = await witness.mastery(env, paper.id, q.n, action, body);
     if (r.ok) { setM(r.value.mastery); setSaid(''); } else setSaid(r.error);
@@ -580,8 +592,8 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
       {next && !(m && m.status === 'badge') && PLAN_WHY[r] ? <Text style={s.sub}>{PLAN_WHY[r]}</Text> : null}
       <Replay q={q} />
       {/* 28 Oct re-audit (the submission: each student's feedback comes "with a short spoken explanation") */}
-      <Btn label="Hear it" onPress={() => tutorSay(spokenFeedback(q))} small testID={'witness-hear-' + q.n} />
-      {next && q.diagnosis && q.moment_s == null && !(typeof q.slip === 'number' && q.slip >= 1) ? <Text style={s.diag}>What your working shows: {q.diagnosis}</Text> : null}
+      <Btn label="Hear it" onPress={() => tutorSay(spokenFeedback(q, fp))} small testID={'witness-hear-' + q.n} />
+      {next && whatShows(q, fp) && q.moment_s == null && !(typeof q.slip === 'number' && q.slip >= 1) ? <Text style={s.diag}>{whatShows(q, fp)!.label}: {whatShows(q, fp)!.text}</Text> : null}
       {next && capabilitiesOf(q).length ? (
         <View style={s.caps} testID={'witness-caps-' + q.n}>
           <Text style={s.capsHead}>Thinking it builds</Text>
@@ -610,9 +622,14 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
                 if (!r.ok) { setSaid(r.error); return false; }
                 setSaid('');
                 if (r.value.fingerprint) setFp(r.value.fingerprint);
+                if (r.value.fingerprint && !r.value.fingerprint.ask) {
+                  const line = 'Thank you. That tells me exactly which idea to work on. Your level starts from there.';
+                  setLoThanks(line); tutorSay(line);
+                }
                 return true;
               }} />
             : <Btn label={path ? 'Open my mastery level' : 'Start my mastery level'} onPress={start} primary testID={'witness-master-' + q.n} />}
+          {loThanks && !asking && !path ? <Text style={s.comment} testID={'witness-lo-thanks-' + q.n}>Lo: {loThanks}</Text> : null}
           {said ? <Text style={s.error}>{said}</Text> : null}
           <AfterLevel m={m} act={act} film={film} filming={filming} />
         </View>
