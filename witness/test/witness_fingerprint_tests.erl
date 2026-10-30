@@ -106,7 +106,7 @@ the_settled_fingerprint_becomes_the_diagnosis_test() ->
     {ok, Read} = witness_fingerprint:parse(<<"{\"reasoning\":\"Takes both halves of the original $100.\",\"evidence\":[\"said: both halves of 100\"],"
         "\"misconception\":\"second change taken of the original amount\",\"intervention\":\"Find the base.\",\"ask\":\"\"}">>),
     Q1 = witness_fingerprint:answer(Q, <<"Both halves of 100.">>, Read, 2),
-    ?assertEqual(<<"second change taken of the original amount: Takes both halves of the original $100.">>, maps:get(diagnosis, Q1)),
+    ?assertEqual(<<"second change taken of the original amount">>, maps:get(diagnosis, Q1)),
     ?assertEqual(<<"The page shows the answer $100 but not which calculation led to it. Lo asks first.">>, maps:get(diagnosis_first, Q1)),
     ?assertNot(maps:is_key(possible, maps:get(fingerprint, Q1))),
     %% a reply that names an idea and still asks names nothing yet

@@ -53,8 +53,9 @@ settled(#{fingerprint := #{ask := <<>>} = F} = Q) ->
     New = case {maps:get(misconception, F, <<>>), maps:get(reasoning, F, <<>>)} of
         {<<>>, <<>>} -> <<>>;
         {<<>>, R} -> R;
-        {M, <<>>} -> M;
-        {M, R} -> <<M/binary, ": ", R/binary>>
+        %% the named idea alone: the reasoning is how the evidence led there, and the desk shows it on its own line
+        %% (30 Oct rehearsal: "where the thinking went wrong" read "...: Paper alone with A $100 could be ...")
+        {M, _} -> M
     end,
     case New of
         <<>> -> Q;
