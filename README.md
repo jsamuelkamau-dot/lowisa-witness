@@ -194,7 +194,7 @@ The clips carry the phone's own audio, so **Lo is heard** as the student hears i
 | **6. The real task**: price the sale, then 18 of 18 flashcards. | ![](evidence/screens/phone-practical-task.png) |
 | **7. The teacher's new challenge.** Muse Spark drafts one; the teacher rewrites it to their own: 1,000 litres, **−30% then +30%**, the order reversed, so the memorised answer cannot be reused. [▶ the desk](evidence/video/teacher-sends-a-challenge-desk.mp4) | ![](evidence/screens/desk-challenge-edited-by-teacher.png) |
 | **8. It reaches the phone by itself**; Lo reads it out; Leo picks 910 litres and writes why. [▶ clip with Lo's voice](evidence/video/teacher-challenge-on-the-phone.mp4) | ![](evidence/video/teacher-challenge-on-the-phone.gif) |
-| **9. The reason, read for the teacher**: *"Muse Spark: the reason holds"*, then Muse Spark recommends, and the teacher issues **Turned around**. | ![](evidence/screens/desk-muse-spark-recommends.png) |
+| **9. The reason, read for the teacher**: *"Muse Spark: the reason holds"*, then Muse Spark recommends, and the teacher issues **Turned around**. (This run sent Muse Spark's own draft, 200 litres, unedited.) | ![](evidence/screens/desk-muse-spark-recommends.png) |
 
 What the rehearsal and the review after it found, and what changed, is in [`harness/FINDINGS.md`](harness/FINDINGS.md):
 a paper that vanished from its exam (rows read with `[safe]` before two new modules were loaded), a quiz that
@@ -234,7 +234,7 @@ level, Muse Wonder's self-check, the challenge, the recommendation). Calls, pric
 - **Production engineering**: Erlang/OTP on the edge; every call metered; retries only on Meta's busy answers; a paper
   Meta could not mark keeps its clip to mark again; signed uploads straight to storage; a teacher-paid level has a
   ceiling on its calls; a slow step reads the paper again before writing back; delete routes for a paper and an exam.
-- **Tested**: 114 unit and route tests run from a fresh clone (`sh scripts/test.sh`, CI on every push); the benchmark,
+- **Tested**: 118 unit and route tests run from a fresh clone (`sh scripts/test.sh`, CI on every push); the benchmark,
   the held-out set and the three-learner runs are committed with every raw reply.
 
 ### Demo and experience
@@ -284,7 +284,7 @@ flowchart TB
 
 | What | Result | Where |
 |---|---|---|
-| Unit and route tests | **114 passing** from a fresh clone | `sh scripts/test.sh`, CI |
+| Unit and route tests | **118 passing** from a fresh clone | `sh scripts/test.sh`, CI |
 | The three learners, five runs each | A named 5/5, B named 5/5, C asked 5/5 | `evidence/misconceptions/runs.json` |
 | Held-out fingerprint check, 36 papers, 10 topics | ambiguous asked 10/11, clear named right 10/12 (2 asked), right work 10/10, adversarial 3/3, **0 wrong labels** | `harness/heldout/results/` |
 | Marking from desk video, 13 clips, 6 languages, 4 subjects | 46 of 46 questions exact (27 and 28 Oct, four runs; one run 45 of 46 before the third-reading fix) | `harness/bench/results/`, `python harness/bench/summary.py` |
@@ -349,6 +349,10 @@ appear only playing what was made this week, and are labelled.
 - **One immediate transfer item** (the teacher's challenge) before the badge; a delayed re-test is the teacher's to
   add.
 - The intervention is the model's own wording; the teacher can change the focus before the level is built.
+- **The self-check reads the level's teaching, not every practice question.** The questions inside each lesson are
+  written as the lesson opens and are not checked one by one. In the 30 Oct rehearsal a level said a shop "loses $25"
+  by charging $100 for a $75 price (it gains it); the check now works out every number and every claim of who gains or
+  loses (`true_claims`), but a question written later can still be wrong. The teacher's preview is on by default.
 - Muse Spark Open is wired (`witness_open.erl`) but has not been run on hosted open weights.
 
 ## Licence
