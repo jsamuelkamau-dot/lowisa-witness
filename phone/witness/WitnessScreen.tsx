@@ -590,7 +590,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
       </View>
       <Text style={s.sub}>{marksOf(q)} of {q.out_of} marks</Text>
       {next && !(m && m.status === 'badge') && PLAN_WHY[r] ? <Text style={s.sub}>{PLAN_WHY[r]}</Text> : null}
-      <Replay q={q} />
+      <Replay q={q} shows={whatShows(q, fp)} />
       {/* 28 Oct re-audit (the submission: each student's feedback comes "with a short spoken explanation") */}
       <Btn label="Hear it" onPress={() => tutorSay(spokenFeedback(q, fp))} small testID={'witness-hear-' + q.n} />
       {next && whatShows(q, fp) && q.moment_s == null && !(typeof q.slip === 'number' && q.slip >= 1) ? <Text style={s.diag}>{whatShows(q, fp)!.label}: {whatShows(q, fp)!.text}</Text> : null}

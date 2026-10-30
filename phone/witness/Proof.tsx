@@ -35,7 +35,8 @@ export function replayGaps(steps: Step[]): number[] {
   });
 }
 
-export function Replay({q}: {q: Question}): React.JSX.Element {
+/** shows: what to say went wrong (WitnessScreen's whatShows: the completed fingerprint once Lo asked); the diagnosis by default. */
+export function Replay({q, shows}: {q: Question; shows?: {label: string; text: string} | null}): React.JSX.Element {
   const steps = q.steps || [];
   const [shown, setShown] = useState(steps.length);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -58,7 +59,7 @@ export function Replay({q}: {q: Question}): React.JSX.Element {
           <Text style={[s.step, st.crossed_out ? s.crossed : null]}>{st.wrote}</Text>
         </View>
       ))}
-      {slip >= 0 && shown > slip && q.diagnosis ? <Text style={s.diag}>{timed ? 'At ' + clock(q.moment_s) + ': ' : "What your working shows: "}{q.diagnosis}</Text> : null}
+      {slip >= 0 && shown > slip && (shows || q.diagnosis) ? <Text style={s.diag}>{timed ? 'At ' + clock(q.moment_s) + ': ' : (shows ? shows.label + ': ' : 'What your working shows: ')}{shows ? shows.text : q.diagnosis}</Text> : null}
       {timed && steps.length > 1 ? <Btn label="Replay how I worked" onPress={play} small testID={'witness-replay-play-' + q.n} /> : null}
     </View>
   );
