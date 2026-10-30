@@ -9,7 +9,7 @@
  * design calls: the edge's own metered call on Muse Spark, paid by the exam's teacher.
  */
 import type {MirrorStorage} from '../state/storage';
-import {classifyGate} from '../billing/credits';
+import {classifyGate, type CreditGate} from '../billing/credits';
 
 /** The model of every call of a mastery level (the edge's house-only Meta row, open to Witness accounts). */
 export const MASTERY_MODEL = 'muse-spark-1-3';
@@ -40,7 +40,7 @@ export function metaRouteFor(storage: MirrorStorage, pathId: string | null | und
   return m ? {sitting: m.paperId, n: m.n} : null;
 }
 
-export type MetaAnswer = {kind: 'text'; text: string} | {kind: 'gated'} | {kind: 'refused'; text: string} | {kind: 'failed'};
+export type MetaAnswer = {kind: 'text'; text: string} | {kind: 'gated'; gate: CreditGate} | {kind: 'refused'; text: string} | {kind: 'failed'};
 
 export interface MetaEnv {
   backendUrl: string;
@@ -79,7 +79,10 @@ export async function askMeta(env: MetaEnv, route: MetaRoute, messages: Array<{r
     try { body = await res.json(); } catch (e) { /* handled below */ }
     if (res.ok && body.success && typeof body.text === 'string' && body.text.trim()) return {kind: 'text', text: body.text};
     if (body.code === 'teacher_credits') return {kind: 'refused', text: String(body.error || '')};
-    if (classifyGate(res.status, body as Record<string, unknown>)) return {kind: 'gated'};
+    // the wall itself goes back with it, so the lesson shows the credit wall, not "check your internet" (30 Oct
+    // rehearsal: a teacher who sat their own exam ran out of credits mid-level)
+    const gate = classifyGate(res.status, body as Record<string, unknown>);
+    if (gate) return {kind: 'gated', gate};
     return {kind: 'failed'};
   } catch (e) {
     return {kind: 'failed'};

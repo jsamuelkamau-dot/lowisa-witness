@@ -383,7 +383,7 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
             <View style={s.card}>
               <Text style={s.rowTitle}>Film my desk (optional)</Text>
               <Text style={s.sub}>For one student working alone, at home or homeschooled: the phone films the desk while you write, so your thinking is seen as it happens{stage.practical ? '. A practical task is always filmed.' : ', not only the finished page.'}</Text>
-              <Btn label="Film my desk with Witness" onPress={() => { setError(''); setStage({kind: 'witness', code: stage.code, title: stage.title, level: stage.level}); }} testID="witness-film" />
+              <Btn label="Film my desk" onPress={() => { setError(''); setStage({kind: 'witness', code: stage.code, title: stage.title, level: stage.level}); }} testID="witness-film" />
             </View>
           </>
         ) : null}
