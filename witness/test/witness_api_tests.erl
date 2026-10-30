@@ -3,7 +3,8 @@
 -behaviour(witness_host).
 -export([meta_key/0, put_url/4, get_url/2, drop_clip/2, save/3, load/2, list/2, spend/3, run/1, marker/0, checker/0, design/2, judger/0,
          put_asset/4, asset_url/2, stiller/0, examiner/0, answer_judge/0, drawer/0, hearer/0, open_engine/0, open_marker/0, retry_waits/0, cropper/0, painter/0, parts_start/3, part_url/4, parts_done/3, parts_finish/4,
-         reader/0, patterner/0, recommender/0, clipper/0, clip_tag/2, suggester/0, challenge_judger/0, fingerprinter/0]).
+         reader/0, patterner/0, recommender/0, clipper/0, clip_tag/2, suggester/0, challenge_judger/0, fingerprinter/0,
+         delete/2, drop_asset/2]).
 
 %% An in-memory host: rows and events in an ets table, marking run at once, a canned marker.
 meta_key() -> <<"test-key">>.
@@ -53,6 +54,8 @@ checker() ->
     end.
 
 put_asset(Uid, Name, Bytes, Mime) -> ets:insert(witness_api_t, {{asset, Uid, Name}, {Bytes, Mime}}), ok.
+delete(Uid, Key) -> ets:delete(witness_api_t, {row, Uid, Key}), ok.
+drop_asset(Uid, Name) -> ets:delete(witness_api_t, {asset, Uid, Name}), ok.
 asset_url(Uid, Name) -> case ets:lookup(witness_api_t, {asset, Uid, Name}) of [_] -> {ok, <<"https://store.example.com/a/", Name/binary>>}; [] -> {error, none} end.
 
 %% The new seams stay off unless a test turns them on, so the older tests' event lists are unchanged.
@@ -366,13 +369,13 @@ a_levels_design_calls_are_paid_by_the_exams_teacher_test() ->
 %% 28 Oct, live: a teacher sitting their own exam on one account was refused every student step ("That isn't yours")
 a_teacher_sitting_their_own_exam_plays_both_sides_test() ->
     setup(),
-    {201, #{code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions">>}, <<"teacher">>),
+    {201, #{code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions">>, <<"preview">> => false}, <<"teacher">>),
     persistent_term:put(witness_api_result, #{questions => [q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
     {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Me">>}, <<"teacher">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"teacher">>),
     {200, _} = r(<<"POST">>, [<<"pile">>, maps:get(pile, element(2, load(<<"teacher">>, {sitting, S}))), <<"release">>], #{}, <<"teacher">>),
     M = fun(Action, Body) -> r(<<"POST">>, [<<"mastery">>, S, <<"3">>, Action], Body, <<"teacher">>) end,
-    {200, #{mastery := #{status := <<"ready">>}}} = M(<<"event">>, #{<<"event">> => <<"built">>, <<"path">> => <<"custom-topic-me">>}),
+    {200, #{mastery := #{status := <<"ready">>}}} = M(<<"event">>, #{<<"event">> => <<"built">>, <<"path">> => <<"custom-topic-me">>, <<"check">> => #{<<"passes">> => true}}),
     {200, #{mastery := #{thread := [#{from := student}]}}} = M(<<"ask">>, #{<<"text">> => <<"Why?">>, <<"where">> => <<"Lesson 1">>}),
     %% the teacher's own steps stay the teacher's
     {200, #{mastery := #{thread := [_, #{from := teacher}]}}} = M(<<"reply">>, #{<<"text">> => <<"Because.">>}),
@@ -401,7 +404,7 @@ design_door_passes_one_call_and_the_wall_test() ->
 
 after_release_the_teacher_chooses_and_issues_the_badge_test() ->
     setup(),
-    {201, #{code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions">>}, <<"teacher">>),
+    {201, #{code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions">>, <<"preview">> => false}, <<"teacher">>),
     persistent_term:put(witness_api_result, #{questions => [q(1, <<"mastered">>, 0.9), q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
     {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amara">>}, <<"stud">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"stud">>),
@@ -413,7 +416,9 @@ after_release_the_teacher_chooses_and_issues_the_badge_test() ->
     %% the student builds and plays the level; asks the teacher from a step; the teacher answers
     {200, #{mastery := Built}} = M(<<"stud">>, 3, <<"event">>, #{<<"event">> => <<"built">>, <<"path">> => <<"custom-topic-x">>,
         <<"check">> => #{<<"passes">> => false, <<"problems">> => [<<"lesson 2: the checks are all lucky cancels">>, 7]}}),
-    ?assertMatch(#{status := <<"ready">>, path := <<"custom-topic-x">>}, Built),
+    %% a level its self-check did not pass waits for the teacher, who sees why and lets it start
+    ?assertMatch(#{status := <<"held">>, path := <<"custom-topic-x">>}, Built),
+    {200, #{mastery := #{status := <<"ready">>}}} = M(<<"teacher">>, 3, <<"approve">>, #{}),
     ?assertNot(maps:is_key(check, Built)),                                 %% the self-check is the teacher's to read
     {200, #{mastery := #{thread := [#{where := <<"Lesson 2, step 3: I typed 1/2">>}]}}} =
         M(<<"stud">>, 3, <<"ask">>, #{<<"text">> => <<"Why does 12/24 not work?">>, <<"where">> => <<"Lesson 2, step 3: I typed 1/2">>}),
@@ -581,7 +586,7 @@ a_video_without_the_paper_is_not_marked_test() ->
     {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions check">>}, <<"teacher">>),
     {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amina">>}, <<"stud">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"stud">>),
-    ?assertMatch({200, #{status := <<"failed">>, unreadable := <<"A picture of a house; no paper.">>, error := <<"Witness couldn't see the paper", _/binary>>}},
+    ?assertMatch({200, #{status := <<"failed">>, unreadable := <<"A picture of a house; no paper.">>, error := <<"The paper couldn't be seen", _/binary>>}},
                  r(<<"GET">>, [<<"sitting">>, S], #{}, <<"teacher">>)),
     {200, #{sittings := [Row], queue := Queue}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>),
     ?assertMatch(#{status := <<"failed">>, unreadable := _, to_master := 0}, Row),
@@ -609,7 +614,7 @@ meta_busy_every_time_keeps_the_clip_to_mark_again_test() ->
     ?assertEqual(3, length([1 || {marked, _, _, _} <- events()])),
     ?assertEqual([], [E || E = {drop, _, _} <- events()]),
     {200, V} = r(<<"GET">>, [<<"sitting">>, S], #{}, <<"teacher">>),
-    ?assertMatch(#{status := <<"failed">>, kept := true, error := <<"Witness couldn't reach the marking service", _/binary>>}, V),
+    ?assertMatch(#{status := <<"failed">>, kept := true, error := <<"The marking service couldn't be reached", _/binary>>}, V),
     ?assertMatch({200, #{sittings := [#{status := <<"failed">>, kept := true}]}}, r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>)),
     %% the student is not told to film it again: the paper is with the teacher
     ?assertMatch({200, #{papers := [#{status := <<"with_teacher">>}]}}, r(<<"GET">>, [<<"mine">>], #{}, <<"stud">>)),
@@ -712,13 +717,35 @@ the_teacher_can_look_at_each_level_first_test() ->
     ?assertMatch({403, _}, M(<<"stud">>, <<"approve">>, #{})),
     {200, #{mastery := #{status := <<"ready">>}}} = M(<<"teacher">>, <<"approve">>, #{}),
     ?assertMatch({400, #{code := <<"not_held">>}}, M(<<"teacher">>, <<"approve">>, #{})),
-    %% the default: a level reaches the student at once
-    {201, #{code := Code2}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Other">>}, <<"teacher">>),
+    %% 30 Oct (judges' panel): the default is that the teacher looks first; turned off, a level that passed its
+    %% self-check reaches the student at once, and one that failed it (or was never checked) still waits
+    {201, #{id := Pdef}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Default">>}, <<"teacher">>),
+    ?assertMatch({200, #{pile := #{preview := true}}}, r(<<"GET">>, [<<"pile">>, Pdef], #{}, <<"teacher">>)),
+    {201, #{code := Code2}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Other">>, <<"preview">> => false}, <<"teacher">>),
     {201, #{id := S2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code2}, <<"stud">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S2, <<"mark">>], #{}, <<"stud">>),
     {200, _} = r(<<"POST">>, [<<"pile">>, maps:get(pile, element(2, load(<<"teacher">>, {sitting, S2}))), <<"release">>], #{}, <<"teacher">>),
+    ?assertMatch({200, #{mastery := #{status := <<"held">>}}},
+                 r(<<"POST">>, [<<"mastery">>, S2, <<"3">>, <<"event">>], #{<<"event">> => <<"built">>, <<"path">> => <<"p2">>}, <<"stud">>)),
+    ?assertMatch({200, #{mastery := #{status := <<"held">>}}},
+                 r(<<"POST">>, [<<"mastery">>, S2, <<"3">>, <<"event">>], #{<<"event">> => <<"built">>, <<"path">> => <<"p2">>,
+                                                                         <<"check">> => #{<<"passes">> => false, <<"problems">> => [<<"lesson 2 never shows the base">>]}}, <<"stud">>)),
     ?assertMatch({200, #{mastery := #{status := <<"ready">>}}},
-                 r(<<"POST">>, [<<"mastery">>, S2, <<"3">>, <<"event">>], #{<<"event">> => <<"built">>, <<"path">> => <<"p2">>}, <<"stud">>)).
+                 r(<<"POST">>, [<<"mastery">>, S2, <<"3">>, <<"event">>], #{<<"event">> => <<"built">>, <<"path">> => <<"p2">>,
+                                                                         <<"check">> => #{<<"passes">> => true}}, <<"stud">>)).
+
+%% 30 Oct (judges' panel: "completed" was the phone's word alone): the level counts as completed only once each of its
+%% lessons was seen finished
+a_level_is_completed_only_after_its_lessons_test() ->
+    setup(),
+    {_P, S} = released_paper(#{questions => [q(3, <<"not_yet">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
+    M = fun(Body) -> r(<<"POST">>, [<<"mastery">>, S, <<"3">>, <<"event">>], Body, <<"stud">>) end,
+    Level = #{<<"title">> => <<"L">>, <<"lessons">> => [#{<<"title">> => <<"One">>}, #{<<"title">> => <<"Two">>}]},
+    {200, _} = M(#{<<"event">> => <<"built">>, <<"path">> => <<"p">>, <<"level">> => Level, <<"check">> => #{<<"passes">> => true}}),
+    {200, _} = M(#{<<"event">> => <<"lesson">>, <<"lesson">> => #{<<"title">> => <<"One">>, <<"right">> => 6, <<"asked">> => 6}}),
+    ?assertMatch({400, #{code := <<"lessons_left">>}}, M(#{<<"event">> => <<"completed">>})),
+    {200, _} = M(#{<<"event">> => <<"lesson">>, <<"lesson">> => #{<<"title">> => <<"Two">>, <<"right">> => 5, <<"asked">> => 6}}),
+    ?assertMatch({200, #{mastery := #{status := <<"completed">>}}}, M(#{<<"event">> => <<"completed">>})).
 
 %% 28 Oct audit: the plan's first look opens on the student's own handwriting; it is cut from the frame by SAM's box
 the_students_own_step_is_cut_from_the_page_test() ->
@@ -865,3 +892,40 @@ a_spoken_answer_to_lo_is_kept_for_the_teacher_test() ->
         r(<<"POST">>, [<<"mastery">>, S, <<"3">>, <<"diagnose">>], #{<<"audio">> => base64:encode(<<"audio-bytes">>), <<"mime">> => <<"audio/mp4">>}, <<"stud">>),
     ?assertMatch(#{text := <<"Because I divided by the common factor 16.">>, audio := <<"diagnose-3-1.m4a">>}, Said),
     ?assertMatch([_], ets:lookup(witness_api_t, {asset, <<"teacher">>, <<S/binary, "/diagnose-3-1.m4a">>})).
+
+%% 30 Oct (judges' panel): the teacher deletes a paper, then a whole exam; nothing of it is left: its row, its pages and
+%% recordings, the student's pointer, the join code
+the_teacher_deletes_a_paper_and_an_exam_test() ->
+    setup(),
+    Fp = #{reasoning => <<"r">>, evidence => [<<"Half up, half down.">>], misconception => <<>>, intervention => <<>>, ask => <<"Half of what?">>},
+    {P, S} = released_paper(#{questions => [(q(3, <<"not_yet">>, 0.9))#{fingerprint => Fp}], pauses => [], lines => [], cost_usd => 0.0}),
+    {200, _} = r(<<"POST">>, [<<"mastery">>, S, <<"3">>, <<"diagnose">>], #{<<"audio">> => base64:encode(<<"audio-bytes">>), <<"mime">> => <<"audio/mp4">>}, <<"stud">>),
+    ?assertMatch([_], ets:lookup(witness_api_t, {asset, <<"teacher">>, <<S/binary, "/diagnose-3-1.m4a">>})),
+    ?assertMatch({ok, _}, load(<<"stud">>, {mine, S})),
+    ?assertMatch({404, _}, r(<<"POST">>, [<<"sitting">>, S, <<"delete">>], #{}, <<"stud">>)),
+    {200, #{deleted := 1}} = r(<<"POST">>, [<<"sitting">>, S, <<"delete">>], #{}, <<"teacher">>),
+    ?assertEqual(none, load(<<"teacher">>, {sitting, S})),
+    ?assertEqual(none, load(<<"stud">>, {mine, S})),
+    ?assertEqual([], ets:lookup(witness_api_t, {asset, <<"teacher">>, <<S/binary, "/diagnose-3-1.m4a">>})),
+    ?assertMatch({200, #{sittings := []}}, r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>)),
+    {ok, #{code := Code}} = load(<<"teacher">>, {pile, P}),
+    {200, _} = r(<<"POST">>, [<<"pile">>, P, <<"delete">>], #{}, <<"teacher">>),
+    ?assertEqual(none, load(<<"teacher">>, {pile, P})),
+    ?assertEqual(none, load(<<"witness-codes">>, {code, Code})).
+
+%% the names of a paper's kept files come from its row
+a_papers_files_are_named_in_its_row_test() ->
+    Row = #{files => [#{n => 1, file => <<"page-1.jpg">>}], result => #{stills => [#{asset => <<"still-4.jpg">>}],
+            questions => [#{drawn => #{asset => <<"drawn-3.webp">>}, fingerprint => #{said => [#{audio => <<"diagnose-3-1.m4a">>, text => <<"I halved it.">>}]}}]}},
+    ?assertEqual([<<"diagnose-3-1.m4a">>, <<"drawn-3.webp">>, <<"page-1.jpg">>, <<"still-4.jpg">>], witness_api:files_of(Row)).
+
+%% a level the teacher pays for has a ceiling on its design calls; the student's own calls have none here
+a_teacher_paid_level_has_a_ceiling_on_its_calls_test() ->
+    setup(),
+    {_P, S} = released_paper(#{questions => [q(3, <<"not_yet">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
+    ok = save(<<"teacher">>, {mark_cache, <<"calls:", S/binary, ":stud">>}, #{calls => 400, sitting => S}),
+    Body = #{<<"messages">> => [#{<<"role">> => <<"user">>, <<"content">> => <<"write lesson 1">>}], <<"for">> => #{<<"sitting">> => S}},
+    ?assertMatch({429, #{code := <<"level_budget">>}}, r(<<"POST">>, [<<"design">>], Body, <<"stud">>)),
+    ok = save(<<"teacher">>, {mark_cache, <<"calls:", S/binary, ":stud">>}, #{calls => 3, sitting => S}),
+    ?assertMatch({200, #{success := true}}, r(<<"POST">>, [<<"design">>], Body, <<"stud">>)),
+    ?assertMatch({ok, #{calls := 4}}, load(<<"teacher">>, {mark_cache, <<"calls:", S/binary, ":stud">>})).

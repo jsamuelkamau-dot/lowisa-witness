@@ -68,10 +68,18 @@ export function builtNews(storage: MirrorStorage, pathId: string): BuiltNews | n
   catch (e) { return null; }
 }
 
+/** The idea the level repairs (pure): the fingerprint's named misconception once there is one, else the diagnosis.
+ *  30 Oct (judges' panel): the reading Lo's question completed never reached the level or its self-check. */
+export function ideaOf(q: Question): string {
+  const f = q.fingerprint;
+  if (f && f.misconception) return f.misconception + (f.reasoning ? ': ' + f.reasoning.replace(/\.$/, '') : '');
+  return q.diagnosis || '';
+}
+
 /** What the build is asked (the composer's line) and its material (pure, for tests). */
 export function masteryBrief(paper: Paper, q: Question, level?: string): {input: string; context: string} {
   const working = (q.steps || []).map(s => (s.crossed_out ? '(crossed out) ' : '') + s.wrote).join('\n') || '(nothing written)';
-  const idea = q.diagnosis || 'the idea behind this question';
+  const idea = ideaOf(q) || 'the idea behind this question';
   const input = 'One mastery level: ' + idea.replace(/\.$/, '');
   const context = [
     'THE QUESTION: question ' + q.n + (paper.title ? ' of "' + paper.title + '"' : '') + (q.final_answer ? ' (the student answered ' + q.final_answer + ')' : '') + '.',
@@ -110,7 +118,7 @@ export const CHECK_WAIT_MS = 120000;
 export function selfCheck(env: WitnessEnv, paper: Paper, q: Question, wait: (ms: number) => Promise<void> = ms => new Promise(r => setTimeout(r, ms))) {
   return async (level: MasteryLevelText): Promise<{passes: boolean; problems: string[]} | null> => {
     const working = (q.steps || []).map(s => (s.crossed_out ? '(crossed out) ' : '') + s.wrote).join('\n');
-    const asked = await witness.check(env, {question: 'Question ' + q.n + (paper.title ? ' of ' + paper.title : ''), working, diagnosis: q.diagnosis || '', focus: q.focus || '', level});
+    const asked = await witness.check(env, {question: 'Question ' + q.n + (paper.title ? ' of ' + paper.title : ''), working, diagnosis: ideaOf(q), focus: q.focus || '', level});
     if (!asked.ok) return null;
     for (let waited = 0; waited < CHECK_WAIT_MS; waited += 4000) {
       await wait(4000);

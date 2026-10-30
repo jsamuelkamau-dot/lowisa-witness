@@ -17,7 +17,7 @@
 %%%-------------------------------------------------------------------
 -module(witness_mark).
 -export([fit/2, unsure/1, reconcile/2, decide/4, split/1, prompt/1, parse/1, needs_level/1, results/0, capabilities/0,
-         fingerprint_rule/0, fingerprint_json/0]).
+         fingerprint_rule/0, fingerprint_json/0, fingerprint/4, norm/1, in_ink/3, numbers/1]).
 
 %% 27 Oct, emulator: a video of no paper at all (the camera pointed at a picture) was marked "to master" on every
 %% question at 20% sure, so each would have become a mastery level for a paper nobody filmed. A video that does not
@@ -43,41 +43,83 @@ capabilities() -> [<<"Pattern Recognition">>, <<"Probability & Uncertainty">>, <
 %% what evidence on the paper supports the diagnosis, and which intervention can repair it. A misconception is named
 %% only when the student's own ink holds enough evidence for it; otherwise Lo asks one diagnostic question first.
 fingerprint_rule() ->
+    %% 30 Oct (judges' panel): the rule names no question it is tested on; its one example is from another topic
     "- \"fingerprint\", for every question that is not mastered (null when mastered). The same wrong answer can come from\n"
     "  different wrong ideas, and each needs a different repair, so read WHICH idea from the ink alone:\n"
     "  \"reasoning\" is the reasoning that produced this answer, in one sentence; \"evidence\" is the student's own lines\n"
-    "  that show it, copied exactly as written; \"misconception\" is a short name for the wrong idea that evidence shows,\n"
-    "  and ONLY what it shows. For example, combining the percentages themselves (\"+50% - 50% = 0%\") is one idea;\n"
-    "  working the numbers but taking the second change of the original amount (\"150 - 50 = 100\") is another; a stated\n"
-    "  intuition with no numbers (\"half up, half down, same price\") shows only that the steps were never worked out,\n"
-    "  not which calculation the student believes. Never name an idea the ink does not show; a bare answer names none.\n"
-    "  \"intervention\" repairs THAT idea only, never a re-teach of the whole method (one or two sentences a tutor can\n"
-    "  act on): for combining the percentages, two changes on different starting amounts and predicting what happens\n"
-    "  when the order changes; for the wrong base, only finding which amount the second change is of; for an\n"
-    "  intuition, writing each step as numbers. \"ask\" is ONE short diagnostic question for the student, about their own\n"
-    "  words, whenever the ink does not show which calculation lies behind the answer (a bare answer, an intuition with\n"
-    "  no numbers, working that fits two ideas); it never gives the right answer away; otherwise \"ask\" is empty.\n".
+    "  that show it, copied exactly as written (never the final answer alone, never your own words); \"misconception\"\n"
+    "  is a short name for the wrong idea that evidence shows, and ONLY what it shows. Working that shows the calculation\n"
+    "  can name an idea (in another topic, \"1/2 + 1/3 = 2/5\" shows adding the tops and the bottoms). Diagnose as a doctor\n"
+    "  does: \"rivals\" lists every OTHER wrong idea that would make a student write exactly this ink, the same lines and the\n"
+    "  same answer. It is empty only when this ink could come from one idea alone. A result stated without the calculation\n"
+    "  behind it nearly always has rivals (the calculation the student did is not on the page), and so do numbers that two\n"
+    "  different wrong methods both produce. With any rival, or a bare answer, \"misconception\" is empty and \"reasoning\"\n"
+    "  names the ideas it could be. \"intervention\" repairs THAT idea only,\n"
+    "  never a re-teach of the whole method (one or two sentences a tutor can act on); a strong one has the student try\n"
+    "  their own idea on a case where it visibly fails, predicting before working it out. \"ask\" is ONE short\n"
+    "  diagnostic question for the student whenever \"misconception\" is empty: it asks them to show or say their own\n"
+    "  calculation (what they had after each step, or what they would do with a different number); it never names the\n"
+    "  idea you suspect, never names the amount or rule the right method uses, and never gives the right answer away.\n"
+    "  When \"misconception\" is named, \"ask\" is empty.\n".
 
 fingerprint_json() ->
-    "\"fingerprint\":{\"reasoning\":\"...\",\"evidence\":[\"...\"],\"misconception\":\"...\",\"intervention\":\"...\",\"ask\":\"\"},".
+    "\"fingerprint\":{\"reasoning\":\"...\",\"evidence\":[\"...\"],\"rivals\":[],\"misconception\":\"...\",\"intervention\":\"...\",\"ask\":\"\"},".
 
-%% The fingerprint as kept: a named misconception needs evidence; with neither, Lo asks. A named one may still carry a
-%% question, when the ink shows the idea but not the calculation behind it (an intuition with no numbers).
-fingerprint(<<"mastered">>, _) -> null;
-fingerprint(_, #{} = F) ->
-    Evidence = [E || E <- [str(X) || X <- list(maps:get(<<"evidence">>, F, []))], E =/= <<>>],
+%% The fingerprint as kept (30 Oct, judges' panel: the rule is the code's, not only the prompt's). A misconception is
+%% named only with evidence that is the student's own ink: each evidence line must be found in what was read from the
+%% page, and the final answer alone is no evidence. Whenever Lo has a question, no idea is named yet: the model's guess
+%% is kept as `possible` for the teacher, and the student's answer to Lo decides (witness_fingerprint). With neither a
+%% name nor a question, Lo asks them to talk it through.
+fingerprint(R, F) -> fingerprint(R, F, [], <<>>).
+
+fingerprint(<<"mastered">>, _, _, _) -> null;
+fingerprint(_, #{} = F, Steps, Final) ->
+    Lines = [norm(W) || #{wrote := W} <- Steps],
+    Evidence = [E || E <- [str(X) || X <- list(maps:get(<<"evidence">>, F, []))], E =/= <<>>, in_ink(norm(E), Lines, norm(Final))],
     Named = str(maps:get(<<"misconception">>, F, <<>>)),
-    Ask = str(maps:get(<<"ask">>, F, <<>>)),
-    Talk = <<"Talk me through how you got your answer, step by step.">>,
-    {M, A} = case {Named, Evidence, Ask} of
-        {_, [], <<>>} -> {<<>>, Talk};
-        {_, [], _} -> {<<>>, Ask};
-        {<<>>, _, <<>>} -> {<<>>, Talk};
-        _ -> {Named, Ask}
+    Rivals = rivals(F),
+    %% Two ways the ink cannot tell the idea, decided here and not by the model (30 Oct, held-out check: with the demo
+    %% answers out of the prompt, Spark named "half up, half down, same price" as cancelling every time, and listed no
+    %% rival): the model names another idea that writes the same ink, or the answer is a number and no quoted line shows
+    %% a calculation (two numbers or more), so the working behind the answer is not on the page. Lo asks first.
+    Unworked = Evidence =/= [] andalso has_digit(Final) andalso not lists:any(fun(E) -> numbers(E) >= 2 end, Evidence),
+    Ask = case {str(maps:get(<<"ask">>, F, <<>>)), Rivals =/= [] orelse Unworked} of
+        {<<>>, true} -> <<"Write or say what you had after each step, and how you got it.">>;
+        {A0, _} -> A0
     end,
-    #{reasoning => str(maps:get(<<"reasoning">>, F, <<>>)), evidence => lists:sublist(Evidence, 4), misconception => M,
-      intervention => str(maps:get(<<"intervention">>, F, <<>>)), ask => A};
-fingerprint(_, _) -> null.
+    {M, A} = settle(Named, Evidence, Ask),
+    maps:merge(#{reasoning => str(maps:get(<<"reasoning">>, F, <<>>)), evidence => lists:sublist(Evidence, 4), misconception => M,
+                 intervention => str(maps:get(<<"intervention">>, F, <<>>)), ask => A},
+               maps:merge(case {M, Named} of {<<>>, <<_, _/binary>>} -> #{possible => Named}; _ -> #{} end,
+                          case Rivals of [] -> #{}; _ -> #{rivals => Rivals} end));
+fingerprint(_, _, _, _) -> null.
+
+has_digit(B) -> re:run(str(B), <<"[0-9]">>, [{capture, none}]) =:= match.
+
+%% how many numbers a line holds ("1/2" is two, "0.25" one)
+numbers(B) -> case re:run(str(B), <<"[0-9]+(?:[.,][0-9]+)?">>, [global, {capture, first, index}]) of {match, L} -> length(L); nomatch -> 0 end.
+
+%% The other wrong ideas the model says would write the same ink (a few short lines).
+rivals(F) -> [R || R <- [str(X) || X <- lists:sublist(list(maps:get(<<"rivals">>, F, [])), 4)], R =/= <<>>].
+
+%% {Misconception, Ask}: a question means nothing is named yet; a name needs evidence; with neither, Lo asks.
+settle(_, _, <<_, _/binary>> = Ask) -> {<<>>, Ask};
+settle(<<_, _/binary>> = Named, [_ | _], _) -> {Named, <<>>};
+settle(_, _, _) -> {<<>>, <<"Talk me through how you got your answer, step by step.">>}.
+
+%% A quoted line is the student's own when it is (part of) a line read from their page, or a line read is part of it;
+%% the final answer by itself is no evidence of the reasoning behind it.
+in_ink(<<>>, _, _) -> false;
+in_ink(Answer, _, Answer) -> false;
+in_ink(E, Lines, _) ->
+    lists:any(fun(L) -> L =/= <<>> andalso (binary:match(L, E) =/= nomatch orelse (byte_size(L) >= 4 andalso binary:match(E, L) =/= nomatch)) end, Lines).
+
+%% Lines compared as written, whatever dash, quote, case or spacing the reading used.
+norm(B0) ->
+    Dash = #{16#2212 => $-, 16#2013 => $-, 16#2014 => $-, 16#00D7 => $x},
+    Drop = " \t\n\"'`.,;:!?" ++ [16#2018, 16#2019, 16#201C, 16#201D],
+    Cs = [maps:get(C, Dash, C) || C <- unicode:characters_to_list(string:lowercase(str(B0)))],
+    unicode:characters_to_binary([C || C <- Cs, not lists:member(C, Drop)]).
 
 %% Practical mode: the same engine on a practical task (a science practical, a technical or workplace task). The
 %% teacher's rubric is a list of procedure steps, each marked like a question, so the desk, the queue, the release
@@ -187,11 +229,20 @@ question(Q) ->
         {<<>>, true} -> <<"Not every mark was earned: the working needs a look.">>;
         {D, _} -> D
     end,
+    Steps = [maps:merge(#{t => num(maps:get(<<"t">>, S, null)), wrote => str(maps:get(<<"wrote">>, S, <<>>)),
+                          crossed_out => maps:get(<<"crossed_out">>, S, false) =:= true}, spot(S))
+             || S <- list(maps:get(<<"steps">>, Q, [])), is_map(S)],
+    Final = str(maps:get(<<"final_answer">>, Q, <<>>)),
+    Fp = fingerprint(Result, maps:get(<<"fingerprint">>, Q, null), Steps, Final),
+    %% while Lo has a question, the diagnosis is what the page shows (the reasoning, which may name two ideas); the
+    %% marking's one-idea reading waits beside it for the teacher, and the student's answer to Lo settles it
+    {Diag, Draft} = case Fp of
+        #{ask := <<_, _/binary>>, reasoning := <<_, _/binary>> = Rsn} -> {Rsn, Diagnosis};
+        _ -> {Diagnosis, <<>>}
+    end,
     #{n => num(maps:get(<<"n">>, Q, maps:get(<<"q">>, Q, 0))),
-      final_answer => str(maps:get(<<"final_answer">>, Q, <<>>)),
-      steps => [maps:merge(#{t => num(maps:get(<<"t">>, S, null)), wrote => str(maps:get(<<"wrote">>, S, <<>>)),
-                             crossed_out => maps:get(<<"crossed_out">>, S, false) =:= true}, spot(S))
-                || S <- list(maps:get(<<"steps">>, Q, [])), is_map(S)],
+      final_answer => Final,
+      steps => Steps,
       printed => case maps:get(<<"printed">>, Q, null) of
                      #{<<"page">> := Pp, <<"box">> := Pb} when is_integer(Pp) -> case box(Pb) of none -> null; B -> #{page => Pp, box => B} end;
                      _ -> null
@@ -204,8 +255,9 @@ question(Q) ->
       result => Result,
       marks => Marks,
       out_of => OutOf,
-      diagnosis => case Result of <<"mastered">> -> <<>>; _ -> Diagnosis end,
-      fingerprint => fingerprint(Result, maps:get(<<"fingerprint">>, Q, null)),
+      diagnosis => case Result of <<"mastered">> -> <<>>; _ -> Diag end,
+      diagnosis_draft => case Result of <<"mastered">> -> <<>>; _ -> Draft end,
+      fingerprint => Fp,
       moment_s => case Result of <<"mastered">> -> null; _ -> num(maps:get(<<"moment_s">>, Q, null)) end,
       %% an unknown result is never trusted: it goes to the top of the teacher's queue
       confidence => case {Result =:= Result0, Torn} of

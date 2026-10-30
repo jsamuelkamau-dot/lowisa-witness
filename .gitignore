@@ -2,6 +2,8 @@
 .env
 *.env
 *.mp4
+# the evidence clips are the submission's own (no learner data: sample papers and the app's own voice)
+!evidence/video/*.mp4
 *.mov
 *.out
 probe-out/

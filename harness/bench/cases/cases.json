@@ -1,0 +1,375 @@
+[
+ {
+  "id": "long_maths_en",
+  "secs": 75.2,
+  "sitting": {
+   "level": "Year 8 maths",
+   "kind": "paper",
+   "questions": [
+    {
+     "n": 1,
+     "text": "Find 20% of 45",
+     "marks": 2
+    },
+    {
+     "n": 2,
+     "text": "Solve 3x + 4 = 19",
+     "marks": 2
+    },
+    {
+     "n": 3,
+     "text": "Simplify 18/24",
+     "marks": 2
+    },
+    {
+     "n": 4,
+     "text": "Work out 2/5 + 1/10",
+     "marks": 2
+    },
+    {
+     "n": 5,
+     "text": "Expand 4(x - 3)",
+     "marks": 2
+    },
+    {
+     "n": 6,
+     "text": "Find the mean of 3, 7, 8, 10",
+     "marks": 2
+    },
+    {
+     "n": 7,
+     "text": "Area of a 5 cm by 8 cm rectangle",
+     "marks": 2
+    },
+    {
+     "n": 8,
+     "text": "Work out 0.4 × 0.3",
+     "marks": 2
+    },
+    {
+     "n": 9,
+     "text": "Solve x/4 = 6",
+     "marks": 2
+    },
+    {
+     "n": 10,
+     "text": "Write 3/8 as a decimal",
+     "marks": 2
+    }
+   ]
+  },
+  "truth": [
+   "mastered",
+   "mastered",
+   "mastered",
+   "not_yet",
+   "mastered",
+   "mastered",
+   "not_yet",
+   "mastered",
+   "mastered",
+   "mastered"
+  ]
+ },
+ {
+  "id": "maths_strong_en",
+  "secs": 29.1,
+  "sitting": {
+   "level": "Year 8 maths",
+   "kind": "paper",
+   "questions": [
+    {
+     "n": 1,
+     "text": "Find 15% of 60",
+     "marks": 2
+    },
+    {
+     "n": 2,
+     "text": "Solve 2x + 3 = 11",
+     "marks": 2
+    },
+    {
+     "n": 3,
+     "text": "Simplify 12/18",
+     "marks": 2
+    }
+   ]
+  },
+  "truth": [
+   "mastered",
+   "mastered",
+   "mastered"
+  ]
+ },
+ {
+  "id": "maths_cancel_en",
+  "secs": 26.1,
+  "sitting": {
+   "level": "Year 7 maths",
+   "kind": "paper",
+   "questions": [
+    {
+     "n": 1,
+     "text": "Simplify 16/64",
+     "marks": 2
+    },
+    {
+     "n": 2,
+     "text": "Work out 1/2 + 1/4",
+     "marks": 2
+    },
+    {
+     "n": 3,
+     "text": "Work out 2/3 + 1/4",
+     "marks": 2
+    }
+   ]
+  },
+  "truth": [
+   "right_answer_wrong_thinking",
+   "mastered",
+   "not_yet"
+  ]
+ },
+ {
+  "id": "maths_selfcorrect_en",
+  "secs": 32.1,
+  "sitting": {
+   "level": "Year 9 maths",
+   "kind": "paper",
+   "questions": [
+    {
+     "n": 1,
+     "text": "Expand 3(x + 4)",
+     "marks": 2
+    },
+    {
+     "n": 2,
+     "text": "Solve 5x − 2 = 18",
+     "marks": 2
+    },
+    {
+     "n": 3,
+     "text": "Find the mean of 4, 6 and 11",
+     "marks": 2
+    }
+   ]
+  },
+  "truth": [
+   "mastered",
+   "mastered",
+   "mastered"
+  ]
+ },
+ {
+  "id": "answers_only_en",
+  "secs": 19.6,
+  "sitting": {
+   "level": "Grade 9 physics",
+   "kind": "paper",
+   "questions": [
+    {
+     "n": 1,
+     "text": "A car travels 120 km in 1.5 h. What is its average speed?",
+     "marks": 2
+    },
+    {
+     "n": 2,
+     "text": "F = ma. Find F when m = 2 kg and a = 2 m/s²",
+     "marks": 2
+    },
+    {
+     "n": 3,
+     "text": "Convert 5 m/s to km/h",
+     "marks": 2
+    }
+   ],
+   "scheme": "Q1: 1 for speed = distance / time, 1 for 80 km/h. Q2: 1 for multiplying m by a, 1 for 4 N. Q3: 1 for a correct conversion, 1 for 18 km/h. Working must be shown for the method mark."
+  },
+  "truth": [
+   "no_working",
+   "no_working",
+   "no_working"
+  ]
+ },
+ {
+  "id": "chem_en",
+  "secs": 28.9,
+  "sitting": {
+   "level": "Grade 10 chemistry",
+   "kind": "paper",
+   "questions": [
+    {
+     "n": 1,
+     "text": "Balance: H2 + O2 → H2O",
+     "marks": 2
+    },
+    {
+     "n": 2,
+     "text": "How many moles in 36 g of water (M = 18 g/mol)?",
+     "marks": 2
+    },
+    {
+     "n": 3,
+     "text": "2 mol of salt in 500 mL. Concentration in mol/L?",
+     "marks": 2
+    }
+   ]
+  },
+  "truth": [
+   "mastered",
+   "mastered",
+   "not_yet"
+  ]
+ },
+ {
+  "id": "bio_short_en",
+  "secs": 33.4,
+  "sitting": {
+   "level": "Year 8 science",
+   "kind": "paper",
+   "questions": [
+    {
+     "n": 1,
+     "text": "Why do green plants need sunlight?",
+     "marks": 2
+    },
+    {
+     "n": 2,
+     "text": "What does the heart do?",
+     "marks": 2
+    },
+    {
+     "n": 3,
+     "text": "Which gas do we breathe out more of?",
+     "marks": 2
+    }
+   ]
+  },
+  "truth": [
+   "mastered",
+   "not_yet",
+   "mastered"
+  ]
+ },
+ {
+  "id": "fr_maths",
+  "secs": 28.8,
+  "sitting": {
+   "level": "Collège, 5e",
+   "kind": "paper",
+   "questions": [
+    {
+     "n": 1,
+     "text": "Calcule les 3/4 de 20",
+     "marks": 2
+    },
+    {
+     "n": 2,
+     "text": "Résous 2x + 3 = 11",
+     "marks": 2
+    },
+    {
+     "n": 3,
+     "text": "Périmètre d'un carré de côté 4 cm",
+     "marks": 2
+    }
+   ]
+  },
+  "truth": [
+   "mastered",
+   "not_yet",
+   "right_answer_wrong_thinking"
+  ]
+ },
+ {
+  "id": "sw_maths",
+  "secs": 24.2,
+  "sitting": {
+   "level": "Darasa la 7, hesabu",
+   "kind": "paper",
+   "questions": [
+    {
+     "n": 1,
+     "text": "Tafuta 10% ya 300",
+     "marks": 2
+    },
+    {
+     "n": 2,
+     "text": "Zidisha 0.3 × 0.2",
+     "marks": 2
+    },
+    {
+     "n": 3,
+     "text": "Tafuta wastani wa 4, 6 na 8",
+     "marks": 2
+    }
+   ]
+  },
+  "truth": [
+   "mastered",
+   "not_yet",
+   "mastered"
+  ]
+ },
+ {
+  "id": "ar_maths",
+  "secs": 23.5,
+  "sitting": {
+   "level": "الصف السابع، رياضيات",
+   "kind": "paper",
+   "questions": [
+    {
+     "n": 1,
+     "text": "احسب 15% من 200",
+     "marks": 2
+    },
+    {
+     "n": 2,
+     "text": "حل المعادلة: x + 7 = 12",
+     "marks": 2
+    },
+    {
+     "n": 3,
+     "text": "مساحة مثلث قاعدته 6 سم وارتفاعه 4 سم",
+     "marks": 2
+    }
+   ]
+  },
+  "truth": [
+   "mastered",
+   "not_yet",
+   "not_yet"
+  ]
+ },
+ {
+  "id": "hi_maths",
+  "secs": 23.4,
+  "sitting": {
+   "level": "कक्षा 7, गणित",
+   "kind": "paper",
+   "questions": [
+    {
+     "n": 1,
+     "text": "25 का 20% ज्ञात करो",
+     "marks": 2
+    },
+    {
+     "n": 2,
+     "text": "3² + 4² का मान",
+     "marks": 2
+    },
+    {
+     "n": 3,
+     "text": "एक बस 1 घंटे में 60 किमी चलती है। 3 घंटे में कितनी?",
+     "marks": 2
+    }
+   ]
+  },
+  "truth": [
+   "mastered",
+   "not_yet",
+   "mastered"
+  ]
+ }
+]

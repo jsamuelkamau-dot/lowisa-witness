@@ -41,14 +41,22 @@ put_m(Q, M) -> Q#{mastery => M}.
 event(Q, <<"built">>, #{path := Path, at := At} = Ctx) ->
     M = maps:remove(check, m(Q)),
     Check = case check(maps:get(check, Ctx, null)) of none -> #{}; C -> #{check => C} end,
-    %% 28 Oct audit (the plan's step 4): the exam's teacher may look at each level first; then it waits, held
-    Status = case maps:get(preview, Ctx, false) of true -> keep(M, <<"held">>); false -> keep(M, <<"ready">>) end,
+    %% 28 Oct audit (the plan's step 4): the exam's teacher may look at each level first; then it waits, held.
+    %% 30 Oct (judges' panel: a level that failed its self-check still reached the student): a level Muse Wonder did
+    %% not pass, or never checked, waits for the teacher whatever the exam's setting; the teacher sees what it found.
+    Passed = case Check of #{check := #{passes := true}} -> true; _ -> false end,
+    Status = case maps:get(preview, Ctx, false) orelse not Passed of true -> keep(M, <<"held">>); false -> keep(M, <<"ready">>) end,
     Level = case outline(maps:get(level, Ctx, null)) of none -> #{}; L -> #{level => L} end,
     put_m(Q, maps:merge(maps:merge(M#{status => Status, path => Path, built_ms => At}, Check), Level));
+%% 30 Oct (judges' panel: "completed" was the phone's word alone): a level counts as completed only once the server
+%% has seen each of its lessons finished (the `lesson` events), when it knows the level's lessons.
 event(Q, <<"completed">>, #{at := At}) ->
     M = m(Q),
+    Lessons = case maps:get(level, M, none) of #{lessons := Ls} -> length(Ls); _ -> 0 end,
+    Seen = length(lists:usort([T || #{title := T} <- maps:get(activity, M, [])])),
     case maps:get(status, M) of
         S when S =:= <<"badge">> -> Q;
+        _ when Seen < Lessons -> {error, lessons_left};
         _ -> put_m(Q, M#{status => <<"completed">>, completed_ms => At})
     end;
 %% 28 Oct re-audit (the plan's badge review: "the level activity and answers"): each lesson the student finishes in

@@ -49,6 +49,9 @@
 -callback part_url(Uid :: binary(), Id :: binary(), UploadId :: binary(), N :: pos_integer()) -> {ok, Url :: binary()} | {error, term()}.
 -callback parts_done(Uid :: binary(), Id :: binary(), UploadId :: binary()) -> {ok, [{pos_integer(), binary(), non_neg_integer()}]} | {error, term()}.
 -callback parts_finish(Uid :: binary(), Id :: binary(), UploadId :: binary(), Parts :: list()) -> ok | {error, term()}.
+%% 30 Oct: the teacher deletes a paper or an exam. Optional: without them, deleting is refused.
+-callback delete(Uid :: binary(), Key :: key()) -> ok.
+-callback drop_asset(Uid :: binary(), Name :: binary()) -> ok.
 %% The store's fingerprint of a clip (its ETag): the same video marked again for the same exam reuses its marking.
 -callback clip_tag(Uid :: binary(), Id :: binary()) -> {ok, binary()} | {error, term()}.
--optional_callbacks([open_engine/0, report/2, parts_start/3, part_url/4, parts_done/3, parts_finish/4, clip_tag/2]).
+-optional_callbacks([open_engine/0, report/2, parts_start/3, part_url/4, parts_done/3, parts_finish/4, clip_tag/2, delete/2, drop_asset/2]).

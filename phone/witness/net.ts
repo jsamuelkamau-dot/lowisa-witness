@@ -43,6 +43,8 @@ export interface Mastery {
  *  is Lo's diagnostic question when the paper alone was not enough, `said` the student's answers to it. */
 export interface Fingerprint {
   reasoning: string; evidence: string[]; misconception: string; intervention: string; ask: string;
+  /** the model's guess while Lo is still asking: for the teacher only, never shown to the student */
+  possible?: string;
   said?: Array<{ask: string; text: string; at: number}>;
 }
 export interface Challenge { q: string; options: string[]; at: number; reply?: {pick: number; right: boolean; answer: number} }
@@ -176,7 +178,7 @@ export const witness = {
   paper: (env: WitnessEnv, id: string) => door<Paper>(env, 'GET', 'sitting/' + id),
   // a challenge's answer is read by Muse Spark before the reply: give it longer
   mastery: (env: WitnessEnv, paperId: string, n: number, action: 'event' | 'explain' | 'ask' | 'fresh' | 'challenge_answer' | 'diagnose', body: Record<string, unknown>) =>
-    door<{mastery: Mastery; fresh?: {id: string; put: string}; fingerprint?: Fingerprint}>(env, 'POST', 'mastery/' + paperId + '/' + n + '/' + action, body,
+    door<{mastery: Mastery; fresh?: {id: string; put: string}; fingerprint?: Fingerprint; diagnosis?: string}>(env, 'POST', 'mastery/' + paperId + '/' + n + '/' + action, body,
       action === 'challenge_answer' || action === 'diagnose' ? 45000 : undefined),
   check: (env: WitnessEnv, body: Record<string, unknown>) => door<{id: string}>(env, 'POST', 'check', body),
   // a spoken answer is heard (Voice Transcribe) and judged (Muse Spark) before the reply: give it longer

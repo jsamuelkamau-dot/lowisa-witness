@@ -1,0 +1,92 @@
+[
+ {
+  "id": "unseen_nopaper",
+  "secs": 20,
+  "sitting": {
+   "level": "Year 8 maths",
+   "kind": "paper",
+   "questions": [
+    {
+     "n": 1,
+     "text": "Find 15% of 60",
+     "marks": 2
+    },
+    {
+     "n": 2,
+     "text": "Solve 2x + 3 = 11",
+     "marks": 2
+    },
+    {
+     "n": 3,
+     "text": "Simplify 12/18",
+     "marks": 2
+    }
+   ]
+  },
+  "truth": [
+   "unreadable",
+   "unreadable",
+   "unreadable"
+  ]
+ },
+ {
+  "id": "unseen_dark",
+  "secs": 29,
+  "sitting": {
+   "level": "Year 8 maths",
+   "kind": "paper",
+   "questions": [
+    {
+     "n": 1,
+     "text": "Find 15% of 60",
+     "marks": 2
+    },
+    {
+     "n": 2,
+     "text": "Solve 2x + 3 = 11",
+     "marks": 2
+    },
+    {
+     "n": 3,
+     "text": "Simplify 12/18",
+     "marks": 2
+    }
+   ]
+  },
+  "truth": [
+   "unreadable",
+   "unreadable",
+   "unreadable"
+  ]
+ },
+ {
+  "id": "blank_page_en",
+  "secs": 20,
+  "sitting": {
+   "level": "Year 8 maths",
+   "kind": "paper",
+   "questions": [
+    {
+     "n": 1,
+     "text": "Find 15% of 60",
+     "marks": 2
+    },
+    {
+     "n": 2,
+     "text": "Solve 2x + 3 = 11",
+     "marks": 2
+    },
+    {
+     "n": 3,
+     "text": "Simplify 12/18",
+     "marks": 2
+    }
+   ]
+  },
+  "truth": [
+   "not_yet",
+   "not_yet",
+   "not_yet"
+  ]
+ }
+]

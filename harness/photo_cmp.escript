@@ -1,5 +1,5 @@
 #!/usr/bin/env escript
-%%! -pa C:/lw-witness-scratch/ebin
+%%! -pa _build/default/lib/witness/ebin
 %% photo_cmp.escript <cases.json>: the research's comparison, marking from a photo of the finished page only. Each clip's
 %% last frame is marked by Muse Spark with the same marking prompt (worded for a photo) and the same scheme, and scored
 %% against the truth as bench.escript scores the video. Writes bench_results_photo.json.
@@ -14,7 +14,7 @@ main([CasesFile]) ->
 
 run(Key, Dir, #{<<"id">> := Id, <<"sitting">> := S0, <<"truth">> := Truth}) ->
     Clip = filename:join(Dir, binary_to_list(Id) ++ ".mp4"), Jpg = filename:join(Dir, binary_to_list(Id) ++ "_last.jpg"),
-    _ = os:cmd("C:/lw-witness-scratch/ffmpeg.exe -v error -y -sseof -0.4 -i " ++ Clip ++ " -frames:v 1 -vf scale=720:-2 -q:v 3 " ++ Jpg),
+    _ = os:cmd(os:getenv("FFMPEG", "ffmpeg") ++ " -v error -y -sseof -0.4 -i " ++ Clip ++ " -frames:v 1 -vf scale=720:-2 -q:v 3 " ++ Jpg),
     {ok, Img} = file:read_file(Jpg),
     Sitting = #{level => maps:get(<<"level">>, S0), kind => maps:get(<<"kind">>, S0),
                 questions => [#{n => N, text => T, marks => M} || #{<<"n">> := N, <<"text">> := T, <<"marks">> := M} <- maps:get(<<"questions">>, S0)]},

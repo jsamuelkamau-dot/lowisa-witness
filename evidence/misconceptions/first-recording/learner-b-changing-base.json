@@ -1,0 +1,58 @@
+{
+  "recorded": "2026-10-30",
+  "model": "muse-spark-1.3 (Meta Model API), the photo marking prompt in witness/src/witness_photo.erl",
+  "paper": "sample paper made for the demo (not a real student): Year 9 Mathematics, Percentages and Money, 2 pages photographed on a desk",
+  "name_read_from_paper": "Tomás Silva",
+  "all_results": [
+    {
+      "n": 1,
+      "result": "mastered",
+      "marks": 1
+    },
+    {
+      "n": 2,
+      "result": "mastered",
+      "marks": 2
+    },
+    {
+      "n": 3,
+      "result": "mastered",
+      "marks": 1
+    },
+    {
+      "n": 4,
+      "result": "not_yet",
+      "marks": 1
+    },
+    {
+      "n": 5,
+      "result": "mastered",
+      "marks": 2
+    },
+    {
+      "n": 6,
+      "result": "mastered",
+      "marks": 2
+    }
+  ],
+  "question_4": {
+    "result": "not_yet",
+    "marks": 1,
+    "final_answer": "A $100",
+    "diagnosis": "Took the 50% decrease as $50 off the $150 instead of 50% of $150."
+  },
+  "steps_as_read": [
+    "100 + 50 = 150",
+    "150 - 50 = 100"
+  ],
+  "fingerprint": {
+    "ask": "",
+    "evidence": [
+      "100 + 50 = 150",
+      "150 - 50 = 100"
+    ],
+    "intervention": "Have the student calculate what 50% of $150 actually is and compare it to the $50 subtracted to see which amount the decrease is of.",
+    "misconception": "second change taken from original amount",
+    "reasoning": "Calculated the increase to $150 correctly but then subtracted $50, which is 50% of the original $100, instead of 50% of $150."
+  }
+}

@@ -69,13 +69,19 @@ export async function record(n: Native, onHandOver?: () => void): Promise<VideoF
 }
 
 /** Said when the Witness camera hands over to the phone's camera app. */
-export const HAND_OVER_WORDS = "The Witness camera couldn't record on this phone, so your phone's own camera opens instead. Record your paper there.";
+export const HAND_OVER_WORDS = "The desk camera couldn't record on this phone, so your phone's own camera opens instead. Record your paper there.";
+
+/** Lo's words when the teacher's Turned around reaches the phone (said once per question). */
+export const BADGE_WORDS = 'Your teacher has seen it: this one is turned around. You worked out where it went wrong, and now it is yours.';
+const BADGE_SAID_KEY = 'lowisa-witness-badge-said-';
 
 /** What the student is shown went wrong (pure): once Lo's question has completed the fingerprint, what their working AND
  *  their answer showed; until then the marking's own reading (30 Oct, rehearsal: the card still said "cancel" after
  *  Leo's answer showed the base was the idea to fix). */
 export function whatShows(q: Question, fp?: Fingerprint | null): {label: string; text: string} | null {
   const f = fp === undefined ? q.fingerprint : fp;
+  // 30 Oct (judges' panel): while Lo is still asking, no idea is put to the student; Lo's question comes first
+  if (f && f.ask && (f.said || []).length < 2) return null;
   if (f && f.misconception && (f.said || []).length) return {label: 'What your working and your answer to Lo show', text: f.misconception};
   return q.diagnosis ? {label: 'What your working shows', text: q.diagnosis} : null;
 }
@@ -250,7 +256,7 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
     try { file = camera ? await record(n!, () => setNotice(HAND_OVER_WORDS)) : await chooseVideo(source); }
     catch (e) { if (camera) storage.removeItem(PENDING_KEY); setError('The camera could not start. Try choosing a video you already recorded.'); return; }
     if (!file) { if (camera) storage.removeItem(PENDING_KEY); return; }
-    if (!doorMime(file.mime, file.name)) { setError('Witness reads MP4 and MOV videos. Record it again with the camera here.'); return; }
+    if (!doorMime(file.mime, file.name)) { setError('Only MP4 and MOV videos can be read. Record it again with the camera here.'); return; }
     await send(file);
   };
 
@@ -375,7 +381,7 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
               </View>
             ) : null}
             <View style={s.card}>
-              <Text style={s.rowTitle}>Witness (optional)</Text>
+              <Text style={s.rowTitle}>Film my desk (optional)</Text>
               <Text style={s.sub}>For one student working alone, at home or homeschooled: the phone films the desk while you write, so your thinking is seen as it happens{stage.practical ? '. A practical task is always filmed.' : ', not only the finished page.'}</Text>
               <Btn label="Film my desk with Witness" onPress={() => { setError(''); setStage({kind: 'witness', code: stage.code, title: stage.title, level: stage.level}); }} testID="witness-film" />
             </View>
@@ -396,7 +402,7 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
           <View style={s.card}>
             <Text style={s.h} testID="witness-exam-title">{stage.title}</Text>
             {stage.level ? <Text style={s.sub}>{stage.level}</Text> : null}
-            <Text style={s.sub}>Witness films your desk while you write, so your teacher sees how you thought, step by step.</Text>
+            <Text style={s.sub}>Your phone films your desk while you write, so your teacher sees how you thought, step by step.</Text>
             <SoftInput value={name} onChangeText={setName} placeholder="Your name, as your teacher knows it" maxLength={80}
               style={s.input} accessibilityLabel="Your name" testID="witness-name" />
             <Text style={s.how}>Prop your phone above the desk so it sees the whole page and your hand. Keep faces out of view: any face the camera catches is covered before the video leaves your phone. Then work through the paper and stop the recording when you finish.</Text>
@@ -506,6 +512,9 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
   const [m, setM] = useState<Mastery | undefined>(q.mastery);
   // 30 Oct (owner): the Misconception Fingerprint; while Lo still has a diagnostic question, it comes before the level
   const [fp, setFp] = useState<Fingerprint | null | undefined>(q.fingerprint);
+  // what Lo's answer settled becomes the question's diagnosis on the server; the level is built from the same
+  const [diag, setDiag] = useState<string>(q.diagnosis);
+  const qd: Question = {...q, diagnosis: diag};
   const asking = !path && !!fp && !!fp.ask && (fp.said || []).length < 2;
   // Lo answers the answer: the learner hears that it landed (30 Oct, rehearsal: the card just vanished)
   const [loThanks, setLoThanks] = useState('');
@@ -527,6 +536,15 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
     }, 20000);
     return () => { live = false; clearInterval(timer); };
   }, [next, m && m.status, env, paper.id, q.n]); // eslint-disable-line react-hooks/exhaustive-deps
+  // 30 Oct (judges' panel: the climax was a small chip): the moment the teacher's Turned around reaches the phone, Lo
+  // says so, once per question
+  useEffect(() => {
+    if (!m || m.status !== 'badge') return;
+    const key = BADGE_SAID_KEY + paper.id + '-' + q.n;
+    if (storage.getItem(key)) return;
+    storage.setItem(key, '1');
+    tutorSay(BADGE_WORDS);
+  }, [m && m.status]); // eslint-disable-line react-hooks/exhaustive-deps
   // the exam's teacher looks at each level first: it opens once they let the student start (28 Oct)
   const held = !!m && m.status === 'held';
   // a level played to the end on this phone tells the teacher once
@@ -543,7 +561,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
     try { const n = docs(); file = source === 'camera' && n && (n.witnessCamera || n.takeVideo) ? await record(n, () => setSaid(HAND_OVER_WORDS)) : await chooseVideo(source); }
     catch (e) { setSaid('The camera could not start. Try choosing a video you already recorded.'); return; }
     if (!file) return;
-    if (!doorMime(file.mime, file.name)) { setSaid('Witness reads MP4 and MOV videos. Record it again with the camera here.'); return; }
+    if (!doorMime(file.mime, file.name)) { setSaid('Only MP4 and MOV videos can be read. Record it again with the camera here.'); return; }
     setFilming('Covering any face the camera caught…');
     file = await smaller(file, (p, st) => setFilming(readyLine(p, st)));
     const mime = doorMime(file.mime, file.name)!;
@@ -570,7 +588,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
     if (path) { if (onOpenPath) onOpenPath(path); return; }
     setSaid(''); setBuilding('Planning your level…');
     const off = onBuildProgress(st => setBuilding(st.stage === 'write' ? 'Writing your lessons…' : st.stage === 'check' ? 'Playing it through as you, to be sure it teaches this…' : st.stage === 'review' ? 'Checking the plan…' : st.stage === 'redesign' ? 'Making it sharper…' : 'Planning your level…'));
-    const made = await buildMastery(env, storage, paper, {...q, fingerprint: fp});
+    const made = await buildMastery(env, storage, paper, {...q, fingerprint: fp, diagnosis: diag});
     off(); setBuilding('');
     if (made.ok && made.pathId) {
       setPath(made.pathId);
@@ -588,12 +606,12 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
         {/* once the teacher issues the badge, the question reads as turned around, not as still to fix */}
         <Text style={[s.chip, next && !(m && m.status === 'badge') ? s.chipNext : s.chipOk]}>{m && m.status === 'badge' ? 'Turned around' : RESULT_WORDS[r]}</Text>
       </View>
-      <Text style={s.sub}>{marksOf(q)} of {q.out_of} marks</Text>
+      <Text style={s.sub}>{m && m.status === 'badge' ? 'On the exam: ' + marksOf(q) + ' of ' + q.out_of + ' marks. Since then, turned around: your teacher saw you master it.' : marksOf(q) + ' of ' + q.out_of + ' marks'}</Text>
       {next && !(m && m.status === 'badge') && PLAN_WHY[r] ? <Text style={s.sub}>{PLAN_WHY[r]}</Text> : null}
-      <Replay q={q} shows={whatShows(q, fp)} />
+      <Replay q={q} shows={whatShows(qd, fp)} />
       {/* 28 Oct re-audit (the submission: each student's feedback comes "with a short spoken explanation") */}
-      <Btn label="Hear it" onPress={() => tutorSay(spokenFeedback(q, fp))} small testID={'witness-hear-' + q.n} />
-      {next && whatShows(q, fp) && q.moment_s == null && !(typeof q.slip === 'number' && q.slip >= 1) ? <Text style={s.diag}>{whatShows(q, fp)!.label}: {whatShows(q, fp)!.text}</Text> : null}
+      <Btn label="Hear it" onPress={() => tutorSay(spokenFeedback(qd, fp))} small testID={'witness-hear-' + q.n} />
+      {next && whatShows(qd, fp) && q.moment_s == null && !(typeof q.slip === 'number' && q.slip >= 1) ? <Text style={s.diag}>{whatShows(qd, fp)!.label}: {whatShows(qd, fp)!.text}</Text> : null}
       {next && capabilitiesOf(q).length ? (
         <View style={s.caps} testID={'witness-caps-' + q.n}>
           <Text style={s.capsHead}>Thinking it builds</Text>
@@ -622,6 +640,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
                 if (!r.ok) { setSaid(r.error); return false; }
                 setSaid('');
                 if (r.value.fingerprint) setFp(r.value.fingerprint);
+                if (r.value.diagnosis) setDiag(r.value.diagnosis);
                 if (r.value.fingerprint && !r.value.fingerprint.ask) {
                   const line = 'Thank you. That tells me exactly which idea to work on. Your level starts from there.';
                   setLoThanks(line); tutorSay(line);

@@ -240,7 +240,7 @@
     }).join('');
     return '<div class="wd-card"><div class="wd-row" style="cursor:default"><span class="wd-grow"><h3 style="margin:0">Your exams</h3>' +
       '<div class="wd-sub">Students sit the exam on paper. Afterwards a single phone photographs each paper, a teacher\'s or one the school owns. ' +
-      'Every question a student didn\'t master goes into their Mastery Plan. Witness, the optional way in, films the desk while one student writes.</div></span>' +
+      'Every question a student didn\'t master goes into their Mastery Plan. Desk filming, the optional way in, films one student\'s desk while they write.</div></span>' +
       '<button class="wd-btn wd-main" data-act="new">New exam</button></div></div>' +
       (rows ? '<div class="wd-card">' + rows + '</div>' : '<div class="wd-card wd-sub">No exams yet. Start one; after the exam, photograph each student\'s paper from the LoWisa phone app.</div>');
   }
@@ -256,14 +256,14 @@
       '<label for="wdTitle">Exam name</label><input id="wdTitle" data-f="title" value="' + esc(d.title || '') + '" placeholder="Fractions quiz, Year 7">' +
       '<label for="wdLevel">Level</label><input id="wdLevel" data-f="level" value="' + esc(d.level || '') + '" placeholder="Year 7, university first year, CPA part 1">' +
       '<label for="wdKind">What students do</label><select id="wdKind" data-f="kind">' +
-      '<option value="paper"' + (d.kind !== 'practical' ? ' selected' : '') + '>An exam on paper (photographed after the exam, or filmed with Witness)</option>' +
-      '<option value="practical"' + (d.kind === 'practical' ? ' selected' : '') + '>A practical task (filmed with Witness: the hands and the apparatus)</option></select>' +
+      '<option value="paper"' + (d.kind !== 'practical' ? ' selected' : '') + '>An exam on paper (photographed after the exam, or filmed at the desk)</option>' +
+      '<option value="practical"' + (d.kind === 'practical' ? ' selected' : '') + '>A practical task (filmed being done: the hands and the apparatus)</option></select>' +
       '<label for="wdEngine">Marked by</label><select id="wdEngine" data-f="engine">' +
       '<option value="meta"' + (d.engine !== 'open' ? ' selected' : '') + '>Muse Spark (with SAM 3.1 following the ink when a paper is filmed)</option>' +
       '<option value="open"' + (d.engine === 'open' ? ' selected' : '') + '>Muse Spark Open, on open weights</option></select>' +
       '<label for="wdPreview">Mastery levels</label><select id="wdPreview" data-f="preview">' +
-      '<option value="no"' + (d.preview !== 'yes' ? ' selected' : '') + '>Reach each student as soon as it is made</option>' +
-      '<option value="yes"' + (d.preview === 'yes' ? ' selected' : '') + '>I look at each level first</option></select>' +
+      '<option value="yes"' + (d.preview !== 'no' ? ' selected' : '') + '>I look at each level first</option>' +
+      '<option value="no"' + (d.preview === 'no' ? ' selected' : '') + '>Reach each student as soon as it is made (a level its self-check did not pass still waits for me)</option></select>' +
       '<label for="wdQs">' + (d.kind === 'practical' ? 'The procedure\'s steps, one a line, with the marks in brackets' : 'Questions, one a line, with the marks in brackets') + '</label>' +
       '<textarea id="wdQs" data-f="qs" rows="6" placeholder="1. 3/4 ÷ 1/2 (2)&#10;2. Solve 2x + 6 = 14 (2)&#10;3. Simplify 16/64 (2)">' + esc(d.qs || '') + '</textarea>' +
       '<div class="wd-sub">Leave it empty to let Muse Spark read the questions printed on the paper.</div>' +
@@ -298,7 +298,7 @@
     var roster = (j.pile && j.pile.roster) || [];
     var code = j.pile && j.pile.code ? '<div class="wd-card"><b>Join code: <span style="font-size:18px;letter-spacing:3px">' + esc(j.pile.code) + '</span></b>' +
       '<div class="wd-sub">Students enter it in the LoWisa phone app to put their name on the class list. After the exam, a single phone (yours, or one the school owns) ' +
-      'photographs each paper with it: the name on each paper finds its student. Witness (optional): a student working alone films their desk while they write.</div>' +
+      'photographs each paper with it: the name on each paper finds its student. Desk filming (optional): a student working alone films their desk while they write.</div>' +
       '<div class="wd-sub" style="margin-top:6px"><b>Class list: ' + roster.length + ' joined</b>' + (roster.length ? ' · ' + roster.map(function (r) { return esc(r.name); }).join(', ') : '') + '</div></div>' : '';
     return code + nums + measured() + patternsCard(j.pile || {}, toMaster + turned) + '<div class="wd-cols"><div class="wd-card"><h3>Papers</h3>' + papers + '</div>' +
       '<div class="wd-card"><h3>To review: what needs you first</h3>' + queue + '</div></div>' +
@@ -306,7 +306,8 @@
       // the second paper stayed "marked" and the button was gone)
       '<div style="margin-top:6px">' + (released && waiting ? '<button class="wd-btn wd-main" data-act="release">Release ' + waiting + ' new paper' + (waiting === 1 ? '' : 's') + '</button> ' +
         '<span class="wd-chip ok">The rest are released</span>' : released ? '<span class="wd-chip ok">Released to students</span>' :
-        '<button class="wd-btn wd-main" data-act="release">Release marks</button> <span class="wd-sub">Students see their marks, and every question they didn\'t master goes into their Mastery Plan.</span>') + '</div>';
+        '<button class="wd-btn wd-main" data-act="release">Release marks</button> <span class="wd-sub">Students see their marks, and every question they didn\'t master goes into their Mastery Plan.</span>') + '</div>' +
+      deleteCard('exam');
   }
 
   // 28 Oct re-audit (the submission's class report; the plan's class patterns and "the next exam can bring back the
@@ -349,7 +350,29 @@
     S.n = q.n;
     return whoseCard(j) + '<div class="wd-cols"><div><div class="wd-card"><h3>' + (practical() ? 'The procedure' : 'Questions') + '</h3>' + list +
       returnsLine((j.result && j.result.returns) || []) +
-      '<div style="margin-top:10px"><button class="wd-btn" data-act="proof">Proof of Thinking</button></div></div>' + examinerCard(j) + '</div><div>' + questionCard(q) + '</div></div>';
+      '<div style="margin-top:10px"><button class="wd-btn" data-act="proof">Proof of Thinking</button></div></div>' + examinerCard(j) + '</div><div>' + questionCard(q) + '</div></div>' +
+      deleteCard('paper');
+  }
+
+  // 30 Oct (judges' panel: nothing could be deleted): the teacher deletes a paper or a whole exam, for good
+  function deleteCard(what) {
+    var words = what === 'paper' ? 'This paper: its photographs, the recordings of spoken answers, its pictures and its level\'s record, and the student\'s link to it.'
+      : 'This exam and every paper in it: the photographs, the recordings, the pictures, the class list and the join code.';
+    if (S.draft.delAsk !== what) return '<div style="margin-top:14px"><button class="wd-btn" data-act="delask" data-what="' + what + '">Delete this ' + (what === 'paper' ? 'paper' : 'exam') + '</button></div>';
+    return '<div class="wd-card" style="margin-top:14px"><b>Delete for good?</b><div class="wd-sub">' + words + ' Nothing of it is kept.</div>' +
+      '<div style="margin-top:8px;display:flex;gap:8px"><button class="wd-btn wd-main" data-act="delete" data-what="' + what + '">Delete for good</button>' +
+      '<button class="wd-btn" data-act="delkeep">Keep it</button></div></div>';
+  }
+  async function deleteIt(what) {
+    S.busy = true;
+    var j = await api('POST', what === 'paper' ? '/api/witness/sitting/' + S.sid + '/delete' : '/api/witness/pile/' + S.pid + '/delete', {});
+    S.busy = false; S.draft.delAsk = '';
+    if (!j.ok) { say(errText(j), 'err'); return render(); }
+    // back to where the teacher came from, read again, with the word that it is gone
+    if (what === 'paper') { stopPlay(); stopRec(); stopWatch(); S.view = 'pile'; await loadPile(S.pid); }
+    else { stopPoll(); S.view = 'home'; await loadPiles(); }
+    say(what === 'paper' ? 'The paper is deleted.' : 'The exam is deleted.');
+    render();
   }
 
   // From Exam to Mastery (29 Oct): who a photographed paper is, read from the paper and matched to the class list; the
@@ -404,6 +427,7 @@
       (timed ? '<button class="wd-btn" data-act="replay">Replay</button>' : '') + '</div><div class="wd-steps" id="wdSteps">' + steps + '</div>' +
       (q.diagnosis ? '<div class="wd-diag"><b>Where the thinking went wrong' + (q.moment_s != null ? ' (' + fmtT(q.moment_s) + ')' : '') + '</b><div>' + esc(q.diagnosis) + '</div></div>' : '') +
       fingerprintCard(q.fingerprint) +
+      (q.diagnosis_first ? '<div class="wd-sub" style="margin:4px 0">The marking first read: ' + esc(q.diagnosis_first) + '</div>' : '') +
       (caps.length && inPlan(q.teacher_result || q.result) ? '<div class="wd-card" style="margin:8px 0"><b style="font-size:12px">Thinking capabilities its level builds</b>' +
         caps.map(function (c) { return '<div class="wd-sub" style="margin-top:3px"><b style="color:var(--tx)">' + esc(c) + '</b>: ' + esc(CAPS[c]) + '</div>'; }).join('') + '</div>' : '') +
       stillOf(q) + '</div>' + drawnCard(q) + '<div class="wd-card"><h3>Your word</h3>' +
@@ -503,6 +527,8 @@
     var said = (f.said || []).map(function (x) { return '<div class="wd-sub">Lo asked: ' + esc(x.ask) + '</div><div>They said: “' + esc(x.text) + '”</div>' + listen(x.audio, 'Their answer to Lo, out loud'); }).join('');
     return '<div class="wd-card" style="margin:8px 0"><b>Misconception fingerprint</b> ' +
       (f.misconception ? '<span class="wd-chip warn">' + esc(f.misconception) + '</span>' : '<span class="wd-chip">Not named yet: the paper is not enough evidence</span>') +
+      // 30 Oct (judges' panel): nothing is named while Lo asks; the model's guess waits here, for the teacher only
+      (!f.misconception && f.possible ? row('Possible, until they answer Lo (not shown to the student)', esc(f.possible)) : '') +
       row('The reasoning that produced it', esc(f.reasoning || '')) +
       row('The evidence, in their own writing', (f.evidence || []).map(function (e) { return '<div class="wd-step" style="opacity:1">' + esc(e) + '</div>'; }).join('')) +
       row('What they told Lo', said) +
@@ -618,6 +644,9 @@
     if (act === 'new') { S.draft = {}; S.view = 'new'; return render(); }
     if (act === 'create') return create();
     if (act === 'release') return release();
+    if (act === 'delask') { S.draft.delAsk = t.getAttribute('data-what'); return render(); }
+    if (act === 'delkeep') { S.draft.delAsk = ''; return render(); }
+    if (act === 'delete') return deleteIt(t.getAttribute('data-what'));
     if (act === 'remark') return remark();
     if (act === 'save') return save();
     if (act === 'replay') return runPlay();
@@ -812,7 +841,7 @@
       (asks ? '<div class="wd-card"><h3>The examiner\'s questions</h3>' + asks + '</div>' : '') +
       returnsLine(p.returns || []) +
       '<div class="wd-sub" style="margin:8px 2px">Marked by ' + esc(p.engine || '') + '. Read by ' + esc((p.read_by || []).join(', ')) + '. ' +
-      (p.source === 'photo' ? 'Photographed after the exam: ' + esc(p.pages) + ' page' + (p.pages === 1 ? '' : 's') + ', kept with the paper.' : 'Filmed with Witness; the video was ' + esc(p.video || '') + '.') + '</div>';
+      (p.source === 'photo' ? 'Photographed after the exam: ' + esc(p.pages) + ' page' + (p.pages === 1 ? '' : 's') + ', kept with the paper.' : 'Filmed at the desk; the video was ' + esc(p.video || '') + '.') + '</div>';
   }
   function measured() {
     var m = S.measure; if (!m || !m.marked) return '';
@@ -880,7 +909,7 @@
     var d = S.draft;
     if (!String(d.title || '').trim()) { say('Give the exam a name.', 'err'); return render(); }
     S.busy = true;
-    var j = await api('POST', '/api/witness/pile', { title: d.title, level: d.level || '', questions: questionsOf(d.qs), scheme: d.scheme || '', kind: d.kind === 'practical' ? 'practical' : 'paper', engine: d.engine === 'open' ? 'open' : 'meta', preview: d.preview === 'yes' });
+    var j = await api('POST', '/api/witness/pile', { title: d.title, level: d.level || '', questions: questionsOf(d.qs), scheme: d.scheme || '', kind: d.kind === 'practical' ? 'practical' : 'paper', engine: d.engine === 'open' ? 'open' : 'meta', preview: d.preview !== 'no' });
     S.busy = false;
     if (!j.ok) { say(errText(j), 'err'); return render(); }
     S.draft = {};

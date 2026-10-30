@@ -79,3 +79,25 @@ One question, three photographed papers, all circling $100 for +50% then −50%:
 - **Lo's question vanished without a word** once answered: Lo now says the answer was heard, out loud.
 - **"The recording is kept for your teacher"** was shown under a spoken answer to Lo, whose recording was not kept. It is
   now, and the desk plays it.
+
+## 30 Oct, evening: the judges' panel, then the fixes, measured
+
+Eight independent reviews of this repository, the film plan and the evidence (two per judging criterion) found, among
+others, things this file had not: the marking prompt quoted the three demo answers as examples, so the three-learner
+result was fitted, not tested; the recorded reply for Learner C named an idea *and* asked, and the code kept the name;
+what Lo's answer settled never reached the self-check, the class patterns or the challenge (the class view put Leo
+with "cancel"). Each was checked against the code before anything changed.
+
+- **The demo answers are out of the prompt.** Re-recorded five times each, the honest result at first was worse: C was
+  named "cancel" with no question in 5 of 5 runs. The prompt alone does not make the model hold back.
+- **The rule moved into code** (`witness_mark:fingerprint/4`): quoted evidence must be in the ink; the final answer is
+  no evidence; while Lo asks nothing is named (the guess is kept for the teacher); a numeric answer with no quoted
+  calculation, or a rival idea the model names, means Lo asks first. Now A is named 5 of 5, B 5 of 5, and C is asked
+  5 of 5, with a question that suggests nothing.
+- **Held out** (`harness/heldout/`): 36 papers in 10 topics the prompt never saw. Ambiguous ink asked 9 of 11 (prompt
+  only), 8 of 11 (asking the model for rivals: it listed none), **10 of 11** (rule in code); clear ink named right 10 of
+  12 with 2 asked first; right work 10 of 10; adversarial ink 3 of 3 held; no wrong name in any run.
+- **The settled reading is the diagnosis** everything after it reads (`witness_fingerprint:settled/1`).
+- Also from the panel, in the server: preview on by default and a level its self-check did not pass always waits for
+  the teacher; "completed" needs each lesson seen; delete routes for a paper and an exam; a ceiling on a
+  teacher-paid level's design calls; a paper read again before a slow step writes back.

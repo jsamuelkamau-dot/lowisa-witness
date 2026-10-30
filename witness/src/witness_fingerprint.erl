@@ -8,12 +8,13 @@
 %%% (the misconception, the reasoning, the evidence, the intervention), or asks once more. After ?MAX_ASKS answers the
 %%% level is built from the reasoning as it stands; the student is never held up.
 %%%
-%%%   fingerprint => #{reasoning, evidence, misconception, intervention, ask, said => [#{ask, text, at, spoken?}]}
+%%%   fingerprint => #{reasoning, evidence, misconception, intervention, ask, possible?, said => [#{ask, text, at, audio?}]}
+%%%   (`possible`: the model's guess while Lo is still asking, for the teacher only; nothing is named until the answer)
 %%%
 %%%   answer(Q, Text, Read, At) (pure) / prompt(Q, Text) / parse(ModelText) / run(Key, Q, Text) -> {ok, F, Cost}
 %%%-------------------------------------------------------------------
 -module(witness_fingerprint).
--export([answer/4, answer/5, prompt/2, parse/1, run/3, pending/1]).
+-export([answer/4, answer/5, prompt/2, parse/1, run/3, pending/1, settled/1]).
 
 -define(MODEL, <<"muse-spark-1.3">>).
 -define(MAX_ASKS, 2).
@@ -36,13 +37,30 @@ answer(Q, Text0, Read, At, Kept) ->
             F = maps:get(fingerprint, Q),
             Said = maps:get(said, F, []) ++ [maps:merge(#{ask => maps:get(ask, F), text => Text, at => At}, maps:with([audio], Kept))],
             F1 = case Read of
-                #{} -> maps:merge(F, maps:with([reasoning, evidence, misconception, intervention, ask], Read));
+                #{} -> maps:merge(maps:remove(possible, F), maps:with([reasoning, evidence, misconception, intervention, ask, possible], Read));
                 _ -> F
             end,
             %% after the last answer Lo asks no more: the level is built from what is known
             F2 = case length(Said) >= ?MAX_ASKS of true -> F1#{ask => <<>>}; false -> F1 end,
-            Q#{fingerprint => F2#{said => Said}}
+            settled(Q#{fingerprint => F2#{said => Said}})
     end.
+
+%% 30 Oct (judges' panel: the corrected reading reached nothing after it). Once Lo has no more questions, what the
+%% answer showed becomes the question's diagnosis, so everything that reads the diagnosis next (the level's brief,
+%% Muse Wonder's self-check and class patterns, the challenge drafter and judge, the recommendation) works from it.
+%% The marking's first reading is kept as `diagnosis_first`.
+settled(#{fingerprint := #{ask := <<>>} = F} = Q) ->
+    New = case {maps:get(misconception, F, <<>>), maps:get(reasoning, F, <<>>)} of
+        {<<>>, <<>>} -> <<>>;
+        {<<>>, R} -> R;
+        {M, <<>>} -> M;
+        {M, R} -> <<M/binary, ": ", R/binary>>
+    end,
+    case New of
+        <<>> -> Q;
+        _ -> (maps:merge(#{diagnosis_first => maps:get(diagnosis, Q, <<>>)}, Q))#{diagnosis => New}
+    end;
+settled(Q) -> Q.
 
 prompt(Q, Text) ->
     F = maps:get(fingerprint, Q, #{}),
@@ -59,9 +77,12 @@ prompt(Q, Text) ->
         "  Lo asked: ", str(maps:get(ask, F, <<>>)), "\n  They said now: ", Text, "\n\n",
         "Name the misconception only when the paper and what they said together are enough evidence; quote that evidence\n"
         "(their ink exactly, and their words as \"said: ...\"). The intervention is what would repair THAT idea, in one or\n"
-        "two sentences a tutor can act on. If it is still not clear, leave misconception empty and give ONE more short\n"
-        "question in \"ask\" that would settle it, without giving the right answer away; otherwise \"ask\" is empty.\n"
-        "Return JSON only: {\"reasoning\":\"...\",\"evidence\":[\"...\"],\"misconception\":\"...\",\"intervention\":\"...\",\"ask\":\"\"}"]).
+        "two sentences a tutor can act on. If it is still not clear, leave misconception empty, say in \"reasoning\" which\n"
+        "ideas it could still be, and give ONE more short question in \"ask\" that would settle it: it asks them to show or\n"
+        "say their own calculation, never names the idea you suspect, and never gives the right answer away. When the\n"
+        "misconception is named, \"ask\" is empty.\n"
+        "\"rivals\" lists any other wrong idea that what they wrote and said still fits; name one only when none is left.\n"
+        "Return JSON only: {\"reasoning\":\"...\",\"evidence\":[\"...\"],\"rivals\":[],\"misconception\":\"...\",\"intervention\":\"...\",\"ask\":\"\"}"]).
 
 parse(Text) ->
     case decode(Text) of
@@ -73,15 +94,23 @@ parse(Text) ->
         _ -> {error, no_fingerprint}
     end.
 
-%% the same rule as the marking's: a named misconception needs evidence, and with neither there is a question
+%% The same rule as the marking's (witness_mark:fingerprint/4): a named misconception needs evidence, and while there is
+%% still a question nothing is named; the guess waits as `possible`. Evidence here may also be the student's words.
 witness_mark_fp(J) ->
     Evidence = [E || E <- [str(X) || X <- listy(maps:get(<<"evidence">>, J, []))], E =/= <<>>],
     Named = str(maps:get(<<"misconception">>, J, <<>>)),
-    Ask = str(maps:get(<<"ask">>, J, <<>>)),
-    M = case Named =/= <<>> andalso Evidence =/= [] of true -> Named; false -> <<>> end,
-    A = Ask,
-    #{reasoning => str(maps:get(<<"reasoning">>, J, <<>>)), evidence => lists:sublist(Evidence, 5), misconception => M,
-      intervention => str(maps:get(<<"intervention">>, J, <<>>)), ask => A}.
+    Rivals = [R || R <- [str(X) || X <- lists:sublist(listy(maps:get(<<"rivals">>, J, [])), 4)], R =/= <<>>],
+    Ask = case {str(maps:get(<<"ask">>, J, <<>>)), Rivals} of
+        {<<>>, [_ | _]} -> <<"Write or say what you had after each step, and how you got it.">>;
+        {A0, _} -> A0
+    end,
+    {M, Possible} = case {Ask, Evidence} of
+        {<<>>, [_ | _]} -> {Named, <<>>};
+        _ -> {<<>>, Named}
+    end,
+    maps:merge(#{reasoning => str(maps:get(<<"reasoning">>, J, <<>>)), evidence => lists:sublist(Evidence, 5), misconception => M,
+                 intervention => str(maps:get(<<"intervention">>, J, <<>>)), ask => Ask},
+               case Possible of <<>> -> #{}; _ -> #{possible => Possible} end).
 
 run(Key, Q, Text) ->
     Req = #{model => ?MODEL, reasoning => #{effort => <<"medium">>}, max_output_tokens => 4000,

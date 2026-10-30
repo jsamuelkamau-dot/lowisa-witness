@@ -63,7 +63,7 @@
 -module(witness_api).
 -export([route/5, view/2, sitting_of/1, queue/1, summary/2]).
 %% 29 Oct audit: who pays for a mastery level's call, for a host's other doors (the level's animations)
--export([payer/3]).
+-export([payer/3, files_of/1]).
 
 -define(MAX_BYTES, 500 * 1024 * 1024).
 %% How long a signed upload link lasts (expiresIn below is the same, in seconds).
@@ -92,9 +92,10 @@ route(<<"POST">>, [<<"pile">>], B, Uid, Host) ->
             Id = new_id(),
             Code = new_code(Host),
             ok = Host:save(?CODES, {code, Code}, #{owner => Uid, pile => Id}),
-            %% preview: the teacher looks at each mastery level before it reaches the student (default: at once)
+            %% preview: the teacher looks at each mastery level before it reaches the student. 30 Oct (judges' panel:
+            %% "held for the teacher" should be true out of the box): on unless the teacher turns it off
             ok = Host:save(Uid, {pile, Id}, (sitting_of(B))#{title => Title, sittings => [], created_ms => now_ms(), code => Code,
-                                                              preview => maps:get(<<"preview">>, B, false) =:= true}),
+                                                              preview => maps:get(<<"preview">>, B, true) =/= false}),
             {201, #{ok => true, id => Id, code => Code}}
     end;
 route(<<"GET">>, [<<"piles">>], _B, Uid, Host) ->
@@ -112,6 +113,31 @@ route(<<"GET">>, [<<"pile">>, Id], _B, Uid, Host) ->
             Ss = [{S, settle(Uid, S, R, Host)} || {S, {ok, R}} <- All, not lists:member(S, Gone)],
             {200, #{ok => true, pile => maps:without([sittings], P#{id => Id}),
                     sittings => [summary(S, R) || {S, R} <- Ss], queue => queue(Ss)}}
+    end;
+%% 30 Oct (judges' panel: nothing could be deleted). The teacher deletes a paper, or a whole exam: its rows, the
+%% photographed pages, the recordings of spoken answers, the stills and drawn steps, the clip if one is still kept,
+%% the student's pointer to it and its cached marking. Nothing of it is kept anywhere after.
+route(<<"POST">>, [<<"sitting">>, Id, <<"delete">>], _B, Uid, Host) ->
+    case {has(Host, delete, 2), Host:load(Uid, {sitting, Id})} of
+        {false, _} -> refuse(501, <<"not_available">>, <<"Deleting isn't available here.">>);
+        {_, none} -> refuse(404, <<"no_sitting">>, <<"That paper isn't here.">>);
+        {_, {ok, Row}} ->
+            case Host:load(Uid, {pile, maps:get(pile, Row, <<>>)}) of
+                {ok, P} -> ok = Host:save(Uid, {pile, maps:get(pile, Row)}, P#{sittings => maps:get(sittings, P, []) -- [Id]});
+                none -> ok
+            end,
+            ok = forget(Uid, Id, Row, Host),
+            {200, #{ok => true, deleted => 1}}
+    end;
+route(<<"POST">>, [<<"pile">>, Id, <<"delete">>], _B, Uid, Host) ->
+    case {has(Host, delete, 2), Host:load(Uid, {pile, Id})} of
+        {false, _} -> refuse(501, <<"not_available">>, <<"Deleting isn't available here.">>);
+        {_, none} -> refuse(404, <<"no_pile">>, <<"That exam isn't here.">>);
+        {_, {ok, P}} ->
+            Gone = [ok || S <- maps:get(sittings, P, []), {ok, R} <- [Host:load(Uid, {sitting, S})], ok =:= forget(Uid, S, R, Host)],
+            case maps:get(code, P, <<>>) of <<>> -> ok; Code -> ok = Host:delete(?CODES, {code, Code}) end,
+            ok = Host:delete(Uid, {pile, Id}),
+            {200, #{ok => true, deleted => length(Gone)}}
     end;
 route(<<"POST">>, [<<"pile">>, Id, <<"release">>], _B, Uid, Host) ->
     case Host:load(Uid, {pile, Id}) of
@@ -207,7 +233,7 @@ route(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"kind">> := <<"photo">>} = B
         {false, _} -> refuse(400, <<"bad_pages">>, <<"Photograph between 1 and 20 pages of one paper.">>);
         {_, none} -> refuse(404, <<"no_pile">>, <<"That exam isn't here.">>);
         {_, {ok, #{kind := <<"practical">>}}} ->
-            refuse(400, <<"practical">>, <<"A practical task is marked from a video of it being done: film it with Witness.">>);
+            refuse(400, <<"practical">>, <<"A practical task is marked from a video of it being done: film it being done.">>);
         {_, {ok, #{sittings := Have}}} when length(Have) >= ?MAX_PILE ->
             refuse(400, <<"pile_full">>, <<"This exam already holds 200 papers. Start another one.">>);
         {true, {ok, PR}} ->
@@ -541,8 +567,13 @@ route(<<"POST">>, [<<"mastery">>, Sid, NBin, Action], B, Uid, Host) ->
                         {error, Code} -> refuse(case Code of forbidden -> 403; storage -> 503; not_configured -> 503; busy -> 503; _ -> 400 end, atom_to_binary(Code), mastery_words(Code));
                         _ ->
                             {Q1, Extra} = case Step of {#{} = Qx, #{} = E} -> {Qx, E}; Qx -> {Qx, #{}} end,
-                            R = maps:get(result, Row),
-                            ok = Host:save(Owner, {sitting, Sid}, Row#{result => R#{questions => [case X of #{n := N} -> Q1; _ -> X end || X <- Qs]}}),
+                            %% 30 Oct (judges' panel): a step may wait on a model for seconds; the paper is read again
+                            %% before this question is written back, so what changed meanwhile (another question, the
+                            %% teacher's release) is not lost
+                            Now = case Host:load(Owner, {sitting, Sid}) of {ok, Fresh} -> Fresh; none -> Row end,
+                            R = maps:get(result, Now, maps:get(result, Row)),
+                            NowQs = maps:get(questions, R, Qs),
+                            ok = Host:save(Owner, {sitting, Sid}, Now#{result => R#{questions => [case X of #{n := N} -> Q1; _ -> X end || X <- NowQs]}}),
                             ok = world(Owner, Sid, N, Q1, Host),
                             {200, maps:merge(#{ok => true, n => N, mastery => witness_mastery:view(Q1, Role)}, Extra)}
                     end
@@ -564,14 +595,10 @@ route(<<"POST">>, [<<"design">>], B, Uid, Host) ->
                     %% 29 Oct audit (the plan, 1b: a mastery level's calls go to Meta): Lo's live teaching turns are words, not JSON
                     reply => case maps:get(<<"reply">>, B, null) of <<"text">> -> text; _ -> json end},
             Payer = payer(Uid, maps:get(<<"for">>, B, null), Host),
-            case Host:design(Payer, Req) of
-                {ok, Text} -> {200, #{success => true, text => Text}};
-                %% the teacher's wallet is the one that ran out: the student is told so, never shown their own wall
-                {gate, _Status, _Body} when Payer =/= Uid ->
-                    {409, #{success => false, code => <<"teacher_credits">>,
-                            error => <<"Your teacher's credits for mastery levels have run out. Ask your teacher, then try again.">>}};
-                {gate, Status, Body} -> {Status, Body};
-                {error, _} -> {502, #{success => false, error => <<"The design call did not come back. Try again in a moment.">>}}
+            case spent_calls(Payer, Uid, maps:get(<<"for">>, B, null), Host) of
+                over -> {429, #{success => false, code => <<"level_budget">>,
+                                error => <<"This level has used all the help set aside for it. Ask your teacher.">>}};
+                ok -> design_call(Payer, Uid, Req, Host)
             end
     end;
 
@@ -606,7 +633,32 @@ route(<<"GET">>, [<<"check">>, Id], _B, Uid, Host) ->
         {ok, #{status := <<"done">>, verdict := V}} -> {200, #{ok => true, id => Id, status => <<"done">>, verdict => V}};
         {ok, #{status := S}} -> {200, #{ok => true, id => Id, status => S}}
     end;
-route(_, _, _, _, _) -> refuse(404, <<"not_found">>, <<"No such Witness route.">>).
+route(_, _, _, _, _) -> refuse(404, <<"not_found">>, <<"No such route.">>).
+
+%% 30 Oct (judges' panel: the design door was an open model call billed to the teacher). When the exam's teacher pays
+%% for a student's level, the calls on that paper have a ceiling (a level, its rewrites, its flashcards and Lo's live
+%% turns need well under it); the count is kept on its own row, so the paper's row is never rewritten for it.
+-define(LEVEL_CALLS, 400).
+spent_calls(Uid, Uid, _, _) -> ok;
+spent_calls(Payer, Uid, #{<<"sitting">> := Sid}, Host) when is_binary(Sid) ->
+    Key = {mark_cache, <<"calls:", Sid/binary, ":", Uid/binary>>},
+    N = case Host:load(Payer, Key) of {ok, #{calls := C}} -> C; _ -> 0 end,
+    case N >= ?LEVEL_CALLS of
+        true -> over;
+        false -> ok = Host:save(Payer, Key, #{calls => N + 1, sitting => Sid, at => now_ms()})
+    end;
+spent_calls(_, _, _, _) -> ok.
+
+design_call(Payer, Uid, Req, Host) ->
+    case Host:design(Payer, Req) of
+        {ok, Text} -> {200, #{success => true, text => Text}};
+        %% the teacher's wallet is the one that ran out: the student is told so, never shown their own wall
+        {gate, _Status, _Body} when Payer =/= Uid ->
+            {409, #{success => false, code => <<"teacher_credits">>,
+                    error => <<"Your teacher's credits for mastery levels have run out. Ask your teacher, then try again.">>}};
+        {gate, Status, Body} -> {Status, Body};
+        {error, _} -> {502, #{success => false, error => <<"The design call did not come back. Try again in a moment.">>}}
+    end.
 
 checker(Host) ->
     _ = code:ensure_loaded(Host),
@@ -711,7 +763,7 @@ diagnose_step(Q, B, #{owner := Owner, sid := Sid, n := N, row := Row}, Host) ->
                     end,
                     case witness_fingerprint:answer(Q, Text, Read, now_ms(), Kept) of
                         {error, _} = E -> E;
-                        Q1 -> {Q1, #{fingerprint => maps:get(fingerprint, Q1)}}
+                        Q1 -> {Q1, #{fingerprint => maps:get(fingerprint, Q1), diagnosis => maps:get(diagnosis, Q1, <<>>)}}
                     end
             end
     end.
@@ -764,7 +816,7 @@ mastery_step(_, _, _, _, _) -> {error, forbidden}.
 
 mastery_words(forbidden) -> <<"That isn't yours to do on this paper.">>;
 mastery_words(not_configured) -> <<"That isn't available right now.">>;
-mastery_words(busy) -> <<"Witness is busy right now. Try again in a moment.">>;
+mastery_words(busy) -> <<"Marking is busy right now. Try again in a moment.">>;
 mastery_words(no_recommendation) -> <<"Couldn't make a recommendation this time. Try again in a moment.">>;
 mastery_words(not_heard) -> <<"Nothing was heard. Speak a little closer, or write it.">>;
 mastery_words(bad_audio) -> <<"That recording couldn't be read. Try again.">>;
@@ -772,6 +824,7 @@ mastery_words(bad_type) -> <<"Record it as an MP4 or MOV video, under an hour.">
 mastery_words(storage) -> <<"Couldn't get the upload ready. Try again in a moment.">>;
 mastery_words(not_asked) -> <<"Your teacher hasn't asked for that.">>;
 mastery_words(empty) -> <<"Write something first.">>;
+mastery_words(lessons_left) -> <<"Finish every lesson in your level first.">>;
 mastery_words(not_to_master) -> <<"This question was mastered already.">>;
 mastery_words(not_completed) -> <<"Turned around opens once the student has finished the level: every lesson's questions and the flashcards.">>;
 mastery_words(not_held) -> <<"This level already reached the student.">>;
@@ -1106,7 +1159,7 @@ mark_video(Uid, Id, Key, Fps, Sitting, Row, Host) ->
     case {Cache, Cached, Outcome} of
         {none, _, _} -> ok;
         {_, {ok, _}, _} -> ok;
-        {_, _, {ok, Fresh}} -> Host:save(Uid, Cache, #{result => maps:without([stills, cached], Fresh), at => now_ms()});
+        {_, _, {ok, Fresh}} -> Host:save(Uid, Cache, #{result => maps:without([stills, cached], Fresh), at => now_ms(), sitting => Id});
         _ -> ok
     end,
     %% the stills are taken while the clip is still there: the record keeps the moments, never the video
@@ -1355,10 +1408,10 @@ view(Id, #{status := S, result := R} = Row) when S =:= <<"marked">>; S =:= <<"re
     case maps:get(examiner, Row, undefined) of undefined -> V; Ex -> V#{examiner => examiner_view(Ex, teacher)} end;
 view(Id, #{status := <<"failed">>, unreadable := W}) ->
     #{ok => true, id => Id, status => <<"failed">>, unreadable => W,
-      error => <<"Witness couldn't see the paper in this video, so nothing was marked. Ask for it to be filmed again.">>};
+      error => <<"The paper couldn't be seen in this video, so nothing was marked. Ask for it to be filmed again.">>};
 view(Id, #{status := <<"failed">>, kept := true}) ->
     #{ok => true, id => Id, status => <<"failed">>, kept => true,
-      error => <<"Witness couldn't reach the marking service, so this paper isn't marked yet. The video is kept: mark it again, no need to film it again.">>};
+      error => <<"The marking service couldn't be reached, so this paper isn't marked yet. The video is kept: mark it again, no need to film it again.">>};
 view(Id, #{status := <<"failed">>}) ->
     #{ok => true, id => Id, status => <<"failed">>, error => <<"This sitting couldn't be marked. Record it again.">>};
 view(Id, #{status := S}) -> #{ok => true, id => Id, status => S}.
@@ -1420,6 +1473,28 @@ num(_) -> 0.
 
 refuse(Code, Kind, Msg) -> {Code, #{ok => false, code => Kind, error => Msg}}.
 refuse(Code, Kind, Msg, Extra) -> {Code, maps:merge(Extra, #{ok => false, code => Kind, error => Msg})}.
+
+%% Everything one paper left behind. The files kept with it are named in its row (pages, stills, drawn steps, spoken
+%% answers, clips at moments), so the row itself says what to remove.
+forget(Uid, Id, Row, Host) ->
+    _ = [catch Host:drop_asset(Uid, <<Id/binary, "/", F/binary>>) || has(Host, drop_asset, 2), F <- files_of(Row)],
+    _ = catch Host:drop_clip(Uid, Id),
+    case maps:get(student_uid, Row, undefined) of
+        Stu when is_binary(Stu), Stu =/= Uid -> catch Host:delete(Stu, {mine, Id});
+        _ -> ok
+    end,
+    _ = [catch Host:delete(Uid, {mark_cache, K}) || {K, #{sitting := S}} <- Host:list(Uid, mark_cache), S =:= Id],
+    ok = Host:delete(Uid, {sitting, Id}).
+
+files_of(Row) -> lists:usort(files_in(Row)).
+files_in(B) when is_binary(B) ->
+    case re:run(B, <<"^[A-Za-z0-9_.-]{1,80}\\.(jpe?g|png|webp|m4a|mp4|wav|webm|ogg|aac|mov)$">>, [{capture, none}]) of
+        match -> [B];
+        nomatch -> []
+    end;
+files_in(M) when is_map(M) -> lists:append([files_in(V) || V <- maps:values(M)]);
+files_in(L) when is_list(L) -> lists:append([files_in(V) || V <- L]);
+files_in(_) -> [].
 
 has(Host, F, A) -> _ = code:ensure_loaded(Host), erlang:function_exported(Host, F, A).
 

@@ -23,6 +23,9 @@ const DOORS: Array<[string, RegExp]> = [
   ['POST', /^\/api\/witness\/pile$/],
   ['GET', new RegExp(`^/api/witness/pile/${HEX16}$`)],
   ['POST', new RegExp(`^/api/witness/pile/${HEX16}/release$`)],
+  // 30 Oct: the teacher deletes a paper or an exam, for good
+  ['POST', new RegExp(`^/api/witness/pile/${HEX16}/delete$`)],
+  ['POST', new RegExp(`^/api/witness/sitting/${HEX16}/delete$`)],
   ['GET', new RegExp(`^/api/witness/sitting/${HEX16}$`)],
   ['POST', new RegExp(`^/api/witness/sitting/${HEX16}/review$`)],
   // Mark again: a paper Meta could not mark is marked from its kept video (28 Oct); a paper already marked is never marked twice

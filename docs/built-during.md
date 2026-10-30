@@ -1,7 +1,7 @@
-# Built during the hackathon (27 Oct – 4 Nov 2026)
+# Built during the hackathon (26 Oct – 4 Nov 2026)
 
-Everything in this repository was written between 27 Oct and 4 Nov 2026; see the commit history. The table grows
-as the work lands.
+Everything in this repository was written during the event: the build began on 27 Oct at 3:30 AM in our time zone,
+which is the 26 Oct 12:00 PM ET kickoff; see the commit history. The table grows as the work lands.
 
 | Part | Where | Status |
 |---|---|---|
@@ -41,3 +41,9 @@ as the work lands.
 | Muse Spark's badge recommendation from all the evidence (the teacher decides) | `witness/src/witness_recommend.erl` | done 28 Oct |
 | **The Misconception Fingerprint**: the reasoning that produced each answer, the evidence quoted from the ink, the misconception named only on enough evidence, the intervention; otherwise Lo asks a diagnostic question, out loud, before the level is built | `witness/src/witness_mark.erl`, `witness/src/witness_fingerprint.erl`, `phone/witness/WitnessScreen.tsx`, `desk/witness-desk.js` | done 30 Oct |
 | **The teacher's new challenge**: the same idea in a new situation (drafted by Muse Spark, edited by the teacher), answered on the phone with a reason, the reason read by Muse Spark for the teacher | `witness/src/witness_challenge.erl`, `phone/witness/WitnessScreen.tsx`, `desk/witness-desk.js` | done 30 Oct |
+| **The rule in code, after the judges' panel**: evidence must be the student's ink, no name while Lo asks (the guess kept for the teacher), a numeric answer needs a worked line, a rival holds the name; the settled reading becomes the diagnosis everything after it reads; the demo answers taken out of the prompt | `witness/src/witness_mark.erl`, `witness/src/witness_fingerprint.erl`, `phone/witness/mastery.ts` | done 30 Oct |
+| **The held-out check**: 36 papers in 10 topics the prompt never saw, labelled before the run, three runs | `harness/heldout/`, `harness/fingerprint_eval.escript` | done 30 Oct |
+| The teacher's gates: preview on by default, a level its self-check did not pass waits for the teacher, "completed" needs every lesson seen | `witness/src/witness_mastery.erl`, `witness/src/witness_api.erl` | done 30 Oct |
+| Deleting a paper or an exam, for good: rows, pages, recordings, pictures, the clip, the student's pointer, the cached marking, the join code | `witness/src/witness_api.erl`, `desk/witness-desk.js` | done 30 Oct |
+| The benchmark, its cases, its raw results and the script that recomputes every number | `harness/bench/` | committed 30 Oct (run 27–28 Oct) |
+| Tests from a fresh clone, and CI | `scripts/test.sh`, `.github/workflows/test.yml` | done 30 Oct |

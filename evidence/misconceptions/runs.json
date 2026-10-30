@@ -1,0 +1,409 @@
+{
+ "what": "Each learner's paper marked five times by Muse Spark through the product's code, 30 Oct 2026, after the judges' panel (rule in code, demo answers out of the prompt). harness/fingerprint_check.escript.",
+ "summary": {
+  "A": {
+   "named": 5,
+   "asked": 0,
+   "names": [
+    "successive percentage changes cancel by addition",
+    "successive percentage changes cancel",
+    "opposite percentage changes cancel",
+    "percentage changes cancel additively",
+    "percentage changes cancel"
+   ],
+   "possible": [
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "asks": [
+    "",
+    "",
+    "",
+    "",
+    ""
+   ],
+   "marks": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  "B": {
+   "named": 5,
+   "asked": 0,
+   "names": [
+    "50% equals $50",
+    "50% means $50",
+    "percent-as-fixed-amount that cancels",
+    "percentage-cancel: 50% always equals 50",
+    "percentage changes cancel as equal absolute amounts"
+   ],
+   "possible": [
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "asks": [
+    "",
+    "",
+    "",
+    "",
+    ""
+   ],
+   "marks": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  "C": {
+   "named": 0,
+   "asked": 5,
+   "names": [
+    "",
+    "",
+    "",
+    "",
+    ""
+   ],
+   "possible": [
+    "percent increase and decrease cancel",
+    "equal percent increase and decrease cancel",
+    "+50% and -50% cancel",
+    "equal percent increase and decrease cancel out",
+    "percent-increase-decrease cancel"
+   ],
+   "asks": [
+    "Write or say what you had after each step, and how you got it.",
+    "Write or say what you had after each step, and how you got it.",
+    "Write or say what you had after each step, and how you got it.",
+    "Write or say what you had after each step, and how you got it.",
+    "Write or say what you had after each step, and how you got it."
+   ],
+   "marks": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "runs": {
+  "A": [
+   {
+    "result": "not_yet",
+    "marks": 0,
+    "name_read_from_paper": "Priya Nair",
+    "final_answer": "A $100",
+    "steps_as_read": [
+     "A $100 — back to the original price [circled]",
+     "+50% - 50% = 0%",
+     "so it stays at $100."
+    ],
+    "fingerprint": {
+     "ask": "",
+     "evidence": [
+      "+50% - 50% = 0%",
+      "so it stays at $100."
+     ],
+     "intervention": "Have her predict then work out each stage in money: first add 50% of $100 to get the new price, then take 50% off that new price, and compare the two money amounts taken on and off.",
+     "misconception": "successive percentage changes cancel by addition",
+     "reasoning": "The student added +50% and -50% to get 0% and concluded the price stays at $100."
+    }
+   },
+   {
+    "result": "not_yet",
+    "marks": 0,
+    "name_read_from_paper": "Priya Nair",
+    "final_answer": "A $100 — back to the original price",
+    "steps_as_read": [
+     "+50% - 50% = 0%",
+     "so it stays at $100."
+    ],
+    "fingerprint": {
+     "ask": "",
+     "evidence": [
+      "+50% - 50% = 0%",
+      "so it stays at $100."
+     ],
+     "intervention": "Have her first calculate $100 + 50% to get $150, then calculate 50% of $150 and compare that cash amount to the first $50 increase to see they are different.",
+     "misconception": "successive percentage changes cancel",
+     "reasoning": "Adding +50% and -50% gives 0% so the price is unchanged at $100."
+    }
+   },
+   {
+    "result": "not_yet",
+    "marks": 0,
+    "name_read_from_paper": "Priya Nair",
+    "final_answer": "A $100",
+    "steps_as_read": [
+     "+50% - 50% = 0%",
+     "so it stays at $100."
+    ],
+    "fingerprint": {
+     "ask": "",
+     "evidence": [
+      "+50% - 50% = 0%",
+      "so it stays at $100."
+     ],
+     "intervention": "Have her predict then work out 50% up from $100 to get $150 and then 50% off that $150, and compare the take-off to the add-on to see the bases differ.",
+     "misconception": "opposite percentage changes cancel",
+     "reasoning": "Thinks +50% and -50% add to 0% so the price returns to $100."
+    }
+   },
+   {
+    "result": "not_yet",
+    "marks": 0,
+    "name_read_from_paper": "Priya Nair",
+    "final_answer": "A $100",
+    "steps_as_read": [
+     "+50% - 50% = 0%",
+     "so it stays at $100."
+    ],
+    "fingerprint": {
+     "ask": "",
+     "evidence": [
+      "+50% - 50% = 0%",
+      "so it stays at $100."
+     ],
+     "intervention": "Have her work it in two steps predicting first: what is $100 + 50%, then what is 50% of that new amount and subtract it to compare to $100.",
+     "misconception": "percentage changes cancel additively",
+     "reasoning": "Thinks +50% and -50% add to 0% so the price stays at $100."
+    }
+   },
+   {
+    "result": "not_yet",
+    "marks": 0,
+    "name_read_from_paper": "Priya Nair",
+    "final_answer": "A $100",
+    "steps_as_read": [
+     "+50% - 50% = 0%",
+     "so it stays at $100."
+    ],
+    "fingerprint": {
+     "ask": "",
+     "evidence": [
+      "+50% - 50% = 0%",
+      "so it stays at $100."
+     ],
+     "intervention": "Have the student predict then work out 50% up from $100 to get $150, then work out 50% off that $150 and compare the dollar size of the two 50% amounts.",
+     "misconception": "percentage changes cancel",
+     "reasoning": "Thought +50% and -50% add to 0% so the price stays at $100."
+    }
+   }
+  ],
+  "B": [
+   {
+    "result": "not_yet",
+    "marks": 0,
+    "name_read_from_paper": "Tomás Silva",
+    "final_answer": "A $100",
+    "steps_as_read": [
+     "100 + 50 = 150",
+     "150 - 50 = 100"
+    ],
+    "fingerprint": {
+     "ask": "",
+     "evidence": [
+      "100 + 50 = 150",
+      "150 - 50 = 100"
+     ],
+     "intervention": "Have the student predict half of $150, work it out, and compare it to $150 minus $50 to see they are not the same.",
+     "misconception": "50% equals $50",
+     "reasoning": "Student treated 50% as $50, adding $50 to get $150 then subtracting $50 to return to $100."
+    }
+   },
+   {
+    "result": "not_yet",
+    "marks": 0,
+    "name_read_from_paper": "Tomás Silva",
+    "final_answer": "A $100",
+    "steps_as_read": [
+     "100 + 50 = 150",
+     "150 - 50 = 100"
+    ],
+    "fingerprint": {
+     "ask": "",
+     "evidence": [
+      "100 + 50 = 150",
+      "150 - 50 = 100"
+     ],
+     "intervention": "Have the student predict then shade 50% of a 100-bar and then 50% of the resulting 150-bar to see the second change is $75, not $50.",
+     "misconception": "50% means $50",
+     "reasoning": "Added $50 for the 50% increase and subtracted $50 for the 50% decrease, treating percent as a fixed dollar amount so they cancel."
+    }
+   },
+   {
+    "result": "not_yet",
+    "marks": 0,
+    "name_read_from_paper": "Tomás Silva",
+    "final_answer": "A $100",
+    "steps_as_read": [
+     "100 + 50 = 150",
+     "150 - 50 = 100"
+    ],
+    "fingerprint": {
+     "ask": "",
+     "evidence": [
+      "100 + 50 = 150",
+      "150 - 50 = 100"
+     ],
+     "intervention": "Ask the student to predict then work out 50% of $150 using their method to see the decrease is $75 not $50, then compare the two percentage bases.",
+     "misconception": "percent-as-fixed-amount that cancels",
+     "reasoning": "Treated 50% as 50 dollars and added then subtracted it so the changes cancel to the original."
+    }
+   },
+   {
+    "result": "not_yet",
+    "marks": 0,
+    "name_read_from_paper": "Tomás Silva",
+    "final_answer": "A $100",
+    "steps_as_read": [
+     "100 + 50 = 150",
+     "150 - 50 = 100"
+    ],
+    "fingerprint": {
+     "ask": "",
+     "evidence": [
+      "100 + 50 = 150",
+      "150 - 50 = 100"
+     ],
+     "intervention": "Have the student predict then work out 50% of $150 and compare it to 50% of $100 to see the decrease is larger than the increase.",
+     "misconception": "percentage-cancel: 50% always equals 50",
+     "reasoning": "treated 50% as a fixed $50 amount that is added then subtracted, so the increase and decrease cancel back to $100."
+    }
+   },
+   {
+    "result": "not_yet",
+    "marks": 0,
+    "name_read_from_paper": "Tomás Silva",
+    "final_answer": "A $100",
+    "steps_as_read": [
+     "100 + 50 = 150",
+     "150 - 50 = 100"
+    ],
+    "fingerprint": {
+     "ask": "",
+     "evidence": [
+      "100 + 50 = 150",
+      "150 - 50 = 100"
+     ],
+     "intervention": "Have the student work out what 50% of the new $150 actually is and predict whether taking that off can still leave $100.",
+     "misconception": "percentage changes cancel as equal absolute amounts",
+     "reasoning": "Treated both 50% changes as a fixed $50 added then subtracted, so they cancel back to $100."
+    }
+   }
+  ],
+  "C": [
+   {
+    "result": "not_yet",
+    "marks": 0,
+    "name_read_from_paper": "Leo Martins",
+    "final_answer": "A $100",
+    "steps_as_read": [
+     "A $100",
+     "Half up, half down. Same price."
+    ],
+    "fingerprint": {
+     "ask": "Write or say what you had after each step, and how you got it.",
+     "evidence": [
+      "Half up, half down. Same price."
+     ],
+     "intervention": "Have the student predict then work out $100 up 50% to $150, then down 50% from $150 step-by-step and compare the $75 result to their same-price prediction.",
+     "misconception": "",
+     "reasoning": "Thinks +50% then -50% cancel because one is half up and the other half down, leaving the same price.",
+     "possible": "percent increase and decrease cancel"
+    }
+   },
+   {
+    "result": "not_yet",
+    "marks": 0,
+    "name_read_from_paper": "Leo Martins",
+    "final_answer": "A $100",
+    "steps_as_read": [
+     "Half up, half down. Same price."
+    ],
+    "fingerprint": {
+     "ask": "Write or say what you had after each step, and how you got it.",
+     "evidence": [
+      "Half up, half down. Same price."
+     ],
+     "intervention": "Have them predict then work out 50% of $100 to get $150 and then 50% of $150 to see the decrease is $75 not $50, so the two 50%s are of different amounts.",
+     "misconception": "",
+     "reasoning": "Thinks half up then half down must return to the same price because the percentages are equal and opposite.",
+     "possible": "equal percent increase and decrease cancel"
+    }
+   },
+   {
+    "result": "not_yet",
+    "marks": 0,
+    "name_read_from_paper": "Leo Martins",
+    "final_answer": "A $100",
+    "steps_as_read": [
+     "A $100 circled",
+     "Half up, half down. Same price."
+    ],
+    "fingerprint": {
+     "ask": "Write or say what you had after each step, and how you got it.",
+     "evidence": [
+      "Half up, half down. Same price."
+     ],
+     "intervention": "Have the student predict then work out 50% of $100 to get to $150 and then 50% of $150 to see the two amounts added and removed are not equal.",
+     "misconception": "",
+     "reasoning": "Thinks a 50% rise and a 50% fall cancel because they are equal and opposite.",
+     "possible": "+50% and -50% cancel"
+    }
+   },
+   {
+    "result": "not_yet",
+    "marks": 0,
+    "name_read_from_paper": "Leo Martins",
+    "final_answer": "A $100",
+    "steps_as_read": [
+     "A $100 circled",
+     "Half up, half down. Same price."
+    ],
+    "fingerprint": {
+     "ask": "Write or say what you had after each step, and how you got it.",
+     "evidence": [
+      "Half up, half down. Same price."
+     ],
+     "intervention": "Have the student predict then work out 50% of $100 to get $150, then 50% of $150, and compare the two 50% amounts to see they are different.",
+     "misconception": "",
+     "reasoning": "Thinks a 50% increase then a 50% decrease cancel to give the original $100 because half up and half down are the same.",
+     "possible": "equal percent increase and decrease cancel out"
+    }
+   },
+   {
+    "result": "not_yet",
+    "marks": 0,
+    "name_read_from_paper": "Leo Martins",
+    "final_answer": "A $100",
+    "steps_as_read": [
+     "A $100",
+     "Half up, half down. Same price."
+    ],
+    "fingerprint": {
+     "ask": "Write or say what you had after each step, and how you got it.",
+     "evidence": [
+      "Half up, half down. Same price."
+     ],
+     "intervention": "Have the student predict then work out 50% of $100 to get to $150, then work out 50% of $150, and compare the dollars added versus the dollars taken off.",
+     "misconception": "",
+     "reasoning": "Thinks +50% and -50% cancel because half up then half down must return to the same price.",
+     "possible": "percent-increase-decrease cancel"
+    }
+   }
+  ]
+ }
+}

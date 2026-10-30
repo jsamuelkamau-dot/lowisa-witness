@@ -62,3 +62,79 @@ the_prompt_has_the_ink_the_question_and_the_answer_test() ->
         <<"ask">> => <<"Half of what?">>}))#{question => <<"A product costs $100...">>},
     P = witness_fingerprint:prompt(Q, <<"Of 100.">>),
     [?assertNotEqual(nomatch, binary:match(P, W)) || W <- [<<"A product costs $100">>, <<"Half up, half down.">>, <<"Half of what?">>, <<"Of 100.">>]].
+
+%% 30 Oct (judges' panel): the rule is the code's. Muse Spark's own output for Learner C, as recorded live
+%% (evidence/misconceptions/learner-c-mental-model.json): it named an idea AND asked. While Lo asks, nothing is named;
+%% the guess waits as `possible` for the teacher, and the student is shown the page's reasoning, not the label.
+the_recorded_learner_c_reply_names_nothing_while_lo_asks_test() ->
+    J = #{<<"questions">> => [#{<<"n">> => 4, <<"final_answer">> => <<"A $100">>, <<"result">> => <<"not_yet">>, <<"marks">> => 0, <<"out_of">> => 3,
+            <<"steps">> => [#{<<"wrote">> => <<"A $100">>}, #{<<"wrote">> => <<"Half up, half down. Same price.">>}],
+            <<"diagnosis">> => <<"Thought a 50% increase and a 50% decrease cancel to return to the original price.">>, <<"confidence">> => 0.9,
+            <<"fingerprint">> => #{<<"ask">> => <<"You wrote 'Half up, half down' – half of what amount each time?"/utf8>>,
+                                   <<"evidence">> => [<<"A $100">>, <<"Half up, half down. Same price.">>],
+                                   <<"intervention">> => <<"Have the student work each step in dollars.">>,
+                                   <<"misconception">> => <<"percentage changes cancel">>,
+                                   <<"reasoning">> => <<"Reasoned that half up then half down must return to the same price without calculating each change.">>}}]},
+    {ok, #{questions := [Q]}} = witness_mark:parse(iolist_to_binary(json:encode(J))),
+    #{fingerprint := F} = Q,
+    ?assertEqual(<<>>, maps:get(misconception, F)),
+    ?assertEqual(<<"percentage changes cancel">>, maps:get(possible, F)),
+    ?assert(witness_fingerprint:pending(Q)),
+    %% the final answer alone is no evidence; the intuition is the student's own line
+    ?assertEqual([<<"Half up, half down. Same price.">>], maps:get(evidence, F)),
+    %% the student sees what the page shows; the one-idea reading waits for the teacher
+    ?assertEqual(<<"Reasoned that half up then half down must return to the same price without calculating each change.">>, maps:get(diagnosis, Q)),
+    ?assertEqual(<<"Thought a 50% increase and a 50% decrease cancel to return to the original price.">>, maps:get(diagnosis_draft, Q)).
+
+%% evidence the model wrote itself is not the student's ink: the label goes, Lo asks
+evidence_not_on_the_page_is_dropped_test() ->
+    Q = marked([<<"$100">>], #{<<"reasoning">> => <<"r">>, <<"evidence">> => [<<"they think percentages cancel">>],
+                               <<"misconception">> => <<"cancelling">>, <<"intervention">> => <<"i">>, <<"ask">> => <<>>}),
+    ?assertMatch(#{fingerprint := #{misconception := <<>>, evidence := [], possible := <<"cancelling">>, ask := <<"Talk me through", _/binary>>}}, Q).
+
+%% the reading may use another dash, quote or spacing than the quote: it is still the same line of ink
+the_same_line_with_another_minus_sign_is_still_the_ink_test() ->
+    Q = marked([<<"150 ", 16#2212/utf8, " 50 = 100">>], #{<<"reasoning">> => <<"r">>, <<"evidence">> => [<<"150-50=100">>],
+        <<"misconception">> => <<"takes the second change of the original">>, <<"intervention">> => <<"i">>, <<"ask">> => <<>>}),
+    ?assertMatch(#{fingerprint := #{misconception := <<"takes the second change of the original">>, evidence := [<<"150-50=100">>]}}, Q).
+
+%% when Lo's answer settles it, the question's diagnosis is what was found, so the level, the self-check, the class
+%% patterns and the challenge all read it; the marking's first reading is kept
+the_settled_fingerprint_becomes_the_diagnosis_test() ->
+    Q = marked([<<"Half up, half down. Same price.">>], #{<<"reasoning">> => <<"Could be cancelling, or both halves of $100.">>,
+        <<"evidence">> => [<<"Half up, half down.">>], <<"misconception">> => <<"cancel">>, <<"intervention">> => <<>>, <<"ask">> => <<"Half of what, each time?">>}),
+    {ok, Read} = witness_fingerprint:parse(<<"{\"reasoning\":\"Takes both halves of the original $100.\",\"evidence\":[\"said: both halves of 100\"],"
+        "\"misconception\":\"second change taken of the original amount\",\"intervention\":\"Find the base.\",\"ask\":\"\"}">>),
+    Q1 = witness_fingerprint:answer(Q, <<"Both halves of 100.">>, Read, 2),
+    ?assertEqual(<<"second change taken of the original amount: Takes both halves of the original $100.">>, maps:get(diagnosis, Q1)),
+    ?assertEqual(<<"Could be cancelling, or both halves of $100.">>, maps:get(diagnosis_first, Q1)),
+    ?assertNot(maps:is_key(possible, maps:get(fingerprint, Q1))),
+    %% a reply that names an idea and still asks names nothing yet
+    {ok, Unsure} = witness_fingerprint:parse(<<"{\"reasoning\":\"r\",\"evidence\":[\"said: x\"],\"misconception\":\"m\",\"intervention\":\"\",\"ask\":\"And then?\"}">>),
+    ?assertMatch(#{misconception := <<>>, possible := <<"m">>, ask := <<"And then?">>}, Unsure).
+
+%% the marking prompt holds no answer it is tested on (judges' panel: the three learners were quoted in it)
+the_rule_quotes_none_of_the_three_learners_test() ->
+    R = string:lowercase(iolist_to_binary(witness_mark:fingerprint_rule())),
+    [?assertEqual(nomatch, binary:match(R, W)) || W <- [<<"50%">>, <<"150">>, <<"half up">>, <<"same price">>]].
+
+%% a differential diagnosis: when the model says another wrong idea would write the same ink, nothing is named and Lo
+%% asks, whatever name it offered
+a_rival_idea_holds_the_name_and_lo_asks_test() ->
+    Q = marked([<<"40 - 10 = 30">>, <<"30 + 10 = 40">>], #{<<"reasoning">> => <<"r">>, <<"evidence">> => [<<"30 + 10 = 40">>],
+        <<"rivals">> => [<<"25% is always $10">>], <<"misconception">> => <<"second change of the original">>, <<"intervention">> => <<"i">>, <<"ask">> => <<>>}),
+    ?assertMatch(#{fingerprint := #{misconception := <<>>, possible := <<"second change of the original">>, rivals := [<<"25% is always $10">>],
+                                   ask := <<"Write or say what you had after each step", _/binary>>}}, Q),
+    ?assert(witness_fingerprint:pending(Q)).
+
+%% an answer that is a number, with no quoted line that shows a calculation: the working is not on the page, so Lo asks,
+%% whatever the model named (30 Oct, held-out check: Spark named the intuition as cancelling every time)
+a_numeric_answer_with_no_calculation_on_the_page_is_asked_test() ->
+    Q = marked([<<"Half up, half down. Same price.">>], #{<<"reasoning">> => <<"r">>, <<"evidence">> => [<<"Half up, half down. Same price.">>],
+        <<"rivals">> => [], <<"misconception">> => <<"opposite percentage changes cancel">>, <<"intervention">> => <<"i">>, <<"ask">> => <<>>}),
+    ?assertMatch(#{fingerprint := #{misconception := <<>>, possible := <<"opposite percentage changes cancel">>}}, Q),
+    ?assert(witness_fingerprint:pending(Q)),
+    %% one number is not a calculation; two are
+    ?assertEqual(1, witness_mark:numbers(<<"Tails is due after 5 heads">>)),
+    ?assertEqual(3, witness_mark:numbers(<<"+50% - 50% = 0%">>)),
+    ?assertEqual(2, witness_mark:numbers(<<"0.25 is bigger than 0.3">>)).

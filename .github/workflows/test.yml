@@ -1,0 +1,12 @@
+name: tests
+on: [push, pull_request]
+jobs:
+  eunit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: '27'
+      - run: sh scripts/test.sh
+      - run: python3 scripts/secret_scan.py

@@ -152,7 +152,7 @@ export function ProofView({env, paperId}: {env: WitnessEnv; paperId: string}): R
           ))}
         </View>
       ) : null}
-      <Text style={s.foot}>Read by {p.read_by.join(', ')}. {p.source === 'photo' ? 'Photographed after the exam: ' + p.pages + (p.pages === 1 ? ' page' : ' pages') + ', kept with the paper.' : 'Filmed with Witness; the video was ' + p.video + '.'}</Text>
+      <Text style={s.foot}>Read by {p.read_by.join(', ')}. {p.source === 'photo' ? 'Photographed after the exam: ' + p.pages + (p.pages === 1 ? ' page' : ' pages') + ', kept with the paper.' : 'Filmed at the desk; the video was ' + p.video + '.'}</Text>
     </View>
   );
 }
