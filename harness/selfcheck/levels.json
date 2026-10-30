@@ -1,0 +1,92 @@
+{
+ "note": "The self-check evaluation (31 Oct 2026, after the 12-judge panel). Twenty mastery levels, written by hand before any run: ten clean and ten each with ONE planted fault (fault names the kind). Muse Wonder must pass the clean ones and hold the faulty ones (selfcheck_eval.escript). Each level is a title and three lessons of short beats, as the self-check reads them.",
+ "ideas": {
+  "base": {"question": "A product costs $100. Its price increases by 50%, then decreases by 50%. What is its final price?", "working": "100 + 50 = 150\n150 - 50 = 100", "diagnosis": "takes the second change of the original amount"},
+  "fractions": {"question": "Work out 1/2 + 1/3.", "working": "1/2 + 1/3 = 2/5", "diagnosis": "adds the tops and the bottoms"},
+  "density": {"question": "A block has a mass of 200 g and a volume of 50 cm^3. What is its density?", "working": "50 / 200 = 0.25 g/cm^3", "diagnosis": "divides volume by mass"},
+  "speed": {"question": "A car drives 60 km at 30 km/h, then 60 km at 60 km/h. What is its average speed?", "working": "(30 + 60) / 2 = 45 km/h", "diagnosis": "averages the two speeds instead of total distance over total time"},
+  "negatives": {"question": "Work out -7 + 3.", "working": "7 + 3 = 10, keep the minus: -10", "diagnosis": "adds the sizes and keeps the sign"}
+ },
+ "levels": [
+  {"id": "base-clean-1", "idea": "base", "fault": null, "level": {"title": "Successive Changes: The New Base", "lessons": [
+    {"title": "The shop till after a rise and a cut", "beats": ["Your step: $100 + $50 = $150, then $150 - $50 = $100. Run it at a shop till.", "Check: a $100 jacket rises 50% then falls 50%. Options: $100, $75, $50. Right: $75, because the fall is 50% of $150, which is $75.", "The till shows $75: the second change came off the new amount."]},
+    {"title": "Why the second change is bigger", "beats": ["50% of $150 is $75, not $50: the base grew.", "Check: $80 rises 25% then falls 25%. Options: $80, $75, $85. Right: $75 (80 x 1.25 = 100; 100 x 0.75 = 75)."]},
+    {"title": "Price the boots sale", "beats": ["Task: boots cost $60. Mark them up 20%, then take 20% off for the sale. Work out the sale price: 60 x 1.2 = 72, 72 x 0.8 = 57.60.", "Check: what does the till charge? Options: $60, $57.60, $62.40. Right: $57.60."]}]}},
+  {"id": "base-clean-2", "idea": "base", "fault": null, "level": {"title": "Which Amount Is It Of?", "lessons": [
+    {"title": "A salary rise then a cut", "beats": ["Your step on a pay slip: $1,000 up 10% then down 10%.", "Check: what is the pay after both? Options: $1,000, $990, $1,010. Right: $990 (1,000 x 1.1 = 1,100; 1,100 x 0.9 = 990)."]},
+    {"title": "The base moves", "beats": ["Each percentage is of the amount just before it.", "Check: a tank of 500 L loses 20% then gains 20%. Options: 500 L, 480 L, 520 L. Right: 480 L."]},
+    {"title": "Fix the stock order", "beats": ["Task: stock of 400 items drops 25%, then is restocked by 25% of what is left. Work out the new stock: 400 x 0.75 = 300; 300 x 1.25 = 375.", "Check: how many items now? Options: 400, 375, 425. Right: 375."]}]}},
+  {"id": "base-false-claim", "idea": "base", "fault": "false_claim", "level": {"title": "Successive Changes: The New Base", "lessons": [
+    {"title": "The shop till after a rise and a cut", "beats": ["Your step: $100 + $50 = $150, then $150 - $50 = $100.", "Check: a $100 jacket rises 50% then falls 50%. Options: $100, $75, $50. Right: $75.", "Charging $100 for it loses the shop $25, because the true price is $75."]},
+    {"title": "Why the second change is bigger", "beats": ["50% of $150 is $75.", "Check: $80 up 25% then down 25%. Options: $80, $75, $85. Right: $75."]},
+    {"title": "Price the boots sale", "beats": ["Task: boots cost $60, up 20% then 20% off: 60 x 1.2 = 72, 72 x 0.8 = 57.60.", "Check: Options: $60, $57.60, $62.40. Right: $57.60."]}]}},
+  {"id": "base-no-catch", "idea": "base", "fault": "no_catch", "level": {"title": "Percentages in the Shop", "lessons": [
+    {"title": "Ten percent off", "beats": ["A $50 shirt is 10% off: $5 off, so $45.", "Check: 10% off $50. Options: $45, $40, $5. Right: $45."]},
+    {"title": "Twenty percent more", "beats": ["A $40 bag is 20% dearer: $48.", "Check: 20% more than $40. Options: $48, $60, $42. Right: $48."]},
+    {"title": "Price the sale rack", "beats": ["Task: a $30 cap is 50% off. Work out the price: $15.", "Check: Options: $15, $20, $25. Right: $15."]}]}},
+  {"id": "fractions-clean-1", "idea": "fractions", "fault": null, "level": {"title": "Same-Sized Pieces First", "lessons": [
+    {"title": "Half a pizza and a third", "beats": ["Your step: 1/2 + 1/3 = 2/5. Put the slices on one plate.", "Check: is 2/5 more or less than the 1/2 you started with? Options: more, less, the same. Right: less, so 2/5 cannot be right."]},
+    {"title": "Make the pieces the same size", "beats": ["1/2 = 3/6 and 1/3 = 2/6, so 1/2 + 1/3 = 5/6.", "Check: 1/4 + 1/2. Options: 2/6, 3/4, 2/4. Right: 3/4."]},
+    {"title": "Mix the paint order", "beats": ["Task: a painter has 1/3 of a tin of white and 1/4 of a tin of blue. How much paint in all? 4/12 + 3/12 = 7/12 of a tin.", "Check: Options: 2/7, 7/12, 1/2. Right: 7/12."]}]}},
+  {"id": "fractions-clean-2", "idea": "fractions", "fault": null, "level": {"title": "Common Denominators at Work", "lessons": [
+    {"title": "Two part-filled jugs", "beats": ["Your step: adding tops and bottoms: 1/2 + 1/3 = 2/5. Pour the jugs together.", "Check: two half-full jugs, 1/2 + 1/2. Your way gives 2/4, a half. Is that right? Options: yes, no. Right: no, it is 1 whole jug."]},
+    {"title": "Count in the same unit", "beats": ["Sixths: 3/6 + 2/6 = 5/6.", "Check: 2/3 + 1/6. Options: 3/9, 5/6, 1/2. Right: 5/6."]},
+    {"title": "Cut the timber order", "beats": ["Task: a carpenter needs 1/2 m and 1/5 m of board. Total length: 5/10 + 2/10 = 7/10 m.", "Check: Options: 2/7 m, 7/10 m, 1/3 m. Right: 7/10 m."]}]}},
+  {"id": "fractions-not-task", "idea": "fractions", "fault": "not_work_task", "level": {"title": "Same-Sized Pieces First", "lessons": [
+    {"title": "Half a pizza and a third", "beats": ["Your step: 1/2 + 1/3 = 2/5.", "Check: is 2/5 less than 1/2? Options: yes, no. Right: yes, so it cannot be the sum."]},
+    {"title": "Make the pieces the same size", "beats": ["1/2 + 1/3 = 3/6 + 2/6 = 5/6.", "Check: 1/4 + 1/2. Options: 2/6, 3/4, 2/4. Right: 3/4."]},
+    {"title": "Review quiz", "beats": ["Quiz: 1/3 + 1/6. Options: 2/9, 1/2, 1/3. Right: 1/2.", "Quiz: 1/5 + 1/10. Options: 2/15, 3/10, 1/5. Right: 3/10."]}]}},
+  {"id": "fractions-false-claim", "idea": "fractions", "fault": "false_claim", "level": {"title": "Same-Sized Pieces First", "lessons": [
+    {"title": "Half a pizza and a third", "beats": ["Your step: 1/2 + 1/3 = 2/5.", "Check: is 2/5 less than 1/2? Options: yes, no. Right: yes."]},
+    {"title": "Make the pieces the same size", "beats": ["1/2 = 3/6 and 1/3 = 2/6, so the sum is 5/6.", "Check: 1/4 + 1/2. Options: 2/6, 3/4, 2/4. Right: 3/4."]},
+    {"title": "Mix the paint order", "beats": ["Task: 1/3 of a tin of white and 1/4 of a tin of blue: 4/12 + 3/12 = 8/12 of a tin.", "Check: Options: 2/7, 8/12, 1/2. Right: 8/12."]}]}},
+  {"id": "density-clean-1", "idea": "density", "fault": null, "level": {"title": "Mass Over Volume", "lessons": [
+    {"title": "Weigh the block in the lab", "beats": ["Your step: 50 / 200 = 0.25 g/cm^3. A metal block that light would float on water.", "Check: does a 200 g block of 50 cm^3 sink in water (1 g/cm^3)? Options: sinks, floats. Right: sinks, so 0.25 cannot be its density."]},
+    {"title": "Grams in each cubic centimetre", "beats": ["Density is grams per cm^3: 200 g / 50 cm^3 = 4 g/cm^3.", "Check: 90 g in 30 cm^3. Options: 0.33, 3, 2700 g/cm^3. Right: 3 g/cm^3."]},
+    {"title": "Check the supplier's metal", "beats": ["Task: a bar of 540 g and 200 cm^3 is sold as aluminium (2.7 g/cm^3). Work out its density: 540 / 200 = 2.7 g/cm^3.", "Check: is it aluminium? Options: yes, no. Right: yes."]}]}},
+  {"id": "density-clean-2", "idea": "density", "fault": null, "level": {"title": "Which Way to Divide", "lessons": [
+    {"title": "A box of feathers and a brick", "beats": ["Your step divides volume by mass. A brick then comes out lighter per cm^3 than feathers.", "Check: 1000 g brick of 500 cm^3, your way: 0.5. Is a brick less dense than water? Options: yes, no. Right: no."]},
+    {"title": "Mass on top", "beats": ["Density = mass / volume: 1000 / 500 = 2 g/cm^3.", "Check: 300 g in 100 cm^3. Options: 3, 0.33, 30000. Right: 3 g/cm^3."]},
+    {"title": "Sort the scrap metal", "beats": ["Task: a 790 g piece of 100 cm^3: steel is 7.9 g/cm^3, copper 8.9. Work it out: 790 / 100 = 7.9.", "Check: which metal? Options: steel, copper. Right: steel."]}]}},
+  {"id": "density-off-idea", "idea": "density", "fault": "off_idea", "level": {"title": "Units of Volume", "lessons": [
+    {"title": "Litres and cubic centimetres", "beats": ["1 litre is 1000 cm^3.", "Check: 2.5 L in cm^3. Options: 25, 250, 2500. Right: 2500."]},
+    {"title": "Cubic metres", "beats": ["1 m^3 is 1,000,000 cm^3.", "Check: 0.002 m^3 in cm^3. Options: 20, 2000, 200. Right: 2000."]},
+    {"title": "Fill the water tank", "beats": ["Task: a tank of 1.2 m^3. How many litres? 1200 L.", "Check: Options: 120, 1200, 12000. Right: 1200."]}]}},
+  {"id": "density-no-catch", "idea": "density", "fault": "no_catch", "level": {"title": "Density in the Lab", "lessons": [
+    {"title": "Weigh the block", "beats": ["A block's mass is 200 g; its volume 50 cm^3.", "Check: what is its mass? Options: 200 g, 50 g. Right: 200 g."]},
+    {"title": "Measure the volume", "beats": ["Volume by water displaced: the water rose 50 cm^3.", "Check: the volume? Options: 50 cm^3, 200 cm^3. Right: 50 cm^3."]},
+    {"title": "Record the metal sample", "beats": ["Task: write the mass and the volume of the sample in the lab book.", "Check: which goes in the mass column? Options: 200 g, 50 cm^3. Right: 200 g."]}]}},
+  {"id": "speed-clean-1", "idea": "speed", "fault": null, "level": {"title": "Total Distance Over Total Time", "lessons": [
+    {"title": "The two-leg drive", "beats": ["Your step: (30 + 60) / 2 = 45 km/h. Time it: 60 km at 30 km/h is 2 h; 60 km at 60 km/h is 1 h.", "Check: 120 km in 3 h. Options: 45 km/h, 40 km/h, 50 km/h. Right: 40 km/h."]},
+    {"title": "Why the slow leg counts more", "beats": ["More time is spent going slowly, so the average leans to the slow speed.", "Check: 30 km at 10 km/h then 30 km at 30 km/h. Options: 20, 15, 25 km/h. Right: 15 km/h (60 km in 4 h)."]},
+    {"title": "Plan the delivery route", "beats": ["Task: a van does 40 km at 40 km/h and 40 km at 80 km/h. Average speed: 80 km / 1.5 h = 53.3 km/h.", "Check: Options: 60, 53.3, 50 km/h. Right: 53.3 km/h."]}]}},
+  {"id": "speed-clean-2", "idea": "speed", "fault": null, "level": {"title": "Average Speed on the Clock", "lessons": [
+    {"title": "A runner's two laps", "beats": ["Your step averages the speeds. Lap times: 400 m at 4 m/s takes 100 s; 400 m at 8 m/s takes 50 s.", "Check: 800 m in 150 s. Options: 6 m/s, 5.33 m/s, 5 m/s. Right: 5.33 m/s."]},
+    {"title": "Time is the weight", "beats": ["Average speed = total distance / total time.", "Check: 10 km at 5 km/h then 10 km at 10 km/h. Options: 7.5, 6.67, 8 km/h. Right: 6.67 km/h."]},
+    {"title": "Set the bus timetable", "beats": ["Task: a bus goes 30 km at 60 km/h and 30 km at 30 km/h. Average: 60 km / 1.5 h = 40 km/h.", "Check: Options: 45, 40, 35 km/h. Right: 40 km/h."]}]}},
+  {"id": "speed-not-task", "idea": "speed", "fault": "not_work_task", "level": {"title": "Total Distance Over Total Time", "lessons": [
+    {"title": "The two-leg drive", "beats": ["Your step: (30 + 60) / 2 = 45. The times: 2 h and 1 h.", "Check: 120 km in 3 h. Options: 45, 40, 50 km/h. Right: 40 km/h."]},
+    {"title": "Why the slow leg counts more", "beats": ["More time at the slow speed.", "Check: 30 km at 10 then 30 km at 30. Options: 20, 15, 25. Right: 15 km/h."]},
+    {"title": "A worked example", "beats": ["Example: 50 km at 50 km/h and 50 km at 25 km/h is 100 km in 3 h, 33.3 km/h.", "Example: 20 km at 20 and 20 km at 40 is 40 km in 1.5 h, 26.7 km/h."]}]}},
+  {"id": "speed-false-claim", "idea": "speed", "fault": "false_claim", "level": {"title": "Total Distance Over Total Time", "lessons": [
+    {"title": "The two-leg drive", "beats": ["Your step: (30 + 60) / 2 = 45. Times: 2 h and 1 h.", "Check: 120 km in 3 h. Options: 45, 40, 50 km/h. Right: 40 km/h."]},
+    {"title": "Why the slow leg counts more", "beats": ["More time at the slow speed.", "Check: 30 km at 10 km/h then 30 km at 30 km/h. Options: 20, 15, 25 km/h. Right: 20 km/h."]},
+    {"title": "Plan the delivery route", "beats": ["Task: 40 km at 40 km/h and 40 km at 80 km/h: 80 km / 1.5 h = 53.3 km/h.", "Check: Options: 60, 53.3, 50. Right: 53.3 km/h."]}]}},
+  {"id": "negatives-clean-1", "idea": "negatives", "fault": null, "level": {"title": "Walk the Number Line", "lessons": [
+    {"title": "The freezer thermometer", "beats": ["Your step: 7 + 3 = 10, keep the minus: -10. The freezer is at -7 C and warms 3 degrees.", "Check: warmer or colder than -7? Your -10 is colder. Options: warmer, colder. Right: warmer, so -10 cannot be right."]},
+    {"title": "Adding a positive moves right", "beats": ["From -7, three steps right: -6, -5, -4.", "Check: -5 + 8. Options: -13, 3, -3. Right: 3."]},
+    {"title": "Log the cold-room temperature", "beats": ["Task: the cold room reads -12 C; the heater adds 5 degrees. Log the new reading: -12 + 5 = -7 C.", "Check: Options: -17, -7, 7. Right: -7 C."]}]}},
+  {"id": "negatives-clean-2", "idea": "negatives", "fault": null, "level": {"title": "Debts and Deposits", "lessons": [
+    {"title": "A bank balance of -$7", "beats": ["Your step adds the sizes and keeps the sign. You owe $7 and pay in $3.", "Check: do you owe more or less now? Your -10 says more. Options: more, less. Right: less: you owe $4."]},
+    {"title": "Opposite signs: subtract the sizes", "beats": ["-7 + 3: 7 - 3 = 4, and the bigger size was negative: -4.", "Check: -2 + 9. Options: -11, 7, -7. Right: 7."]},
+    {"title": "Reconcile the account", "beats": ["Task: an account is at -$25; a $40 payment arrives. Work out the balance: -25 + 40 = $15.", "Check: Options: -$65, $15, -$15. Right: $15."]}]}},
+  {"id": "negatives-no-catch", "idea": "negatives", "fault": "no_catch", "level": {"title": "Adding Numbers", "lessons": [
+    {"title": "Adding positives", "beats": ["3 + 4 = 7.", "Check: 5 + 6. Options: 11, 1, 30. Right: 11."]},
+    {"title": "Adding two negatives", "beats": ["-3 + -4 = -7.", "Check: -2 + -5. Options: -7, 7, -3. Right: -7."]},
+    {"title": "Total the deliveries", "beats": ["Task: 12 boxes on Monday and 9 on Tuesday: 21 boxes.", "Check: Options: 21, 3, 108. Right: 21."]}]}},
+  {"id": "negatives-off-idea", "idea": "negatives", "fault": "off_idea", "level": {"title": "Multiplying Negatives", "lessons": [
+    {"title": "Two negatives make a positive", "beats": ["-3 x -4 = 12.", "Check: -2 x -5. Options: 10, -10, -7. Right: 10."]},
+    {"title": "A negative times a positive", "beats": ["-3 x 4 = -12.", "Check: -6 x 2. Options: 12, -12, -4. Right: -12."]},
+    {"title": "Scale the losses", "beats": ["Task: a shop loses $3 a day for 5 days: -3 x 5 = -$15.", "Check: Options: -$15, $15, -$8. Right: -$15."]}]}}
+ ]
+}

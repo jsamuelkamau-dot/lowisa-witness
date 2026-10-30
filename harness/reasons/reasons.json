@@ -1,0 +1,191 @@
+{
+ "note": "The challenge reason judge, measured (31 Oct 2026, after the 12-judge panel: 'n = 1'). Each reason is a student's pick and why on a teacher's challenge, labelled before any run: holds = true when the reason applies the right principle, false when it is luck, the old idea, parroted words or empty of reasoning. reason_eval.escript asks Muse Spark (witness_challenge:judge/3) and counts false accepts (a reason that does not hold, accepted) and false rejects. Kinds: worked (the numbers worked through), explained (the principle applied in words with the numbers), rule_of_thumb (right pick, no principle), old_idea (the misconception), words_only (the rule named with no working shown: labelled not holding, reported on its own because a teacher may accept it).",
+ "challenges": {
+  "water": {
+   "diagnosis": "takes the second change of the original amount",
+   "q": "A town stores 1,000 litres of water. The supply falls by 30%, then rises by 30%. How much water is there now?",
+   "options": [
+    "700 L",
+    "910 L",
+    "1,000 L",
+    "1,090 L"
+   ],
+   "answer": 1
+  },
+  "fractions": {
+   "diagnosis": "adds the tops and the bottoms",
+   "q": "A recipe uses 1/3 cup of sugar and 1/6 cup of honey. How much sweetener in all?",
+   "options": [
+    "2/9 cup",
+    "1/2 cup",
+    "1/3 cup",
+    "2/3 cup"
+   ],
+   "answer": 1
+  },
+  "density": {
+   "diagnosis": "divides volume by mass",
+   "q": "A stone has a mass of 300 g and a volume of 120 cm^3. What is its density?",
+   "options": [
+    "0.4 g/cm^3",
+    "2.5 g/cm^3",
+    "36000 g/cm^3",
+    "180 g/cm^3"
+   ],
+   "answer": 1
+  },
+  "speed": {
+   "diagnosis": "averages the two speeds instead of total distance over total time",
+   "q": "A cyclist rides 20 km at 10 km/h and then 20 km at 20 km/h. What is the average speed?",
+   "options": [
+    "15 km/h",
+    "13.3 km/h",
+    "12 km/h",
+    "10 km/h"
+   ],
+   "answer": 1
+  }
+ },
+ "reasons": [
+  {
+   "c": "water",
+   "pick": 1,
+   "why": "30% of 1000 is 300 so 700 left. Then 30% of 700 is 210, so 910.",
+   "holds": true,
+   "kind": "worked"
+  },
+  {
+   "c": "water",
+   "pick": 1,
+   "why": "The rise is taken of the new amount, which is smaller, so it ends lower: 700 x 1.3 = 910.",
+   "holds": true,
+   "kind": "explained"
+  },
+  {
+   "c": "water",
+   "pick": 1,
+   "why": "It always ends a bit lower so I picked the one under 1000.",
+   "holds": false,
+   "kind": "rule_of_thumb"
+  },
+  {
+   "c": "water",
+   "pick": 2,
+   "why": "Minus 30% then plus 30% cancels out.",
+   "holds": false,
+   "kind": "old_idea"
+  },
+  {
+   "c": "water",
+   "pick": 1,
+   "why": "The base changes.",
+   "holds": false,
+   "kind": "words_only"
+  },
+  {
+   "c": "fractions",
+   "pick": 1,
+   "why": "1/3 is 2/6, plus 1/6 is 3/6, which is 1/2.",
+   "holds": true,
+   "kind": "worked"
+  },
+  {
+   "c": "fractions",
+   "pick": 1,
+   "why": "Same-sized pieces first: sixths. 2/6 + 1/6 = 3/6 = 1/2 cup.",
+   "holds": true,
+   "kind": "explained"
+  },
+  {
+   "c": "fractions",
+   "pick": 0,
+   "why": "1 + 1 = 2 on top and 3 + 6 = 9 on the bottom.",
+   "holds": false,
+   "kind": "old_idea"
+  },
+  {
+   "c": "fractions",
+   "pick": 1,
+   "why": "Half sounds right for a recipe.",
+   "holds": false,
+   "kind": "rule_of_thumb"
+  },
+  {
+   "c": "fractions",
+   "pick": 1,
+   "why": "You make the denominators the same.",
+   "holds": false,
+   "kind": "words_only"
+  },
+  {
+   "c": "density",
+   "pick": 1,
+   "why": "Mass divided by volume: 300 / 120 = 2.5 g per cm^3.",
+   "holds": true,
+   "kind": "worked"
+  },
+  {
+   "c": "density",
+   "pick": 1,
+   "why": "Each cubic centimetre has 300/120 grams, 2.5.",
+   "holds": true,
+   "kind": "explained"
+  },
+  {
+   "c": "density",
+   "pick": 0,
+   "why": "120 divided by 300 is 0.4.",
+   "holds": false,
+   "kind": "old_idea"
+  },
+  {
+   "c": "density",
+   "pick": 1,
+   "why": "Stones are usually around 2 or 3.",
+   "holds": false,
+   "kind": "rule_of_thumb"
+  },
+  {
+   "c": "density",
+   "pick": 1,
+   "why": "Density is mass over volume.",
+   "holds": false,
+   "kind": "words_only"
+  },
+  {
+   "c": "speed",
+   "pick": 1,
+   "why": "20 km at 10 km/h takes 2 h, 20 km at 20 km/h takes 1 h, so 40 km in 3 h is 13.3 km/h.",
+   "holds": true,
+   "kind": "worked"
+  },
+  {
+   "c": "speed",
+   "pick": 1,
+   "why": "Total distance 40 km over total time 3 hours.",
+   "holds": true,
+   "kind": "explained"
+  },
+  {
+   "c": "speed",
+   "pick": 0,
+   "why": "Halfway between 10 and 20 is 15.",
+   "holds": false,
+   "kind": "old_idea"
+  },
+  {
+   "c": "speed",
+   "pick": 1,
+   "why": "It is less than 15 because it is slower.",
+   "holds": false,
+   "kind": "rule_of_thumb"
+  },
+  {
+   "c": "speed",
+   "pick": 1,
+   "why": "Average speed = distance / time.",
+   "holds": false,
+   "kind": "words_only"
+  }
+ ]
+}
