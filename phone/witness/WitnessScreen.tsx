@@ -45,7 +45,7 @@ type Stage =
   | {kind: 'home'}
   | {kind: 'joined'; code: string; title: string; level: string; practical?: boolean}
   | {kind: 'listed'; title: string; name: string}
-  | {kind: 'photos'; code: string; title: string}
+  | {kind: 'photos'; code: string; title: string; photo: boolean}
   | {kind: 'witness'; code: string; title: string; level: string}
   | {kind: 'sending'; title: string; line: string}
   | {kind: 'sent'; title: string; id: string}
@@ -231,6 +231,8 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
     const r = await witness.join(env, code);
     setBusy(false);
     if (!r.ok) { setError(r.error); return; }
+    // the photographing code opens the exam on the phone that photographs the papers (31 Oct)
+    if (r.value.photo) { setStage({kind: 'photos', code, title: r.value.pile.title, photo: true}); return; }
     setStage({kind: 'joined', code, title: r.value.pile.title, level: r.value.pile.level, practical: r.value.pile.kind === 'practical'});
   };
 
@@ -358,7 +360,8 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
               <Text style={s.h}>Your exam on paper</Text>
               <Text style={s.sub}>Sit the exam on paper as you always do. Afterwards it is marked for how you thought, not only your answers, and every question you didn't master becomes your Mastery Plan.</Text>
               <SoftInput value={code} onChangeText={t => setCode(typedCode(t))} placeholder="Join code" autoCapitalize="characters" maxLength={6}
-                style={[s.input, s.code]} accessibilityLabel="Your teacher's join code" testID="witness-code" />
+                style={[s.input, s.code]} accessibilityLabel="Your teacher's join code, or the photographing code" testID="witness-code" />
+              <Text style={s.small}>Photographing the class's papers? Type the photographing code from the teacher's desk here.</Text>
               <Btn label={busy ? 'Checking…' : 'Find the exam'} onPress={join} primary disabled={busy} testID="witness-join" />
             </View>
             <Mine papers={papers} onOpen={p => setStage(p.status === 'released' ? {kind: 'paper', paper: p} : {kind: 'asks', paper: p})} />
@@ -380,7 +383,7 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
               <View style={s.card}>
                 <Text style={s.rowTitle}>Photograph the papers</Text>
                 <Text style={s.sub}>After the exam, a single phone photographs every student's paper: a teacher's phone, or one the school owns. Each paper's name is read from the paper itself.</Text>
-                <Btn label="Photograph the papers" onPress={() => { setError(''); setStage({kind: 'photos', code: stage.code, title: stage.title}); }} testID="witness-photos" />
+                <Btn label="Photograph the papers" onPress={() => { setError(''); setStage({kind: 'photos', code: stage.code, title: stage.title, photo: false}); }} testID="witness-photos" />
               </View>
             ) : null}
             <View style={s.card}>
@@ -399,7 +402,7 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
           </View>
         ) : null}
 
-        {stage.kind === 'photos' ? <PhotoDesk env={env} code={stage.code} title={stage.title} /> : null}
+        {stage.kind === 'photos' ? <PhotoDesk env={env} code={stage.code} title={stage.title} photo={stage.photo} /> : null}
 
         {stage.kind === 'witness' ? (
           <View style={s.card}>
@@ -845,6 +848,13 @@ function AfterLevel({m, act, film, filming}: {m?: Mastery; act(action: 'explain'
 }
 
 /** What a photographed paper's row says once it comes back: the name read from it, and whether it found its student. */
+/** The papers this phone sent for one exam: matched on the exam's code (31 Oct, rehearsal: two exams with one title
+ * showed each other's papers); the title only for a server that does not send the code. */
+export function takenFor(papers: Taken[], code: string, title: string): Taken[] {
+  const c = (code || '').trim().toUpperCase();
+  return papers.filter(p => (p.code ? p.code.toUpperCase() === c || (p.photo_code || '').toUpperCase() === c : p.title === title));
+}
+
 export function takenLine(t: Taken): string {
   if (t.status === 'uploading') return 'Pages still to send';
   if (t.status === 'marking') return 'Marking: the name comes back here';
@@ -869,12 +879,14 @@ export const MAX_PAGES = 20;
  * Each page is a JPEG of at most 1600 pixels made on the phone (takePhoto / pickImages), sent one at a time, three tries
  * each, so a weak classroom connection costs a page, not the paper.
  */
-function PhotoDesk({env, code, title}: {env: WitnessEnv; code: string; title: string}): React.JSX.Element {
+export function PhotoDesk({env, code, title, photo}: {env: WitnessEnv; code: string; title: string; photo: boolean}): React.JSX.Element {
+  // the photographing code: given when the exam was opened with it, else typed here (the join code cannot photograph)
+  const [pcode, setPcode] = useState(photo ? code : '');
   const [pages, setPages] = useState<PickedDocument[]>([]);
   const [line, setLine] = useState('');
   const [said, setSaid] = useState('');
   const [taken, setTaken] = useState<Taken[] | null>(null);
-  const load = useCallback(async () => { const r = await witness.taken(env); if (r.ok) setTaken((r.value.papers || []).filter(p => p.title === title)); }, [env, title]);
+  const load = useCallback(async () => { const r = await witness.taken(env); if (r.ok) setTaken(takenFor(r.value.papers || [], code, title)); }, [env, code, title]);
   useEffect(() => { load(); }, [load]);
   // while a paper is still being marked, its name is looked for every five seconds (for up to three minutes)
   // the name is matched a moment after the marking: a marked paper with no name result yet is still waited for (29 Oct, live)
@@ -903,8 +915,10 @@ function PhotoDesk({env, code, title}: {env: WitnessEnv; code: string; title: st
   const sendPaper = async () => {
     if (!pages.length) return;
     setSaid('');
+    const pc = pcode.trim().toUpperCase();
+    if (pc.length !== 6) { setSaid("Type the photographing code from the teacher's desk: six letters and numbers."); return; }
     setLine('Getting the paper ready…');
-    const started = await witness.startPhoto(env, code, pages.length);
+    const started = await witness.startPhoto(env, pc, pages.length);
     if (!started.ok) { setLine(''); setSaid(started.error); return; }
     const id = started.value.id;
     for (let i = 0; i < pages.length; i++) {
@@ -930,6 +944,13 @@ function PhotoDesk({env, code, title}: {env: WitnessEnv; code: string; title: st
       <View style={s.card} testID="witness-photo-desk">
         <Text style={s.h}>{title}</Text>
         <Text style={s.sub}>Photograph one student's paper at a time: every page, the page with the name first. Lay each page flat in good light, the whole page in the photo.</Text>
+        {photo ? null : (
+          <>
+            <Text style={s.small}>The photographing code is on the teacher's desk. It is not the students' join code.</Text>
+            <SoftInput value={pcode} onChangeText={t => setPcode(typedCode(t))} placeholder="Photographing code" autoCapitalize="characters" maxLength={6}
+              style={[s.input, s.code]} accessibilityLabel="The photographing code from the teacher's desk" testID="witness-photo-code" />
+          </>
+        )}
         {pages.length ? (
           <ScrollView horizontal style={s.thumbs} testID="witness-photo-pages">
             {pages.map((pg, i) => (

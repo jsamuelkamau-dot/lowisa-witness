@@ -99,6 +99,9 @@ photographed_paper_reaches_the_student_by_name_test() ->
     %% the phone that took it sees the name come back, but the paper is not its own
     {200, #{papers := [T]}} = r(<<"GET">>, [<<"taken">>], #{}, <<"school-phone">>),
     ?assertMatch(#{id := Id, status := <<"marked">>, student := <<"Amani Wanjiru">>, title := <<"Maths Term Test">>, name_match := <<"read">>}, T),
+    %% and which exam it belongs to by its code, not its title (two exams can share one)
+    ?assertEqual(Code, maps:get(code, T)),
+    ?assertEqual(photo(Code), maps:get(photo_code, T)),
     {200, #{papers := []}} = r(<<"GET">>, [<<"mine">>], #{}, <<"school-phone">>),
     %% the student has it (marks once released), Liam does not
     {200, #{papers := [#{id := Id, status := <<"with_teacher">>}]}} = r(<<"GET">>, [<<"mine">>], #{}, <<"amani">>),
@@ -163,7 +166,11 @@ the_class_code_and_the_photographing_phone_open_nothing_else_test() ->
     setup(),
     {Pile, Code} = exam(),
     {403, #{code := <<"photo_code">>}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"kind">> => <<"photo">>, <<"pages">> => 1, <<"code">> => Code}, <<"stud">>),
-    {404, #{code := <<"no_code">>}} = r(<<"POST">>, [<<"join">>], #{<<"code">> => photo(Code), <<"name">> => <<"X">>}, <<"stud">>),
+    %% the photographing code typed in the phone's code box opens the exam for photographing only: no name is listed
+    {200, #{photo := true, pile := #{title := <<"Maths Term Test">>}}} = r(<<"POST">>, [<<"join">>], #{<<"code">> => photo(Code), <<"name">> => <<"X">>}, <<"stud">>),
+    {ok, #{} = P0} = load(<<"teacher">>, {pile, Pile}),
+    ?assertEqual([], maps:get(roster, P0, [])),
+    {404, #{code := <<"no_code">>}} = r(<<"POST">>, [<<"join">>], #{<<"code">> => <<"ZZZZZZ">>}, <<"stud">>),
     {200, _} = r(<<"POST">>, [<<"join">>], #{<<"code">> => Code, <<"name">> => <<"Amani Wanjiru">>}, <<"amani">>),
     Id = photographed(Code, <<"school-phone">>),
     {ok, #{student_uid := <<"amani">>}} = load(<<"teacher">>, {sitting, Id}),

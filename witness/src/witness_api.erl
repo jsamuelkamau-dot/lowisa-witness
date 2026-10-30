@@ -210,7 +210,14 @@ route(<<"POST">>, [<<"join">>], B, Uid, Host) ->
                 Name -> roster_add(Owner, PileId, Uid, Name, Host)
             end,
             {200, #{ok => true, pile => #{title => maps:get(title, P), level => maps:get(level, P, <<>>), kind => maps:get(kind, P, <<"paper">>)}}};
-        {ok, _} -> refuse(404, <<"no_code">>, <<"That code doesn't match an exam. Check it with your teacher.">>)
+        {ok, _} ->
+            %% 31 Oct, rehearsal: the phone that photographs types the photographing code in the same box; it opens the
+            %% exam for photographing only (no name goes on the class list, nothing of the class is read back)
+            case by_code(maps:get(<<"code">>, B, null), photo, Host) of
+                {ok, _, _, P} -> {200, #{ok => true, photo => true, pile => #{title => maps:get(title, P), level => maps:get(level, P, <<>>),
+                                                                               kind => maps:get(kind, P, <<"paper">>)}}};
+                _ -> refuse(404, <<"no_code">>, <<"That code doesn't match an exam. Check it with your teacher.">>)
+            end
     end;
 %% 31 Oct (judges' panel, the school leader: with forty students every challenge and every badge was one student at a
 %% time). One teacher action on many questions of this exam at once:
@@ -1652,9 +1659,14 @@ roster_add(Owner, PileId, Uid, Name, Host) ->
     end.
 
 taken_view(Id, Owner, R, Host) ->
-    Title = case Host:load(Owner, {pile, maps:get(pile, R, <<>>)}) of {ok, P} -> maps:get(title, P); none -> <<>> end,
+    %% 31 Oct, rehearsal: two exams with one title showed each other's papers; the phone matches on the exam's code
+    %% (the phone that took the paper typed the photographing code, so it may see it again)
+    {Title, Code, PCode} = case Host:load(Owner, {pile, maps:get(pile, R, <<>>)}) of
+        {ok, P} -> {maps:get(title, P), maps:get(code, P, <<>>), maps:get(photo_code, P, <<>>)};
+        none -> {<<>>, <<>>, <<>>}
+    end,
     Read = case R of #{result := #{student := St}} -> St; _ -> #{} end,
-    #{id => Id, status => maps:get(status, R), pages => maps:get(pages, R, 0), got => maps:get(got, R, []), title => Title,
+    #{id => Id, status => maps:get(status, R), pages => maps:get(pages, R, 0), got => maps:get(got, R, []), title => Title, code => Code, photo_code => PCode,
       created_ms => maps:get(created_ms, R, 0), student => maps:get(student, R, <<>>), read => Read,
       name_match => maps:get(name_match, R, null)}.
 

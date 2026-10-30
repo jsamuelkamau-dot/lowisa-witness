@@ -2,7 +2,7 @@
  * FROM EXAM TO MASTERY (2026-10-29, owner): the paper photographed after the exam by one phone, no question ending in a
  * verdict, every question not mastered in the Mastery Plan, and the seven thinking capabilities named in each level.
  */
-import {takenLine, MAX_PAGES} from '../src/witness/WitnessScreen';
+import {takenLine, takenFor, MAX_PAGES} from '../src/witness/WitnessScreen';
 import {CAPABILITIES, capabilitiesOf, PLAN_WHY, RESULT_WORDS, toMaster, witness, type Paper, type Question, type Taken} from '../src/witness/net';
 import {builtNews, keepBuilt, markMasteryDone, masteryBrief, masteryDone, MASTERY_DONE_KEY} from '../src/witness/mastery';
 import {compileDeepCourse} from '../src/paths/deep/compile';
@@ -51,6 +51,11 @@ describe('the seven thinking capabilities', () => {
 describe('the papers one phone photographed', () => {
   const t = (extra: Partial<Taken>): Taken => ({id: 'x', status: 'marked', pages: 2, got: [1, 2], title: 'Maths', created_ms: 1, student: 'Amani Wanjiru',
     read: {name: 'Amani Wanjiru'}, name_match: 'read', ...extra});
+  it('lists only the papers sent for this exam, by its code, when two exams share a title', () => {
+    const mine = t({id: 'a', title: 'Maths', code: 'DEMOJN'}), other = t({id: 'b', title: 'Maths', code: 'VVRAWN'});
+    expect(takenFor([mine, other], 'demojn', 'Maths').map(p => p.id)).toEqual(['a']);
+    expect(takenFor([t({id: 'old', title: 'Maths'})], 'DEMOJN', 'Maths').map(p => p.id)).toEqual(['old']);   // an older server
+  });
   it('says whose each paper is once the name comes back', () => {
     expect(takenLine(t({}))).toBe('Amani Wanjiru · on the class list');
     expect(takenLine(t({name_match: 'unsure', read: {name: 'Amani Wanjku'}}))).toBe('Name read: Amani Wanjku · the teacher confirms whose it is');

@@ -28,7 +28,8 @@ async function page() {
     get: (route) => new Promise((ok) => {
       const n = ++id;
       wait.set(n, (j) => ok(j.result && j.result.result ? j.result.result.value : null));
-      const expr = 'window.__lowisaWitnessIpc.call(' + JSON.stringify({ method: 'GET', path: route }) + ')';
+      // the signed-in user, as the desk itself sends it
+      const expr = 'window.__lowisaWitnessIpc.call(Object.assign({ userId: localStorage.getItem("lowisa-user-id") }, ' + JSON.stringify({ method: 'GET', path: route }) + '))';
       ws.send(JSON.stringify({ id: n, method: 'Runtime.evaluate', params: { expression: expr, awaitPromise: true, returnByValue: true } }));
     }),
     close: () => ws.close(),

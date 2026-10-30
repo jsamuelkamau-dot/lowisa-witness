@@ -78,7 +78,7 @@ export interface Parts { size: number; count: number; urls: PartUrl[] }
 export interface Badge { question: string; fixed: string; exam: string; wrong_at: number | null; turned_at: number; note: string }
 export interface Paper { id: string; status: string; unseen?: boolean; title?: string; student?: string; kind?: 'photo' | 'video'; result?: {questions: Question[]; stills?: Still[]}; examiner?: Examiner }
 /** A paper this phone photographed for the class: the name read from it, and whether it found its student. */
-export interface Taken { id: string; status: string; pages: number; got: number[]; title: string; created_ms: number; student: string;
+export interface Taken { id: string; status: string; pages: number; got: number[]; title: string; code?: string; photo_code?: string; created_ms: number; student: string;
   read: {name?: string; class?: string; number?: string; note?: string}; name_match: 'read' | 'teacher' | 'unsure' | 'none' | 'unread' | null }
 export interface Proof {
   record: 'proof_of_thinking'; id: string; exam: string; level: string; kind: string; student: string;
@@ -172,7 +172,8 @@ export async function door<T>(env: WitnessEnv, method: 'GET' | 'POST', path: str
 export const witness = {
   mine: (env: WitnessEnv) => door<{papers: Paper[]}>(env, 'GET', 'mine'),
   badges: (env: WitnessEnv) => door<{badges: Badge[]}>(env, 'GET', 'badges'),
-  join: (env: WitnessEnv, code: string, name?: string) => door<{pile: {title: string; level: string; kind?: string}}>(env, 'POST', 'join', {code, ...(name ? {name} : {})}),
+  /** a join code finds the exam; the photographing code (31 Oct) answers photo: true and opens it for photographing only */
+  join: (env: WitnessEnv, code: string, name?: string) => door<{photo?: boolean; pile: {title: string; level: string; kind?: string}}>(env, 'POST', 'join', {code, ...(name ? {name} : {})}),
   /** a finished paper photographed page by page: started, each page sent (a photo is a few hundred KB: give it time) */
   startPhoto: (env: WitnessEnv, code: string, pages: number) => door<{id: string; pages: number}>(env, 'POST', 'sitting/start', {kind: 'photo', pages, code}),
   page: (env: WitnessEnv, id: string, n: number, mime: string, base64: string) =>
