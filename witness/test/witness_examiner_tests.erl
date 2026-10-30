@@ -9,7 +9,7 @@ qs() ->
 
 prompt_names_the_students_own_steps_test() ->
     P = witness_examiner:prompt(#{level => <<"Grade 9">>}, qs()),
-    ?assertNotEqual(nomatch, binary:match(P, <<"step 1: 120 x 1.5 = 180 km/h">>)),
+    ?assertNotEqual(nomatch, binary:match(P, <<"step 1: <<<120 x 1.5 = 180 km/h>>>">>)),
     ?assertNotEqual(nomatch, binary:match(P, <<"AT MOST TWO">>)),
     ?assertNotEqual(nomatch, binary:match(P, <<"never says it was wrong">>)),
     ?assertNotEqual(nomatch, binary:match(P, <<"95% sure">>)).
@@ -25,7 +25,7 @@ judge_reads_the_verdict_test() ->
     ?assertEqual({ok, #{own_work => true, understood => false, why => <<"w">>}}, witness_examiner:judge(<<"{\"own_work\":true,\"understood\":false,\"why\":\"w\"}">>)),
     ?assertEqual({error, no_verdict}, witness_examiner:judge(<<"{}">>)),
     P = witness_examiner:judge_prompt(#{wrote => <<"F = 2 + 2">>, ask => <<"Why add?">>}, hd(tl(qs())), <<"Sasa naona, multiply">>),
-    ?assertNotEqual(nomatch, binary:match(P, <<"THE STEP THEY WROTE: F = 2 + 2">>)).
+    ?assertNotEqual(nomatch, binary:match(P, <<"THE STEP THEY WROTE: <<<F = 2 + 2>>>">>)).
 
 draw_lines_are_checked_and_capped_test() ->
     {ok, #{lines := L, changed := 2}} = witness_draw:parse_lines(<<"{\"lines\":[\"3x - 5 = 10\",\"3x = 10 + 5\",\" \",\"3x = 15\",\"x = 5\",\"a\",\"b\",\"c\"],\"changed\":2}">>),

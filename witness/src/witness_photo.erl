@@ -38,7 +38,8 @@ prompt(Sitting) ->
         "never guess a name that cannot be read: leave it empty and say why in name_note.\n"
         "If no page of the student's work can be read in the photos (no paper, too dark or blurred to read), mark nothing and\n"
         "return ONLY {\"readable\":false,\"why\":\"one plain sentence of what the photos show\"}. A page that is in view but\n"
-        "left empty IS readable: its questions are not_yet, with the diagnosis that they were left blank.\n\n"
+        "left empty IS readable: its questions are not_yet, with the diagnosis that they were left blank.\n\n",
+        witness_mark:ink_is_work(),
         "For every question, judge the THINKING as well as the final answer:\n"
         "- \"steps\" are the student's own lines for the question in the order they appear; \"wrote\" is the ink exactly as\n"
         "  written (copy it, never describe it); crossed_out is true for a line struck through to replace it; slashes drawn\n"
@@ -59,6 +60,7 @@ prompt(Sitting) ->
         "- \"slip\" is the number of the step (1 for the first) where the thinking went wrong; null when mastered;\n"
         "- \"capabilities\": for every question that is not mastered, the one or two of these seven thinking capabilities\n"
         "  its mastery work should build, by name: ", capability_list(), "; empty when mastered;\n",
+        witness_mark:skill_rule(),
         witness_mark:fingerprint_rule(),
         "- confidence is how sure you are of the result, 0 to 1.\n"
         "Return JSON only:\n"
@@ -66,7 +68,7 @@ prompt(Sitting) ->
         "\"questions\":[{\"n\":1,\"printed\":{\"page\":1,\"box\":[0,0,0,0]},\"final_answer\":\"...\","
         "\"steps\":[{\"wrote\":\"...\",\"crossed_out\":false,\"page\":1,\"box\":[0,0,0,0]}],"
         "\"result\":\"mastered|right_answer_wrong_thinking|part_way|not_yet\",\"marks\":0,\"out_of\":2,\"diagnosis\":\"...\","
-        "\"slip\":null,\"capabilities\":[\"...\"],", witness_mark:fingerprint_json(), "\"confidence\":0.9}]}"]).
+        "\"slip\":null,\"capabilities\":[\"...\"],\"skill\":\"...\",", witness_mark:fingerprint_json(), "\"confidence\":0.9}]}"]).
 
 capability_list() -> lists:join(", ", witness_mark:capabilities()).
 
@@ -78,6 +80,9 @@ mark(Key, Pages, Sitting, Opts) ->
     %% the page's ink colour, which tells a student's pen from the printed questions (a test's own pages give none)
     Tint = maps:get(tint, Opts, case maps:is_key(gray, Opts) of true -> fun(_) -> none end; false -> fun(Url) -> witness_media:tint_image(Url, 600) end end),
     Read = maps:get(read, Opts, fun(K, Content, Effort) -> witness_meta:read_content(K, ?SPARK, Content, #{effort => Effort}) end),
+    %% 31 Oct: the engine that reads it (Muse Spark on the Meta Model API, or Muse Spark Open through witness_open), for
+    %% its price and its name on the result
+    Price = maps:get(price, Opts, {tokens, ?SPARK}),
     case content(Pages, Fetch) of
         {ok, Images} ->
             Content = [#{type => input_text, text => prompt(Sitting)} | Images],
@@ -86,8 +91,8 @@ mark(Key, Pages, Sitting, Opts) ->
                     case witness_mark:parse(Text) of
                         {ok, #{questions := Qs0} = M} ->
                             Qs = witness_mark:fit(Qs0, Sitting),
-                            Cost = witness_meta:cost({tokens, ?SPARK}, Usage),
-                            Marked = again(Key, Content, Sitting, Read, #{questions => Qs, cost_usd => Cost}),
+                            Cost = witness_meta:cost(Price, Usage),
+                            Marked = again(Key, Content, Sitting, Read, Price, #{questions => Qs, cost_usd => Cost}),
                             {ok, Marked#{questions => place(maps:get(questions, Marked), Pages, Gray, Tint),
                                          student => maps:get(student, M, #{}), pages => length(Pages)}};
                         E -> E
@@ -110,7 +115,7 @@ content(Pages, Fetch) ->
     end.
 
 %% unsure questions read again at high effort, a split settled by a third reading (as a filmed paper is)
-again(Key, Content, Sitting, Read, #{questions := Qs} = Marked) ->
+again(Key, Content, Sitting, Read, Price, #{questions := Qs} = Marked) ->
     Reading = fun() ->
         case Read(Key, Content, <<"high">>) of
             {ok, T, U} -> case witness_mark:parse(T) of {ok, #{questions := Q2}} -> {ok, witness_mark:fit(Q2, Sitting), U}; E -> E end;
@@ -121,11 +126,11 @@ again(Key, Content, Sitting, Read, #{questions := Qs} = Marked) ->
         false -> Marked;
         {ok, Second, U2} ->
             Rec = witness_mark:reconcile(Qs, Second),
-            Cost = maps:get(cost_usd, Marked) + witness_meta:cost({tokens, ?SPARK}, U2),
+            Cost = maps:get(cost_usd, Marked) + witness_meta:cost(Price, U2),
             case witness_mark:split(Rec) andalso Reading() of
                 false -> Marked#{questions => witness_mark:decide(Rec, Qs, Second, []), cost_usd => Cost, read_twice => true};
                 {ok, Third, U3} -> Marked#{questions => witness_mark:decide(Rec, Qs, Second, Third), read_twice => true, read_thrice => true,
-                                           cost_usd => Cost + witness_meta:cost({tokens, ?SPARK}, U3)};
+                                           cost_usd => Cost + witness_meta:cost(Price, U3)};
                 _ -> Marked#{questions => witness_mark:decide(Rec, Qs, Second, []), cost_usd => Cost, read_twice => true}
             end;
         _ -> Marked
@@ -144,7 +149,7 @@ place(Qs, Pages, Gray, Tint) ->
                 [] -> [];
                 _ -> try Gray(Url) of
                          {ok, W, H, G} ->
-                             T = case catch Tint(Url) of {ok, W, H, Tb} -> Tb; _ -> none end,
+                             T = case (try Tint(Url) catch _:_ -> none end) of {ok, W, H, Tb} -> Tb; _ -> none end,
                              witness_page:place(G, T, W, H, [B || {_, B} <- Items],
                                                 [case Key of {q, _} -> printed; _ -> hand end || {Key, _} <- Items]);
                          _ -> [none || _ <- Items]

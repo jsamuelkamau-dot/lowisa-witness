@@ -37,12 +37,35 @@ answer(Q, Text0, Read, At, Kept) ->
             F = maps:get(fingerprint, Q),
             Said = maps:get(said, F, []) ++ [maps:merge(#{ask => maps:get(ask, F), text => Text, at => At}, maps:with([audio], Kept))],
             F1 = case Read of
-                #{} -> maps:merge(maps:remove(possible, F), maps:with([reasoning, evidence, misconception, intervention, ask, possible], Read));
+                #{} -> maps:merge(maps:remove(possible, F), maps:with([reasoning, evidence, misconception, intervention, ask, possible], vet(Read, Q, Said)));
                 _ -> F
             end,
             %% after the last answer Lo asks no more: the level is built from what is known
             F2 = case length(Said) >= ?MAX_ASKS of true -> F1#{ask => <<>>}; false -> F1 end,
             settled(Q#{fingerprint => F2#{said => Said}})
+    end.
+
+%% 31 Oct (judges' panel: after Lo asked, any evidence the model wrote let it name the idea, the film's own path). The
+%% marking's rule again, with the student's answer as a second source: an evidence line is kept only when it is in the
+%% lines read from their page (never the final answer alone) or, written "said: ...", in what they told Lo. A name left
+%% with no evidence is a guess again, kept for the teacher, and Lo may ask once more.
+vet(#{misconception := Named} = Read, Q, Said) ->
+    Lines = [witness_mark:norm(W) || #{wrote := W} <- maps:get(steps, Q, []), is_binary(W)],
+    Final = maps:get(final_answer, Q, <<>>),
+    Words = witness_mark:norm(iolist_to_binary(lists:join(<<" ">>, [T || #{text := T} <- Said]))),
+    Kept = [E || E <- maps:get(evidence, Read, []), own(E, Lines, Final, Words)],
+    case {Named, Kept} of
+        {<<_, _/binary>>, []} ->
+            Ask = case length(Said) < ?MAX_ASKS of true -> <<"Write or say what you had after each step, and how you got it.">>; false -> <<>> end,
+            Read#{evidence => [], misconception => <<>>, possible => Named, ask => Ask};
+        _ -> Read#{evidence => Kept}
+    end;
+vet(Read, _, _) -> Read.
+
+own(E, Lines, Final, Words) ->
+    case string:prefix(string:lowercase(E), <<"said:">>) of
+        nomatch -> witness_mark:quote_in_ink(E, Lines, Final);
+        Rest -> W = witness_mark:norm(Rest), byte_size(W) >= 4 andalso binary:match(Words, W) =/= nomatch
     end.
 
 %% 30 Oct (judges' panel: the corrected reading reached nothing after it). Once Lo has no more questions, what the
@@ -65,17 +88,18 @@ settled(Q) -> Q.
 
 prompt(Q, Text) ->
     F = maps:get(fingerprint, Q, #{}),
-    Said = [["  Lo asked: ", str(maps:get(ask, S, <<>>)), "\n  They said: ", str(maps:get(text, S, <<>>)), "\n"] || S <- maps:get(said, F, [])],
+    Said = [["  Lo asked: ", str(maps:get(ask, S, <<>>)), "\n  They said: ", witness_text:data(maps:get(text, S, <<>>)), "\n"] || S <- maps:get(said, F, [])],
     unicode:characters_to_binary([
         "A student's exam answer was marked; the marking could not tell from the paper alone which wrong idea produced it,\n"
-        "so Lo asked them one diagnostic question. Complete the Misconception Fingerprint from ALL the evidence.\n\n",
+        "so Lo asked them one diagnostic question. Complete the Misconception Fingerprint from ALL the evidence.\n",
+        witness_text:rule(), "\n",
         "THE QUESTION: ", str(maps:get(question, Q, maps:get(text, Q, <<>>))), "\n",
         "THEIR ANSWER ON THE PAPER: ", str(maps:get(final_answer, Q, <<>>)), "\n",
-        "THEIR WORKING, AS WRITTEN:\n", [["  ", str(maps:get(wrote, S, <<>>)), "\n"] || S <- maps:get(steps, Q, []), is_map(S)],
+        "THEIR WORKING, AS WRITTEN:\n", [["  ", witness_text:data(maps:get(wrote, S, <<>>)), "\n"] || S <- maps:get(steps, Q, []), is_map(S)],
         "WHAT THE MARKING SAW: ", str(maps:get(diagnosis, Q, <<>>)), "\n",
         "THE REASONING IT READ: ", str(maps:get(reasoning, F, <<>>)), "\n",
         Said,
-        "  Lo asked: ", str(maps:get(ask, F, <<>>)), "\n  They said now: ", Text, "\n\n",
+        "  Lo asked: ", str(maps:get(ask, F, <<>>)), "\n  They said now: ", witness_text:data(Text), "\n\n",
         "Name the misconception only when the paper and what they said together are enough evidence; quote that evidence\n"
         "(their ink exactly, and their words as \"said: ...\"). The intervention is what would repair THAT idea, in one or\n"
         "two sentences a tutor can act on. If it is still not clear, leave misconception empty, say in \"reasoning\" which\n"

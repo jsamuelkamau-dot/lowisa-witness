@@ -139,6 +139,32 @@ a_numeric_answer_with_no_calculation_on_the_page_is_asked_test() ->
     ?assertEqual(3, witness_mark:numbers(<<"+50% - 50% = 0%">>)),
     ?assertEqual(2, witness_mark:numbers(<<"0.25 is bigger than 0.3">>)).
 
+%% 31 Oct (judges' panel, an offline probe): a quote that a read line is only PART of kept the model's invented ending
+%% as "their own writing"; now a quote must be in a line read from the page, give or take a reading's small slips
+an_invented_ending_on_a_real_line_is_not_evidence_test() ->
+    Q = marked([<<"Half up, half down. Same price.">>], #{<<"reasoning">> => <<"r">>,
+        <<"evidence">> => [<<"Half up, half down. Same price. So +50% - 50% = 0%, they cancel">>],
+        <<"rivals">> => [], <<"misconception">> => <<"percentages cancel">>, <<"intervention">> => <<"i">>, <<"ask">> => <<>>}),
+    ?assertMatch(#{fingerprint := #{misconception := <<>>, evidence := []}}, Q),
+    ?assert(witness_fingerprint:pending(Q)).
+
+a_reading_slip_or_two_joined_lines_still_count_test() ->
+    Lines = [witness_mark:norm(L) || L <- [<<"100 + 50 = 150">>, <<"150 - 50 = 100">>]],
+    ?assert(witness_mark:quote_in_ink(<<"100 + 50 = 150; 150 - 50 = 100">>, Lines, <<"$100">>)),
+    ?assert(witness_mark:quote_in_ink(<<"150 - 5O = 100">>, Lines, <<"$100">>)),
+    ?assertNot(witness_mark:quote_in_ink(<<"150 - 50 = 100, so they cancel out">>, Lines, <<"$100">>)),
+    ?assertNot(witness_mark:quote_in_ink(<<"$100">>, [witness_mark:norm(<<"$100">>)], <<"$100">>)).
+
+%% a calculation is an operation, an "=" or a comparison between numbers, never how many numerals a line holds
+a_calculation_is_an_operation_not_a_count_of_numbers_test() ->
+    [?assert(witness_mark:calculation(L)) || L <- [<<"+50% - 50% = 0%">>, <<"100 + 50 = 150">>, <<"16/64">>, <<"2.5 x 10 = 25">>,
+                                                    <<"25% of 40 = 10">>, <<"25 is bigger than 3">>, <<"0.30 > 0.25">>, <<"150 − 50 = 100"/utf8>>]],
+    [?assertNot(witness_mark:calculation(L)) || L <- [<<"50 up, 50 down">>, <<"Tails is due after 5 heads and 5 tails">>,
+                                                       <<"Half up, half down. Same price.">>, <<"$100">>, <<"Off then on, same amount. $40.">>]],
+    Q = marked([<<"50 up, 50 down">>], #{<<"reasoning">> => <<"r">>, <<"evidence">> => [<<"50 up, 50 down">>],
+        <<"rivals">> => [], <<"misconception">> => <<"percentages cancel">>, <<"intervention">> => <<"i">>, <<"ask">> => <<>>}),
+    ?assertMatch(#{fingerprint := #{misconception := <<>>, possible := <<"percentages cancel">>}}, Q).
+
 %% the examiner asks about what was not mastered when there is any (30 Oct, rehearsal: it asked about mastered 1 and 2)
 the_examiner_asks_about_what_was_not_mastered_test() ->
     Qs = [#{n => 1, result => <<"mastered">>}, #{n => 4, result => <<"not_yet">>}, #{n => 5, result => <<"mastered">>}],

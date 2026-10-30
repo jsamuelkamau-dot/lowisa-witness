@@ -83,7 +83,7 @@ evidence(M) ->
     case maps:get(challenge, M, undefined) of
         undefined -> "not set";
         #{q := Text, reply := #{why := Why, right := R} = Rp} ->
-            [$", Text, "\" answered ", case R of true -> "right"; false -> "wrong" end, ", saying \"", Why, $",
+            [$", Text, "\" answered ", case R of true -> "right"; false -> "wrong" end, ", saying ", witness_text:data(Why),
              case maps:get(verdict, Rp, undefined) of
                  #{understood := U, why := W} -> [" (Spark: ", case U of true -> "the reason holds"; false -> "the reason does not hold" end, ": ", W, ")"];
                  _ -> ""
@@ -102,10 +102,12 @@ suggest_prompt(Q, Note) ->
         case str(maps:get(focus, Q, <<>>)) of <<>> -> ""; F -> ["THE TEACHER'S FOCUS NOTE: ", F, "\n"] end,
         case Note of <<>> -> ""; _ -> ["THE TEACHER ASKS FOR: ", Note, "\n"] end,
         "\nWrite ONE multiple-choice question that tests the SAME principle in a DIFFERENT real-world situation, with ",
-        "different numbers or facts, so the old answer cannot be reused. 3 options. One is right; one is exactly what the ",
-        "student's old way of thinking gives; one other common slip. Every fact the question needs is in it. Short and ",
-        "plain, for the student's level. Work the right answer out yourself before you write it.\n",
-        "Return JSON only: {\"q\":\"the question\",\"options\":[\"...\",\"...\",\"...\"],\"answer\":0,",
+        "different numbers or facts, so the old answer cannot be reused. 4 options. One is right; one is exactly what the ",
+        "student's old way of thinking gives; two other common slips. At least one wrong option is above the right ",
+        "answer and at least one below it, so no rule of thumb (\"it always ends lower\") picks the right one without ",
+        "the reasoning. Every fact the question needs is in it. Short and plain, for the student's level. Work the right ",
+        "answer out yourself before you write it.\n",
+        "Return JSON only: {\"q\":\"the question\",\"options\":[\"...\",\"...\",\"...\",\"...\"],\"answer\":0,",
         "\"checks\":\"one sentence for the teacher: what a right answer with the right reason shows\"}"]).
 
 parse_suggestion(Text) ->
@@ -132,13 +134,13 @@ judge_prompt(Q, {Pick, Why}) ->
     #{q := Text, options := Opts, answer := A} = maps:get(challenge, m(Q)),
     unicode:characters_to_binary([
             "A student got an exam question wrong, had a lesson on it, and now answers a new question that tests the same ",
-            "principle in a new situation.\n\n",
+            "principle in a new situation.\n", witness_text:rule(), "\n",
             "WHAT WENT WRONG IN THE EXAM: ", str(maps:get(diagnosis, Q, <<>>)), "\n",
             "THE NEW QUESTION: ", Text, "\n",
             "THE OPTIONS: ", lists:join("; ", [[integer_to_list(I), ". ", O] || {I, O} <- lists:zip(lists:seq(1, length(Opts)), Opts)]), "\n",
             "THE RIGHT OPTION: ", integer_to_list(A + 1), "\n",
             "THE STUDENT PICKED: ", integer_to_list(Pick + 1), "\n",
-            "THEIR REASON, IN THEIR OWN WORDS: ", Why, "\n\n",
+            "THEIR REASON, IN THEIR OWN WORDS: ", witness_text:data(Why), "\n\n",
             "Does the reason show they now apply the right principle (not luck, not the old way)? Judge the reasoning, not ",
             "the wording. Return JSON only: {\"understood\":true,\"why\":\"one sentence for the teacher\"}"]).
 

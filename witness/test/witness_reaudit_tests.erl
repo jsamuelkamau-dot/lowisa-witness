@@ -20,7 +20,7 @@ patterns_count_from_the_papers_not_the_model_test() ->
     ?assertEqual({error, no_patterns}, witness_patterns:parse(<<"no">>, items())),
     P = witness_patterns:prompt(#{title => <<"Fractions">>, level => <<"Year 7">>}, items()),
     ?assertEqual(P, unicode:characters_to_binary(P)),
-    [?assertNotEqual(nomatch, binary:match(P, X)) || X <- [<<"1. Amara, question 3 (Simplify 16/64; turned around since)">>, <<"3/4 ÷ 1/2"/utf8>>, <<"what to reteach tomorrow">>,
+    [?assertNotEqual(nomatch, binary:match(P, X)) || X <- [<<"1. <<<Amara>>>, question 3 (Simplify 16/64; turned around since)">>, <<"3/4 ÷ 1/2"/utf8>>, <<"what to reteach tomorrow">>,
                                                     %% 30 Oct rehearsal: three different reasons for one answer came back as one group
                                                     <<"never by the answer">>]],
     ?assertEqual({error, nothing_to_master}, witness_patterns:run(<<"k">>, #{}, [])).
@@ -34,7 +34,7 @@ recommendation_reads_every_piece_of_evidence_test() ->
                        thread => [#{from => student, text => <<"?">>}, #{from => teacher, text => <<"!">>}]}},
     P = witness_recommend:prompt(Q),
     [?assertNotEqual(nomatch, binary:match(P, X)) || X <- [<<"Simplify 16/64">>, <<"Common factors">>, <<"Fix the stock order: 5 of 6 right first time">>,
-                                                           <<"\"Divide by 16.\" (Lo judged it understood: names the factor)">>, <<"marked mastered, 2 of 2">>,
+                                                           <<"<<<Divide by 16.>>> (Lo judged it understood: names the factor)">>, <<"marked mastered, 2 of 2">>,
                                                            <<"EXPLAINED BACK TO THE TEACHER: not asked for">>, <<"QUESTIONS THE STUDENT ASKED: 1">>,
                                                            <<"A finished level alone is not proof">>]],
     ?assertEqual({ok, #{recommend => <<"not_yet">>, why => <<"w">>, missing => <<"m">>}},

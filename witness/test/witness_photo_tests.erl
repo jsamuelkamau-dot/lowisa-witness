@@ -47,6 +47,12 @@ setup() ->
 r(M, P, B, Uid) -> witness_api:route(M, P, B, Uid, ?MODULE).
 jpeg() -> base64:encode(<<255, 216, 255, "page">>).
 
+%% 31 Oct: a phone photographs with the exam's photographing code (the desk shows it), never the students' join code
+photo(Join) ->
+    {ok, #{owner := O, pile := P}} = load(<<"witness-codes">>, {code, Join}),
+    {ok, #{photo_code := C}} = load(O, {pile, P}),
+    C.
+
 exam() ->
     {201, #{id := Pile, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Maths Term Test">>,
         <<"questions">> => [#{<<"n">> => 1, <<"text">> => <<"3/4 ÷ 1/2"/utf8>>, <<"marks">> => 2}]}, <<"teacher">>),
@@ -62,7 +68,7 @@ photographed_paper_reaches_the_student_by_name_test() ->
     {ok, #{roster := Roster}} = load(<<"teacher">>, {pile, Pile}),
     ?assertEqual([<<"Amani Wanjiru">>, <<"Liam Chen">>], [maps:get(name, E) || E <- Roster]),
     %% the class phone (not the teacher's account) photographs a two-page paper
-    {201, #{id := Id, pages := 2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"kind">> => <<"photo">>, <<"pages">> => 2, <<"code">> => Code}, <<"school-phone">>),
+    {201, #{id := Id, pages := 2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"kind">> => <<"photo">>, <<"pages">> => 2, <<"code">> => photo(Code)}, <<"school-phone">>),
     {409, #{code := <<"pages_missing">>, missing := [1, 2]}} = r(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], #{}, <<"school-phone">>),
     {200, #{got := [1]}} = r(<<"POST">>, [<<"sitting">>, Id, <<"page">>], #{<<"n">> => 1, <<"mime">> => <<"image/jpeg">>, <<"file">> => jpeg()}, <<"school-phone">>),
     {409, #{missing := [2]}} = r(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], #{}, <<"school-phone">>),
@@ -143,11 +149,48 @@ an_unclear_name_waits_for_the_teacher_test() ->
     Id2 = photographed(Code, <<"teacher">>),
     {ok, #{name_match := <<"none">>}} = load(<<"teacher">>, {sitting, Id2}),
     {200, _} = r(<<"POST">>, [<<"join">>], #{<<"code">> => Code, <<"name">> => <<"Liam Chen">>}, <<"liam">>),
-    {ok, #{student_uid := <<"liam">>, name_match := <<"read">>}} = load(<<"teacher">>, {sitting, Id2}),
+    %% 31 Oct (judges' panel): someone who joins AFTER the paper was photographed is not linked on their own: the
+    %% teacher confirms (an impostor joining under a classmate's name gets nothing)
+    {ok, #{name_match := <<"confirm">>, candidates := [<<"liam">>]} = Waiting} = load(<<"teacher">>, {sitting, Id2}),
+    ?assertNot(maps:is_key(student_uid, Waiting)),
+    {200, _} = r(<<"POST">>, [<<"sitting">>, Id2, <<"student">>], #{<<"uid">> => <<"liam">>}, <<"teacher">>),
+    {ok, #{student_uid := <<"liam">>, name_match := <<"teacher">>}} = load(<<"teacher">>, {sitting, Id2}),
     _ = Pile.
 
+%% 31 Oct (judges' panel, confirmed by probes): an impostor who joins under a classmate's name after the photos gets
+%% nothing; the join code cannot photograph; the phone that photographed cannot read the student's recordings
+the_class_code_and_the_photographing_phone_open_nothing_else_test() ->
+    setup(),
+    {Pile, Code} = exam(),
+    {403, #{code := <<"photo_code">>}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"kind">> => <<"photo">>, <<"pages">> => 1, <<"code">> => Code}, <<"stud">>),
+    {404, #{code := <<"no_code">>}} = r(<<"POST">>, [<<"join">>], #{<<"code">> => photo(Code), <<"name">> => <<"X">>}, <<"stud">>),
+    {200, _} = r(<<"POST">>, [<<"join">>], #{<<"code">> => Code, <<"name">> => <<"Amani Wanjiru">>}, <<"amani">>),
+    Id = photographed(Code, <<"school-phone">>),
+    {ok, #{student_uid := <<"amani">>}} = load(<<"teacher">>, {sitting, Id}),
+    %% a classmate joining as Amani afterwards changes nothing
+    {200, _} = r(<<"POST">>, [<<"join">>], #{<<"code">> => Code, <<"name">> => <<"Amani Wanjiru">>}, <<"impostor">>),
+    {ok, #{student_uid := <<"amani">>}} = load(<<"teacher">>, {sitting, Id}),
+    {200, _} = r(<<"POST">>, [<<"pile">>, Pile, <<"release">>], #{}, <<"teacher">>),
+    {200, #{papers := []}} = r(<<"GET">>, [<<"mine">>], #{}, <<"impostor">>),
+    %% the photographing phone: no page, recording or record of a released paper
+    ok = put_asset(<<"teacher">>, <<Id/binary, "/answer-1.m4a">>, <<"a">>, <<"audio/mp4">>),
+    {404, _} = r(<<"GET">>, [<<"sitting">>, Id, <<"asset">>, <<"answer-1.m4a">>], #{}, <<"school-phone">>),
+    {404, _} = r(<<"GET">>, [<<"sitting">>, Id, <<"proof">>], #{}, <<"school-phone">>),
+    {200, #{url := _}} = r(<<"GET">>, [<<"sitting">>, Id, <<"asset">>, <<"answer-1.m4a">>], #{}, <<"amani">>),
+    {200, #{url := _}} = r(<<"GET">>, [<<"sitting">>, Id, <<"asset">>, <<"answer-1.m4a">>], #{}, <<"teacher">>),
+    %% the teacher hears the answer to Lo too (31 Oct: "diagnose-" was refused)
+    ok = put_asset(<<"teacher">>, <<Id/binary, "/diagnose-1-1.m4a">>, <<"a">>, <<"audio/mp4">>),
+    {200, #{url := _}} = r(<<"GET">>, [<<"sitting">>, Id, <<"asset">>, <<"diagnose-1-1.m4a">>], #{}, <<"teacher">>),
+    %% the teacher takes a name off the list: its paper waits for its name again
+    {200, _} = r(<<"POST">>, [<<"pile">>, Pile, <<"roster">>, <<"remove">>], #{<<"uid">> => <<"amani">>}, <<"teacher">>),
+    {ok, Row} = load(<<"teacher">>, {sitting, Id}),
+    ?assertNot(maps:is_key(student_uid, Row)),
+    %% and closes joining
+    {200, #{joining := <<"closed">>}} = r(<<"POST">>, [<<"pile">>, Pile, <<"joining">>], #{<<"open">> => false}, <<"teacher">>),
+    {409, #{code := <<"closed">>}} = r(<<"POST">>, [<<"join">>], #{<<"code">> => Code, <<"name">> => <<"Late">>}, <<"late">>).
+
 photographed(Code, By) ->
-    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"kind">> => <<"photo">>, <<"pages">> => 1, <<"code">> => Code}, By),
+    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"kind">> => <<"photo">>, <<"pages">> => 1, <<"code">> => photo(Code)}, By),
     {200, _} = r(<<"POST">>, [<<"sitting">>, Id, <<"page">>], #{<<"n">> => 1, <<"mime">> => <<"image/jpeg">>, <<"file">> => jpeg()}, By),
     {202, _} = r(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], #{}, By),
     Id.
@@ -155,10 +198,10 @@ photographed(Code, By) ->
 photo_refusals_test() ->
     setup(),
     {_, Code} = exam(),
-    {400, #{code := <<"bad_pages">>}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"kind">> => <<"photo">>, <<"pages">> => 0, <<"code">> => Code}, <<"p">>),
-    {400, #{code := <<"bad_pages">>}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"kind">> => <<"photo">>, <<"pages">> => 21, <<"code">> => Code}, <<"p">>),
+    {400, #{code := <<"bad_pages">>}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"kind">> => <<"photo">>, <<"pages">> => 0, <<"code">> => photo(Code)}, <<"p">>),
+    {400, #{code := <<"bad_pages">>}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"kind">> => <<"photo">>, <<"pages">> => 21, <<"code">> => photo(Code)}, <<"p">>),
     {404, #{code := <<"no_pile">>}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"kind">> => <<"photo">>, <<"pages">> => 1, <<"code">> => <<"NOPE00">>}, <<"p">>),
-    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"kind">> => <<"photo">>, <<"pages">> => 1, <<"code">> => Code}, <<"p">>),
+    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"kind">> => <<"photo">>, <<"pages">> => 1, <<"code">> => photo(Code)}, <<"p">>),
     {400, #{code := <<"bad_page">>}} = r(<<"POST">>, [<<"sitting">>, Id, <<"page">>], #{<<"n">> => 2, <<"file">> => jpeg()}, <<"p">>),
     {400, #{code := <<"bad_type">>}} = r(<<"POST">>, [<<"sitting">>, Id, <<"page">>], #{<<"n">> => 1, <<"mime">> => <<"application/pdf">>, <<"file">> => jpeg()}, <<"p">>),
     {400, #{code := <<"empty">>}} = r(<<"POST">>, [<<"sitting">>, Id, <<"page">>], #{<<"n">> => 1, <<"file">> => <<>>}, <<"p">>),
@@ -166,7 +209,7 @@ photo_refusals_test() ->
     {404, _} = r(<<"POST">>, [<<"sitting">>, Id, <<"page">>], #{<<"n">> => 1, <<"file">> => jpeg()}, <<"stranger">>),
     %% a practical is filmed, never photographed
     {201, #{code := PCode}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Titration">>, <<"kind">> => <<"practical">>}, <<"teacher">>),
-    {400, #{code := <<"practical">>}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"kind">> => <<"photo">>, <<"pages">> => 1, <<"code">> => PCode}, <<"p">>).
+    {400, #{code := <<"practical">>}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"kind">> => <<"photo">>, <<"pages">> => 1, <<"code">> => photo(PCode)}, <<"p">>).
 
 %% ---------------------------------------------------------------- names
 names_test() ->

@@ -25,7 +25,7 @@
 %%% saving and checking who may do what.
 %%%-------------------------------------------------------------------
 -module(witness_mastery).
--export([event/3, approve/2, ask/4, verify/2, explain/4, ask/3, reply/3, badge/3, view/2, needs/1, judge_prompt/2, judge/1, fresh_started/3, fresh_marked/3,
+-export([event/3, outline/1, check/1, approve/2, ask/4, verify/2, explain/4, ask/3, reply/3, badge/3, view/2, needs/1, judge_prompt/2, judge/1, fresh_started/3, fresh_marked/3,
          recommended/3]).
 
 -define(MAX_TEXT, 2000).
@@ -38,36 +38,51 @@ m(Q) -> maps:get(mastery, Q, #{status => <<"not_started">>}).
 put_m(Q, M) -> Q#{mastery => M}.
 
 %% The student's phone: the level was built (with its path on that phone) or played to the end.
+%% 31 Oct (judges' panel, confirmed with a forged request: "passes": true from a phone made a level ready with the
+%% teacher's preview off). The verdict and the outline are the server's own: witness_api reads the check the phone names
+%% (`check_id`), under that student, and passes its stored verdict and the outline Muse Wonder actually played as
+%% `check` and `level`. A level whose check never finished, failed, or is not this student's waits for the teacher.
 event(Q, <<"built">>, #{path := Path, at := At} = Ctx) ->
     M = maps:remove(check, m(Q)),
-    Check = case check(maps:get(check, Ctx, null)) of none -> #{}; C -> #{check => C} end,
+    Check = case maps:get(check, Ctx, none) of #{passes := P} = C when is_boolean(P) -> #{check => C}; _ -> #{} end,
     %% 28 Oct audit (the plan's step 4): the exam's teacher may look at each level first; then it waits, held.
     %% 30 Oct (judges' panel: a level that failed its self-check still reached the student): a level Muse Wonder did
     %% not pass, or never checked, waits for the teacher whatever the exam's setting; the teacher sees what it found.
     Passed = case Check of #{check := #{passes := true}} -> true; _ -> false end,
     Status = case maps:get(preview, Ctx, false) orelse not Passed of true -> keep(M, <<"held">>); false -> keep(M, <<"ready">>) end,
-    Level = case outline(maps:get(level, Ctx, null)) of none -> #{}; L -> #{level => L} end,
+    Level = case maps:get(level, Ctx, none) of #{title := _, lessons := _} = L -> #{level => L}; _ -> #{} end,
     put_m(Q, maps:merge(maps:merge(M#{status => Status, path => Path, built_ms => At}, Check), Level));
 %% 30 Oct (judges' panel: "completed" was the phone's word alone): a level counts as completed only once the server
-%% has seen each of its lessons finished (the `lesson` events), when it knows the level's lessons.
+%% has seen each of its lessons finished (the `lesson` events). 31 Oct: by title, every lesson of the outline the self-
+%% check played, not merely as many lesson events as it has lessons.
 event(Q, <<"completed">>, #{at := At}) ->
     M = m(Q),
-    Lessons = case maps:get(level, M, none) of #{lessons := Ls} -> length(Ls); _ -> 0 end,
-    Seen = length(lists:usort([T || #{title := T} <- maps:get(activity, M, [])])),
+    Want = case maps:get(level, M, none) of #{lessons := Ls} -> lists:usort([witness_mark:norm(T) || #{title := T} <- Ls]); _ -> [] end,
+    Seen = lists:usort([witness_mark:norm(T) || #{title := T} <- maps:get(activity, M, [])]),
     case maps:get(status, M) of
         S when S =:= <<"badge">> -> Q;
-        _ when Seen < Lessons -> {error, lessons_left};
-        _ -> put_m(Q, M#{status => <<"completed">>, completed_ms => At})
+        _ when Want =:= [] -> {error, lessons_left};
+        _ ->
+            case Want -- Seen of
+                [] -> put_m(Q, M#{status => <<"completed">>, completed_ms => At});
+                _ -> {error, lessons_left}
+            end
     end;
 %% 28 Oct re-audit (the plan's badge review: "the level activity and answers"): each lesson the student finishes in
-%% the level, with how many of its questions they had right first time. It never changes the level's state.
+%% the level, with how many of its questions they had right first time. It never changes the level's state. 31 Oct: only
+%% a lesson of this level's outline counts.
 event(Q, <<"lesson">>, #{at := At, lesson := #{} = L}) ->
+    M = m(Q),
+    Titles = case maps:get(level, M, none) of #{lessons := Ls} -> [witness_mark:norm(T) || #{title := T} <- Ls]; _ -> [] end,
     case clean(maps:get(<<"title">>, L, <<>>)) of
         <<>> -> {error, bad_event};
         Title ->
-            M = m(Q),
-            Entry = #{title => Title, right => count(maps:get(<<"right">>, L, null)), asked => count(maps:get(<<"asked">>, L, null)), at => At},
-            put_m(Q, M#{activity => lists:sublist(maps:get(activity, M, []) ++ [Entry], ?MAX_ACTIVITY)})
+            case lists:member(witness_mark:norm(Title), Titles) of
+                false -> {error, not_in_level};
+                true ->
+                    Entry = #{title => Title, right => count(maps:get(<<"right">>, L, null)), asked => count(maps:get(<<"asked">>, L, null)), at => At},
+                    put_m(Q, M#{activity => lists:sublist(maps:get(activity, M, []) ++ [Entry], ?MAX_ACTIVITY)})
+            end
     end;
 event(_, _, _) -> {error, bad_event}.
 
@@ -82,20 +97,20 @@ approve(Q, At) ->
         _ -> {error, not_held}
     end.
 
-%% What the teacher reads of a level: its title and each lesson with its steps (short, capped).
-outline(#{<<"title">> := T, <<"lessons">> := Ls}) when is_binary(T), is_list(Ls) ->
-    #{title => clean(T), lessons => [#{title => clean(maps:get(<<"title">>, L, <<>>)),
-                                       beats => [clean(B) || B <- lists:sublist(listy(maps:get(<<"beats">>, L, [])), 8), is_binary(B)]}
+%% What the teacher reads of a level, from the outline the self-check played (witness_api's check row): its title and
+%% each lesson with its steps (short, capped).
+outline(#{title := T, lessons := Ls}) when is_binary(T), is_list(Ls) ->
+    #{title => clean(T), lessons => [#{title => clean(maps:get(title, L, <<>>)),
+                                       beats => [clean(B) || B <- lists:sublist(maps:get(beats, L, []), 8), is_binary(B)]}
                                      || L <- lists:sublist(Ls, 5), is_map(L)]};
 outline(_) -> none.
 
-%% the phone's verdict on the level it kept: passes, and what Wonder still found (a few short lines)
-check(#{<<"passes">> := P} = C) when is_boolean(P) ->
-    Problems = [clean(X) || X <- lists:sublist(listy(maps:get(<<"problems">>, C, [])), 6), is_binary(X)],
-    #{passes => P, problems => [X || X <- Problems, X =/= <<>>]};
+%% The stored verdict as the teacher reads it: passes, what Wonder still found, its two plays and any false claim.
+check(#{passes := P} = V) when is_boolean(P) ->
+    Problems = [case X of #{fix := F, lesson := N} when is_integer(N) -> <<"lesson ", (integer_to_binary(N))/binary, ": ", F/binary>>;
+                          #{fix := F} -> F end || X <- lists:sublist(maps:get(problems, V, []), 6), is_map(X)],
+    maps:merge(#{passes => P, problems => [clean(X) || X <- Problems, X =/= <<>>]}, maps:with([plays, false_claims, why], V));
 check(_) -> none.
-listy(L) when is_list(L) -> L;
-listy(_) -> [].
 
 %% a level built again never takes back a badge or a completion
 keep(#{status := S}, _) when S =:= <<"completed">>; S =:= <<"badge">>; S =:= <<"not_yet">> -> S;
@@ -166,15 +181,20 @@ say(Q, Who, Text0, At) ->
 %% The teacher issues the badge (or not yet, with a note): only for a question that was to master. 29 Oct (owner): the
 %% badge replaces a level's certificate, so it is issued only once the student completed the level (every lesson's
 %% questions and its flashcards, the checkpoint the app holds before a level counts as done); the game is optional.
-badge(Q, Issue, #{note := Note0, at := At}) ->
+badge(Q, Issue, #{note := Note0, at := At} = Ctx) ->
     case {needs(Q), Issue =:= true andalso not is_map_key(completed_ms, m(Q))} of
         {false, _} -> {error, not_to_master};
         {_, true} -> {error, not_completed};
         {true, false} ->
             Note = clean(Note0),
             M = m(Q),
-            put_m(Q, M#{status => case Issue of true -> <<"badge">>; false -> <<"not_yet">> end,
-                        badge => #{issued => Issue =:= true, note => Note, at => At}})
+            Q1 = put_m(Q, M#{status => case Issue of true -> <<"badge">>; false -> <<"not_yet">> end,
+                             badge => #{issued => Issue =:= true, note => Note, at => At}}),
+            %% 31 Oct (judges' panel): the badge starts the re-check clock (witness_recheck)
+            case Issue of
+                true -> witness_recheck:schedule(Q1, At, maps:get(recheck_days, Ctx, 7));
+                false -> Q1
+            end
     end.
 
 %% Muse Spark's recommendation for the teacher's decision (witness_recommend), kept with when it was made.
@@ -191,15 +211,17 @@ view(Q, student) ->
         _ -> #{}
     end,
     Fresh = case M of #{fresh := #{status := FS}} -> #{fresh => #{status => FS}}; _ -> #{} end,     %% the marks are the teacher's to give
-    maps:merge(maps:merge(maps:merge((maps:with([status, path, asks, thread, badge, world], M))#{explained => maps:keys(Explain)}, LoNext), Fresh),
-               witness_challenge:view(M)).
+    maps:merge(maps:merge(maps:merge(maps:merge((maps:with([status, path, asks, thread, badge, world], M))#{explained => maps:keys(Explain)}, LoNext), Fresh),
+                          witness_challenge:view(M)),
+               witness_recheck:view(M)).
 
 %% Spark judges an explanation back to Lo against the diagnosis: the idea in the student's own words, not the lesson's.
 judge_prompt(Q, Text) ->
     unicode:characters_to_binary([
         "A student explains, in their own words, the idea they got wrong on an exam question, after a lesson on it.\n",
+        witness_text:rule(),
         "THE MISCONCEPTION THEY HAD: ", str(maps:get(diagnosis, Q, <<>>)), "\n",
-        "THEIR EXPLANATION: ", Text, "\n\n",
+        "THEIR EXPLANATION: ", witness_text:data(Text), "\n\n",
         "Does the explanation show they now understand the right idea and why their first way was wrong? Repeating words ",
         "without the reason is not enough. Return JSON only: {\"understood\":true,\"why\":\"one sentence\",",
         "\"next\":\"one question Lo should ask next if not understood, else empty\"}"]).

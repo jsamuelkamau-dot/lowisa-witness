@@ -12,7 +12,7 @@
 %%%-------------------------------------------------------------------
 -module(witness_host).
 
--type key() :: {pile | sitting | mine | code | check, binary()}.
+-type key() :: {pile | sitting | mine | code | check | mark_cache, binary()}.
 -export_type([key/0]).
 
 %% Meta Model API key, or undefined when Witness is not configured.
@@ -27,7 +27,7 @@
 %% The caller's rows.
 -callback save(Uid :: binary(), Key :: key(), Row :: map()) -> ok.
 -callback load(Uid :: binary(), Key :: key()) -> {ok, map()} | none.
--callback list(Uid :: binary(), Kind :: pile | sitting | mine) -> [{Id :: binary(), Row :: map()}].
+-callback list(Uid :: binary(), Kind :: pile | sitting | mine | check | mark_cache) -> [{Id :: binary(), Row :: map()}].
 %% What a sitting cost, in US dollars, for the host to charge or log.
 -callback spend(Uid :: binary(), Feature :: binary(), Usd :: float()) -> ok.
 %% One design call of a mastery level (Muse Spark), paid by the learner the host's own way; {gate, ...} is its wall.
@@ -54,4 +54,10 @@
 -callback drop_asset(Uid :: binary(), Name :: binary()) -> ok.
 %% The store's fingerprint of a clip (its ETag): the same video marked again for the same exam reuses its marking.
 -callback clip_tag(Uid :: binary(), Id :: binary()) -> {ok, binary()} | {error, term()}.
--optional_callbacks([open_engine/0, report/2, parts_start/3, part_url/4, parts_done/3, parts_finish/4, clip_tag/2, delete/2, drop_asset/2]).
+%% 31 Oct (judges' panel: lost updates, and a paper deleted while it was being marked came back): one row changed in
+%% place. Fun gets the row as stored now ({ok, Row}, or none when there is none) and returns the row to keep, or `stop`
+%% to leave it as it is. The host writes only if nobody wrote the row in between, and otherwise calls Fun again with
+%% what is there now. Optional: without it Witness reads, changes and saves.
+-callback update(Uid :: binary(), Key :: key(), Fun :: fun(({ok, map()} | none) -> map() | stop)) -> {ok, map()} | stop.
+-optional_callbacks([open_engine/0, report/2, parts_start/3, part_url/4, parts_done/3, parts_finish/4, clip_tag/2, delete/2, drop_asset/2,
+                     update/3]).

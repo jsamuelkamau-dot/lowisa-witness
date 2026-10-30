@@ -31,7 +31,7 @@ prompt(Q) ->
     end,
     unicode:characters_to_binary([
         "You help a teacher decide whether a student has turned around one exam question they did not master. The teacher ",
-        "decides; you recommend, from the evidence only.\n\n",
+        "decides; you recommend, from the evidence only.\n", witness_text:rule(), "\n",
         "THE QUESTION: ", str(maps:get(question, Q, maps:get(text, Q, <<>>))), "\n",
         "WHAT WENT WRONG IN THE EXAM: ", str(maps:get(diagnosis, Q, <<>>)), "\n",
         case maps:get(fingerprint, Q, null) of
@@ -54,7 +54,7 @@ prompt(Q) ->
 explained(undefined, true, _) -> "asked for, not done yet";
 explained(undefined, _, _) -> "not asked for";
 explained(#{text := T} = E, _, Lo) ->
-    [$", T, $", case {Lo, maps:get(verdict, E, undefined)} of
+    [witness_text:data(T), case {Lo, maps:get(verdict, E, undefined)} of
                     {true, #{understood := U, why := W}} -> [" (Lo judged it ", case U of true -> "understood"; false -> "not yet understood" end, ": ", str(W), ")"];
                     _ -> ""
                 end].

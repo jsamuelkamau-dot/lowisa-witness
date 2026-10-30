@@ -13,13 +13,13 @@
 %%%   request(Model, Prompt, Frames, Fps) -> map()   (pure, for tests)
 %%%-------------------------------------------------------------------
 -module(witness_open).
--export([mark/3, request/4]).
+-export([mark/3, request/4, read_content/3, content_request/3, price_of/1]).
 
 -define(FPS, 1).
 -define(MAX_FRAMES, 120).
 -define(TIMEOUT_MS, 300000).
 
-mark(#{url := Base, key := Key, model := Model}, #{url := Clip}, Sitting) ->
+mark(#{url := Base, key := Key, model := Model} = Cfg, #{url := Clip}, Sitting) ->
     case witness_media:frames(Clip, ?FPS, ?MAX_FRAMES) of
         {ok, []} -> {error, no_frames};
         {ok, Frames0} ->
@@ -31,7 +31,7 @@ mark(#{url := Base, key := Key, model := Model}, #{url := Clip}, Sitting) ->
                     case witness_mark:parse(Text) of
                         {ok, #{questions := Qs, pauses := Ps} = M} ->
                             {ok, #{questions => witness_mark:fit(Qs, Sitting), pauses => Ps, returns => maps:get(returns, M, []), lines => [], frames => length(Frames), engine => Model,
-                                   cost_usd => witness_meta:cost({tokens, Model}, maps:get(<<"usage">>, R, #{}))}};
+                                   cost_usd => witness_meta:cost(price_of(Cfg), maps:get(<<"usage">>, R, #{}))}};
                         E -> E
                     end;
                 {ok, Other} -> {error, {no_choice, maps:keys(Other)}};
@@ -39,6 +39,26 @@ mark(#{url := Base, key := Key, model := Model}, #{url := Clip}, Sitting) ->
             end;
         E -> E
     end.
+
+%% 31 Oct (judges' panel: only desk video could go to open weights; the photographed paper, the film's own path, could
+%% not): one reading of a photographed paper's content (witness_photo's labelled pages) through the same endpoint, so
+%% witness_photo:mark/4 reads, rereads and places lines exactly as it does on the Meta Model API.
+%%   read_content(Cfg, Content, Effort) -> {ok, Text, Usage}
+read_content(#{url := Base, key := Key, model := Model}, Content, Effort) ->
+    Body = iolist_to_binary(json:encode(content_request(Model, Content, Effort))),
+    case post(Base, Key, Body) of
+        {ok, #{<<"choices">> := [#{<<"message">> := #{<<"content">> := Text}} | _]} = R} -> {ok, Text, maps:get(<<"usage">>, R, #{})};
+        {ok, Other} -> {error, {no_choice, maps:keys(Other)}};
+        E -> E
+    end.
+
+%% The Responses-style parts witness_photo builds, as chat-completion parts (pure, for tests).
+content_request(Model, Content, Effort) ->
+    Parts = [case P of
+                 #{type := input_text, text := T} -> #{type => text, text => T};
+                 #{type := input_image, image_url := U} -> #{type => image_url, image_url => #{url => U}}
+             end || P <- Content],
+    #{model => Model, max_completion_tokens => 16000, reasoning_effort => Effort, messages => [#{role => user, content => Parts}]}.
 
 request(Model, Prompt, Frames, Fps) ->
     Label = fun({last, _}, _) -> <<"the last frame: the finished work">>;
@@ -59,6 +79,10 @@ post(Base, Key, Body) ->
         {ok, {{_, C, _}, _, Resp}} -> {error, {C, binary:part(Resp, 0, min(300, byte_size(Resp)))}};
         {error, R} -> {error, R}
     end.
+
+%% what the host pays its endpoint, per million tokens (in, out); nothing named, nothing counted
+price_of(#{price := {In, Out}}) when is_number(In), is_number(Out) -> {price, {In, Out}};
+price_of(_) -> {price, {0.0, 0.0}}.
 
 str(B) when is_binary(B) -> binary_to_list(B);
 str(L) when is_list(L) -> L.

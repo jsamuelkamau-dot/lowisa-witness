@@ -4,7 +4,9 @@
 -export([meta_key/0, put_url/4, get_url/2, drop_clip/2, save/3, load/2, list/2, spend/3, run/1, marker/0, checker/0, design/2, judger/0,
          put_asset/4, asset_url/2, stiller/0, examiner/0, answer_judge/0, drawer/0, hearer/0, open_engine/0, open_marker/0, retry_waits/0, cropper/0, painter/0, parts_start/3, part_url/4, parts_done/3, parts_finish/4,
          reader/0, patterner/0, recommender/0, clipper/0, clip_tag/2, suggester/0, challenge_judger/0, fingerprinter/0,
-         delete/2, drop_asset/2]).
+         delete/2, drop_asset/2, update/3, guard/0, rechecker/0, recheck_judger/0]).
+-export([events/0, setup/0]).
+
 
 %% An in-memory host: rows and events in an ets table, marking run at once, a canned marker.
 meta_key() -> <<"test-key">>.
@@ -12,6 +14,10 @@ put_url(Uid, Id, Mime, Size) -> ev({put, Uid, Id, Mime, Size}), {ok, <<"https://
 get_url(_Uid, Id) -> {ok, <<"https://store.example.com/", Id/binary, "?signed">>}.
 drop_clip(Uid, Id) -> ev({drop, Uid, Id}), ok.
 save(Uid, Key, Row) -> ets:insert(witness_api_t, {{row, Uid, Key}, Row}), ok.
+%% the conditional write: one change to a row at a time (two at once both land)
+update(Uid, Key, F) ->
+    global:trans({{witness_api_t_lock, Uid, Key}, self()}, fun() -> case F(load(Uid, Key)) of stop -> stop; Row -> save(Uid, Key, Row), {ok, Row} end end).
+guard() -> fun(<<"test-key">>, Text) -> ev({guarded, Text}), case binary:match(Text, <<"UNSAFE">>) of nomatch -> {ok, 0.0001}; _ -> {unsafe, <<"not a lesson">>, 0.0001} end end.
 load(Uid, Key) -> case ets:lookup(witness_api_t, {row, Uid, Key}) of [{_, R}] -> {ok, R}; [] -> none end.
 list(Uid, Kind) -> [{Id, R} || {{row, U, {K, Id}}, R} <- ets:tab2list(witness_api_t), U =:= Uid, K =:= Kind].
 spend(Uid, F, Usd) -> ev({spend, Uid, F, Usd}), ok.
@@ -26,6 +32,8 @@ parts_arrived(Id, Ns) -> [ets:insert(witness_api_t, {{arrived, Id, N}}) || N <- 
 marker() ->
     fun(<<"test-key">>, #{url := Url, fps := Fps}, Sitting) ->
         ev({marked, Url, Fps, Sitting}),
+        %% a test may act while the marking is under way (31 Oct: the teacher deletes the paper meanwhile)
+        case persistent_term:get(witness_api_during, none) of none -> ok; During -> During() end,
         case persistent_term:get(witness_api_fail, false) of
             true -> {error, boom};
             {unreadable, _} = U -> {error, U};
@@ -41,17 +49,32 @@ marker() ->
     end.
 
 design(<<"broke">>, _) -> {gate, 402, #{success => false, code => <<"credits_exhausted">>}};
-design(Uid, Req) -> ev({design, Uid, Req}), {ok, <<"{\"title\":\"Common factors\"}">>}.
+design(Uid, Req) -> ev({design, Uid, Req}), {ok, persistent_term:get(witness_api_design_text, <<"{\"title\":\"Common factors\"}">>)}.
 
 judger() ->
     fun(<<"test-key">>, #{n := N}, Text) -> ev({judged, N, Text}), {ok, #{understood => binary:match(Text, <<"factor">>) =/= nomatch, why => <<"w">>, next => <<"n">>}} end.
 
+rechecker() -> fun(<<"test-key">>, Q) -> ev({recheck_written, maps:get(question, Q, none)}),
+                   {ok, #{q => <<"After a 20% rise a jacket costs $60. What did it cost before?">>, answer => 50, unit => <<"$">>, working => <<"60 / 1.2">>}, 0.003} end.
+recheck_judger() -> fun(<<"test-key">>, _Q, {V, W}) -> ev({recheck_judged, V, W}), {ok, #{understood => binary:match(W, <<"1.2">>) =/= nomatch, why => <<"w">>}, 0.001} end.
 checker() ->
     fun(<<"test-key">>, In) ->
         ev({checked, In}),
-        {ok, #{passes => false, caught => false, cleared => true, on_idea => true, why => <<"the checks let digit-cancelling pass">>,
-               problems => [#{lesson => 3, fix => <<"use 19/95, where cancelling the 9s gives 1/5, not 1/5... make it fail">>}]}, 0.04}
+        Passes = persistent_term:get(witness_api_check_passes, false),
+        {ok, #{passes => Passes, caught => Passes, cleared => true, on_idea => true, why => <<"the checks let digit-cancelling pass">>,
+               plays => #{holds => [#{lesson => 2, check => <<"Simplify 19/95">>, answered => <<"1/5">>, right => false}], knows => []},
+               false_claims => [],
+               problems => case Passes of true -> []; false -> [#{lesson => 3, fix => <<"use 19/95, where cancelling the 9s gives 1/5, not 1/5... make it fail">>}] end}, 0.04}
     end.
+
+%% 31 Oct: a level is built as the phone builds it now: its self-check through the route, for the student's own
+%% question, then the built event naming that check (the server uses its own verdict and outline).
+build_level(S, N, Who, Passes, Lessons) ->
+    persistent_term:put(witness_api_check_passes, Passes),
+    Level = #{<<"title">> => <<"Common factors">>, <<"lessons">> => [#{<<"title">> => T, <<"beats">> => [<<"b">>]} || T <- Lessons]},
+    {202, #{id := C}} = r(<<"POST">>, [<<"check">>], #{<<"question">> => <<"q">>, <<"working">> => <<"w">>, <<"diagnosis">> => <<"d">>,
+                                                      <<"level">> => Level, <<"for">> => #{<<"sitting">> => S, <<"n">> => N}}, Who),
+    r(<<"POST">>, [<<"mastery">>, S, integer_to_binary(N), <<"event">>], #{<<"event">> => <<"built">>, <<"path">> => <<"custom-topic-x">>, <<"check_id">> => C}, Who).
 
 put_asset(Uid, Name, Bytes, Mime) -> ets:insert(witness_api_t, {{asset, Uid, Name}, {Bytes, Mime}}), ok.
 delete(Uid, Key) -> ets:delete(witness_api_t, {row, Uid, Key}), ok.
@@ -101,7 +124,9 @@ ev(E) -> ets:insert(witness_api_t, {erlang:unique_integer([monotonic]), E}).
 events() -> [E || {K, E} <- lists:sort(ets:tab2list(witness_api_t)), is_integer(K)].
 
 setup() -> case ets:whereis(witness_api_t) of undefined -> ok; _ -> ets:delete(witness_api_t) end, ets:new(witness_api_t, [named_table, public]), persistent_term:put(witness_api_fail, false), persistent_term:erase(witness_api_result),
-           [persistent_term:erase({witness_api_on, K}) || K <- [stills, examiner, open, world, clips, cache]], persistent_term:erase(witness_api_exbusy).
+           [persistent_term:erase({witness_api_on, K}) || K <- [stills, examiner, open, world, clips, cache]], persistent_term:erase(witness_api_exbusy),
+           persistent_term:erase(witness_api_check_passes), persistent_term:erase(witness_api_design_text),
+           persistent_term:erase(witness_api_during).
 
 r(M, P, B, Uid) -> witness_api:route(M, P, B, Uid, ?MODULE).
 
@@ -231,14 +256,20 @@ join_code_puts_the_students_paper_in_the_teachers_pile_test() ->
 
 self_check_runs_off_the_request_test() ->
     setup(),
-    ?assertMatch({400, #{code := <<"no_level">>}}, r(<<"POST">>, [<<"check">>], #{}, <<"stud">>)),
+    {_P, S} = released_paper(#{questions => [q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
+    For = #{<<"sitting">> => S, <<"n">> => 3},
+    ?assertMatch({400, #{code := <<"no_level">>}}, r(<<"POST">>, [<<"check">>], #{<<"for">> => For}, <<"stud">>)),
     Body = #{<<"question">> => <<"Simplify 16/64">>, <<"working">> => <<"16/64 = 1/4">>, <<"diagnosis">> => <<"Cancelled the 6s.">>,
-             <<"focus">> => <<"football">>,
+             <<"focus">> => <<"football">>, <<"for">> => For,
              <<"level">> => #{<<"title">> => <<"Common factors">>, <<"lessons">> => [#{<<"title">> => <<"Your step, at the stadium">>, <<"beats">> => [<<"a">>, 7, <<"b">>]}]}},
+    %% 31 Oct: only for the caller's own level (not another account's paper, not without one)
+    ?assertMatch({403, #{code := <<"not_a_level">>}}, r(<<"POST">>, [<<"check">>], maps:remove(<<"for">>, Body), <<"stud">>)),
+    ?assertMatch({403, #{code := <<"not_a_level">>}}, r(<<"POST">>, [<<"check">>], Body, <<"other">>)),
     {202, #{id := Id, status := <<"checking">>}} = r(<<"POST">>, [<<"check">>], Body, <<"stud">>),
     [{checked, In}] = [E || E = {checked, _} <- events()],
     ?assertMatch(#{diagnosis := <<"Cancelled the 6s.">>, focus := <<"football">>, level := #{lessons := [#{beats := [<<"a">>, <<"b">>]}]}}, In),
-    ?assertMatch({200, #{status := <<"done">>, verdict := #{passes := false, problems := [#{lesson := 3}]}}}, r(<<"GET">>, [<<"check">>, Id], #{}, <<"stud">>)),
+    ?assertMatch({200, #{status := <<"done">>, verdict := #{passes := false, problems := [#{lesson := 3}], plays := #{holds := [#{right := false}]}}}},
+                 r(<<"GET">>, [<<"check">>, Id], #{}, <<"stud">>)),
     ?assert(lists:member({spend, <<"stud">>, <<"witness_check">>, 0.04}, events())),
     ?assertMatch({404, _}, r(<<"GET">>, [<<"check">>, Id], #{}, <<"other">>)).
 
@@ -281,9 +312,11 @@ the_badge_review_has_the_activity_the_recording_and_a_recommendation_test() ->
     setup(),
     {P, S} = released_paper(#{questions => [q(1, <<"mastered">>, 0.9), q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
     M = fun(Who, Action, Body) -> r(<<"POST">>, [<<"mastery">>, S, <<"3">>, Action], Body, Who) end,
-    {200, _} = M(<<"stud">>, <<"event">>, #{<<"event">> => <<"built">>, <<"path">> => <<"p1">>}),
+    {200, _} = build_level(S, 3, <<"stud">>, true, [<<"Price the boots sale">>]),
     {200, _} = M(<<"stud">>, <<"event">>, #{<<"event">> => <<"lesson">>, <<"lesson">> => #{<<"title">> => <<"Price the boots sale">>, <<"right">> => 5, <<"asked">> => 6}}),
     ?assertMatch({400, _}, M(<<"stud">>, <<"event">>, #{<<"event">> => <<"lesson">>, <<"lesson">> => #{}})),
+    %% 31 Oct: only a lesson of the level the self-check played counts
+    ?assertMatch({400, #{code := <<"not_in_level">>}}, M(<<"stud">>, <<"event">>, #{<<"event">> => <<"lesson">>, <<"lesson">> => #{<<"title">> => <<"Something else">>}})),
     {200, _} = M(<<"teacher">>, <<"verify">>, #{<<"lo">> => true, <<"teacher">> => true}),
     %% out loud to Lo: Voice Transcribe writes it, Spark judges it, the recording is kept for the teacher
     {200, #{mastery := StudentView}} = M(<<"stud">>, <<"explain">>, #{<<"to">> => <<"lo">>, <<"audio">> => base64:encode(<<"audio-bytes">>), <<"mime">> => <<"audio/mp4">>}),
@@ -358,12 +391,20 @@ a_levels_design_calls_are_paid_by_the_exams_teacher_test() ->
     {_P, S} = released_paper(#{questions => [q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
     B = #{<<"requestId">> => <<"mob-1">>, <<"messages">> => [#{<<"role">> => <<"user">>, <<"content">> => <<"One level">>}]},
     {200, _} = r(<<"POST">>, [<<"design">>], B#{<<"for">> => #{<<"sitting">> => S, <<"n">> => 3}}, <<"stud">>),
-    {200, _} = r(<<"POST">>, [<<"design">>], B#{<<"for">> => #{<<"sitting">> => S, <<"n">> => 3}}, <<"other">>),
-    {200, _} = r(<<"POST">>, [<<"design">>], B, <<"stud">>),
-    ?assertEqual([<<"teacher">>, <<"other">>, <<"stud">>], [U || {design, U, _} <- events()]),
+    %% 31 Oct (judges' panel): never for someone else's paper, a question mastered already, or with no paper named
+    ?assertMatch({403, #{code := <<"not_a_level">>}}, r(<<"POST">>, [<<"design">>], B#{<<"for">> => #{<<"sitting">> => S, <<"n">> => 3}}, <<"other">>)),
+    ?assertMatch({403, #{code := <<"not_a_level">>}}, r(<<"POST">>, [<<"design">>], B#{<<"for">> => #{<<"sitting">> => S, <<"n">> => 1}}, <<"stud">>)),
+    ?assertMatch({403, #{code := <<"not_a_level">>}}, r(<<"POST">>, [<<"design">>], B, <<"stud">>)),
+    ?assertEqual([<<"teacher">>], [U || {design, U, _} <- events()]),
+    %% the server's own first instruction keeps the call on this level's idea
+    [{design, _, #{messages := [#{role := <<"system">>, content := Scope} | _]}}] = [E || E = {design, _, _} <- events()],
+    ?assertNotEqual(nomatch, binary:match(Scope, <<"THE IDEA TO REPAIR: d">>)),
     %% a teacher out of credits: the student is told it is the teacher's, not shown their own credit wall
     {201, #{code := Code2}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Broke class">>}, <<"broke">>),
+    persistent_term:put(witness_api_result, #{questions => [q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
     {201, #{id := S2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code2, <<"student">> => <<"Amara">>}, <<"stud">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S2, <<"mark">>], #{}, <<"stud">>),
+    {200, _} = r(<<"POST">>, [<<"pile">>, maps:get(pile, element(2, load(<<"broke">>, {sitting, S2}))), <<"release">>], #{}, <<"broke">>),
     ?assertMatch({409, #{code := <<"teacher_credits">>}}, r(<<"POST">>, [<<"design">>], B#{<<"for">> => #{<<"sitting">> => S2, <<"n">> => 3}}, <<"stud">>)).
 
 %% 28 Oct, live: a teacher sitting their own exam on one account was refused every student step ("That isn't yours")
@@ -375,7 +416,10 @@ a_teacher_sitting_their_own_exam_plays_both_sides_test() ->
     {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"teacher">>),
     {200, _} = r(<<"POST">>, [<<"pile">>, maps:get(pile, element(2, load(<<"teacher">>, {sitting, S}))), <<"release">>], #{}, <<"teacher">>),
     M = fun(Action, Body) -> r(<<"POST">>, [<<"mastery">>, S, <<"3">>, Action], Body, <<"teacher">>) end,
-    {200, #{mastery := #{status := <<"ready">>}}} = M(<<"event">>, #{<<"event">> => <<"built">>, <<"path">> => <<"custom-topic-me">>, <<"check">> => #{<<"passes">> => true}}),
+    {200, #{mastery := #{status := <<"ready">>}}} = build_level(S, 3, <<"teacher">>, true, [<<"L1">>]),
+    %% 31 Oct (judges' panel, confirmed): the phone's own "passes" is not the verdict; a level built naming no check waits
+    {200, #{mastery := #{status := <<"held">>}}} = M(<<"event">>, #{<<"event">> => <<"built">>, <<"path">> => <<"p">>, <<"check">> => #{<<"passes">> => true}}),
+    {200, #{mastery := #{status := <<"ready">>}}} = M(<<"approve">>, #{}),
     {200, #{mastery := #{thread := [#{from := student}]}}} = M(<<"ask">>, #{<<"text">> => <<"Why?">>, <<"where">> => <<"Lesson 1">>}),
     %% the teacher's own steps stay the teacher's
     {200, #{mastery := #{thread := [_, #{from := teacher}]}}} = M(<<"reply">>, #{<<"text">> => <<"Because.">>}),
@@ -385,22 +429,40 @@ a_teacher_sitting_their_own_exam_plays_both_sides_test() ->
 
 design_door_passes_one_call_and_the_wall_test() ->
     setup(),
+    {_P, S} = released_paper(#{questions => [q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
     B = #{<<"requestId">> => <<"mob-course-1-s">>, <<"reasoningEffort">> => <<"medium">>, <<"maxOutputTokens">> => 12000,
+          <<"for">> => #{<<"sitting">> => S, <<"n">> => 3},
           <<"messages">> => [#{<<"role">> => <<"system">>, <<"content">> => <<"Design.">>}, #{<<"role">> => <<"user">>, <<"content">> => <<"One level">>},
                              #{<<"role">> => <<"assistant">>, <<"content">> => <<"dropped">>}]},
     ?assertMatch({200, #{success := true, text := <<"{\"title\":\"Common factors\"}">>}}, r(<<"POST">>, [<<"design">>], B, <<"stud">>)),
-    [{design, <<"stud">>, Req}] = [E || E = {design, _, _} <- events()],
+    [{design, <<"teacher">>, Req}] = [E || E = {design, _, _} <- events()],
+    %% the server's scope first, then the level's own system and user messages (an assistant turn is dropped)
     ?assertMatch(#{request_id := <<"mob-course-1-s">>, effort := <<"medium">>, max_tokens := 12000,
-                   messages := [#{role := <<"system">>}, #{role := <<"user">>}]}, Req),
-    %% the learner with no credits meets the host's own wall, as from any paid call
-    ?assertMatch({402, #{code := <<"credits_exhausted">>}}, r(<<"POST">>, [<<"design">>], B, <<"broke">>)),
+                   messages := [#{role := <<"system">>}, #{role := <<"system">>, content := <<"Design.">>}, #{role := <<"user">>}]}, Req),
     ?assertMatch({400, _}, r(<<"POST">>, [<<"design">>], #{}, <<"stud">>)),
     %% an unknown effort or size falls back to the safe ones
     {200, _} = r(<<"POST">>, [<<"design">>], B#{<<"reasoningEffort">> => <<"max">>, <<"maxOutputTokens">> => 999999}, <<"stud">>),
     ?assertMatch([_, {design, _, #{effort := <<"low">>, max_tokens := 8000, reply := json}}], [E || E = {design, _, _} <- events()]),
-    %% Lo's live teaching turn on a mastery level asks for words, not JSON
-    {200, _} = r(<<"POST">>, [<<"design">>], B#{<<"reply">> => <<"text">>}, <<"stud">>),
-    ?assertMatch(#{reply := text}, lists:last([R || {design, _, R} <- events()])).
+    %% Lo's live teaching turn asks for words, not JSON, and is read for safety before it reaches the student
+    {200, #{text := <<"{\"title\":\"Common factors\"}">>}} = r(<<"POST">>, [<<"design">>], B#{<<"reply">> => <<"text">>}, <<"stud">>),
+    ?assertMatch(#{reply := text}, lists:last([R || {design, _, R} <- events()])),
+    ?assertMatch([{guarded, _}], [E || E = {guarded, _} <- events()]),
+    %% a teacher who sits their own exam pays from their own wallet, and meets the host's own wall
+    {201, #{code := C2}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Own">>}, <<"broke">>),
+    {201, #{id := S2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => C2, <<"student">> => <<"Me">>}, <<"broke">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S2, <<"mark">>], #{}, <<"broke">>),
+    {200, _} = r(<<"POST">>, [<<"pile">>, maps:get(pile, element(2, load(<<"broke">>, {sitting, S2}))), <<"release">>], #{}, <<"broke">>),
+    ?assertMatch({402, #{code := <<"credits_exhausted">>}}, r(<<"POST">>, [<<"design">>], B#{<<"for">> => #{<<"sitting">> => S2, <<"n">> => 3}}, <<"broke">>)).
+
+%% 31 Oct (judges' panel): a turn the guard finds unsafe never reaches the student
+an_unsafe_turn_is_replaced_before_it_reaches_the_student_test() ->
+    setup(),
+    {_P, S} = released_paper(#{questions => [q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
+    persistent_term:put(witness_api_design_text, <<"UNSAFE words">>),
+    B = #{<<"requestId">> => <<"t">>, <<"reply">> => <<"text">>, <<"for">> => #{<<"sitting">> => S, <<"n">> => 3},
+          <<"messages">> => [#{<<"role">> => <<"user">>, <<"content">> => <<"say something">>}]},
+    ?assertMatch({200, #{text := <<"Let's keep to your level.", _/binary>>, guarded := true}}, r(<<"POST">>, [<<"design">>], B, <<"stud">>)),
+    persistent_term:erase(witness_api_design_text).
 
 after_release_the_teacher_chooses_and_issues_the_badge_test() ->
     setup(),
@@ -414,8 +476,7 @@ after_release_the_teacher_chooses_and_issues_the_badge_test() ->
     ?assertMatch({404, _}, M(<<"other">>, 3, <<"ask">>, #{<<"text">> => <<"hi">>})),
     {200, _} = r(<<"POST">>, [<<"pile">>, maps:get(pile, element(2, load(<<"teacher">>, {sitting, S}))), <<"release">>], #{}, <<"teacher">>),
     %% the student builds and plays the level; asks the teacher from a step; the teacher answers
-    {200, #{mastery := Built}} = M(<<"stud">>, 3, <<"event">>, #{<<"event">> => <<"built">>, <<"path">> => <<"custom-topic-x">>,
-        <<"check">> => #{<<"passes">> => false, <<"problems">> => [<<"lesson 2: the checks are all lucky cancels">>, 7]}}),
+    {200, #{mastery := Built}} = build_level(S, 3, <<"stud">>, false, [<<"Lesson A">>]),
     %% a level its self-check did not pass waits for the teacher, who sees why and lets it start
     ?assertMatch(#{status := <<"held">>, path := <<"custom-topic-x">>}, Built),
     {200, #{mastery := #{status := <<"ready">>}}} = M(<<"teacher">>, 3, <<"approve">>, #{}),
@@ -423,6 +484,8 @@ after_release_the_teacher_chooses_and_issues_the_badge_test() ->
     {200, #{mastery := #{thread := [#{where := <<"Lesson 2, step 3: I typed 1/2">>}]}}} =
         M(<<"stud">>, 3, <<"ask">>, #{<<"text">> => <<"Why does 12/24 not work?">>, <<"where">> => <<"Lesson 2, step 3: I typed 1/2">>}),
     {200, #{mastery := #{thread := [_, #{from := teacher}]}}} = M(<<"teacher">>, 3, <<"reply">>, #{<<"text">> => <<"Try dividing both by 12.">>}),
+    ?assertMatch({400, #{code := <<"lessons_left">>}}, M(<<"stud">>, 3, <<"event">>, #{<<"event">> => <<"completed">>})),
+    {200, _} = M(<<"stud">>, 3, <<"event">>, #{<<"event">> => <<"lesson">>, <<"lesson">> => #{<<"title">> => <<"Lesson A">>}}),
     {200, #{mastery := #{status := <<"completed">>}}} = M(<<"stud">>, 3, <<"event">>, #{<<"event">> => <<"completed">>}),
     %% verification only when the teacher asks for it, and only what they asked
     ?assertMatch({400, #{code := <<"not_asked">>}}, M(<<"stud">>, 3, <<"explain">>, #{<<"to">> => <<"lo">>, <<"text">> => <<"common factor">>})),
@@ -447,7 +510,7 @@ after_release_the_teacher_chooses_and_issues_the_badge_test() ->
     ?assertMatch(#{mastery := #{fresh := #{sitting := F, status := <<"marked">>, question := #{n := _}}}}, QF),
     {200, #{result := #{questions := [_, Q3]}}} = r(<<"GET">>, [<<"sitting">>, S], #{}, <<"teacher">>),
     ?assertMatch(#{mastery := #{explain := #{lo := #{verdict := #{understood := true}}, teacher := #{text := <<"I know now.">>}}}}, Q3),
-    ?assertMatch(#{mastery := #{check := #{passes := false, problems := [<<"lesson 2: the checks are all lucky cancels">>]}}}, Q3),
+    ?assertMatch(#{mastery := #{check := #{passes := false, problems := [<<"lesson 3: use 19/95", _/binary>>], plays := #{holds := [_]}}}}, Q3),
     %% the badge is the teacher's alone, and only for a question that was to master
     ?assertMatch({403, _}, M(<<"stud">>, 3, <<"badge">>, #{<<"issue">> => true})),
     ?assertMatch({400, #{code := <<"not_to_master">>}}, M(<<"teacher">>, 1, <<"badge">>, #{<<"issue">> => true})),
@@ -710,9 +773,10 @@ the_teacher_can_look_at_each_level_first_test() ->
     {200, _} = r(<<"POST">>, [<<"pile">>, P, <<"release">>], #{}, <<"teacher">>),
     M = fun(Who, Action, Body) -> r(<<"POST">>, [<<"mastery">>, S, <<"3">>, Action], Body, Who) end,
     Level = #{<<"title">> => <<"Cancel Factors Right">>, <<"lessons">> => [#{<<"title">> => <<"Price the boots sale">>, <<"beats">> => [<<"Half price: 32/64">>]}]},
-    {200, #{mastery := #{status := <<"held">>}}} = M(<<"stud">>, <<"event">>, #{<<"event">> => <<"built">>, <<"path">> => <<"p1">>, <<"level">> => Level}),
-    %% the teacher reads it; the student cannot approve it; the teacher lets them start
-    {200, #{result := #{questions := [#{mastery := #{level := #{title := <<"Cancel Factors Right">>, lessons := [#{title := <<"Price the boots sale">>}]}}}]}}} =
+    _ = Level,
+    {200, #{mastery := #{status := <<"held">>}}} = build_level(S, 3, <<"stud">>, true, [<<"Price the boots sale">>]),
+    %% the teacher reads it (the outline the self-check played); the student cannot approve it; the teacher lets them start
+    {200, #{result := #{questions := [#{mastery := #{level := #{title := <<"Common factors">>, lessons := [#{title := <<"Price the boots sale">>}]}}}]}}} =
         r(<<"GET">>, [<<"sitting">>, S], #{}, <<"teacher">>),
     ?assertMatch({403, _}, M(<<"stud">>, <<"approve">>, #{})),
     {200, #{mastery := #{status := <<"ready">>}}} = M(<<"teacher">>, <<"approve">>, #{}),
@@ -730,9 +794,17 @@ the_teacher_can_look_at_each_level_first_test() ->
     ?assertMatch({200, #{mastery := #{status := <<"held">>}}},
                  r(<<"POST">>, [<<"mastery">>, S2, <<"3">>, <<"event">>], #{<<"event">> => <<"built">>, <<"path">> => <<"p2">>,
                                                                          <<"check">> => #{<<"passes">> => false, <<"problems">> => [<<"lesson 2 never shows the base">>]}}, <<"stud">>)),
-    ?assertMatch({200, #{mastery := #{status := <<"ready">>}}},
+    %% the phone's own word that it passed is not enough (31 Oct): the server's verdict is
+    ?assertMatch({200, #{mastery := #{status := <<"held">>}}},
                  r(<<"POST">>, [<<"mastery">>, S2, <<"3">>, <<"event">>], #{<<"event">> => <<"built">>, <<"path">> => <<"p2">>,
-                                                                         <<"check">> => #{<<"passes">> => true}}, <<"stud">>)).
+                                                                         <<"check">> => #{<<"passes">> => true}}, <<"stud">>)),
+    ?assertMatch({200, #{mastery := #{status := <<"held">>}}}, build_level(S2, 3, <<"stud">>, false, [<<"A">>])),
+    ?assertMatch({200, #{mastery := #{status := <<"ready">>}}}, build_level(S2, 3, <<"stud">>, true, [<<"A">>])),
+    %% a check for another question, or another student's, is not this level's
+    {202, #{id := Other}} = r(<<"POST">>, [<<"check">>], #{<<"level">> => #{<<"title">> => <<"x">>, <<"lessons">> => [#{<<"title">> => <<"y">>}]},
+                                                           <<"for">> => #{<<"sitting">> => S, <<"n">> => 3}}, <<"stud">>),
+    ?assertMatch({200, #{mastery := #{status := <<"held">>}}},
+                 r(<<"POST">>, [<<"mastery">>, S2, <<"3">>, <<"event">>], #{<<"event">> => <<"built">>, <<"path">> => <<"p2">>, <<"check_id">> => Other}, <<"stud">>)).
 
 %% 30 Oct (judges' panel: "completed" was the phone's word alone): the level counts as completed only once each of its
 %% lessons was seen finished
@@ -740,8 +812,7 @@ a_level_is_completed_only_after_its_lessons_test() ->
     setup(),
     {_P, S} = released_paper(#{questions => [q(3, <<"not_yet">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
     M = fun(Body) -> r(<<"POST">>, [<<"mastery">>, S, <<"3">>, <<"event">>], Body, <<"stud">>) end,
-    Level = #{<<"title">> => <<"L">>, <<"lessons">> => [#{<<"title">> => <<"One">>}, #{<<"title">> => <<"Two">>}]},
-    {200, _} = M(#{<<"event">> => <<"built">>, <<"path">> => <<"p">>, <<"level">> => Level, <<"check">> => #{<<"passes">> => true}}),
+    {200, _} = build_level(S, 3, <<"stud">>, true, [<<"One">>, <<"Two">>]),
     {200, _} = M(#{<<"event">> => <<"lesson">>, <<"lesson">> => #{<<"title">> => <<"One">>, <<"right">> => 6, <<"asked">> => 6}}),
     ?assertMatch({400, #{code := <<"lessons_left">>}}, M(#{<<"event">> => <<"completed">>})),
     {200, _} = M(#{<<"event">> => <<"lesson">>, <<"lesson">> => #{<<"title">> => <<"Two">>, <<"right">> => 5, <<"asked">> => 6}}),
@@ -771,13 +842,14 @@ a_built_level_gets_a_picture_of_its_world_test() ->
     {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"stud">>),
     {200, _} = r(<<"POST">>, [<<"pile">>, P, <<"release">>], #{}, <<"teacher">>),
     Level = #{<<"title">> => <<"Cancel Factors Right">>, <<"lessons">> => [#{<<"title">> => <<"The sports shop sale">>, <<"beats">> => [<<"Boots at 16/64 off">>]}]},
-    {200, _} = r(<<"POST">>, [<<"mastery">>, S, <<"3">>, <<"event">>], #{<<"event">> => <<"built">>, <<"path">> => <<"p1">>, <<"level">> => Level}, <<"stud">>),
+    _ = Level,
+    {200, _} = build_level(S, 3, <<"stud">>, true, [<<"The sports shop sale">>]),
     [{painted, Prompt}] = [E || E = {painted, _} <- events()],
     [?assertNotEqual(nomatch, binary:match(Prompt, W)) || W <- [<<"The sports shop sale">>, <<"No words, letters or numbers">>]],
     {200, #{papers := [#{result := #{questions := [#{mastery := #{world := <<"world-3.webp">>}}]}}]}} = r(<<"GET">>, [<<"mine">>], #{}, <<"stud">>),
     ?assert(lists:member({spend, <<"teacher">>, <<"witness_world">>, 0.01}, events())),
     %% built again: drawn once only
-    {200, _} = r(<<"POST">>, [<<"mastery">>, S, <<"3">>, <<"event">>], #{<<"event">> => <<"built">>, <<"path">> => <<"p1">>, <<"level">> => Level}, <<"stud">>),
+    {200, _} = build_level(S, 3, <<"stud">>, true, [<<"The sports shop sale">>]),
     ?assertEqual(1, length([E || E = {painted, _} <- events()])),
     ?assertMatch({200, #{url := _}}, r(<<"GET">>, [<<"sitting">>, S, <<"asset">>, <<"world-3.webp">>], #{}, <<"stud">>)).
 
@@ -923,12 +995,18 @@ a_papers_files_are_named_in_its_row_test() ->
 a_teacher_paid_level_has_a_ceiling_on_its_calls_test() ->
     setup(),
     {_P, S} = released_paper(#{questions => [q(3, <<"not_yet">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
-    ok = save(<<"teacher">>, {mark_cache, <<"calls:", S/binary, ":stud">>}, #{calls => 400, sitting => S}),
-    Body = #{<<"messages">> => [#{<<"role">> => <<"user">>, <<"content">> => <<"write lesson 1">>}], <<"for">> => #{<<"sitting">> => S}},
+    Key = {mark_cache, <<"calls:", S/binary, ":3:stud">>},
+    ok = save(<<"teacher">>, Key, #{calls => 150, sitting => S}),
+    Body = #{<<"messages">> => [#{<<"role">> => <<"user">>, <<"content">> => <<"write lesson 1">>}], <<"for">> => #{<<"sitting">> => S, <<"n">> => 3}},
     ?assertMatch({429, #{code := <<"level_budget">>}}, r(<<"POST">>, [<<"design">>], Body, <<"stud">>)),
-    ok = save(<<"teacher">>, {mark_cache, <<"calls:", S/binary, ":stud">>}, #{calls => 3, sitting => S}),
+    ok = save(<<"teacher">>, Key, #{calls => 3, sitting => S}),
     ?assertMatch({200, #{success := true}}, r(<<"POST">>, [<<"design">>], Body, <<"stud">>)),
-    ?assertMatch({ok, #{calls := 4}}, load(<<"teacher">>, {mark_cache, <<"calls:", S/binary, ":stud">>})).
+    ?assertMatch({ok, #{calls := 4}}, load(<<"teacher">>, Key)),
+    %% two calls at once are both counted (31 Oct: the count was read, then written)
+    Me = self(),
+    [spawn(fun() -> Me ! {done, r(<<"POST">>, [<<"design">>], Body, <<"stud">>)} end) || _ <- lists:seq(1, 10)],
+    [receive {done, _} -> ok end || _ <- lists:seq(1, 10)],
+    ?assertMatch({ok, #{calls := 14}}, load(<<"teacher">>, Key)).
 
 %% a teacher who sat their own exam (one account, both sides): deleting the paper takes their own pointer too
 deleting_a_paper_one_account_sat_takes_its_pointer_test() ->
@@ -941,3 +1019,106 @@ deleting_a_paper_one_account_sat_takes_its_pointer_test() ->
     ok = save(<<"teacher">>, {mine, S}, #{owner => <<"teacher">>}),
     {200, _} = r(<<"POST">>, [<<"sitting">>, S, <<"delete">>], #{}, <<"teacher">>),
     ?assertEqual(none, load(<<"teacher">>, {mine, S})).
+
+%% ---------------------------------------------------------------- 31 Oct, the 12-judge panel
+
+%% the re-check: "Turned around" starts a clock; once due (or sent now by the teacher) Muse Spark writes a problem of a
+%% different structure, answered with the student's own number and working; the number is checked by code
+the_badge_starts_a_recheck_a_week_later_test() ->
+    setup(),
+    {P, S} = released_paper(#{questions => [q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
+    M = fun(Who, Action, Body) -> r(<<"POST">>, [<<"mastery">>, S, <<"3">>, Action], Body, Who) end,
+    {200, _} = build_level(S, 3, <<"stud">>, true, [<<"L1">>]),
+    {200, _} = M(<<"stud">>, <<"event">>, #{<<"event">> => <<"lesson">>, <<"lesson">> => #{<<"title">> => <<"L1">>}}),
+    {200, _} = M(<<"stud">>, <<"event">>, #{<<"event">> => <<"completed">>}),
+    {200, #{mastery := #{recheck := #{status := <<"scheduled">>, due_ms := Due}}}} = M(<<"teacher">>, <<"badge">>, #{<<"issue">> => true}),
+    ?assert(Due > erlang:system_time(millisecond) + 6 * 86400000),
+    %% not due yet: nothing is written
+    ?assertMatch({400, #{code := <<"not_due">>}}, M(<<"stud">>, <<"recheck_open">>, #{})),
+    ?assertMatch({403, _}, M(<<"stud">>, <<"recheck_now">>, #{})),
+    {200, _} = M(<<"teacher">>, <<"recheck_now">>, #{}),
+    {200, #{mastery := #{recheck := Open}}} = M(<<"stud">>, <<"recheck_open">>, #{}),
+    ?assertMatch(#{status := <<"open">>, q := <<"After a 20% rise", _/binary>>, unit := <<"$">>}, Open),
+    ?assertNot(maps:is_key(answer, Open)),                                   %% the answer is never sent before they answer
+    ?assertMatch({400, #{code := <<"bad_value">>}}, M(<<"stud">>, <<"recheck_answer">>, #{<<"value">> => <<"fifty">>, <<"working">> => <<"w">>})),
+    ?assertMatch({400, #{code := <<"empty">>}}, M(<<"stud">>, <<"recheck_answer">>, #{<<"value">> => <<"$50">>})),
+    {200, #{mastery := #{recheck := #{status := <<"passed">>, reply := #{right := true, answer := 50}}}}} =
+        M(<<"stud">>, <<"recheck_answer">>, #{<<"value">> => <<"$50.00">>, <<"working">> => <<"60 / 1.2 = 50">>}),
+    ?assert(lists:member({recheck_judged, 50.0, <<"60 / 1.2 = 50">>}, events())),
+    ?assertMatch({400, #{code := <<"answered">>}}, M(<<"stud">>, <<"recheck_answer">>, #{<<"value">> => 50, <<"working">> => <<"again">>})),
+    {200, Measured} = r(<<"GET">>, [<<"pile">>, P, <<"measure">>], #{}, <<"teacher">>),
+    ?assertMatch(#{rechecks := #{passed := 1}}, Measured).
+
+%% one teacher action on many questions: a challenge to a group, the badge after one review, accepting confident marks
+the_teacher_acts_on_a_whole_group_at_once_test() ->
+    setup(),
+    {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Class">>, <<"preview">> => false}, <<"teacher">>),
+    persistent_term:put(witness_api_result, #{questions => [q(1, <<"mastered">>, 0.95), q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
+    Ss = [begin {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => W}, W),
+                {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, W), S end || W <- [<<"s1">>, <<"s2">>, <<"s3">>]],
+    {200, #{done := 3}} = r(<<"POST">>, [<<"pile">>, P, <<"bulk">>], #{<<"action">> => <<"accept">>, <<"items">> => [#{<<"sitting">> => S, <<"n">> => 1} || S <- Ss]}, <<"teacher">>),
+    {200, #{queue := Q}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>),
+    ?assertEqual([3, 3, 3], [maps:get(n, I) || I <- Q]),
+    {200, _} = r(<<"POST">>, [<<"pile">>, P, <<"release">>], #{}, <<"teacher">>),
+    Ch = #{<<"q">> => <<"Simplify 18/72">>, <<"options">> => [<<"1/4">>, <<"1/2">>, <<"8/7">>, <<"1/8">>], <<"answer">> => 0},
+    {200, #{done := 3}} = r(<<"POST">>, [<<"pile">>, P, <<"bulk">>], #{<<"action">> => <<"challenge">>, <<"challenge">> => Ch,
+                                                                     <<"items">> => [#{<<"sitting">> => S, <<"n">> => 3} || S <- Ss]}, <<"teacher">>),
+    %% the badge only where the level was finished; the reply says which
+    [S1 | _] = Ss,
+    {200, _} = build_level(S1, 3, <<"s1">>, true, [<<"L1">>]),
+    {200, _} = r(<<"POST">>, [<<"mastery">>, S1, <<"3">>, <<"event">>], #{<<"event">> => <<"lesson">>, <<"lesson">> => #{<<"title">> => <<"L1">>}}, <<"s1">>),
+    {200, _} = r(<<"POST">>, [<<"mastery">>, S1, <<"3">>, <<"event">>], #{<<"event">> => <<"completed">>}, <<"s1">>),
+    %% the exam lists what is ready for one review: the level finished and the challenge answered right
+    {200, _} = r(<<"POST">>, [<<"mastery">>, S1, <<"3">>, <<"challenge_answer">>], #{<<"pick">> => 0, <<"why">> => <<"Divide both by 18.">>}, <<"s1">>),
+    {200, #{ready := [#{sitting := S1, n := 3, student := <<"s1">>}]}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>),
+    {200, #{done := 1, results := Rs}} = r(<<"POST">>, [<<"pile">>, P, <<"bulk">>], #{<<"action">> => <<"badge">>, <<"items">> => [#{<<"sitting">> => S, <<"n">> => 3} || S <- Ss]}, <<"teacher">>),
+    {200, #{ready := []}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>),
+    ?assertEqual([<<"ok">>, <<"not_completed">>, <<"not_completed">>], [maps:get(result, R) || R <- Rs]),
+    %% another teacher's exam: nothing
+    ?assertMatch({404, _}, r(<<"POST">>, [<<"pile">>, P, <<"bulk">>], #{<<"action">> => <<"accept">>}, <<"other">>)).
+
+%% a paper deleted while it is being marked stays deleted (31 Oct: the marking wrote it back)
+a_paper_deleted_while_marking_stays_deleted_test() ->
+    setup(),
+    {201, #{id := P}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Q">>}, <<"teacher">>),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"pile">> => P}, <<"teacher">>),
+    persistent_term:put(witness_api_during, fun() -> {200, _} = r(<<"POST">>, [<<"sitting">>, S, <<"delete">>], #{}, <<"teacher">>) end),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"teacher">>),
+    persistent_term:erase(witness_api_during),
+    ?assertEqual(none, load(<<"teacher">>, {sitting, S})),
+    {200, #{sittings := []}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>).
+
+%% forty students joining at once all reach the class list (31 Oct: the list was read, then written)
+students_joining_at_once_all_reach_the_list_test() ->
+    setup(),
+    {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Q">>}, <<"teacher">>),
+    Me = self(),
+    [spawn(fun() -> Me ! {joined, r(<<"POST">>, [<<"join">>], #{<<"code">> => Code, <<"name">> => <<"Student ", (integer_to_binary(I))/binary>>},
+                                       <<"s", (integer_to_binary(I))/binary>>)} end) || I <- lists:seq(1, 40)],
+    [receive {joined, {200, _}} -> ok end || _ <- lists:seq(1, 40)],
+    {ok, #{roster := Roster}} = load(<<"teacher">>, {pile, P}),
+    ?assertEqual(40, length(Roster)).
+
+%% the student's own payload never carries the model's guess (31 Oct, confirmed: `possible` reached the phone)
+the_students_phone_never_gets_the_models_guess_test() ->
+    setup(),
+    Fp = #{reasoning => <<"Could cancel, could keep the base.">>, evidence => [], misconception => <<>>, intervention => <<>>,
+           ask => <<"Write or say what you had after each step.">>, possible => <<"percentage changes cancel">>, rivals => [<<"base">>]},
+    {_P, S} = released_paper(#{questions => [(q(3, <<"not_yet">>, 0.9))#{fingerprint => Fp, diagnosis_draft => <<"cancels">>}], pauses => [], lines => [], cost_usd => 0.0}),
+    {200, #{papers := [#{result := #{questions := [Q]}}]}} = r(<<"GET">>, [<<"mine">>], #{}, <<"stud">>),
+    #{fingerprint := F} = Q,
+    [?assertNot(maps:is_key(K, F)) || K <- [possible, rivals, reasoning]],
+    [?assertNot(maps:is_key(K, Q)) || K <- [confidence, diagnosis_draft]],
+    ?assertMatch(#{ask := <<"Write or say", _/binary>>}, F),
+    %% the teacher still sees all of it
+    {200, #{result := #{questions := [TQ]}}} = r(<<"GET">>, [<<"sitting">>, S], #{}, <<"teacher">>),
+    ?assertMatch(#{fingerprint := #{possible := <<"percentage changes cancel">>}}, TQ).
+
+%% each door that calls a model has a daily ceiling for one account
+a_model_door_has_a_daily_ceiling_test() ->
+    setup(),
+    Slot = integer_to_binary(erlang:system_time(millisecond) div 86400000),
+    ok = save(<<"teacher">>, {mark_cache, <<"rate:read:teacher">>}, #{minute => Slot, n => 40, sitting => <<>>}),
+    ?assertMatch({429, #{code := <<"daily_limit">>}},
+                 r(<<"POST">>, [<<"pile">>, <<"read">>], #{<<"mime">> => <<"image/jpeg">>, <<"file">> => base64:encode(<<"jpegbytes">>)}, <<"teacher">>)),
+    ?assertMatch({200, _}, r(<<"POST">>, [<<"pile">>, <<"read">>], #{<<"mime">> => <<"image/jpeg">>, <<"file">> => base64:encode(<<"jpegbytes">>)}, <<"other">>)).

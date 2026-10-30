@@ -4,7 +4,8 @@
 %%% For one exam: how often the teacher agreed with Witness on the questions they reviewed, how many right answers
 %%% reached by wrong thinking Witness caught that the teacher kept (a photo of the final answer marks those right),
 %%% how long marking took on the server, and how long the teacher spent on each paper at the desk (the desk sends the
-%%% seconds a paper was open with each review). Pure: the exam's sittings in, the numbers out.
+%%% seconds a paper was open with each review), how many questions were turned around, and how the re-checks a few
+%%% days later came out (witness_recheck). Pure: the exam's sittings in, the numbers out.
 %%%
 %%%   exam([{Id, Row}]) -> map()
 %%%-------------------------------------------------------------------
@@ -30,7 +31,10 @@ exam(Ss) ->
       marking_seconds => stats(MarkS), teacher_seconds_per_paper => stats(DeskS),
       examiner_asks => length(Asks), examiner_answered => length(Answered),
       examiner_own_work => length([A || #{answer := #{verdict := #{own_work := true}}} = A <- Answered]),
-      cost_usd => lists:sum([num(maps:get(cost_usd, maps:get(result, R), 0)) || R <- Marked])}.
+      cost_usd => lists:sum([num(maps:get(cost_usd, maps:get(result, R), 0)) || R <- Marked]),
+      %% 31 Oct (judges' panel): what the teacher saw turned around, and whether it held a few days later
+      turned_around => length([Q || Q <- Qs, maps:get(status, maps:get(mastery, Q, #{}), <<>>) =:= <<"badge">>]),
+      rechecks => witness_recheck:measure(Qs)}.
 
 stats([]) -> #{n => 0};
 stats(L) -> S = lists:sort(L), #{n => length(L), mean => round1(lists:sum(L) / length(L)), median => round1(lists:nth((length(S) + 1) div 2, S)), max => round1(lists:last(S))}.

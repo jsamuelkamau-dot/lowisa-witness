@@ -150,13 +150,21 @@ cost(sam_video, Frames) -> max(Frames, ?SAM_MIN_FRAMES) * ?SAM_FRAME;
 cost(sam_image, N) -> N * ?SAM_IMAGE;
 cost(image, N) -> N * ?IMAGE;
 cost(transcribe, Seconds) -> Seconds / 3600 * ?TRANSCRIBE_HOUR;
-cost({tokens, Model}, #{} = U) ->
-    {In, Out} = price(Model),
+cost({tokens, Model}, #{} = U) -> cost({price, price(Model)}, U);
+%% a host's own per-million prices (an open-weights endpoint it pays for: witness_host:open_engine/0's `price`)
+cost({price, {In, Out}}, #{} = U) ->
     num(maps:get(<<"input_tokens">>, U, maps:get(<<"prompt_tokens">>, U, 0))) * In / 1.0e6
         + num(maps:get(<<"output_tokens">>, U, maps:get(<<"completion_tokens">>, U, 0))) * Out / 1.0e6.
 
+%% Meta's published per-million prices (input, output). 31 Oct (judges' panel: every model not named Wonder was priced
+%% as Muse Spark, an open-weights model included): each model by name; anything else is not Meta's API to price, so
+%% it costs what its host says (cost({price, ...})) or nothing here. Cached input is counted at the full input price,
+%% so a cost here is never under the bill.
+price(<<"muse-spark-1.3">>) -> {1.25, 4.25};
+price(<<"muse-spark-1-3">>) -> {1.25, 4.25};
+price(<<"muse-wonder-1.0">>) -> {4.0, 20.0};
 price(<<"muse-wonder", _/binary>>) -> {4.0, 20.0};
-price(_) -> {1.25, 4.25}.
+price(_) -> {0.0, 0.0}.
 
 num(N) when is_number(N) -> N;
 num(_) -> 0.

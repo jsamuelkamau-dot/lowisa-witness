@@ -5,6 +5,8 @@ set -e
 here="$(cd "$(dirname "$0")/.." && pwd)"
 out="$here/_build/default/lib/witness/ebin"
 mkdir -p "$out"
-erlc -o "$out" "$here"/witness/src/*.erl "$here"/witness/test/*.erl
+# the library first, so the test host finds the witness_host behaviour it implements
+erlc -o "$out" "$here"/witness/src/*.erl
+erlc -pa "$out" -o "$out" "$here"/witness/test/*.erl
 mods=$(cd "$out" && ls witness_*_tests.beam | sed 's/\.beam$//' | paste -sd, -)
 erl -noshell -pa "$out" -eval "case eunit:test([$mods], []) of ok -> halt(0); _ -> halt(1) end."

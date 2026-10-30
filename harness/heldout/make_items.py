@@ -1,6 +1,9 @@
-"""Renders the held-out set (items.py) as photographed one-page papers, for fingerprint_eval.escript.
+"""Renders a held-out set as photographed one-page papers, for fingerprint_eval.escript.
 
-  python harness/heldout/make_items.py OUT_DIR   ->  OUT_DIR/<id>.jpg and OUT_DIR/<id>.json (the exam the teacher set)
+  python harness/heldout/make_items.py OUT_DIR            the development set (items.py)
+  python harness/heldout/make_items.py OUT_DIR v2         the held-out set written after the rule froze (items_v2.py)
+  python harness/heldout/make_items.py OUT_DIR v2 hinted  the same, each scheme also naming the wrong method (the ablation)
+  ->  OUT_DIR/<id>.jpg and OUT_DIR/<id>.json (the exam the teacher set)
 
 The handwriting is a handwriting font (HAND_FONT, default Windows' Ink Free) with a small wobble per letter; the
 "photograph" is simulated: the page on a wooden desk, slightly turned, perspective, light falling off. These are not
@@ -11,7 +14,13 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from items import ITEMS, TOPICS
+SET = sys.argv[2] if len(sys.argv) > 2 else "v1"
+HINTED = len(sys.argv) > 3 and sys.argv[3] == "hinted"
+if SET == "v2":
+    from items_v2 import ITEMS, TOPICS, SCHEMES_HINTED
+else:
+    from items import ITEMS, TOPICS
+    SCHEMES_HINTED = {}
 
 HAND = os.environ.get("HAND_FONT", r"C:\Windows\Fonts\Inkfree.ttf")
 PRINT = os.environ.get("PRINT_FONT", r"C:\Windows\Fonts\arial.ttf")
@@ -74,10 +83,10 @@ NAMES = ["Ana Lima", "Kwame Asante", "Mei Chen", "Omar Haddad", "Sofia Rossi", "
 
 
 def paper(item, rnd):
-    iid, topic, lines, _, _ = item
+    iid, topic, lines = item[0], item[1], item[2]
     text, marks, _ = TOPICS[topic]
     img = Image.new("RGBA", (W, H), (251, 250, 246, 255)); d = ImageDraw.Draw(img)
-    printed(d, 90, 64, "Mathematics Class Check", 40, True)
+    printed(d, 90, 64, "Mathematics Class Check" if SET == "v1" else "Class Check", 40, True)
     printed(d, 90, 168, "Name: ______________________________      Class: ________", 28)
     hand(img, 200, 152, NAMES[sum(map(ord, iid)) % len(NAMES)], 52, rnd)
     hand(img, 820, 156, "8A", 48, rnd)
@@ -97,7 +106,10 @@ if __name__ == "__main__":
         rnd = random.Random(iid)
         photograph(paper(item, rnd), rnd).save(os.path.join(out, iid + ".jpg"), quality=86)
         text, marks, scheme = TOPICS[topic]
+        if HINTED and topic in SCHEMES_HINTED:
+            scheme = scheme + " " + SCHEMES_HINTED[topic]
         json.dump({"id": iid, "topic": topic, "expect": item[3], "keys": item[4], "level": "Year 8",
+                   "hard": bool(item[5]) if len(item) > 5 else False, "set": SET, "hinted": HINTED,
                    "scheme": "Q1: " + scheme, "questions": [{"n": 1, "text": text, "marks": marks}]},
                   open(os.path.join(out, iid + ".json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(len(ITEMS), "papers in", out)

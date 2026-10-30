@@ -22,7 +22,7 @@
 prompt(Exam, Items) ->
     %% 30 Oct rehearsal: the fingerprint's named idea goes on the line, so two diagnoses that share words but not the
     %% reasoning ("they cancel" and "kept the first base") are told apart
-    Lines = [io_lib:format("~b. ~ts, question ~b (~ts~ts): ~ts~ts~n", [I, maps:get(student, It, <<>>), maps:get(n, It, 0), maps:get(question, It, <<>>),
+    Lines = [io_lib:format("~b. ~ts, question ~b (~ts~ts): ~ts~ts~n", [I, witness_text:data(maps:get(student, It, <<>>)), maps:get(n, It, 0), maps:get(question, It, <<>>),
                                                                        case maps:get(turned_around, It, false) of true -> "; turned around since"; false -> "" end,
                                                                        maps:get(diagnosis, It, <<>>),
                                                                        case maps:get(idea, It, <<>>) of <<>> -> ""; Idea -> [" [named idea: ", Idea, "]"] end])
@@ -35,8 +35,10 @@ prompt(Exam, Items) ->
         "plain words a teacher would say to the class, most common first. A line belongs to one group. Group by the ",
         "reasoning each line names, never by the answer: lines with the same wrong answer but different reasoning are ",
         "different groups, because each needs a different repair. A line's [named idea], when it has one, is the idea it ",
-        "was diagnosed with: lines with different named ideas are different groups. When unsure that two lines name the ",
-        "same idea, keep them apart.\n",
+        "was diagnosed with. Two named ideas worded differently are ONE group when they describe the same wrong step and ",
+        "the same repair would fix both (in another topic, \"multiplies only the first term in the bracket\" and \"forgets ",
+        "the second term when expanding\" are one idea); ideas that need different repairs are different groups. When unsure ",
+        "whether one repair fixes both, keep them apart.\n",
         "2. For each group, one sentence on what to reteach tomorrow, with a concrete example to use in class.\n",
         "3. In two or three sentences, the plan for tomorrow's lesson: what first, what to practise.\n",
         "4. Up to four questions for the next exam that bring back these ideas in a new form, with their marks.\n",
@@ -66,6 +68,8 @@ group(P, Items, N) ->
             Its = [lists:nth(L, Items) || L <- Lines],
             #{idea => Idea, reteach => str(maps:get(<<"reteach">>, P, <<>>)),
               students => lists:usort([maps:get(student, I, <<>>) || I <- Its]),
+              %% 31 Oct (judges' panel): the papers and questions of the group, for one teacher action on all of them
+              items => lists:usort([#{sitting => S, n => maps:get(n, I, 0)} || I <- Its, S <- [maps:get(sitting, I, none)], is_binary(S)]),
               questions => lists:usort([maps:get(n, I, 0) || I <- Its]),
               turned_around => length([I || I <- Its, maps:get(turned_around, I, false) =:= true])}
     end.

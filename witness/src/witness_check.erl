@@ -27,8 +27,9 @@ prompt(In) ->
     unicode:characters_to_binary([
         "You check a mastery level before a student sees it. It was written for ONE student who did not master one exam ",
         "question. Play the level twice, honestly, the way each student would really answer every question and check in it.\n\n",
+        witness_text:rule(),
         "THE QUESTION: ", str(maps:get(question, In, <<>>)), "\n",
-        "HOW THE STUDENT WORKED IT:\n", str(maps:get(working, In, <<>>)), "\n",
+        "HOW THE STUDENT WORKED IT:\n", witness_text:data(maps:get(working, In, <<>>)), "\n",
         "THE MISCONCEPTION: ", str(maps:get(diagnosis, In, <<>>)), "\n",
         case str(maps:get(focus, In, <<>>)) of <<>> -> ""; F -> ["THE TEACHER'S FOCUS NOTE: ", F, "\n"] end,
         "\nTHE LEVEL: ", str(maps:get(title, Level, <<>>)), "\n", Lessons, "\n",
@@ -45,7 +46,15 @@ prompt(In) ->
         "how much. Is each one true? A level that teaches one false thing is not ready. That is \"true_claims\".\n",
         "The level passes only when caught, cleared, work_task and true_claims are all true and 3 holds. When it does not ",
         "pass, name what to change, lesson by lesson, so a writer can fix it in one pass.\n",
+        %% 31 Oct (judges' panel: the most creative use of a model here showed only as "passed"): the two plays, so the
+        %% teacher sees what each student answered and where the misconception was caught
+        "Also record both plays, at most four checks each: \"holds\" for the student who still holds the misconception and ",
+        "\"knows\" for the one who has it right; each check is its lesson, the check in a few words, what that student ",
+        "answered, and whether it came out right. \"false_claims\" lists every number or claim in the level that is not ",
+        "true, each as the level says it and what is true instead (empty when there are none).\n",
         "Return JSON only: {\"caught\":true,\"cleared\":true,\"on_idea\":true,\"work_task\":true,\"true_claims\":true,\"why\":\"one sentence\",",
+        "\"holds\":[{\"lesson\":2,\"check\":\"...\",\"answered\":\"...\",\"right\":false}],",
+        "\"knows\":[{\"lesson\":2,\"check\":\"...\",\"answered\":\"...\",\"right\":true}],\"false_claims\":[],",
         "\"problems\":[{\"lesson\":1,\"fix\":\"what to change\"}]}"]).
 
 parse(Text) ->
@@ -62,10 +71,14 @@ parse(Text) ->
                         || P <- list(maps:get(<<"problems">>, M, [])), is_map(P), str(maps:get(<<"fix">>, P, <<>>)) =/= <<>>],
             %% 30 Oct rehearsal: a percentages level passed saying the shop "loses $25" by charging $100 for a $75
             %% price (the shop gains it); a claim the check found false stops the level
-            TrueClaims = maps:get(<<"true_claims">>, M, true) =/= false,
+            False = [C || C <- [short(X, 300) || X <- lists:sublist(list(maps:get(<<"false_claims">>, M, [])), 6)], C =/= <<>>],
+            %% a false claim the check lists stops the level even when its own "true_claims" says otherwise
+            TrueClaims = maps:get(<<"true_claims">>, M, true) =/= false andalso False =:= [],
             Passes = Caught andalso Cleared andalso OnIdea andalso WorkTask andalso TrueClaims,
             {ok, #{passes => Passes, caught => Caught, cleared => Cleared, on_idea => OnIdea, work_task => WorkTask, true_claims => TrueClaims,
                    why => str(maps:get(<<"why">>, M, <<>>)),
+                   plays => #{holds => plays(maps:get(<<"holds">>, M, [])), knows => plays(maps:get(<<"knows">>, M, []))},
+                   false_claims => False,
                    %% a level that fails with nothing named to change still gets one thing to change
                    problems => case {Passes, Problems} of
                                    {false, []} -> [#{lesson => null, fix => <<"Make the level's checks catch the misconception and let the right idea pass.">>}];
@@ -98,6 +111,15 @@ decode(Text) ->
             E = lists:max([P || {P, _} <- binary:matches(T, <<"}">>)] ++ [S]),
             try json:decode(binary:part(T, S, E - S + 1)) catch _:_ -> undefined end
     end.
+
+%% one play: what each check asked, what this student answered, and whether it came out right (short, at most four)
+plays(L) ->
+    [#{lesson => case maps:get(<<"lesson">>, P, null) of N when is_integer(N) -> N; _ -> null end,
+       check => short(maps:get(<<"check">>, P, <<>>), 200), answered => short(maps:get(<<"answered">>, P, <<>>), 200),
+       right => maps:get(<<"right">>, P, false) =:= true}
+     || P <- lists:sublist(list(L), 4), is_map(P), short(maps:get(<<"check">>, P, <<>>), 200) =/= <<>>].
+
+short(B, Max) -> string:slice(string:trim(str(B)), 0, Max).
 
 str(B) when is_binary(B) -> B;
 str(L) when is_list(L) -> unicode:characters_to_binary(L);
