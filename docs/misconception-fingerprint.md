@@ -55,21 +55,24 @@ phone photo); every reading is a live call.
 **Learner B, honestly.** B's two lines fit two descriptions: "the second 50% taken of the original $100" and "50% means
 $50". On a $100 start they are the same numbers, so no reading of this page can tell them apart, and Muse Spark names
 the second every time. The repair is the same for both (which amount is the second change of?). A start other than
-$100 would separate them; the held-out set has such a case (`tax-ask-two-ideas`), and it is the one ambiguous paper
+$100 would separate them; the development set has such a case (`tax-ask-two-ideas`), and it is the one ambiguous paper
 the system still named (below).
 
 **Learner C.** "Half up, half down. Same price." states a result, not a calculation: C might halve $100 twice (B's
 idea) or believe the halves cancel (A's idea). The model guesses "cancel" every time; the code does not let it name
 that, because no quoted line shows a calculation. Lo asks, out loud, without suggesting an answer. In the rehearsal
-Leo answered *"Both halves are of 100 dollars. Half of 100 is 50, so up 50 then down 50"*, and Muse Spark settled the
-fingerprint on the base: B's idea, not A's, which the page alone could not have shown.
+Leo wrote back *"Both halves are of 10 Half of 100 is 50, so up 50 then down 50"* (the text as captured, typed on an
+emulator), and Muse Spark settled the fingerprint on the base: B's idea, not A's, which the page alone could not have
+shown.
 
-## Held out: 36 papers the prompt never saw
+## The development set: 36 papers, and the held-out set written after the rule froze
 
-The marking prompt holds no question or answer it is tested on; its one example is fraction addition. The held-out
-set (`harness/heldout/`) is 36 one-page papers in 10 topics (decimals, negative numbers, expanding brackets, area
+The marking prompt holds no question or answer it is tested on; its one example is fraction addition. The first set
+(`harness/heldout/items.py`) is 36 one-page papers in 10 topics (decimals, negative numbers, expanding brackets, area
 scaling, average speed, probability, a discount then tax, units, ratio, order of operations), each labelled before any
-run:
+run. The rule in code was designed over three runs on these papers (below), so they are the **development set**, not a
+held-out result. The held-out numbers come from **v2**: 53 papers in 13 new topics written after the rule froze
+(`harness/heldout/README.md`).
 
 | Expected | Rule in the prompt only | + the model asked for rivals | **Rule enforced in code** |
 |---|---|---|---|
@@ -79,9 +82,9 @@ run:
 | Ink that shows the idea: named right | 12 of 12 | 12 of 12 | **10 of 12** (2 asked first) |
 | A wrong idea named | 0 | 0 | **0** |
 
-The remaining false label is working that two methods both produce (`40 - 10 = 30`, `30 + 10 = 40`). The two papers
+The one ambiguous page still named is working that two methods both produce (`40 - 10 = 30`, `30 + 10 = 40`). The two papers
 asked first state their idea in words with one number ("Tails is due after 5 heads"): Lo asks one question before the
-level is built, which costs the student a sentence and never mislabels them. 36 papers cost $0.49 to mark, median
+level is built, which costs the student a sentence and never mislabels them. Marking all 36 papers cost $0.49 (about $0.014 a paper), median
 9.9 s each. Each run's full output is in `harness/heldout/results/`.
 
 ## Where it lives in the code

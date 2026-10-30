@@ -12,6 +12,6 @@ mistake), and are labelled as LoWisa's.
 | Master any topic level builder | Builds each mastery level to the same standard as every LoWisa level. From Exam to Mastery supplies the new input: the failed question, the diagnosis, the student's own working and the teacher's focus note. |
 | Level contents (lessons, beats, first look, halfway twist, main run, Lo asks, Insight episode, flashcards, A4 notes) | What a mastery level contains |
 | Scene player and lesson player | Play the mastery level on the phone |
-| Lo's voice | Speaks the examiner's questions |
+| Lo's voice (LoWisa's existing text-to-speech: Amazon Polly this week, ElevenLabs before it; not a Meta model) | Speaks the examiner's questions. Lo's words are written by Muse Spark; only the sound is the existing voice |
 | School dashboard and roles | Teachers, classes and who sees which student |
 | Earlier exam photo capture and marking (other providers) | Replaced: the marking for the path, the name read from the page, the line placement on the ink, the fingerprint and everything after it are new and run on Meta's models |
