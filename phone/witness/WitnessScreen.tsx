@@ -72,8 +72,8 @@ export async function record(n: Native, onHandOver?: () => void): Promise<VideoF
 export const HAND_OVER_WORDS = "The desk camera couldn't record on this phone, so your phone's own camera opens instead. Record your paper there.";
 
 /** Lo's words when the teacher's Turned around reaches the phone (said once per question). */
-export const BADGE_WORDS = 'Your teacher has seen it: this one is turned around. You worked out where it went wrong, and now it is yours.';
-const BADGE_SAID_KEY = 'lowisa-witness-badge-said-';
+export const TURNED_WORDS = 'Your teacher has seen it: this one is turned around. You worked out where it went wrong, and now it is yours.';
+const TURNED_SAID_KEY = 'lowisa-witness-turned-said-';
 
 /** What the student is shown went wrong (pure): once Lo's question has completed the fingerprint, what their working AND
  *  their answer showed; until then the marking's own reading (30 Oct, rehearsal: the card still said "cancel" after
@@ -510,6 +510,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
   const next = r !== 'mastered';
   const [path, setPath] = useState<string | null>(() => masteryPath(storage, paper.id, q.n) || (q.mastery && q.mastery.path) || null);
   const [m, setM] = useState<Mastery | undefined>(q.mastery);
+  const turned = !!m && m.status === 'badge';
   // 30 Oct (owner): the Misconception Fingerprint; while Lo still has a diagnostic question, it comes before the level
   const [fp, setFp] = useState<Fingerprint | null | undefined>(q.fingerprint);
   // what Lo's answer settled becomes the question's diagnosis on the server; the level is built from the same
@@ -526,7 +527,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
   // 30 Oct (owner): what the teacher sends after the level (a new challenge, a reply, Turned around) reaches an open screen
   // too: looked for every 20 seconds while the question is still to turn around
   useEffect(() => {
-    if (!next || (m && m.status === 'badge')) return undefined;
+    if (!next || turned) return undefined;
     let live = true;
     const timer = setInterval(async () => {
       const r = await witness.mine(env);
@@ -539,12 +540,12 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
   // 30 Oct (judges' panel: the climax was a small chip): the moment the teacher's Turned around reaches the phone, Lo
   // says so, once per question
   useEffect(() => {
-    if (!m || m.status !== 'badge') return;
-    const key = BADGE_SAID_KEY + paper.id + '-' + q.n;
+    if (!turned) return;
+    const key = TURNED_SAID_KEY + paper.id + '-' + q.n;
     if (storage.getItem(key)) return;
     storage.setItem(key, '1');
-    tutorSay(BADGE_WORDS);
-  }, [m && m.status]); // eslint-disable-line react-hooks/exhaustive-deps
+    tutorSay(TURNED_WORDS);
+  }, [turned]); // eslint-disable-line react-hooks/exhaustive-deps
   // the exam's teacher looks at each level first: it opens once they let the student start (28 Oct)
   const held = !!m && m.status === 'held';
   // a level played to the end on this phone tells the teacher once
@@ -604,10 +605,10 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
       <View style={s.rowTop}>
         <Text style={s.rowTitle}>Question {q.n}</Text>
         {/* once the teacher issues the badge, the question reads as turned around, not as still to fix */}
-        <Text style={[s.chip, next && !(m && m.status === 'badge') ? s.chipNext : s.chipOk]}>{m && m.status === 'badge' ? 'Turned around' : RESULT_WORDS[r]}</Text>
+        <Text style={[s.chip, next && !turned ? s.chipNext : s.chipOk]}>{turned ? 'Turned around' : RESULT_WORDS[r]}</Text>
       </View>
-      <Text style={s.sub}>{m && m.status === 'badge' ? 'On the exam: ' + marksOf(q) + ' of ' + q.out_of + ' marks. Since then, turned around: your teacher saw you master it.' : marksOf(q) + ' of ' + q.out_of + ' marks'}</Text>
-      {next && !(m && m.status === 'badge') && PLAN_WHY[r] ? <Text style={s.sub}>{PLAN_WHY[r]}</Text> : null}
+      <Text style={s.sub}>{turned ? 'On the exam: ' + marksOf(q) + ' of ' + q.out_of + ' marks. Since then, turned around: your teacher saw you master it.' : marksOf(q) + ' of ' + q.out_of + ' marks'}</Text>
+      {next && !turned && PLAN_WHY[r] ? <Text style={s.sub}>{PLAN_WHY[r]}</Text> : null}
       <Replay q={q} shows={whatShows(qd, fp)} />
       {/* 28 Oct re-audit (the submission: each student's feedback comes "with a short spoken explanation") */}
       <Btn label="Hear it" onPress={() => tutorSay(spokenFeedback(qd, fp))} small testID={'witness-hear-' + q.n} />
