@@ -354,3 +354,15 @@ no_question_ends_in_a_verdict_test() ->
     ?assert(witness_mark:needs_level(#{result => <<"part_way">>})),
     ?assertNot(witness_mark:needs_level(#{result => <<"mastered">>})),
     ?assertEqual(7, length(witness_mark:capabilities())).
+
+%% 31 Oct, photo bench on the committed code: with no mark scheme the prompt said "give 1 mark" beside questions
+%% listed as 2 marks, and right work came back 1 of 2, part way. A fully correct question earns all of its worth.
+no_scheme_gives_a_right_question_all_its_marks_test() ->
+    S = #{level => <<"Year 8">>, questions => [#{n => 1, text => <<"Solve 2x + 3 = 11">>, marks => 2}]},
+    [begin
+         P = Prompt(S),
+         ?assertEqual(nomatch, binary:match(P, <<"give 1 mark">>)),
+         ?assertNotEqual(nomatch, binary:match(P, <<"earns every mark it is worth">>))
+     end || Prompt <- [fun witness_photo:prompt/1, fun witness_mark:prompt/1]],
+    %% and the scheme, when given, is still what is followed
+    ?assertNotEqual(nomatch, binary:match(witness_photo:prompt(S#{scheme => <<"Q1: x = 4 (2)">>}), <<"follow it exactly">>)).

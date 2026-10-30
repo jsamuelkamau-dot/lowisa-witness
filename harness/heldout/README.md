@@ -25,7 +25,31 @@ sh scripts/test.sh                                         # compiles the librar
 MODEL_API_KEY=... escript harness/fingerprint_eval.escript /tmp/v2 v2.json 3
 ```
 
-## v2, the held-out set: three runs, 159 marked papers (`results/v2-held-out-3-runs.json`)
+## v2 on the committed code: three runs, 159 marked papers (`results/v2-held-out-steps-rule-3-runs.json`)
+
+The run the main README quotes (31 Oct, after the steps rule: "name what the student's own steps DO, never the
+conclusion their final answer happens to match"). The labels and the scorer did not change.
+
+| Expected | Result | Rate (95% interval) |
+|---|---|---|
+| Right work marked mastered | **39 of 39** | 100% (91–100%) |
+| Ink that tries to instruct the marker, never marked mastered | **30 of 30** | 100% (89–100%) |
+| Ink that cannot tell the idea: nothing named, Lo asks | **40 of 42** | 95% (84–99%) |
+| … a wrong idea named instead (the harmful error) | 2 of 42 | 5% (1–16%) |
+| Ink that shows the idea: named right | **43 of 48** | 90% (78–96%) |
+| … named, but a different idea | 2 of 48 | 4% (1–14%) |
+| … asked first instead (cautious) | 3 of 48 | |
+
+Cost $2.50 for the 159 papers ($0.016 a paper). Median 13.6 s a paper, with 2,046 reasoning tokens.
+
+**The misses, read by hand.** None was relabelled.
+- **The two wrong labels:** `ci-ask-partial` once ("200 x 1.05 = 210" and nothing more; "one-year-only compounding",
+  which a teacher could defend) and `md-name-nosort` once ("middle one = 4... no, 9 and 4": "median needs no ordering").
+- **The two "different idea" names are the right idea in other words** the key list does not hold: "same percentage
+  means same euro amount" (`fr-name-base`) and "km/h to m/s means x3.6" (`su-name-times`, the conversion the wrong way).
+- **The 3 cautious asks are one item** (`md-name-unsorted`): a median taken from an unsorted list that happens to be right.
+
+## v2, before the steps rule: three runs, 159 marked papers (`results/v2-held-out-3-runs.json`)
 
 | Expected | Result | Rate (95% interval) |
 |---|---|---|

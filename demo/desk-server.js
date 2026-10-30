@@ -71,8 +71,9 @@ http.createServer((req, res) => {
   if (REPLAY) {
     if (req.method !== 'GET') { res.writeHead(200, { 'content-type': 'application/json' }); return res.end('{"ok":false,"code":"replay","error":"This is a recorded exam: it can be read, not changed."}'); }
     // a picture of a paper: the recorded file itself, served from the replay folder
-    const asset = /\/asset\/([A-Za-z0-9._-]+)$/.exec(route);
-    if (asset) { res.writeHead(200, { 'content-type': 'application/json' }); return res.end(JSON.stringify({ ok: true, url: '/replay-asset/' + asset[1] })); }
+    // named by its whole path (two papers each have a still-1.jpg)
+    const asset = /\/asset\/[A-Za-z0-9._-]+$/.test(route) ? route.replace(/^\/api\/witness\//, '').replace(/\//g, '_') : null;
+    if (asset) { res.writeHead(200, { 'content-type': 'application/json' }); return res.end(JSON.stringify({ ok: true, url: '/replay-asset/' + asset })); }
     const body = replayed(route);
     res.writeHead(body ? 200 : 404, { 'content-type': 'application/json' });
     return res.end(body || '{"ok":false,"error":"Not in this recording."}');

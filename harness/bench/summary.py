@@ -18,8 +18,9 @@ RUNS = [
     ("cmp_video2", "28 Oct, video, the comparison set (14 clips, with the rubbed-out reason)"),
     ("photo", "28 Oct, photo of the finished page, the same papers"),
     ("load39", "28 Oct, load test: 39 papers marked at once"),
-    ("video_on_head", "31 Oct, video, the 13 clips on the code as committed"),
-    ("photo_on_head", "31 Oct, photo of the finished page through witness_photo:mark/4, the code the edge runs"),
+    ("video_before_scheme_fix", "31 Oct, video, the 13 clips, before the no-scheme fix"),
+    ("video_on_head", "31 Oct, video, the 13 clips on the code as committed (after the no-scheme fix)"),
+    ("photo_on_head", "31 Oct, photo of the finished page through witness_photo:mark/4, the code the edge runs (after the no-scheme fix)"),
 ]
 
 

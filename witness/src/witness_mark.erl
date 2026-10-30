@@ -222,7 +222,9 @@ prompt(Sitting) ->
         List -> unicode:characters_to_binary(["The questions:\n" | [io_lib:format("~p. ~ts (~p marks)~n", [maps:get(n, Q), maps:get(text, Q), maps:get(marks, Q, 1)]) || Q <- List]])
     end,
     Scheme = case maps:get(scheme, Sitting, <<>>) of
-        <<>> -> <<"No mark scheme was given: give 1 mark for a fully correct question, judged by its method as well as its answer.">>;
+        <<>> -> %% 31 Oct (photo bench on the committed code): "give 1 mark" beside a question listed as 2 marks gave right work 1 of
+        %% 2, which the marking rightly reads as not mastered; a fully correct question earns all of its worth
+        <<"No mark scheme was given: a fully correct question (right method and right answer) earns every mark it is worth; a right method that did not reach the answer earns part of them.">>;
         S -> <<"The teacher's mark scheme (follow it exactly, including method marks):\n", S/binary>>
     end,
     Level = maps:get(level, Sitting, <<"any level">>),

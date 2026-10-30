@@ -17,12 +17,15 @@ main([Dir, Out]) ->
                 questions => [#{n => N, text => T, marks => M} || #{<<"n">> := N, <<"text">> := T, <<"marks">> := M} <- maps:get(<<"questions">>, Exam)]},
     T0 = erlang:monotonic_time(millisecond),
     Me = self(),
-    Pids = [spawn(fun() -> Me ! {self(), mark(Key, Dir, Sitting, T, T0)} end) || T <- Truth],
+    %% a paper whose scoring fails still answers, so the class never waits on it
+    Pids = [spawn(fun() -> Me ! {self(), try mark(Key, Dir, Sitting, T, T0)
+                                         catch Cl:Er -> #{paper => maps:get(<<"paper">>, T), student => maps:get(<<"student">>, T),
+                                                          error => unicode:characters_to_binary(io_lib:format("~0p", [{Cl, Er}]))} end} end) || T <- Truth],
     Papers = [receive {P, R} -> R after 1800000 -> #{error => <<"timeout">>} end || P <- Pids],
     MarkedMs = erlang:monotonic_time(millisecond) - T0,
     Items = [#{student => maps:get(student, P), sitting => maps:get(paper, P), n => maps:get(n, Q), question => maps:get(maps:get(n, Q), Texts, <<>>),
                result => maps:get(result, Q), diagnosis => maps:get(diagnosis, Q, <<>>),
-               idea => maps:get(misconception, maps:get(fingerprint, Q, #{}), <<>>), turned_around => false,
+               idea => maps:get(misconception, fp(Q), <<>>), turned_around => false,
                drawn => maps:get(drawn, Q)}
              || P <- Papers, Q <- maps:get(questions, P, []), witness_mark:needs_level(Q)],
     {Patterns, PatCost} = case witness_patterns:run(Key, #{title => maps:get(<<"title">>, Exam), level => maps:get(<<"level">>, Exam)},
@@ -67,7 +70,7 @@ mark(Key, Dir, Sitting, #{<<"paper">> := Id, <<"student">> := Name, <<"questions
     end.
 
 score(Q, Drawn) ->
-    Fp = maps:get(fingerprint, Q, #{}),
+    Fp = fp(Q),
     Mastered = maps:get(result, Q) =:= <<"mastered">>,
     Q#{drawn => Drawn, sound => Mastered =:= (Drawn =:= <<"right">>),
        named => maps:get(misconception, Fp, <<>>), asked => maps:get(ask, Fp, <<>>) =/= <<>>}.
@@ -80,6 +83,9 @@ group(G, Items) ->
     {Top, TopN} = case lists:reverse(lists:keysort(2, maps:to_list(Counts))) of [] -> {<<>>, 0}; [T | _] -> T end,
     #{idea => maps:get(idea, G), lines => length(Drawn), drawn => Counts, top_drawn => Top,
       top_share => case Drawn of [] -> 0.0; _ -> TopN / length(Drawn) end, students => length(maps:get(students, G, []))}.
+
+%% a mastered question carries fingerprint => null
+fp(Q) -> case maps:get(fingerprint, Q, null) of M when is_map(M) -> M; _ -> #{} end.
 
 norm(B) -> string:lowercase(string:trim(unicode:characters_to_binary(B))).
 round1(X) -> round(X * 10) / 10.

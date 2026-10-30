@@ -112,3 +112,29 @@ with "cancel"). Each was checked against the code before anything changed.
   number and every gain or loss claim (`true_claims` in `witness_check.erl`). The questions written inside each lesson
   as it opens are still not checked one by one (README, limits).
 - **The settled diagnosis carried the model's notes on its evidence.** It is now the named idea alone.
+
+## 31 Oct: twelve judges, then every number re-run on the committed code
+
+A panel of twelve reviewers (three per judging criterion) graded the repository, the film plan and the evidence. Each
+gap was checked against the code before anything changed; the fixes and their tests are in the commits of 31 Oct.
+Then every evaluation was run again on the committed code.
+
+- **Learner B drifted to "cancel"** in some readings: the name followed the final answer ($100, "back to the start"),
+  not the steps. The marking rule now says to name what the student's own steps DO (how each number in them was got).
+  Five readings each: A named 5 of 5 (the changes cancel), B 5 of 5 (50% taken as a fixed $50), C asked 5 of 5
+  (`evidence/misconceptions/runs-31oct-steps-rule.jsonl`; the readings before the rule are kept beside it).
+- **Held-out v2** (53 papers written after the rule froze, three runs): ambiguous asked 40 of 42, a wrong idea named
+  2 of 42, clear named right 43 of 48, right work 39 of 39, injection 30 of 30 (`harness/heldout/README.md`).
+- **My first "clean" self-check levels leaked worked answers**, so the check passed them for the wrong reason. The
+  levels were rewritten (the first version is kept as `levels-first.json`). Now clean passed 30 of 30, faults held
+  30 of 30 and named 30 of 30, planted false claims 9 of 9.
+- **The reason judge accepted reasons made only of words** ("because percentages work like that"). Its prompt now asks
+  for the rule applied to this question's numbers: false accepts 0 of 36, false rejects 0 of 24.
+- **A marking bug the photo bench found.** With no mark scheme the prompt said "give 1 mark for a fully correct
+  question" beside questions listed as 2 marks; right work came back 1 of 2, which the marking rightly reads as not
+  mastered. On the committed code the photo bench fell to 19 of 40 exact. The sentence now gives a fully correct
+  question all its worth (`no_scheme_gives_a_right_question_all_its_marks_test`); photo 39 of 43 exact, 42 of 43
+  sound; video 45 of 46 exact, 46 of 46 sound. An exam with the teacher's scheme was never affected.
+- **Where a line is on the photo** (`harness/bench/line_bench.escript`, 64 lines): `witness_page` 64 of 64 at an
+  overlap of 0.5 or more with the ink (mean 0.92), SAM 3.1's word boxes 52 of 64 (0.75), Muse Spark's own boxes 1 of
+  64 (0.06). Spark's boxes are loose and drift; the product never cuts a step with them.

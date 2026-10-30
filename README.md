@@ -21,11 +21,11 @@ Part of [LoWisa](https://lowisa.dev), built for the Meta Global AI Developer Hac
 
 | Model | Its job here | Code | Measured | Evidence |
 |---|---|---|---|---|
-| **Muse Spark 1.3** | Reads the teacher's exam file. Marks every photographed paper for the path, not only the answer. Writes the Misconception Fingerprint. Reads the student's answer to Lo. Writes the mastery level. Drafts the challenge, judges the reason, recommends the badge. Writes the re-check. Reads Lo's spoken turns for safety. | `witness_photo`, `witness_mark`, `witness_fingerprint`, `witness_challenge`, `witness_recheck`, `witness_recommend`, `witness_guard` | held-out v2, 159 marked papers: right work 39/39; injection 30/30; ambiguous pages asked first ⟪V2-ASK⟫; clear ideas named right ⟪V2-NAMED⟫ | `harness/heldout/` |
+| **Muse Spark 1.3** | Reads the teacher's exam file. Marks every photographed paper for the path, not only the answer. Writes the Misconception Fingerprint. Reads the student's answer to Lo. Writes the mastery level. Drafts the challenge, judges the reason, recommends the badge. Writes the re-check. Reads Lo's spoken turns for safety. | `witness_photo`, `witness_mark`, `witness_fingerprint`, `witness_challenge`, `witness_recheck`, `witness_recommend`, `witness_guard` | held-out v2, 159 marked papers: right work 39/39; injection 30/30; ambiguous pages asked first 40/42; clear ideas named right 43/48 | `harness/heldout/` |
 | **Muse Wonder** | Plays each mastery level as the student who still holds the misconception and as one who has it right (in one reasoning pass), and holds a level that would not catch it or says a false thing. Groups the class by reasoning. Asks the examiner's questions. | `witness_check`, `witness_patterns`, `witness_examiner` | 20 levels × 3: planted faults held 30/30, the fault named 30/30; clean levels passed 30/30 | `harness/selfcheck/` |
 | **Muse Voice Transcribe** | The student's spoken answer to Lo; the teacher's spoken comment | `witness_meta:transcribe/2` | a 6.4 s spoken answer written down for $0.0003 | `harness/probes/results-31oct/transcript-31oct.json` |
 | **Muse Image** | Draws the corrected step on lined paper | `witness_draw` | the three learners' steps drawn, $0.015–0.021 each | `harness/probes/results-31oct/drawn-learner-*.webp` |
-| **SAM 3.1** | Desk filming (the optional way in): follows the ink through a video, so each line has the second it was written | `witness_sam`, `witness_timeline` | on a photo it answers "word" (not "handwriting"); line placement ⟪LINES⟫ | `harness/probes/`, `harness/bench/results/line_placement.json` |
+| **SAM 3.1** | Desk filming (the optional way in): follows the ink through a video, so each line has the second it was written | `witness_sam`, `witness_timeline` | on a photo it answers "word" (not "handwriting"); its word boxes, joined into lines, found 52 of 64 handwritten lines (mean overlap 0.75) | `harness/probes/`, `harness/bench/results/line_placement.json` |
 | Muse Spark Open | The same marking, on a photographed paper or a desk video, through any OpenAI-compatible endpoint | `witness_open`, `witness_photo` | **wired, not yet run**: no hosted endpoint for it in this account | – |
 
 **What surprised us about Meta's models**
@@ -120,7 +120,7 @@ It draws on what is known to work:
 |---|---|
 | Marking a page | $0.016 (held-out v2) |
 | One question turned around (marking, Lo's question, the level and its animations, the self-check, the challenge, the recommendation) | about $0.25 to $0.35 |
-| A class of 40 | ⟪CLASS-COST⟫ for the marking, and ⟪CLASS-MIN⟫ from the last photo to a marked, grouped class |
+| A class of 40, two-page papers ([`harness/class/`](harness/class/)) | **$1.01**: $0.90 to mark all 40, $0.10 for the class patterns. All 40 marked at once in 32 s; the patterns ready 1 minute after the last photo |
 
 **Why this matters, and why it is hard to copy**
 - **The scale of the need:** UNESCO counts 44 million more teachers needed by 2030 ([Global Report on Teachers, 2024](https://www.unesco.org/en/articles/global-report-teachers-what-you-need-know)). Teacher time is the scarcest thing in a school.
@@ -185,17 +185,47 @@ set **v2** has 53 papers in 13 new topics:
 It was labelled by a rule stated in [`items_v2.py`](harness/heldout/items_v2.py) and committed before its first run.
 Scoring is strict: the name itself must carry a key, and an "ask" passes only when nothing at all names an idea.
 
-| v2, three runs (159 marked papers) | Result | Rate (95% interval) |
+| v2, three runs on the committed code (159 marked papers, [`v2-held-out-steps-rule-3-runs.json`](harness/heldout/results/v2-held-out-steps-rule-3-runs.json)) | Result | Rate (95% interval) |
 |---|---|---|
 | Right work marked mastered | **39 of 39** | 100% (91–100%) |
 | Ink that tries to instruct the marker, never marked mastered | **30 of 30** | 100% (89–100%) |
-| Ink that cannot tell the idea: Lo asks | ⟪V2-ASK-ROW⟫ |
-| … a wrong idea named instead | ⟪V2-WRONG-ROW⟫ |
-| Ink that shows the idea: named right | ⟪V2-NAMED-ROW⟫ |
+| Ink that cannot tell the idea: Lo asks | **40 of 42** | 95% (84–99%) |
+| … a wrong idea named instead (the harmful error) | 2 of 42 | 5% (1–16%) |
+| Ink that shows the idea: named right | **43 of 48** | 90% (78–96%) |
+| … named, but a different idea (both are the right idea in other words; scored as missed) | 2 of 48 | 4% (1–14%) |
+| … asked first instead (cautious) | 3 of 48 | |
 
 The misses are read by hand in [`harness/heldout/README.md`](harness/heldout/README.md), with the hinted-scheme ablation
 and the effort ablation (on the development set, low effort was as accurate as medium, 28% cheaper and 40% faster).
 **The design choice: when unsure, ask. A wrong label is the error that harms a learner; a question costs a sentence.**
+
+### A class of 40
+
+The film's maths test (six questions, two pages) answered by 40 sample students ([`make_class.py`](harness/class/make_class.py)):
+each wrong answer is one of six ideas a teacher sees in this topic, drawn before the run, and "a percentage taken as
+that many dollars" is written on three different questions. All 40 papers went through the product's marking at once,
+then every question not mastered went to Muse Wonder's class patterns ([`class_run.escript`](harness/class/class_run.escript)).
+
+| | Result |
+|---|---|
+| Names read from the pages | **40 of 40** |
+| Questions marked soundly (mastered or not, as drawn) | **240 of 240** |
+| "Half up, half down. Same price.": nothing named, Lo asks | **5 of 5** |
+| Wrong ideas named | 48 of 51 (the other 3, "3/5 = 35%", show no calculation: Lo asks) |
+| Time | all 40 marked in 32 s; the class patterns ready at 1 minute |
+| Cost | **$1.01** for the class ($0.90 marking, $0.10 patterns) |
+
+| Group Muse Wonder made | Lines | Drawn as |
+|---|---|---|
+| The percent taken as that many dollars (Q2, Q4, Q5) | 23 | 23 of 23 the same idea |
+| Equal increases and decreases cancel | 12 | 12 of 12 |
+| No working shown: ask the student first | 8 | the 8 lines where Lo asks |
+| Dividing by each ratio number | 7 | 7 of 7 |
+| Finding a percentage by dividing by it | 4 | 4 of 4 |
+| Joining the fraction's digits into a percentage | 2 | 2 of 2 |
+
+Raw results: [`harness/class/results/class-of-40.json`](harness/class/results/class-of-40.json). These are sample
+papers in one handwriting font; a real class is harder.
 
 ## 5. The loop, end to end
 
@@ -244,7 +274,7 @@ Prices and calls: [`docs/integration.md`](docs/integration.md), `witness_meta:co
 - **The evidence rule is code, measured on a held-out set** written after it froze, with the misses read by hand.
 - **Handwriting placed where it is on the page.**
   - Muse Spark's line boxes drift. `witness_page.erl` snaps each line onto real ink bands with dynamic programming, splits touching lines, leaves printed pictures out, and tells pen from print by colour.
-  - It is measured against the truth beside Muse Spark's own boxes and SAM 3.1's word boxes: ⟪LINES-SHORT⟫.
+  - It is measured against the truth beside Muse Spark's own boxes and SAM 3.1's word boxes, on the 36 development papers (64 lines; a line is found at an overlap of 0.5 or more with the ink's own box): **`witness_page` 64 of 64 (mean overlap 0.92)**, SAM 3.1 52 of 64 (0.75), Muse Spark's own boxes 1 of 64 (0.06: they are loose and drift, which is why the product never cuts a step with them).
 - **Disagreement is measured, not hidden.** An unsure marking is read again at high effort, sharing the prompt cache; two readings that split are settled by a third.
 - **Production engineering:**
   - Erlang/OTP on the edge, every model call metered;
@@ -252,7 +282,7 @@ Prices and calls: [`docs/integration.md`](docs/integration.md), `witness_meta:co
   - every model route capped per account per day;
   - the self-check's verdict bound to the level on the server;
   - access by role: the join code, the photographing code, the student, the teacher.
-- **Tested.** ⟪TESTS⟫ library tests from a fresh clone (`sh scripts/test.sh`, CI); the edge's own suite; 66 phone and 23 desk tests in the host app (copies in `phone/__tests__`, `desk/__tests__`).
+- **Tested.** 138 library tests from a fresh clone (`sh scripts/test.sh`, CI); the edge's own suite; 66 phone and 23 desk tests in the host app (copies in `phone/__tests__`, `desk/__tests__`).
 
 ### Demo and experience
 - **The 3-minute film is cut from one continuous run** on the production edge and the release build.
@@ -298,7 +328,23 @@ flowchart TB
 
 ## 8. Evidence: every number and where it comes from
 
-⟪EVIDENCE-TABLE⟫
+| Number | What it is | Raw results |
+|---|---|---|
+| A 5/5, B 5/5 named; C asked 5/5 | the three learners, five readings each, through `witness_photo:mark/4` | `evidence/misconceptions/runs-31oct-steps-rule.jsonl` |
+| asked 40/42, wrong name 2/42, named right 43/48, right work 39/39, injection 30/30 | held-out v2, 53 papers × 3 runs | `harness/heldout/results/v2-held-out-steps-rule-3-runs.json` |
+| ambiguous asked 10/11 (development) | the 36 papers the rule was designed on, and the effort ablation | `harness/heldout/results/dev-set-*.json` |
+| clean 30/30, faults held 30/30, named 30/30, false claims 9/9 | Muse Wonder's self-check, 20 levels × 3 runs | `harness/selfcheck/results/selfcheck-3-runs.json` |
+| false accepts 0/36, false rejects 0/24 | the reason judge, 20 reasons × 3 runs | `harness/reasons/results/reasons-applied-3-runs.json` |
+| video 45/46 exact, 46/46 sound | 13 desk clips in 6 languages, SAM 3.1 + Muse Spark | `harness/bench/results/video_on_head.json` |
+| photo 39/43 exact, 42/43 sound | the same papers photographed, the product's photo path | `harness/bench/results/photo_on_head.json` |
+| 138/138 exact | 39 papers marked at once (28 Oct) | `harness/bench/results/load39.json` |
+| 40/40 names, 240/240 sound, no-calculation asked 5/5, 6 groups, $1.01 | a class of 40, two-page papers marked at once, then grouped | `harness/class/results/class-of-40.json` |
+| page 64/64, SAM 52/64, Spark 1/64 | where each handwritten line is on the photo | `harness/bench/results/line_placement.json` |
+| Voice Transcribe $0.0003; Muse Image $0.015–0.021; structured output; 99.8% cached | the live API probe | `harness/probes/results-31oct/` |
+| the loop, photo to re-check | one continuous run on the production edge | `evidence/` (⟪REHEARSAL-FILES⟫) |
+
+Every bench number is recomputed from the raw files by `python harness/bench/summary.py`; every result file records
+the commit it ran on. Notes for Meta's API team, and what each run found: [`harness/FINDINGS.md`](harness/FINDINGS.md).
 
 ## 9. Try it, and verify it yourself
 
