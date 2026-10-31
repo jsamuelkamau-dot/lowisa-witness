@@ -65,9 +65,14 @@ fingerprint_rule() ->
     "- \"fingerprint\", for every question that is not mastered (null when mastered). The same wrong answer can come from\n"
     "  different wrong ideas, and each needs a different repair, so read WHICH idea from the ink alone:\n"
     "  \"reasoning\" is the reasoning that produced this answer, in one sentence; \"evidence\" is the student's own lines\n"
-    "  that show it, copied exactly as written (never the final answer alone, never your own words); \"misconception\"\n"
+    "  that show it, copied exactly as written (never a bare final result alone, never your own words); \"misconception\"\n"
     "  is a short name for the wrong idea that evidence shows, and ONLY what it shows. Working that shows the calculation\n"
-    "  can name an idea (in another topic, \"1/2 + 1/3 = 2/5\" shows adding the tops and the bottoms). Name what the\n"
+    "  can name an idea (in another topic, \"1/2 + 1/3 = 2/5\" shows adding the tops and the bottoms). When the question\n"
+    "  asks for an explanation, a reason or a law in words and the student wrote one in words, that sentence IS their\n"
+    "  working: quote it and name the idea it states (in another topic, \"plants get their food from the soil\" states\n"
+    "  that idea); for such a sentence, rivals are other ideas that would make a student write it, never restatements of\n"
+    "  it. This is only for answers in words: a calculation keeps every rule here, and a single word or term given for a\n"
+    "  recall question (a unit, a name) shows no reasoning. Name what the\n"
     "  student's own steps DO (how each number in them was got), never the conclusion their final answer happens to match:\n"
     "  when every step is worked, the wrong idea is in the step that computed a number wrongly. Diagnose as a doctor\n"
     "  does: \"rivals\" lists every OTHER wrong idea that would make a student write exactly this ink, the same lines and the\n"
@@ -141,9 +146,11 @@ settle(_, _, _) -> {<<>>, <<"Talk me through how you got your answer, step by st
 %% What the page shows while Lo asks: the answer and that the working behind it is not on the page.
 held_words(Steps, Final) ->
     Answer = case Final of <<>> -> <<"this answer">>; _ -> <<"the answer ", Final/binary>> end,
-    case [W || #{wrote := W} <- Steps, W =/= <<>>, W =/= Final] of
-        [] -> <<"Only ", Answer/binary, " is on the page, not the working behind it. Lo asks first.">>;
-        _ -> <<"The page shows ", Answer/binary, " but not which calculation led to it. Lo asks first.">>
+    case {words(Final) >= 5, [W || #{wrote := W} <- Steps, W =/= <<>>, W =/= Final]} of
+        %% an answer in words is more than a result: what the page lacks is which idea is behind it (31 Oct, physics test)
+        {true, _} -> <<"The page shows the answer in the student's own words, but not yet which idea is behind it. Lo asks first.">>;
+        {false, []} -> <<"Only ", Answer/binary, " is on the page, not the working behind it. Lo asks first.">>;
+        {false, _} -> <<"The page shows ", Answer/binary, " but not which calculation led to it. Lo asks first.">>
     end.
 
 %% A quoted line is the student's own when it is (part of) a line read from their page, or that line with a reading's
@@ -157,9 +164,17 @@ in_ink(E, Lines, _) ->
     lists:any(fun(L) -> L =/= <<>> andalso (binary:match(L, E) =/= nomatch orelse near(E, L)) end, Lines).
 
 %% A quote may join two lines ("100 + 50 = 150; 150 - 50 = 100"): each part must be in the ink on its own.
+%% 31 Oct (physics test, "explain why a ship floats"): a final answer that is itself the working, a written explanation
+%% or a calculation, is the student's reasoning in their own ink; only a bare result ("$100", "Joules") is no evidence.
 quote_in_ink(Raw, Lines, Final) ->
+    Bare = case reasoned(Final) of true -> <<>>; false -> norm(Final) end,
     Parts = [norm(P) || P <- re:split(str(Raw), <<"\\s*(?:;|\\n|\\|| / (?=[A-Za-z]))\\s*">>, [unicode, {return, binary}, trim]), norm(P) =/= <<>>],
-    Parts =/= [] andalso lists:all(fun(P) -> in_ink(P, Lines, norm(Final)) end, Parts).
+    Parts =/= [] andalso lists:all(fun(P) -> in_ink(P, Lines, Bare) end, Parts).
+
+reasoned(Final) -> calculation(Final) orelse words(Final) >= 5.
+
+%% the words in an answer ("P = F x A" has none worth counting; "It attracts all metals." has four)
+words(B) -> length([W || W <- string:lexemes(str(B), " \t\n"), re:run(W, <<"[A-Za-z]{2,}">>, [{capture, none}]) =:= match]).
 
 %% Two lines that differ only by a reading's slips: an edit distance of at most 15% of the longer one.
 near(A, B) ->
@@ -286,12 +301,19 @@ parse(Text) ->
 
 question(Q) ->
     Result0 = maps:get(<<"result">>, Q, <<>>),
-    Marks = num(maps:get(<<"marks">>, Q, 0)), OutOf = num(maps:get(<<"out_of">>, Q, 1)),
+    Marks0 = num(maps:get(<<"marks">>, Q, 0)), OutOf = num(maps:get(<<"out_of">>, Q, 1)),
     %% "mastered" with a mark missing says two things at once (27 Oct benchmark: three answers written with no
     %% working came back mastered at 1 of 2): it is not mastered, and the teacher looks at it first
-    Torn = Result0 =:= <<"mastered">> andalso maps:is_key(<<"marks">>, Q) andalso is_number(Marks) andalso is_number(OutOf)
-               andalso Marks < OutOf,
+    Torn = Result0 =:= <<"mastered">> andalso maps:is_key(<<"marks">>, Q) andalso is_number(Marks0) andalso is_number(OutOf)
+               andalso Marks0 < OutOf,
     Result = case {lists:member(Result0, results()), Torn} of {_, true} -> <<"part_way">>; {true, _} -> Result0; _ -> <<"not_yet">> end,
+    %% and the other way (31 Oct, physics test with no scheme: five one-mark answers marked "part way" at 1 of 1): a
+    %% question part way or not yet there never holds every mark; a one-mark question earns nothing for part of the idea
+    %% (a right answer reached by wrong thinking keeps what the scheme gives it)
+    Marks = case lists:member(Result, [<<"part_way">>, <<"not_yet">>]) andalso is_number(Marks0) andalso is_number(OutOf) andalso OutOf > 0 andalso Marks0 >= OutOf of
+        true -> max(0, ceil(OutOf) - 1);
+        false -> Marks0
+    end,
     Diagnosis = case {str(maps:get(<<"diagnosis">>, Q, <<>>)), Torn} of
         {<<>>, true} -> <<"Not every mark was earned: the working needs a look.">>;
         {D, _} -> D

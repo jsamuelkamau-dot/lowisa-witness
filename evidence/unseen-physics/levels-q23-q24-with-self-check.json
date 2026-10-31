@@ -1,0 +1,1986 @@
+{
+ "id": "33ca17568b83dd66",
+ "ok": true,
+ "status": "released",
+ "read": {
+  "name": "Daniel Kwan",
+  "date": "14 May 2024",
+  "class": "3B"
+ },
+ "result": {
+  "engine": "muse-spark-1.3",
+  "lines": [],
+  "questions": [
+   {
+    "result": "not_yet",
+    "steps": [
+     {
+      "t": null,
+      "page": 1,
+      "box": {
+       "h": 1000,
+       "w": 1000,
+       "y1": 210,
+       "x1": 240,
+       "x2": 410,
+       "y2": 270
+      },
+      "wrote": "Joules",
+      "crossed_out": false,
+      "spot": [
+       270,
+       225,
+       350,
+       255
+      ]
+     }
+    ],
+    "n": 1,
+    "diagnosis": "Only the answer Joules is on the page, not the working behind it. Lo asks first.",
+    "skill": "recalling the unit of force",
+    "marks": 0,
+    "fingerprint": {
+     "evidence": [],
+     "ask": "What is measured in joules and what do we measure in newtons?",
+     "reasoning": "Thinks force is measured in joules.",
+     "misconception": "",
+     "rivals": [
+      "Guessed a familiar science unit without linking it to force"
+     ],
+     "intervention": "Have student match quantities to units by sorting cards for force, energy and power."
+    },
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 1,
+     "place": {
+      "h": 1000,
+      "w": 1000,
+      "y1": 205,
+      "x1": 0,
+      "x2": 550,
+      "y2": 265
+     },
+     "box": [
+      30,
+      220,
+      490,
+      250
+     ]
+    },
+    "slip": 1,
+    "confidence": 0.97,
+    "diagnosis_draft": "Gave the unit of energy instead of the unit of force.",
+    "final_answer": "Joules",
+    "capabilities": [
+     "Pattern Recognition"
+    ]
+   },
+   {
+    "result": "not_yet",
+    "steps": [
+     {
+      "t": null,
+      "page": 1,
+      "box": {
+       "h": 1000,
+       "w": 1000,
+       "y1": 245,
+       "x1": 280,
+       "x2": 530,
+       "y2": 305
+      },
+      "wrote": "Magnetic force",
+      "crossed_out": false,
+      "spot": [
+       310,
+       260,
+       470,
+       290
+      ]
+     }
+    ],
+    "n": 2,
+    "diagnosis": "Only the answer Magnetic force is on the page, not the working behind it. Lo asks first.",
+    "skill": "recalling force holding planets in orbit",
+    "marks": 0,
+    "fingerprint": {
+     "evidence": [],
+     "ask": "What does a magnet pull and what does the Sun pull on planets?",
+     "reasoning": "Thinks planets are held by magnetic force.",
+     "misconception": "",
+     "rivals": [
+      "Guessed a non-contact force name"
+     ],
+     "intervention": "Compare what magnets attract with what the Sun attracts to test the magnetic idea."
+    },
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 1,
+     "place": {
+      "h": 1000,
+      "w": 1000,
+      "y1": 245,
+      "x1": 0,
+      "x2": 550,
+      "y2": 305
+     },
+     "box": [
+      30,
+      260,
+      490,
+      290
+     ]
+    },
+    "slip": 1,
+    "confidence": 0.97,
+    "diagnosis_draft": "Thinks magnetism keeps planets in orbit instead of gravity.",
+    "final_answer": "Magnetic force",
+    "capabilities": [
+     "Pattern Recognition"
+    ]
+   },
+   {
+    "result": "mastered",
+    "steps": [
+     {
+      "t": null,
+      "page": 1,
+      "box": {
+       "h": 1000,
+       "w": 1000,
+       "y1": 290,
+       "x1": 275,
+       "x2": 535,
+       "y2": 350
+      },
+      "wrote": "60 ÷ 4 = 15 m/s",
+      "crossed_out": false,
+      "spot": [
+       305,
+       305,
+       475,
+       335
+      ]
+     }
+    ],
+    "n": 3,
+    "diagnosis": "",
+    "skill": "",
+    "marks": 1,
+    "fingerprint": null,
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 1,
+     "place": {
+      "h": 1000,
+      "w": 1000,
+      "y1": 285,
+      "x1": 0,
+      "x2": 550,
+      "y2": 345
+     },
+     "box": [
+      30,
+      300,
+      490,
+      330
+     ]
+    },
+    "slip": null,
+    "confidence": 0.99,
+    "diagnosis_draft": "",
+    "final_answer": "60 ÷ 4 = 15 m/s",
+    "capabilities": []
+   },
+   {
+    "result": "not_yet",
+    "steps": [
+     {
+      "t": null,
+      "page": 1,
+      "box": {
+       "h": 1000,
+       "w": 1000,
+       "y1": 326,
+       "x1": 230,
+       "x2": 410,
+       "y2": 391
+      },
+      "wrote": "Gravity",
+      "crossed_out": false,
+      "spot": [
+       260,
+       342,
+       350,
+       375
+      ]
+     }
+    ],
+    "n": 4,
+    "diagnosis": "Only the answer Gravity is on the page, not the working behind it. Lo asks first.",
+    "skill": "distinguishing contact and non-contact forces",
+    "marks": 0,
+    "fingerprint": {
+     "evidence": [],
+     "ask": "Does gravity need the objects to touch to act?",
+     "reasoning": "Thinks gravity is a contact force.",
+     "misconception": "",
+     "rivals": [
+      "Guessed any named force without checking for contact"
+     ],
+     "intervention": "Have student sort pushes needing touch versus acting at a distance."
+    },
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 1,
+     "place": {
+      "h": 1000,
+      "w": 1000,
+      "y1": 325,
+      "x1": 0,
+      "x2": 550,
+      "y2": 385
+     },
+     "box": [
+      30,
+      340,
+      490,
+      370
+     ]
+    },
+    "slip": 1,
+    "confidence": 0.96,
+    "diagnosis_draft": "Gave a non-contact force instead of a contact force.",
+    "final_answer": "Gravity",
+    "capabilities": [
+     "Pattern Recognition"
+    ]
+   },
+   {
+    "result": "part_way",
+    "steps": [
+     {
+      "t": null,
+      "page": 1,
+      "box": {
+       "h": 1000,
+       "w": 1000,
+       "y1": 365,
+       "x1": 225,
+       "x2": 545,
+       "y2": 425
+      },
+      "wrote": "Moving in a straight line",
+      "crossed_out": false,
+      "spot": [
+       255,
+       380,
+       485,
+       410
+      ]
+     }
+    ],
+    "n": 5,
+    "diagnosis": "Only the answer Moving in a straight line is on the page, not the working behind it. Lo asks first.",
+    "skill": "stating both parts of constant velocity",
+    "marks": 0,
+    "fingerprint": {
+     "evidence": [],
+     "ask": "Talk me through how you got your answer, step by step.",
+     "reasoning": "States constant velocity means moving in a straight line.",
+     "misconception": "",
+     "possible": "constant velocity means straight-line direction only",
+     "intervention": "Ask student to compare straight-line motion that speeds up with one that does not change speed."
+    },
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 1,
+     "place": {
+      "h": 1000,
+      "w": 1000,
+      "y1": 365,
+      "x1": 0,
+      "x2": 550,
+      "y2": 425
+     },
+     "box": [
+      30,
+      380,
+      490,
+      410
+     ]
+    },
+    "slip": 1,
+    "confidence": 0.93,
+    "diagnosis_draft": "Gave direction only and omitted constant speed.",
+    "final_answer": "Moving in a straight line",
+    "capabilities": [
+     "Pattern Recognition"
+    ]
+   },
+   {
+    "result": "not_yet",
+    "steps": [
+     {
+      "t": null,
+      "page": 1,
+      "box": {
+       "h": 1000,
+       "w": 1000,
+       "y1": 425,
+       "x1": 105,
+       "x2": 380,
+       "y2": 485
+      },
+      "wrote": "a = 20 ÷ 5 = 2",
+      "crossed_out": false,
+      "spot": [
+       135,
+       440,
+       320,
+       470
+      ]
+     }
+    ],
+    "n": 6,
+    "diagnosis": "Divided force by mass but calculated 20 ÷ 5 as 2.",
+    "skill": "dividing 20 by 5 correctly",
+    "marks": 0,
+    "fingerprint": {
+     "evidence": [
+      "a = 20 ÷ 5 = 2"
+     ],
+     "ask": "",
+     "reasoning": "Calculated 20 divided by 5 as 2.",
+     "misconception": "20 divided by 5 equals 2",
+     "intervention": "Have student check with multiplication that 5 x 2 does not make 20 and find what does."
+    },
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 1,
+     "place": {
+      "h": 1000,
+      "w": 1000,
+      "y1": 405,
+      "x1": 0,
+      "x2": 550,
+      "y2": 465
+     },
+     "box": [
+      30,
+      420,
+      490,
+      450
+     ]
+    },
+    "slip": 1,
+    "confidence": 0.97,
+    "diagnosis_draft": "",
+    "final_answer": "a = 20 ÷ 5 = 2",
+    "capabilities": [
+     "Pattern Recognition"
+    ]
+   },
+   {
+    "result": "part_way",
+    "steps": [
+     {
+      "t": null,
+      "page": 1,
+      "box": {
+       "h": 1000,
+       "w": 1000,
+       "y1": 492,
+       "x1": 115,
+       "x2": 420,
+       "y2": 556
+      },
+      "wrote": "Energy cannot be created.",
+      "crossed_out": false,
+      "spot": [
+       145,
+       508,
+       360,
+       540
+      ]
+     }
+    ],
+    "n": 7,
+    "diagnosis": "Only the answer Energy cannot be created. is on the page, not the working behind it. Lo asks first.",
+    "skill": "stating full conservation of energy",
+    "marks": 0,
+    "fingerprint": {
+     "evidence": [],
+     "ask": "Talk me through how you got your answer, step by step.",
+     "reasoning": "States conservation means energy cannot be created.",
+     "misconception": "",
+     "possible": "conservation means only that energy cannot be created",
+     "intervention": "Ask what happens to energy when it disappears from one place and where it must go."
+    },
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 1,
+     "place": {
+      "h": 1000,
+      "w": 1000,
+      "y1": 465,
+      "x1": 0,
+      "x2": 550,
+      "y2": 525
+     },
+     "box": [
+      30,
+      480,
+      490,
+      510
+     ]
+    },
+    "slip": 1,
+    "confidence": 0.94,
+    "diagnosis_draft": "Stated only no creation and omitted no destruction with transfer or transformation.",
+    "final_answer": "Energy cannot be created.",
+    "capabilities": [
+     "Pattern Recognition"
+    ]
+   },
+   {
+    "result": "not_yet",
+    "steps": [
+     {
+      "t": null,
+      "page": 1,
+      "box": {
+       "h": 1000,
+       "w": 1000,
+       "y1": 535,
+       "x1": 275,
+       "x2": 450,
+       "y2": 595
+      },
+      "wrote": "Nuclear",
+      "crossed_out": false,
+      "spot": [
+       305,
+       550,
+       390,
+       580
+      ]
+     }
+    ],
+    "n": 8,
+    "diagnosis": "Only the answer Nuclear is on the page, not the working behind it. Lo asks first.",
+    "skill": "recalling a renewable energy source",
+    "marks": 0,
+    "fingerprint": {
+     "evidence": [],
+     "ask": "What fuel does nuclear use and can it run out?",
+     "reasoning": "Thinks nuclear is a renewable energy source.",
+     "misconception": "",
+     "rivals": [
+      "Guessed a familiar energy source name"
+     ],
+     "intervention": "Sort energy sources by whether the fuel runs out and test nuclear against solar."
+    },
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 1,
+     "place": {
+      "h": 1000,
+      "w": 1000,
+      "y1": 535,
+      "x1": 0,
+      "x2": 550,
+      "y2": 595
+     },
+     "box": [
+      30,
+      550,
+      490,
+      580
+     ]
+    },
+    "slip": 1,
+    "confidence": 0.97,
+    "diagnosis_draft": "Gave a non-renewable source explicitly excluded by the scheme.",
+    "final_answer": "Nuclear",
+    "capabilities": [
+     "Pattern Recognition"
+    ]
+   },
+   {
+    "result": "not_yet",
+    "steps": [
+     {
+      "t": null,
+      "page": 1,
+      "box": {
+       "h": 1000,
+       "w": 1000,
+       "y1": 573,
+       "x1": 275,
+       "x2": 455,
+       "y2": 633
+      },
+      "wrote": "Ampere",
+      "crossed_out": false,
+      "spot": [
+       305,
+       588,
+       395,
+       618
+      ]
+     }
+    ],
+    "n": 9,
+    "diagnosis": "Only the answer Ampere is on the page, not the working behind it. Lo asks first.",
+    "skill": "recalling unit of potential difference",
+    "marks": 0,
+    "fingerprint": {
+     "evidence": [],
+     "ask": "What does an ammeter measure and what does a voltmeter measure?",
+     "reasoning": "Thinks potential difference is measured in amperes.",
+     "misconception": "",
+     "rivals": [
+      "Guessed a familiar electrical unit"
+     ],
+     "intervention": "Have student pair voltmeter with volts and ammeter with amperes."
+    },
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 1,
+     "place": {
+      "h": 1000,
+      "w": 1000,
+      "y1": 575,
+      "x1": 0,
+      "x2": 550,
+      "y2": 635
+     },
+     "box": [
+      30,
+      590,
+      490,
+      620
+     ]
+    },
+    "slip": 1,
+    "confidence": 0.97,
+    "diagnosis_draft": "Gave the unit of current instead of potential difference.",
+    "final_answer": "Ampere",
+    "capabilities": [
+     "Pattern Recognition"
+    ]
+   },
+   {
+    "result": "not_yet",
+    "steps": [
+     {
+      "t": null,
+      "page": 1,
+      "box": {
+       "h": 1000,
+       "w": 1000,
+       "y1": 615,
+       "x1": 275,
+       "x2": 505,
+       "y2": 675
+      },
+      "wrote": "It gets smaller.",
+      "crossed_out": false,
+      "spot": [
+       305,
+       630,
+       445,
+       660
+      ]
+     }
+    ],
+    "n": 10,
+    "diagnosis": "Only the answer It gets smaller. is on the page, not the working behind it. Lo asks first.",
+    "skill": "stating current in a series circuit",
+    "marks": 0,
+    "fingerprint": {
+     "evidence": [],
+     "ask": "Talk me through how you got your answer, step by step.",
+     "reasoning": "States current gets smaller in a series circuit.",
+     "misconception": "",
+     "possible": "current is used up around a series circuit",
+     "intervention": "Have student predict ammeter readings at three points then compare with same reading."
+    },
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 1,
+     "place": {
+      "h": 1000,
+      "w": 1000,
+      "y1": 615,
+      "x1": 0,
+      "x2": 550,
+      "y2": 675
+     },
+     "box": [
+      30,
+      630,
+      490,
+      660
+     ]
+    },
+    "slip": 1,
+    "confidence": 0.94,
+    "diagnosis_draft": "Thinks current is used up and gets smaller in a series circuit.",
+    "final_answer": "It gets smaller.",
+    "capabilities": [
+     "Systems Thinking"
+    ]
+   },
+   {
+    "result": "not_yet",
+    "steps": [
+     {
+      "t": null,
+      "page": 1,
+      "box": {
+       "h": 1000,
+       "w": 1000,
+       "y1": 655,
+       "x1": 190,
+       "x2": 490,
+       "y2": 715
+      },
+      "wrote": "It attracts all metals.",
+      "crossed_out": false,
+      "spot": [
+       220,
+       670,
+       430,
+       700
+      ]
+     }
+    ],
+    "n": 11,
+    "diagnosis": "Only the answer It attracts all metals. is on the page, not the working behind it. Lo asks first.",
+    "skill": "stating what a magnet attracts",
+    "marks": 0,
+    "fingerprint": {
+     "evidence": [],
+     "ask": "Talk me through how you got your answer, step by step.",
+     "reasoning": "States a magnet attracts all metals.",
+     "misconception": "",
+     "possible": "magnets attract all metals",
+     "intervention": "Test magnet on aluminium and copper versus iron to see which stick."
+    },
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 1,
+     "place": {
+      "h": 1000,
+      "w": 1000,
+      "y1": 655,
+      "x1": 0,
+      "x2": 550,
+      "y2": 715
+     },
+     "box": [
+      30,
+      670,
+      490,
+      700
+     ]
+    },
+    "slip": 1,
+    "confidence": 0.95,
+    "diagnosis_draft": "Overgeneralised magnets to attract all metals instead of only iron, nickel and cobalt.",
+    "final_answer": "It attracts all metals.",
+    "capabilities": [
+     "Pattern Recognition"
+    ]
+   },
+   {
+    "result": "not_yet",
+    "steps": [
+     {
+      "t": null,
+      "page": 1,
+      "box": {
+       "h": 1000,
+       "w": 1000,
+       "y1": 695,
+       "x1": 230,
+       "x2": 420,
+       "y2": 755
+      },
+      "wrote": "Heat it up.",
+      "crossed_out": false,
+      "spot": [
+       260,
+       710,
+       360,
+       740
+      ]
+     }
+    ],
+    "n": 12,
+    "diagnosis": "Only the answer Heat it up. is on the page, not the working behind it. Lo asks first.",
+    "skill": "stating how to strengthen a magnet",
+    "marks": 0,
+    "fingerprint": {
+     "evidence": [],
+     "ask": "Talk me through how you got your answer, step by step.",
+     "reasoning": "States heating makes a magnet stronger.",
+     "misconception": "",
+     "possible": "heating strengthens a magnet",
+     "intervention": "Compare magnet strength after heating versus after adding coils or current."
+    },
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 1,
+     "place": {
+      "h": 1000,
+      "w": 1000,
+      "y1": 695,
+      "x1": 0,
+      "x2": 550,
+      "y2": 755
+     },
+     "box": [
+      30,
+      710,
+      490,
+      740
+     ]
+    },
+    "slip": 1,
+    "confidence": 0.95,
+    "diagnosis_draft": "Thinks heating strengthens a magnet when it weakens it.",
+    "final_answer": "Heat it up.",
+    "capabilities": [
+     "Root Cause Analysis"
+    ]
+   },
+   {
+    "result": "not_yet",
+    "steps": [
+     {
+      "t": null,
+      "page": 1,
+      "box": {
+       "h": 1000,
+       "w": 1000,
+       "y1": 735,
+       "x1": 305,
+       "x2": 490,
+       "y2": 795
+      },
+      "wrote": "Conduction",
+      "crossed_out": false,
+      "spot": [
+       335,
+       750,
+       430,
+       780
+      ]
+     }
+    ],
+    "n": 13,
+    "diagnosis": "Only the answer Conduction is on the page, not the working behind it. Lo asks first.",
+    "skill": "recalling heat transfer in vacuum",
+    "marks": 0,
+    "fingerprint": {
+     "evidence": [],
+     "ask": "What does conduction need to pass heat on?",
+     "reasoning": "Thinks conduction is the main transfer in a vacuum.",
+     "misconception": "",
+     "rivals": [
+      "Guessed a familiar heat-transfer name"
+     ],
+     "intervention": "Ask how conduction would carry heat with no particles to touch."
+    },
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 1,
+     "place": {
+      "h": 1000,
+      "w": 1000,
+      "y1": 735,
+      "x1": 0,
+      "x2": 550,
+      "y2": 795
+     },
+     "box": [
+      30,
+      750,
+      490,
+      780
+     ]
+    },
+    "slip": 1,
+    "confidence": 0.96,
+    "diagnosis_draft": "Gave conduction which needs particles instead of radiation in a vacuum.",
+    "final_answer": "Conduction",
+    "capabilities": [
+     "Pattern Recognition"
+    ]
+   },
+   {
+    "result": "not_yet",
+    "steps": [
+     {
+      "t": null,
+      "page": 1,
+      "box": {
+       "h": 1000,
+       "w": 1000,
+       "y1": 775,
+       "x1": 320,
+       "x2": 485,
+       "y2": 835
+      },
+      "wrote": "Melting",
+      "crossed_out": false,
+      "spot": [
+       350,
+       790,
+       425,
+       820
+      ]
+     }
+    ],
+    "n": 14,
+    "diagnosis": "Only the answer Melting is on the page, not the working behind it. Lo asks first.",
+    "skill": "naming length increase on heating",
+    "marks": 0,
+    "fingerprint": {
+     "evidence": [],
+     "ask": "Does the longer rod turn to liquid or stay solid?",
+     "reasoning": "Thinks getting longer on heating is melting.",
+     "misconception": "",
+     "rivals": [
+      "Guessed a familiar heating word"
+     ],
+     "intervention": "Compare a rod that stays solid but longer with one that turns to liquid."
+    },
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 1,
+     "place": {
+      "h": 1000,
+      "w": 1000,
+      "y1": 775,
+      "x1": 0,
+      "x2": 550,
+      "y2": 835
+     },
+     "box": [
+      30,
+      790,
+      490,
+      820
+     ]
+    },
+    "slip": 1,
+    "confidence": 0.96,
+    "diagnosis_draft": "Named a change of state instead of thermal expansion.",
+    "final_answer": "Melting",
+    "capabilities": [
+     "Pattern Recognition"
+    ]
+   },
+   {
+    "result": "not_yet",
+    "steps": [
+     {
+      "t": null,
+      "page": 1,
+      "box": {
+       "h": 1000,
+       "w": 1000,
+       "y1": 813,
+       "x1": 195,
+       "x2": 505,
+       "y2": 882
+      },
+      "wrote": "Angle of incidence is bigger",
+      "crossed_out": false,
+      "spot": [
+       225,
+       830,
+       445,
+       865
+      ]
+     },
+     {
+      "t": null,
+      "page": 1,
+      "box": {
+       "h": 1000,
+       "w": 1000,
+       "y1": 850,
+       "x1": 190,
+       "x2": 435,
+       "y2": 910
+      },
+      "wrote": "than angle of reflection.",
+      "crossed_out": false,
+      "spot": [
+       220,
+       865,
+       375,
+       895
+      ]
+     }
+    ],
+    "n": 15,
+    "diagnosis": "States incidence angle is bigger instead of equal to reflection angle.",
+    "skill": "stating the law of reflection",
+    "marks": 0,
+    "fingerprint": {
+     "evidence": [
+      "Angle of incidence is bigger",
+      "than angle of reflection."
+     ],
+     "ask": "",
+     "reasoning": "States incidence angle is bigger than reflection angle.",
+     "misconception": "angle of incidence is bigger than angle of reflection",
+     "intervention": "Have student measure both angles for a ray and see they match."
+    },
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 1,
+     "place": {
+      "h": 1000,
+      "w": 1000,
+      "y1": 815,
+      "x1": 0,
+      "x2": 550,
+      "y2": 875
+     },
+     "box": [
+      30,
+      830,
+      490,
+      860
+     ]
+    },
+    "slip": 1,
+    "confidence": 0.96,
+    "diagnosis_draft": "",
+    "final_answer": "Angle of incidence is bigger than angle of reflection.",
+    "capabilities": [
+     "Pattern Recognition"
+    ]
+   },
+   {
+    "result": "not_yet",
+    "steps": [
+     {
+      "t": null,
+      "page": 2,
+      "wrote": "Transverse wave",
+      "crossed_out": false,
+      "spot": [
+       705,
+       48,
+       850,
+       78
+      ]
+     }
+    ],
+    "n": 16,
+    "diagnosis": "Only the answer Transverse wave is on the page, not the working behind it. Lo asks first.",
+    "skill": "recalling sound wave type",
+    "marks": 0,
+    "fingerprint": {
+     "evidence": [],
+     "ask": "Do air particles vibrate along or across the sound direction?",
+     "reasoning": "Thinks sound is a transverse wave.",
+     "misconception": "",
+     "rivals": [
+      "Guessed the other main wave type"
+     ],
+     "intervention": "Compare particle movement along sound direction versus across for light."
+    },
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 2,
+     "box": [
+      530,
+      50,
+      980,
+      80
+     ]
+    },
+    "slip": 1,
+    "confidence": 0.96,
+    "diagnosis_draft": "Gave transverse instead of longitudinal for sound.",
+    "final_answer": "Transverse wave",
+    "capabilities": [
+     "Pattern Recognition"
+    ]
+   },
+   {
+    "result": "mastered",
+    "steps": [
+     {
+      "t": null,
+      "page": 2,
+      "wrote": "20 Hz - 20 000 Hz",
+      "crossed_out": false,
+      "spot": [
+       710,
+       92,
+       870,
+       122
+      ]
+     }
+    ],
+    "n": 17,
+    "diagnosis": "",
+    "skill": "",
+    "marks": 1,
+    "fingerprint": null,
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 2,
+     "box": [
+      530,
+      90,
+      980,
+      120
+     ]
+    },
+    "slip": null,
+    "confidence": 0.99,
+    "diagnosis_draft": "",
+    "final_answer": "20 Hz - 20 000 Hz",
+    "capabilities": []
+   },
+   {
+    "result": "not_yet",
+    "steps": [
+     {
+      "t": null,
+      "page": 2,
+      "wrote": "It can travel in a vacuum.",
+      "crossed_out": false,
+      "spot": [
+       720,
+       132,
+       920,
+       162
+      ]
+     }
+    ],
+    "n": 18,
+    "diagnosis": "States sound can travel in a vacuum when it needs a medium.",
+    "skill": "stating a property of sound",
+    "marks": 0,
+    "fingerprint": {
+     "evidence": [
+      "It can travel in a vacuum."
+     ],
+     "ask": "",
+     "reasoning": "States sound can travel in a vacuum.",
+     "misconception": "sound can travel in a vacuum",
+     "intervention": "Ask student to predict hearing a bell in evacuated jar before pumping air out."
+    },
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 2,
+     "box": [
+      530,
+      130,
+      980,
+      160
+     ]
+    },
+    "slip": 1,
+    "confidence": 0.96,
+    "diagnosis_draft": "",
+    "final_answer": "It can travel in a vacuum.",
+    "capabilities": [
+     "Systems Thinking"
+    ]
+   },
+   {
+    "result": "mastered",
+    "steps": [
+     {
+      "t": null,
+      "page": 2,
+      "wrote": "ρ = 200 ÷ 50 = 4 g/cm³",
+      "crossed_out": false,
+      "spot": [
+       585,
+       190,
+       760,
+       220
+      ]
+     }
+    ],
+    "n": 19,
+    "diagnosis": "",
+    "skill": "",
+    "marks": 1,
+    "fingerprint": null,
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 2,
+     "box": [
+      530,
+      170,
+      980,
+      200
+     ]
+    },
+    "slip": null,
+    "confidence": 0.99,
+    "diagnosis_draft": "",
+    "final_answer": "ρ = 200 ÷ 50 = 4 g/cm³",
+    "capabilities": []
+   },
+   {
+    "result": "not_yet",
+    "steps": [
+     {
+      "t": null,
+      "page": 2,
+      "wrote": "P = F × A",
+      "crossed_out": false,
+      "spot": [
+       815,
+       232,
+       900,
+       262
+      ]
+     }
+    ],
+    "n": 20,
+    "diagnosis": "Only the answer P = F × A is on the page, not the working behind it. Lo asks first.",
+    "skill": "recalling pressure-force-area equation",
+    "marks": 0,
+    "fingerprint": {
+     "evidence": [],
+     "ask": "Talk me through how you got your answer, step by step.",
+     "reasoning": "Calculated pressure as force multiplied by area.",
+     "misconception": "",
+     "possible": "pressure equals force times area",
+     "intervention": "Test with larger area: predict if pressure should rise or fall, then check P=F/A."
+    },
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 2,
+     "box": [
+      530,
+      230,
+      980,
+      260
+     ]
+    },
+    "slip": 1,
+    "confidence": 0.97,
+    "diagnosis_draft": "Gave pressure as force times area instead of force divided by area.",
+    "final_answer": "P = F × A",
+    "capabilities": [
+     "Pattern Recognition"
+    ]
+   },
+   {
+    "result": "not_yet",
+    "steps": [
+     {
+      "t": null,
+      "page": 2,
+      "wrote": "P = 100 × 0.5 = 50 Pa",
+      "crossed_out": false,
+      "spot": [
+       605,
+       305,
+       765,
+       335
+      ]
+     }
+    ],
+    "n": 21,
+    "diagnosis": "Multiplied force by area instead of dividing force by area.",
+    "skill": "calculating pressure from force and area",
+    "marks": 0,
+    "fingerprint": {
+     "evidence": [
+      "P = 100 × 0.5 = 50 Pa"
+     ],
+     "ask": "",
+     "reasoning": "Multiplied 100 by 0.5 to get pressure.",
+     "misconception": "pressure equals force times area",
+     "intervention": "Have student try larger area and see multiplying makes pressure larger when it should be smaller."
+    },
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 2,
+     "box": [
+      530,
+      270,
+      980,
+      300
+     ]
+    },
+    "slip": 1,
+    "confidence": 0.97,
+    "diagnosis_draft": "",
+    "final_answer": "P = 100 × 0.5 = 50 Pa",
+    "capabilities": [
+     "Root Cause Analysis"
+    ]
+   },
+   {
+    "result": "not_yet",
+    "steps": [
+     {
+      "t": null,
+      "page": 2,
+      "wrote": "N/m",
+      "crossed_out": false,
+      "spot": [
+       680,
+       345,
+       730,
+       375
+      ]
+     }
+    ],
+    "n": 22,
+    "diagnosis": "Only the answer N/m is on the page, not the working behind it. Lo asks first.",
+    "skill": "recalling the unit of pressure",
+    "marks": 0,
+    "fingerprint": {
+     "evidence": [],
+     "ask": "If P = F ÷ A, what are the units of F divided by units of A?",
+     "reasoning": "Thinks pressure is measured in N/m.",
+     "misconception": "",
+     "rivals": [
+      "Omitted the square by slip"
+     ],
+     "intervention": "Link P=F/A units to N divided by m² to rebuild the unit."
+    },
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 2,
+     "box": [
+      530,
+      345,
+      980,
+      375
+     ]
+    },
+    "slip": 1,
+    "confidence": 0.92,
+    "diagnosis_draft": "Gave newtons per metre instead of newtons per square metre.",
+    "final_answer": "N/m",
+    "capabilities": [
+     "Pattern Recognition"
+    ]
+   },
+   {
+    "result": "not_yet",
+    "steps": [
+     {
+      "t": null,
+      "page": 2,
+      "wrote": "There is less oxygen higher up.",
+      "crossed_out": false,
+      "spot": [
+       605,
+       415,
+       835,
+       445
+      ]
+     }
+    ],
+    "n": 23,
+    "diagnosis": "Explained by oxygen content instead of less air above pressing down.",
+    "skill": "explaining pressure fall with altitude",
+    "marks": 0,
+    "mastery": {
+     "status": "held",
+     "check": {
+      "why": "The level confronts the less-oxygen explanation with the constant 21 percent share, teaches pressure as the weight of air above, ends in a signed guide altimeter calibration, and its pressures at 2860m and 4910m are correct.",
+      "plays": {
+       "holds": [
+        {
+         "check": "why the sealed bag swells",
+         "right": false,
+         "answered": "less oxygen higher up pushing back outside",
+         "lesson": 1
+        },
+        {
+         "check": "why pressure falls climbing to 5000m",
+         "right": false,
+         "answered": "there is less oxygen above",
+         "lesson": 2
+        },
+        {
+         "check": "reason to write in calibration log",
+         "right": false,
+         "answered": "less oxygen at the high camp",
+         "lesson": 3
+        }
+       ],
+       "knows": [
+        {
+         "check": "why the sealed bag swells",
+         "right": true,
+         "answered": "total outside pressure drops while oxygen stays near 21 percent",
+         "lesson": 1
+        },
+        {
+         "check": "why pressure falls climbing to 5000m",
+         "right": true,
+         "answered": "less air remains above, so its weight pressing down is lower",
+         "lesson": 2
+        },
+        {
+         "check": "reason to write in calibration log",
+         "right": true,
+         "answered": "55 kPa at 4910m because less air presses above than at 2860m",
+         "lesson": 3
+        }
+       ]
+      },
+      "problems": [],
+      "false_claims": [],
+      "passes": true
+     },
+     "path": "custom-topic-18107368",
+     "level": {
+      "title": "Altitude Pressure Explained",
+      "lessons": [
+       {
+        "title": "Sealed Snack Bag Climb",
+        "beats": [
+         "See Bag Swell Up: On the drive from Lukla base at 2860m to 4910m camp, a sealed chips bag swells tight and hard.: It is like a squeezed sponge slowly opening as hands lift off it.",
+         "Predict Using Oxygen Idea: You predict the bag swells because there is less oxygen higher up pushing back outside.",
+         "Spot Pressure Mismatch Clue: Total outside push drops even where oxygen share stays near 21 percent, so oxygen alone cannot explain it."
+        ]
+       },
+       {
+        "title": "Weight of Air Above",
+        "beats": [
+         "Feel Air Column Weight: Gravity pulls the whole air column down, and that weight squeezes air at the bottom.: It is like feeling heavier at the bottom of a pile of blankets.",
+         "Climb Above Air Mass: Climbing to 5000m leaves much air below you, so less air remains above pressing down.",
+         "Link Pressure To Altitude: Fewer air molecules above means lower weight, lower pressure, and thinner pressing on everything."
+        ]
+       },
+       {
+        "title": "Guide Altimeter Calibration Job",
+        "beats": [
+         "Record Base Camp Pressure: At surveyed 2860m benchmark, guide logs 72 kilopascals as signed base reading before clients ascend.",
+         "Check Higher Camp Reading: At 4910m high camp the altimeter shows near 55 kilopascals because less air presses above.",
+         "Sign Calibration Log Done: Guide writes weight-of-air reason in log, signs it, and clears altimeter for paid trek use."
+        ]
+       }
+      ]
+     },
+     "world": "world-23.webp",
+     "world_at": 1793446485737,
+     "built_ms": 1793446485717
+    },
+    "fingerprint": {
+     "evidence": [
+      "There is less oxygen higher up."
+     ],
+     "ask": "",
+     "reasoning": "States pressure falls because there is less oxygen higher up.",
+     "misconception": "altitude pressure falls due to less oxygen",
+     "intervention": "Ask what presses down to make pressure and how much air is above at height."
+    },
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 2,
+     "box": [
+      530,
+      385,
+      980,
+      415
+     ]
+    },
+    "slip": 1,
+    "confidence": 0.95,
+    "diagnosis_draft": "",
+    "final_answer": "There is less oxygen higher up.",
+    "capabilities": [
+     "Systems Thinking",
+     "Root Cause Analysis"
+    ]
+   },
+   {
+    "result": "not_yet",
+    "steps": [
+     {
+      "t": null,
+      "page": 2,
+      "wrote": "The ship floats because it is very light",
+      "crossed_out": false,
+      "spot": [
+       575,
+       580,
+       880,
+       610
+      ]
+     },
+     {
+      "t": null,
+      "page": 2,
+      "wrote": "and the nail sinks because it is heavier.",
+      "crossed_out": false,
+      "spot": [
+       575,
+       610,
+       870,
+       640
+      ]
+     },
+     {
+      "t": null,
+      "page": 2,
+      "wrote": "Heavy objects sink and light objects float.",
+      "crossed_out": false,
+      "spot": [
+       575,
+       640,
+       860,
+       670
+      ]
+     }
+    ],
+    "n": 24,
+    "diagnosis": "Explained floating by lightness alone instead of displaced water upthrust balancing weight.",
+    "skill": "explaining floating using upthrust",
+    "marks": 0,
+    "mastery": {
+     "status": "held",
+     "check": {
+      "why": "The level replays the ship-versus-nail prediction in a harbour tank, teaches displacement and upthrust balance, and ends with loading a cargo barge to its safe displacement limit, with all claims physically correct.",
+      "plays": {
+       "holds": [
+        {
+         "check": "Predict displaced water amounts",
+         "right": false,
+         "answered": "Displacement does not matter; the light ship floats and the heavier nail sinks",
+         "lesson": 1
+        },
+        {
+         "check": "Explain ship floats nail sinks",
+         "right": false,
+         "answered": "The ship is very light and the nail is heavier, so heavy sinks and light floats",
+         "lesson": 2
+        },
+        {
+         "check": "Decide safe crate limit",
+         "right": false,
+         "answered": "Judge by total heaviness alone, ignoring how much extra water the hull can displace",
+         "lesson": 3
+        }
+       ],
+       "knows": [
+        {
+         "check": "Predict displaced water amounts",
+         "right": true,
+         "answered": "The wide hull displaces tonnes of water; the tiny nail displaces only a few drops",
+         "lesson": 1
+        },
+        {
+         "check": "Explain ship floats nail sinks",
+         "right": true,
+         "answered": "The ship's displaced water gives upthrust equal to its weight; the nail cannot displace enough water to balance its weight",
+         "lesson": 2
+        },
+        {
+         "check": "Decide safe crate limit",
+         "right": true,
+         "answered": "Add crates only while each added tonne displaces one more tonne of water up to the hull limit",
+         "lesson": 3
+        }
+       ]
+      },
+      "problems": [],
+      "false_claims": [],
+      "passes": true
+     },
+     "path": "custom-topic-24d9e5a5",
+     "level": {
+      "title": "Ships, Nails and Upthrust",
+      "lessons": [
+       {
+        "title": "Predicting Ship and Nail",
+        "beats": [
+         "Spot the weight trap: Many predict the steel ship floats because it is very light and the nail sinks because it is heavier.",
+         "Picture harbour test tank: A harbour tank shows a huge hollow steel ship beside a tiny solid nail ready for a float test.",
+         "Predict displaced water amounts: The wide hull can push aside tonnes of water while the nail pushes aside only a few drops."
+        ]
+       },
+       {
+        "title": "Displaced Water Pushes Up",
+        "beats": [
+         "Weigh pushed-aside water: Displaced water has weight, and that weight decides how hard the water pushes up.",
+         "Balance upthrust against weight: A floating object stays up when upthrust from displaced water equals its total downward weight.",
+         "Explain ship floats nail sinks: The hollow ship displaces enough water for large upthrust, but the solid nail cannot displace enough."
+        ]
+       },
+       {
+        "title": "Load the Cargo Barge",
+        "beats": [
+         "Read barge load chart: A cargo barge floats high empty and sits lower as crates add weight needing more upthrust.",
+         "Measure extra displacement needed: Each added tonne must push aside one more tonne of harbour water to keep upthrust balanced.",
+         "Decide safe crate limit: Check hull displacement limit from Question 24 to decide how many crates still float safely."
+        ]
+       }
+      ]
+     },
+     "world": "world-24.webp",
+     "world_at": 1793446472430,
+     "built_ms": 1793446472413
+    },
+    "fingerprint": {
+     "evidence": [
+      "The ship floats because it is very light",
+      "and the nail sinks because it is heavier.",
+      "Heavy objects sink and light objects float."
+     ],
+     "ask": "",
+     "reasoning": "States heavy objects sink and light objects float regardless of displacement.",
+     "misconception": "heavy sinks and light floats regardless of displacement",
+     "intervention": "Compare heavy ship with tiny nail: predict displaced water and upthrust for each shape."
+    },
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 2,
+     "box": [
+      530,
+      455,
+      980,
+      485
+     ]
+    },
+    "slip": 1,
+    "confidence": 0.96,
+    "diagnosis_draft": "",
+    "final_answer": "The ship floats because it is very light and the nail sinks because it is heavier. Heavy objects sink and light objects float.",
+    "capabilities": [
+     "Systems Thinking",
+     "Root Cause Analysis"
+    ]
+   },
+   {
+    "result": "not_yet",
+    "steps": [
+     {
+      "t": null,
+      "page": 2,
+      "wrote": "kg",
+      "crossed_out": false,
+      "spot": [
+       810,
+       700,
+       840,
+       730
+      ]
+     }
+    ],
+    "n": 25,
+    "diagnosis": "Only the answer kg is on the page, not the working behind it. Lo asks first.",
+    "skill": "recalling unit of gravitational field strength",
+    "marks": 0,
+    "fingerprint": {
+     "evidence": [],
+     "ask": "If weight is in N and mass in kg, what are N per kg?",
+     "reasoning": "Thinks gravitational field strength is measured in kg.",
+     "misconception": "",
+     "rivals": [
+      "Guessed mass unit"
+     ],
+     "intervention": "Link g = weight/mass units to N divided by kg."
+    },
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 2,
+     "box": [
+      530,
+      700,
+      980,
+      730
+     ]
+    },
+    "slip": 1,
+    "confidence": 0.97,
+    "diagnosis_draft": "Gave the unit of mass instead of N/kg for field strength.",
+    "final_answer": "kg",
+    "capabilities": [
+     "Pattern Recognition"
+    ]
+   },
+   {
+    "result": "part_way",
+    "steps": [
+     {
+      "t": null,
+      "page": 2,
+      "wrote": "W = 10 × 10 = 100 kg",
+      "crossed_out": false,
+      "spot": [
+       795,
+       740,
+       965,
+       770
+      ]
+     }
+    ],
+    "n": 26,
+    "diagnosis": "Calculated 100 correctly but gave mass unit kg instead of newtons.",
+    "skill": "giving weight in newtons",
+    "marks": 0,
+    "fingerprint": {
+     "evidence": [
+      "W = 10 × 10 = 100 kg"
+     ],
+     "ask": "",
+     "reasoning": "Multiplied 10 by 10 but recorded the result in kg.",
+     "misconception": "weight is measured in kg",
+     "intervention": "Have student check weight as a force must use force unit versus mass unit."
+    },
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 2,
+     "box": [
+      530,
+      740,
+      980,
+      770
+     ]
+    },
+    "slip": 1,
+    "confidence": 0.95,
+    "diagnosis_draft": "",
+    "final_answer": "W = 10 × 10 = 100 kg",
+    "capabilities": [
+     "Pattern Recognition"
+    ]
+   },
+   {
+    "result": "not_yet",
+    "steps": [
+     {
+      "t": null,
+      "page": 2,
+      "wrote": "The fastest speed at the start.",
+      "crossed_out": false,
+      "spot": [
+       735,
+       780,
+       955,
+       810
+      ]
+     }
+    ],
+    "n": 27,
+    "diagnosis": "Described fastest initial speed instead of constant speed when resultant force is zero.",
+    "skill": "stating meaning of terminal velocity",
+    "marks": 0,
+    "fingerprint": {
+     "evidence": [
+      "The fastest speed at the start."
+     ],
+     "ask": "",
+     "reasoning": "States terminal velocity is the fastest speed at the start.",
+     "misconception": "terminal velocity is initial maximum speed",
+     "intervention": "Sketch falling speed levelling off when air resistance balances weight to see when it occurs."
+    },
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 2,
+     "box": [
+      530,
+      780,
+      980,
+      810
+     ]
+    },
+    "slip": 1,
+    "confidence": 0.95,
+    "diagnosis_draft": "",
+    "final_answer": "The fastest speed at the start.",
+    "capabilities": [
+     "Systems Thinking"
+    ]
+   },
+   {
+    "result": "mastered",
+    "steps": [
+     {
+      "t": null,
+      "page": 2,
+      "wrote": "To cook food.",
+      "crossed_out": false,
+      "spot": [
+       740,
+       820,
+       860,
+       850
+      ]
+     }
+    ],
+    "n": 28,
+    "diagnosis": "",
+    "skill": "",
+    "marks": 1,
+    "fingerprint": null,
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 2,
+     "box": [
+      530,
+      820,
+      980,
+      850
+     ]
+    },
+    "slip": null,
+    "confidence": 0.99,
+    "diagnosis_draft": "",
+    "final_answer": "To cook food.",
+    "capabilities": []
+   },
+   {
+    "result": "mastered",
+    "steps": [
+     {
+      "t": null,
+      "page": 2,
+      "wrote": "300 000 km/s",
+      "crossed_out": false,
+      "spot": [
+       735,
+       860,
+       855,
+       890
+      ]
+     }
+    ],
+    "n": 29,
+    "diagnosis": "",
+    "skill": "",
+    "marks": 1,
+    "fingerprint": null,
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 2,
+     "box": [
+      530,
+      860,
+      980,
+      890
+     ]
+    },
+    "slip": null,
+    "confidence": 0.99,
+    "diagnosis_draft": "",
+    "final_answer": "300 000 km/s",
+    "capabilities": []
+   },
+   {
+    "result": "mastered",
+    "steps": [
+     {
+      "t": null,
+      "page": 2,
+      "wrote": "Telescope",
+      "crossed_out": false,
+      "spot": [
+       735,
+       900,
+       825,
+       930
+      ]
+     }
+    ],
+    "n": 30,
+    "diagnosis": "",
+    "skill": "",
+    "marks": 1,
+    "fingerprint": null,
+    "out_of": 1,
+    "moment_s": null,
+    "printed": {
+     "page": 2,
+     "box": [
+      530,
+      900,
+      980,
+      930
+     ]
+    },
+    "slip": null,
+    "confidence": 0.99,
+    "diagnosis_draft": "",
+    "final_answer": "Telescope",
+    "capabilities": []
+   }
+  ],
+  "stills": [
+   {
+    "n": 1,
+    "t": null,
+    "page": 1,
+    "step": "step-1.jpg",
+    "asset": "still-1.jpg"
+   },
+   {
+    "n": 2,
+    "t": null,
+    "page": 1,
+    "step": "step-2.jpg",
+    "asset": "still-2.jpg"
+   },
+   {
+    "n": 4,
+    "t": null,
+    "page": 1,
+    "step": "step-4.jpg",
+    "asset": "still-4.jpg"
+   },
+   {
+    "n": 5,
+    "t": null,
+    "page": 1,
+    "step": "step-5.jpg",
+    "asset": "still-5.jpg"
+   },
+   {
+    "n": 6,
+    "t": null,
+    "page": 1,
+    "step": "step-6.jpg",
+    "asset": "still-6.jpg"
+   },
+   {
+    "n": 7,
+    "t": null,
+    "page": 1,
+    "step": "step-7.jpg",
+    "asset": "still-7.jpg"
+   },
+   {
+    "n": 8,
+    "t": null,
+    "page": 1,
+    "step": "step-8.jpg",
+    "asset": "still-8.jpg"
+   },
+   {
+    "n": 9,
+    "t": null,
+    "page": 1,
+    "step": "step-9.jpg",
+    "asset": "still-9.jpg"
+   },
+   {
+    "n": 10,
+    "t": null,
+    "page": 1,
+    "step": "step-10.jpg",
+    "asset": "still-10.jpg"
+   },
+   {
+    "n": 11,
+    "t": null,
+    "page": 1,
+    "step": "step-11.jpg",
+    "asset": "still-11.jpg"
+   },
+   {
+    "n": 12,
+    "t": null,
+    "page": 1,
+    "step": "step-12.jpg",
+    "asset": "still-12.jpg"
+   },
+   {
+    "n": 13,
+    "t": null,
+    "page": 1,
+    "step": "step-13.jpg",
+    "asset": "still-13.jpg"
+   },
+   {
+    "n": 14,
+    "t": null,
+    "page": 1,
+    "step": "step-14.jpg",
+    "asset": "still-14.jpg"
+   },
+   {
+    "n": 15,
+    "t": null,
+    "page": 1,
+    "step": "step-15.jpg",
+    "asset": "still-15.jpg"
+   }
+  ],
+  "pauses": [],
+  "returns": []
+ },
+ "pages": [
+  "page-1.jpg"
+ ],
+ "kind": "photo",
+ "student": "Daniel Kwan",
+ "linked": true,
+ "name_match": "read",
+ "examiner": {
+  "status": "ready",
+  "at": 1793445904979,
+  "asks": [
+   {
+    "k": 1,
+    "n": 6,
+    "ask": "You wrote \"a = 20 ÷ 5 = 2\". How did you work out 20 ÷ 5?",
+    "step": 1,
+    "wrote": "a = 20 ÷ 5 = 2"
+   },
+   {
+    "k": 2,
+    "n": 15,
+    "ask": "You wrote \"Angle of incidence is bigger\". Why did you think it is bigger?",
+    "step": 1,
+    "wrote": "Angle of incidence is bigger"
+   }
+  ]
+ }
+}

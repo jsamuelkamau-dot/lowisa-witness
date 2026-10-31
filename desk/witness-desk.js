@@ -988,7 +988,10 @@
     if (j.title && !String(d.title || '').trim()) d.title = j.title;
     if (j.level && !String(d.level || '').trim()) d.level = j.level;
     // the paper's own "(2 marks)" is the mark already: kept once (29 Oct, film take: "(2 marks) (2)")
-    if ((j.questions || []).length) d.qs = j.questions.map(function (q) {
+    // a mark scheme read after the paper has numbers but no question words: it fills the scheme and keeps the
+    // paper's questions (31 Oct, physics test: the scheme's 30 empty questions replaced the paper's 30)
+    var worded = (j.questions || []).filter(function (q) { return String(q.text || '').trim(); });
+    if (worded.length && (worded.length === j.questions.length || !String(d.qs || '').trim())) d.qs = j.questions.map(function (q) {
       var text = String(q.text || '').replace(/\s*\(\s*(\d+)\s*marks?\s*\)\s*$/i, function (all, n) { return Number(n) === Number(q.marks) ? '' : all; });
       return q.n + '. ' + text + ' (' + q.marks + ')';
     }).join('\n');

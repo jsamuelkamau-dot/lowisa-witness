@@ -155,6 +155,30 @@ a_reading_slip_or_two_joined_lines_still_count_test() ->
     ?assertNot(witness_mark:quote_in_ink(<<"150 - 50 = 100, so they cancel out">>, Lines, <<"$100">>)),
     ?assertNot(witness_mark:quote_in_ink(<<"$100">>, [witness_mark:norm(<<"$100">>)], <<"$100">>)).
 
+%% 31 Oct (physics test, an exam it had never seen): an answer that IS the working, a written explanation or a
+%% calculation, is the student's own reasoning; a bare result stays no evidence
+an_explanation_in_words_is_its_own_working_test() ->
+    Ship = <<"The ship floats because it is very light and the nail sinks because it is heavier. Heavy objects sink and light objects float.">>,
+    Calc = <<"P = 100 x 0.5 = 50 Pa">>,
+    ?assert(witness_mark:quote_in_ink(Ship, [witness_mark:norm(Ship)], Ship)),
+    ?assert(witness_mark:quote_in_ink(<<"Heavy objects sink and light objects float.">>, [witness_mark:norm(Ship)], Ship)),
+    ?assert(witness_mark:quote_in_ink(Calc, [witness_mark:norm(Calc)], Calc)),
+    ?assertNot(witness_mark:quote_in_ink(<<"Joules">>, [witness_mark:norm(<<"Joules">>)], <<"Joules">>)),
+    ?assertNot(witness_mark:quote_in_ink(<<"It attracts all metals.">>, [witness_mark:norm(<<"It attracts all metals.">>)], <<"It attracts all metals.">>)),
+    J = #{<<"questions">> => [#{<<"n">> => 24, <<"final_answer">> => Ship, <<"result">> => <<"not_yet">>, <<"marks">> => 0, <<"out_of">> => 2,
+                                <<"steps">> => [#{<<"wrote">> => Ship}], <<"diagnosis">> => <<"Thought floating depends on weight alone.">>, <<"confidence">> => 0.9,
+                                <<"fingerprint">> => #{<<"reasoning">> => <<"r">>, <<"evidence">> => [Ship], <<"rivals">> => [],
+                                                       <<"misconception">> => <<"heavy things sink, light things float">>, <<"intervention">> => <<"i">>, <<"ask">> => <<>>}},
+                              #{<<"n">> => 23, <<"final_answer">> => <<"There is less oxygen higher up.">>, <<"result">> => <<"not_yet">>, <<"marks">> => 0, <<"out_of">> => 1,
+                                <<"steps">> => [#{<<"wrote">> => <<"There is less oxygen higher up.">>}], <<"diagnosis">> => <<"d">>, <<"confidence">> => 0.9,
+                                <<"fingerprint">> => #{<<"reasoning">> => <<"r">>, <<"evidence">> => [], <<"rivals">> => [<<"a">>],
+                                                       <<"misconception">> => <<>>, <<"intervention">> => <<"i">>, <<"ask">> => <<"What presses down?">>}}]},
+    {ok, #{questions := [Q24, Q23]}} = witness_mark:parse(iolist_to_binary(json:encode(J))),
+    ?assertMatch(#{fingerprint := #{misconception := <<"heavy things sink, light things float">>, ask := <<>>}}, Q24),
+    ?assertEqual(<<"Thought floating depends on weight alone.">>, maps:get(diagnosis, Q24)),
+    %% while Lo asks about an answer in words, the page is not said to hold "only the answer"
+    ?assertEqual(<<"The page shows the answer in the student's own words, but not yet which idea is behind it. Lo asks first.">>, maps:get(diagnosis, Q23)).
+
 %% a calculation is an operation, an "=" or a comparison between numbers, never how many numerals a line holds
 a_calculation_is_an_operation_not_a_count_of_numbers_test() ->
     [?assert(witness_mark:calculation(L)) || L <- [<<"+50% - 50% = 0%">>, <<"100 + 50 = 150">>, <<"16/64">>, <<"2.5 x 10 = 25">>,
@@ -170,3 +194,15 @@ the_examiner_asks_about_what_was_not_mastered_test() ->
     Qs = [#{n => 1, result => <<"mastered">>}, #{n => 4, result => <<"not_yet">>}, #{n => 5, result => <<"mastered">>}],
     ?assertEqual([4], [N || #{n := N} <- witness_examiner:focus(Qs)]),
     ?assertEqual(2, length(witness_examiner:focus([#{n => 1, result => <<"mastered">>}, #{n => 2, result => <<"mastered">>}]))).
+
+%% 31 Oct (physics test, no scheme): "part way" at 1 of 1 said two things at once; part of the idea never holds every
+%% mark, while a right answer by wrong thinking keeps its mark
+part_way_never_holds_every_mark_test() ->
+    Q = fun(R, M, Of) -> #{<<"n">> => 5, <<"final_answer">> => <<"x">>, <<"result">> => R, <<"marks">> => M, <<"out_of">> => Of,
+                           <<"steps">> => [], <<"diagnosis">> => <<"d">>, <<"confidence">> => 0.9, <<"fingerprint">> => null} end,
+    {ok, #{questions := [A, B, C, D]}} = witness_mark:parse(iolist_to_binary(json:encode(#{<<"questions">> =>
+        [Q(<<"part_way">>, 1, 1), Q(<<"part_way">>, 3, 3), Q(<<"right_answer_wrong_thinking">>, 1, 1), Q(<<"part_way">>, 1, 2)]}))),
+    ?assertMatch(#{marks := 0, out_of := 1}, A),
+    ?assertMatch(#{marks := 2, out_of := 3}, B),
+    ?assertMatch(#{marks := 1, out_of := 1}, C),
+    ?assertMatch(#{marks := 1, out_of := 2}, D).

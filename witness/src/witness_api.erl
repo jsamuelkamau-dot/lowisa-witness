@@ -64,6 +64,8 @@
 -export([route/5, view/2, sitting_of/1, queue/1, summary/2]).
 %% 29 Oct audit: who pays for a mastery level's call, for a host's other doors (the level's animations)
 -export([payer/3, files_of/1]).
+%% 31 Oct: the push a teacher's new challenge sends, for the push tests
+-export([told/5]).
 
 -define(MAX_BYTES, 500 * 1024 * 1024).
 %% How long a signed upload link lasts (expiresIn below is the same, in seconds).
@@ -660,6 +662,7 @@ route(<<"POST">>, [<<"mastery">>, Sid, NBin, Action], B, Uid, Host) ->
                                                                   (_) -> stop end, Host) of
                                 {ok, _} ->
                                     ok = world(Owner, Sid, N, Q1, Host),
+                                    ok = told(Role, Action, Row, Sid, N),
                                     {200, maps:merge(#{ok => true, n => N, mastery => witness_mastery:view(Q1, Role)}, Extra)};
                                 stop -> refuse(404, <<"no_sitting">>, <<"That paper isn't here.">>)
                             end
@@ -1032,6 +1035,15 @@ payer(Uid, #{<<"sitting">> := Sid}, Host) when is_binary(Sid) ->
         _ -> Uid
     end;
 payer(Uid, _, _) -> Uid.
+
+%% 31 Oct (filming): the teacher's new challenge reached the student only if they happened to open the paper. It is
+%% pushed to their phone (lowisa_edge_push, kind witness_challenge), and opens From Exam to Mastery. Never throws.
+told(teacher, <<"challenge">>, #{student_uid := S, status := <<"released">>}, Sid, N) when is_binary(S), S =/= <<>> ->
+    _ = (catch lowisa_edge_push:send(S, <<"witness_challenge">>,
+                                     #{<<"text">> => <<"Your teacher sent you a new challenge on question ", (integer_to_binary(N))/binary, ".">>,
+                                       <<"target">> => <<"witness:", Sid/binary>>})),
+    ok;
+told(_, _, _, _, _) -> ok.
 
 %% A question the teacher saw turned around.
 turned(Q) -> maps:get(status, maps:get(mastery, Q, #{}), <<>>) =:= <<"badge">>.
