@@ -36,7 +36,7 @@ the submission page; section 2 walks through it frame by frame.
 4. [Meta's models: who does what](#4-metas-models-who-does-what)
 5. [What is new, who it is for, and who pays](#5-what-is-new-who-it-is-for-and-who-pays)
 6. [One question, three learners: the Misconception Fingerprint](#6-one-question-three-learners-the-misconception-fingerprint)
-7. [Measured: an exam it had never seen, a held-out set, a class of 40](#7-measured-an-exam-it-had-never-seen-a-held-out-set-a-class-of-40)
+7. [Measured: a real student's handwriting, an exam it had never seen, a held-out set, a class of 40](#7-measured-a-real-students-handwriting-an-exam-it-had-never-seen-a-held-out-set-a-class-of-40)
 8. [The loop, end to end](#8-the-loop-end-to-end)
 9. [How it meets the judging criteria](#9-how-it-meets-the-judging-criteria)
 10. [Architecture](#10-architecture)
@@ -396,7 +396,30 @@ has Lo ask first (section 7).
 
 Full write-up: [`docs/misconception-fingerprint.md`](docs/misconception-fingerprint.md).
 
-## 7. Measured: an exam it had never seen, a held-out set, a class of 40
+## 7. Measured: a real student's handwriting, an exam it had never seen, a held-out set, a class of 40
+
+### Real handwriting: one student's three papers, against his own teacher's marks
+
+A real Grade 5 student's pencil answers on three end-of-term papers (maths, English, science: 110 multiple-choice
+questions), marked by his class teacher, who is not on our team. His parent gave consent; his name, school, class and
+student number are blurred. We removed the teacher's red ink by colour so the model could not copy his ticks, then the
+live product's photo path marked each paper once, on frozen code (3 Nov, edge vb1103a, `witness/src` `0b7502c`).
+
+| | Pages as photographed | Sideways pages turned upright |
+|---|---|---|
+| Witness agrees with the teacher | **102 of 109** | **105 of 109** |
+| The teacher's wrong answers Witness also caught | 4 of 10 | **7 of 10** |
+| Right by the teacher, wrong by Witness | 1 | 1 |
+| Wrong answers given an invented reason | 0 | **0 of 9** (only a letter on the page: Lo asks first) |
+
+Three of the nine question pages were photographed sideways, and that is where the first run lost most: on maths Q11
+it read his letter right but took the option's value from the wrong place on the turned page. Turning pages upright
+before marking is the fix this points to. Of the four disagreements left, one is a plain reading error (science Q33:
+he wrote D, Witness read the correct C), one is a sheet and a question paper that disagree (he circled D on the paper,
+wrote B on the sheet), and two are questions whose right answer the photos cannot settle. Every question, both runs,
+and the sheets the teacher marked: [`evidence/real-handwriting/`](evidence/real-handwriting/). It is one student and
+multiple choice only, so it tests reading a child's handwriting and marking against a real teacher, not the written
+working the fingerprint reads.
 
 ### An exam it had never seen: the film's physics paper
 
@@ -572,6 +595,7 @@ flowchart TB
 
 | Number | What it is | Raw results |
 |---|---|---|
+| 102/109 and 105/109 agree with the teacher; his wrong answers caught 4/10 and 7/10; 0/9 invented reasons | one real student's handwriting, three papers, his teacher's marks; as photographed, then sideways pages upright | `evidence/real-handwriting/results/three-papers-two-conditions.json` |
 | 180/180 decisions, 6/30 every run, 40–58 s, ~$0.05 | the film's physics paper, never seen before, 6 live runs with and without a scheme | `evidence/unseen-physics/` |
 | A 5/5, B 5/5 named; C asked 5/5 | the three learners, five readings each, through `witness_photo:mark/4` | `evidence/misconceptions/runs-31oct-steps-rule.jsonl` |
 | asked 39/42, wrong name 3/42, named right 44/48, right work 39/39, injection 30/30 | held-out v2 on the shipped code (and the blind first run beside it), 53 papers × 3 runs | `harness/heldout/results/v2-on-shipped-code-3-runs.json`, `v2-held-out-3-runs.json` |
@@ -698,13 +722,13 @@ files. **In the film, LoWisa's parts appear only playing what was made this week
 
 ## 15. Limits, stated plainly
 
-- **No real students, and no real handwriting, yet.**
-  - Every paper here is a sample: a handwriting font, or a paper written for the demo, on a simulated phone photo. Real handwriting and real classrooms are harder.
-  - **The evaluation sets are ours.** The items, labels and code come from the same team, and v2 has been seen since its blind first run (section 7). The next measurement is a v3 set in real handwriting from outside writers, labelled by an outside teacher, run once on frozen code.
+- **One real student's handwriting so far, and only multiple choice.**
+  - Apart from Student M's three papers (section 7), every paper here is a sample: a handwriting font, or a paper written for the demo, on a simulated phone photo. Real written working and real classrooms are harder.
+  - **The evaluation sets are ours.** The items, labels and code come from the same team, and v2 has been seen since its blind first run (section 7). Student M's papers are the first exception: his teacher's marks, not ours, are the key. The next measurement is a v3 set of written answers in real handwriting from many outside writers, labelled by an outside teacher, run once on frozen code.
   - The class of 40 measures speed and cost at class size; its 40 papers are built from 14 written answers (two to four per question), so it is not an accuracy test.
   - **A real pilot follows the hackathon.** Ten days were not enough to run one properly: it needs consenting schools,
     parents' consent for minors, real exams, and a re-test a week or more later. We plan to run it, in this order:
-    1. **Real handwriting first:** papers from outside writers, labelled by an outside teacher, run once on frozen code (the v3 set).
+    1. **Real written working first:** papers from many outside writers, labelled by an outside teacher, run once on frozen code (the v3 set). One real student's multiple-choice papers, against his own teacher, are done (section 7).
     2. **Teachers' time:** the minutes a teacher spends per paper, against their own hand marking of the same class.
     3. **Agreement:** the desk's marks and fingerprints against the teacher's own, question by question.
     4. **Learning:** a fresh question on the same idea a week after "Turned around", for students who did and did not play their level.

@@ -61,3 +61,4 @@ history. The table grows as the work lands. Code built this week inside LoWisa's
 | A local replay of the desk with no key; the privacy document | `demo/desk-server.js --replay`, `docs/privacy.md` | done 31 Oct |
 | Lo's live turns fail closed: a turn the safety check could not read never reaches the student (after the 3 Nov judges' panel) | `witness/src/witness_api.erl` | done 3 Nov |
 | Held-out v2 run again on the shipped code, beside its blind first run; which commit each result ran on | `harness/heldout/results/v2-on-shipped-code-3-runs.json`, `harness/PROVENANCE.md` | done 3 Nov |
+| A real student's handwriting: three papers marked on the live product against his own teacher's marks, as photographed and with sideways pages upright (parent's consent; name and school blurred) | `evidence/real-handwriting/` | done 3 Nov |
