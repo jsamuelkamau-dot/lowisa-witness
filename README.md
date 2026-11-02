@@ -266,6 +266,30 @@ is best at.
 
 Notes for Meta's API team: `harness/FINDINGS.md`.
 
+**Beyond a basic integration**
+- **Meta's models check each other, with code between them.** Muse Spark reads and diagnoses; code checks every quote
+  against the lines read from the page; Muse Wonder plays the level as the student before the student sees it; Muse
+  Spark judges the student's reason and recommends; the teacher decides. Sixteen distinct jobs across five models,
+  each with its own measured result (the table above).
+- **A reasoning model used as a simulated learner.** Muse Wonder plays every level twice in one reasoning pass, as the
+  student who still holds the wrong idea and as one who has it right, and audits every number and claim the level
+  makes. Nothing reaches a student until that check passes or the teacher has looked.
+- **Every input Meta's models take:** photographed handwriting (Muse Spark), desk video (SAM 3.1 with Muse Spark),
+  the student's voice (Muse Voice Transcribe), and pictures (Muse Image).
+- **Built for a class, priced per call:** forty papers marked at once in 32 s for $1.01; every call metered at Meta's
+  published prices, structured output on every reply, the prompt cache shared across the readings of one paper, and
+  a daily ceiling on every route.
+
+**Meta across LoWisa, beyond this project**
+
+| How a learner reaches Meta's models | What it does | Built | Where to see it |
+|---|---|---|---|
+| **No key: paid from LoWisa credits** | Every From Exam to Mastery model call runs on Meta's models, paid from the teacher's or school's existing LoWisa credits, through the Meta provider on LoWisa's edge | During the event (27 Oct) | This repository (`witness/src/witness_meta.erl`) |
+| **The learner's own Meta key** | Muse Spark 1.3 is one of the tutor's models in the LoWisa desktop app: it teaches, works with the learner's files and builds quizzes. Meta bills the learner's own usage | Before the event (21 Oct), released in desktop app 0.9.32 on 2 Nov; **not part of this submission's new work** | [lowisa.dev/help/ide-models-and-keys](https://lowisa.dev/help/ide-models-and-keys/), and "Can I use Meta's Muse Spark with LoWisa?" on [lowisa.dev](https://lowisa.dev) |
+
+LoWisa's general tutor on managed credits (no key) runs on another provider's model. Meta's models on LoWisa credits
+are, for now, From Exam to Mastery's.
+
 ## 5. What is new, who it is for, and who pays
 
 **Why not an existing tool**
@@ -678,8 +702,13 @@ files. **In the film, LoWisa's parts appear only playing what was made this week
   - Every paper here is a sample: a handwriting font, or a paper written for the demo, on a simulated phone photo. Real handwriting and real classrooms are harder.
   - **The evaluation sets are ours.** The items, labels and code come from the same team, and v2 has been seen since its blind first run (section 7). The next measurement is a v3 set in real handwriting from outside writers, labelled by an outside teacher, run once on frozen code.
   - The class of 40 measures speed and cost at class size; its 40 papers are built from 14 written answers (two to four per question), so it is not an accuracy test.
-  - **A real pilot follows the hackathon.** Ten days were not enough to run one properly, with consenting schools and a delayed re-test.
-  - The pilot will measure agreement with the teacher, the teacher's minutes, and the re-check a week later (`witness_measure` already records agreement, minutes, turned-around and re-checks).
+  - **A real pilot follows the hackathon.** Ten days were not enough to run one properly: it needs consenting schools,
+    parents' consent for minors, real exams, and a re-test a week or more later. We plan to run it, in this order:
+    1. **Real handwriting first:** papers from outside writers, labelled by an outside teacher, run once on frozen code (the v3 set).
+    2. **Teachers' time:** the minutes a teacher spends per paper, against their own hand marking of the same class.
+    3. **Agreement:** the desk's marks and fingerprints against the teacher's own, question by question.
+    4. **Learning:** a fresh question on the same idea a week after "Turned around", for students who did and did not play their level.
+  - `witness_measure` already records agreement, the teacher's seconds per paper, turned-around questions and re-checks, so the pilot needs no new code to report them.
 - **The research in section 1 is evidence, not proof.** The MIT study is a preprint with 54 participants; the Gerlich and CHI studies are surveys; Butler's is one classroom experiment. Together they show a risk worth designing against and a direction that works, not a settled law. The 65% PISA figure is the OECD average as reported by ACER (source 6).
 - **The fingerprint's limits are measured, not solved** (section 7).
   - A wrong idea can still be named on an ambiguous page.
