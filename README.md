@@ -44,8 +44,9 @@ the submission page; section 2 walks through it frame by frame.
 12. [Try it, and verify it yourself](#12-try-it-and-verify-it-yourself)
 13. [Safety, privacy and the teacher's authority](#13-safety-privacy-and-the-teachers-authority)
 14. [What was built during the event, and what existed before](#14-what-was-built-during-the-event-and-what-existed-before)
-15. [Limits, stated plainly](#15-limits-stated-plainly)
-16. [Sources](#16-sources)
+15. [Problems we hit, and how we solved them](#15-problems-we-hit-and-how-we-solved-them)
+16. [Limits, stated plainly](#16-limits-stated-plainly)
+17. [Sources](#17-sources)
 
 **Short on time?** Read sections 1 to 3 (the problem, the demo, and the depth behind it), then sections 4 and 7 (Meta's models, and the numbers).
 
@@ -332,7 +333,7 @@ The time that comes back is spent on the learners, on the work only a teacher sh
   explanation to read, and the "Turned around" decision (sections 3.6 and 13).
 
 **Not yet measured:** a teacher's own minutes per paper with real teachers. The desk already records them
-(`witness_measure`: the seconds each paper is open while reviewed); the pilot will report them (section 15).
+(`witness_measure`: the seconds each paper is open while reviewed); the pilot will report them (section 16).
 
 **What it costs**, measured on the production edge and priced at Meta's published rates:
 
@@ -441,7 +442,7 @@ fixed and re-run the same day: a written explanation had been treated as a bare 
 given full marks. **So the marking result above is unseen, but for naming ideas this paper is now a development paper**:
 the rule was changed on it, and after the change question 24's idea was named in 6 of 6 runs (4 of 6 before). The levels
 for questions 23 and 24 were then built live, and their self-checks passed. One paper is one paper: more unseen
-subjects, marked by an outside teacher, are the next step (section 15).
+subjects, marked by an outside teacher, are the next step (section 16).
 
 ### Held out: 53 papers, first run blind, then run again on the shipped code
 
@@ -471,7 +472,7 @@ The three runs mark the same 53 papers, so they show consistency, not 159 indepe
 the runs. Earlier v2 runs between these two are kept too (`v2-held-out-steps-rule-3-runs.json`,
 `v2-held-out-explain-rule-3-runs.json`), and which commit each ran on is in [`harness/PROVENANCE.md`](harness/PROVENANCE.md).
 **What would settle it:** a v3 set nobody on the team has seen, in real handwriting from outside writers, labelled by
-an outside teacher and run once (section 15).
+an outside teacher and run once (section 16).
 
 The misses are read by hand in [`harness/heldout/README.md`](harness/heldout/README.md), with the hinted-scheme ablation
 and the effort ablation (on the development set, low effort was as accurate as medium, 28% cheaper and 40% faster).
@@ -722,7 +723,41 @@ mastery mode, the checked practical task, the wiring of the phone and desktop ap
 files. **In the film, LoWisa's parts appear only playing what was made this week, and they are labelled.** Full list:
 [`docs/existed-before.md`](docs/existed-before.md).
 
-## 15. Limits, stated plainly
+## 15. Problems we hit, and how we solved them
+
+Each of these was found by testing, checked against the code before anything changed, and fixed with a test. The full
+log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
+
+**Reading real pages**
+
+| Problem | What we saw | What we did | Result |
+|---|---|---|---|
+| **Pages photographed sideways** (3 Nov) | On a real student's papers, three of nine question pages were sideways. On one, Witness read his letter right but took the option's value from the wrong place on the turned page | Before marking, Muse Spark looks at small copies of the pages and says which edge of each photo is the page's top; the server turns that page upright with ffmpeg and keeps it so, so the stills and steps are cut from the upright page. If the look fails, the paper is marked as photographed | His wrong answers caught: **4 of 10 → 7 of 10**. Live on the production edge the sideways page was stored upright and both missed questions were caught |
+| **Asking "how many degrees" turned pages the wrong way** | Muse Spark found every sideways page, but two of three turns would have left the page upside down | Ask which *edge* is the top (top, left, right, bottom) and work out the turn in code | **6 of 6** turns right, 6 upright pages left alone, ~14 s and ~$0.01 a paper |
+| **The teacher's ticks could leak into the test** | His red-pen marks sit on the answer sheet the model reads | The teacher's ink is removed by colour (his letters are grey pencil) before marking; his marks stay the answer key | Every disagreement is published with what the photos show (section 7) |
+| **A line's place on the photo** | Muse Spark's own boxes overlapped the ink on 1 of 64 lines, so a crop of a student's step could miss it | `witness_page` finds each line on its own ink; Spark's boxes are never used for a cut | **64 of 64** lines placed (SAM 3.1: 52 of 64) |
+
+**Keeping the model honest**
+
+| Problem | What we saw | What we did | Result |
+|---|---|---|---|
+| **A wrong idea named from too little ink** | With the demo answers taken out of the prompt, Learner C ("Half up, half down. Same price.") was still named "cancel" 5 of 5 times: the prompt alone does not make the model hold back | The evidence rule moved into code (`witness_mark:fingerprint/4`): quoted evidence must be in the ink, the final answer is no evidence, and a rival idea means Lo asks first | C asked **5 of 5**; on 53 held-out papers a wrong idea named in 2 of 42 ambiguous cases |
+| **Our own test sets leaked into the rule** | The prompt once quoted the three demo answers; later the rule's worded example mirrored a held-out item | Both taken out; the held-out set run again on the shipped code beside its blind first run, and now reported as a second development set | Section 7; every result file records its commit ([`harness/PROVENANCE.md`](harness/PROVENANCE.md)) |
+| **"Is it right?" missed wrong thinking** | At low effort with a plain prompt, a right answer reached by cancelling digits was called right | The marking asks about the method, at medium effort | The wrong thinking caught on every run |
+| **A self-check passed a false claim** | Muse Wonder passed a level whose shop "loses $25" by charging $100 for a $75 price | The self-check works out every number and every gain or loss claim | Planted false claims caught **9 of 9** |
+| **A safety check that failed open** (3 Nov) | When Lo's live turn could not be read for safety (no key, the day's ceiling, no verdict), it still reached the student | It fails closed: the student gets a safe line, and the miss is logged | `witness_api:guarded/3`, with tests |
+
+**Meta's models in production**
+
+| Problem | What we saw | What we did | Result |
+|---|---|---|---|
+| **Reasoning ate the whole answer** | Muse Wonder at 4,000 output tokens spent 3,998 on reasoning and returned no verdict; one marking reply in twelve ran out before its JSON | Medium effort with 16,000 tokens; a reply cut short is read again | Wonder returns its verdict; the cut-short reply is read again in code |
+| **Two readings that disagreed** | Two readings that split always ended "part way", so a right one-word answer could lose marks | Unsure questions are read again at high effort, and a third reading decides when two disagree | Video bench back to **46 of 46** exact (28 Oct) |
+| **Voice Transcribe takes WAV only** | Phone recordings (AAC), MP3 and Opus were refused | The server converts every recording to 16 kHz mono WAV with ffmpeg | $0.0003 for a spoken answer |
+| **Rereads sent every page again** | Each extra reading of one paper paid for all its pages again | One prompt-cache key per paper, shared by all its readings | 99.8% cached on the probe |
+| **Meta's model unknown to the credit system** | The first mastery level stopped with "provider not configured" | Mastery levels call Muse Spark through the edge's own metered call, at Meta's published prices | Every level since built on Muse Spark |
+
+## 16. Limits, stated plainly
 
 - **One real student's handwriting so far, and only multiple choice.**
   - Apart from one Grade 5 student's three papers (section 7), every paper here is a sample: a handwriting font, or a paper written for the demo, on a simulated phone photo. Real written working and real classrooms are harder.
@@ -744,7 +779,7 @@ files. **In the film, LoWisa's parts appear only playing what was made this week
 - **Muse Spark Open is wired but has not been run** on hosted open weights.
 - **The low-effort finding is from 36 papers.** The product stays at medium until it is measured on more.
 
-## 16. Sources
+## 17. Sources
 
 Every number in section 1 was checked against these. Where the original was reachable (the MIT paper, Hattie and
 Timperley, Kiray et al., TALIS 2024), the figure was read in the original.

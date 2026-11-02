@@ -57,7 +57,7 @@ points to.
 - **One student, one teacher, multiple choice only.** This tests reading a child's handwritten letters from phone
   photos and marking them against a real teacher. It does not test written working, which is where the fingerprint
   does its work; for multiple choice, Witness rightly names no wrong idea and has Lo ask. Written answers from many
-  students are the pilot's first step (main README, section 15).
+  students are the pilot's first step (main README, section 16).
 - **The teacher's marks were read by us**, from the photos. Where his marks were unclear (science Q20) the question is
   left out rather than guessed.
 - **Removing the ink by colour** left faint pink specks, and where a tick crossed a letter a little of the stroke may
