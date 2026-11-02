@@ -15,7 +15,7 @@ read the page (`witness_mark:fingerprint/4`, the same rule again in `witness_fin
 | The model returns | The code keeps |
 |---|---|
 | A named misconception with quoted evidence that is found in the lines read from the student's page | the name |
-| Quoted "evidence" that is not on the page (the model's own words), or only the final answer | no evidence, so no name: Lo asks the student to talk it through |
+| Quoted "evidence" that is not in the lines Muse Spark read from the page (the model's own words), or only the final answer | no evidence, so no name: Lo asks the student to talk it through |
 | A name **and** a question for Lo | no name yet: the guess is kept as `possible`, for the teacher only |
 | A numeric answer where no quoted line shows a calculation (two numbers or more): an intuition, a bare statement of the result | no name yet: Lo asks *"Write or say what you had after each step, and how you got it."* |
 | A rival: another wrong idea the model says would write the same ink | no name yet: Lo asks |
