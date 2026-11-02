@@ -18,29 +18,8 @@ Part of [LoWisa](https://lowisa.dev), built for the Meta Global AI Developer Hac
 | ![Daniel's answer to question 24: heavy objects sink, light objects float](evidence/film/12-before-and-after.jpg) | ![Lo hands Daniel the controls: push the log down until the water holds 200 kg](evidence/film/07-his-turn.jpg) |
 | One question from the film. Before: Daniel's answer on his exam. After: the idea he can explain, once the level is done | The level built from his answer. Lo gives him the controls and he finds the balance himself |
 
-### Meta's models at a glance
-
-| Model | Its job here | Code | Measured | Evidence |
-|---|---|---|---|---|
-| **Muse Spark 1.3** | Reads the teacher's exam file. Marks every photographed paper for the path, not only the answer. Writes the Misconception Fingerprint. Reads the student's answer to Lo. Writes the mastery level. Drafts the challenge, judges the reason, recommends the badge. Writes the re-check. Reads Lo's spoken turns for safety. | `witness_photo`, `witness_mark`, `witness_fingerprint`, `witness_challenge`, `witness_recheck`, `witness_recommend`, `witness_guard` | an exam it had never seen: 180/180 marking decisions right; held-out v2, 159 marked papers: right work 39/39, injection 30/30, ambiguous pages asked first 40/42, clear ideas named right 43/48 | `evidence/unseen-physics/`, `harness/heldout/` |
-| **Muse Wonder** | Plays each mastery level as the student who still holds the misconception and as one who has it right (in one reasoning pass), and holds a level that would not catch it or says a false thing. Groups the class by reasoning. Asks the examiner's questions. | `witness_check`, `witness_patterns`, `witness_examiner` | 20 levels × 3: planted faults held 30/30, the fault named 30/30; clean levels passed 30/30 | `harness/selfcheck/` |
-| **Muse Voice Transcribe** | The student's spoken answer to Lo; the teacher's spoken comment | `witness_meta:transcribe/2` | a 6.4 s spoken answer written down for $0.0003 | `harness/probes/results-31oct/transcript-31oct.json` |
-| **Muse Image** | Draws the corrected step on lined paper | `witness_draw` | the three learners' steps drawn, $0.015–0.021 each | `harness/probes/results-31oct/drawn-learner-*.webp` |
-| **SAM 3.1** | Desk filming (the optional way in): follows the ink through a video, so each line has the second it was written | `witness_sam`, `witness_timeline` | on a photo it answers "word" (not "handwriting"); its word boxes, joined into lines, found 52 of 64 handwritten lines (mean overlap 0.75) | `harness/probes/`, `harness/bench/results/line_placement.json` |
-| Muse Spark Open | The same marking, on a photographed paper or a desk video, through any OpenAI-compatible endpoint | `witness_open`, `witness_photo` | **wired, not yet run**: no hosted endpoint for it in this account | – |
-
-**What surprised us about Meta's models**
-- **Muse Spark changed its own reading from one sentence.** Leo's page read "half up, half down": its guess was
-  "cancel". His answer to Lo ("both halves are of 100") moved it to "the second change was taken of the original
-  amount", which no reading of the page could have shown.
-- **Muse Wonder caught a false sentence a level said in passing.** "Charging $100 loses the shop $25" is false: the shop
-  gains it. Asked to work out every number and claim, it found every planted false claim (9 of 9, over three runs).
-- **The API gave us things we expected to build ourselves:**
-  - `/responses` holds a strict JSON schema for Muse Spark and Muse Wonder.
-  - A prompt cache key made a second reading of the same pages 99.8% cached.
-  - SAM 3.1 follows written lines in the order they were written.
-
-Notes for Meta's API team: `harness/FINDINGS.md`.
+**Meta's models do the work:** Muse Spark, Muse Wonder, Muse Voice Transcribe, Muse Image and SAM 3.1, each with
+its job and its measured result in section 4.
 
 ---
 
@@ -49,22 +28,30 @@ Notes for Meta's API team: `harness/FINDINGS.md`.
 1. [The problem: are we weakening our own minds?](#1-the-problem-are-we-weakening-our-own-minds)
 2. [The demo, frame by frame: one failed question to mastery](#2-the-demo-frame-by-frame-one-failed-question-to-mastery)
 3. [Beyond the 3 minutes: what the film had no time to show](#3-beyond-the-3-minutes-what-the-film-had-no-time-to-show)
-4. [What is new, who it is for, and who pays](#4-what-is-new-who-it-is-for-and-who-pays)
-5. [One question, three learners: the Misconception Fingerprint](#5-one-question-three-learners-the-misconception-fingerprint)
-6. [Measured: an exam it had never seen, a held-out set, a class of 40](#6-measured-an-exam-it-had-never-seen-a-held-out-set-a-class-of-40)
-7. [The loop, end to end](#7-the-loop-end-to-end)
-8. [How it meets the judging criteria](#8-how-it-meets-the-judging-criteria)
-9. [Architecture](#9-architecture)
-10. [Evidence: every number and where it comes from](#10-evidence-every-number-and-where-it-comes-from)
-11. [Try it, and verify it yourself](#11-try-it-and-verify-it-yourself)
-12. [Safety, privacy and the teacher's authority](#12-safety-privacy-and-the-teachers-authority)
-13. [What was built during the event, and what existed before](#13-what-was-built-during-the-event-and-what-existed-before)
-14. [Limits, stated plainly](#14-limits-stated-plainly)
-15. [Sources](#15-sources)
+4. [Meta's models: who does what](#4-metas-models-who-does-what)
+5. [What is new, who it is for, and who pays](#5-what-is-new-who-it-is-for-and-who-pays)
+6. [One question, three learners: the Misconception Fingerprint](#6-one-question-three-learners-the-misconception-fingerprint)
+7. [Measured: an exam it had never seen, a held-out set, a class of 40](#7-measured-an-exam-it-had-never-seen-a-held-out-set-a-class-of-40)
+8. [The loop, end to end](#8-the-loop-end-to-end)
+9. [How it meets the judging criteria](#9-how-it-meets-the-judging-criteria)
+10. [Architecture](#10-architecture)
+11. [Evidence: every number and where it comes from](#11-evidence-every-number-and-where-it-comes-from)
+12. [Try it, and verify it yourself](#12-try-it-and-verify-it-yourself)
+13. [Safety, privacy and the teacher's authority](#13-safety-privacy-and-the-teachers-authority)
+14. [What was built during the event, and what existed before](#14-what-was-built-during-the-event-and-what-existed-before)
+15. [Limits, stated plainly](#15-limits-stated-plainly)
+16. [Sources](#16-sources)
+
+**Short on time?** Read sections 1 to 3 (the problem, the demo, and the depth behind it), then sections 4 and 7 (Meta's models, and the numbers).
 
 ---
 
 ## 1. The problem: are we weakening our own minds?
+
+Two problems meet in every classroom. AI can now do a student's thinking for them. And exams have always told a
+student *that* they failed, without helping them master what they missed. From Exam to Mastery answers both at once.
+
+### 1.1 When AI does the thinking, the thinking weakens
 
 AI is changing how we think. As we let it do our thinking for us, a question grows: are we weakening our own minds,
 and our children's? The early research says the fear is real **when AI does the work**:
@@ -76,42 +63,69 @@ and our children's? The early research says the fear is real **when AI does the 
 | Microsoft Research and Carnegie Mellon, CHI 2025 [3] | 319 knowledge workers, 936 real tasks done with AI | **The more people trusted the AI, the less critical thinking they applied**; the more they trusted themselves, the more they applied |
 | Gerlich, *Societies* (2025) [4] | 666 people of different ages and education | Heavier AI use went with **weaker critical thinking**, through "cognitive offloading": handing the thinking itself to the tool. The youngest participants relied on AI most and scored lowest |
 
-**But the problem is older than AI.** For generations, education has measured what students get wrong without making
-sure they master what they never understood. A failed question is treated as the end of the story: a mark, a verdict,
-the class moves on. Many adults still carry a failed exam as proof that they "aren't a maths person". That is not
-because they could not learn it. Nobody turned that mistake into the next thing they mastered.
+### 1.2 Exam failure: the older problem
 
-- **Learning was falling before AI arrived.** In OECD countries, the average mathematics score in PISA 2022 fell by
-  nearly 15 points. Before then, no change between two tests had been more than 4 points. The OECD notes the decline
-  had begun before the pandemic [5].
-- **Most children in poorer countries are not learning the basics.** The World Bank, UNESCO and UNICEF estimate that
-  **70% of 10-year-olds** in low- and middle-income countries cannot understand a simple written text, up from 57%
-  before the pandemic [6].
-- **Teachers have no time to look at every student's reasoning.** The world needs **44 million more teachers** by 2030
-  [7]. With a class of forty, nobody can read every student's working, ask each one what they meant, and write each of
+For generations, education has measured what students get wrong, without making sure they master what they never
+understood. Many adults still carry a failed exam as proof that they "aren't a maths person". That is not because they
+could not learn it. Nobody turned that mistake into the next thing they mastered.
+
+- **Failing is common, and students fear it.**
+  - In PISA 2022, about one in three 15-year-olds across OECD countries (31%) did not reach the basic level in
+    mathematics. The average score fell by nearly 15 points; before then, no change between two tests had been more
+    than 4 points [5].
+  - Two in three (65%) said they worry about getting poor marks in mathematics [6].
+  - In low- and middle-income countries, **70% of 10-year-olds cannot understand a simple written text** [7].
+- **A mark tells a student *that* they failed, not *why*.**
+  - In a classroom experiment with 132 pupils, those given written comments on their work did better on the next task
+    and stayed interested. Those given grades did not, and grades with comments added did no better than grades alone.
+    The weakest pupils lost interest most when they were graded [8].
+  - Across 196 studies, feedback is one of the strongest influences on learning (average effect 0.79), **but only
+    feedback about the task and how it was done**. Praise and judgements of the person help least [9].
+- **The usual answer to failure does not fix it.** In the same synthesis, making a student repeat a year has a
+  *negative* average effect on achievement (−0.12) [9].
+- **A mistake is where learning can start, if someone works on it with the student.**
+  - Errors followed by corrective feedback improve learning [10].
+  - The more confident the wrong belief, the more likely it is corrected once the student sees it fail (the
+    hypercorrection effect) [11].
+  - Wrong ideas are not rare, and they are not foolish: 377 student science teachers held **74 different
+    misconceptions about floating and sinking** between them [12]. That is the question in our film.
+- **Teachers have no time to do this for every student.** The world needs **44 million more teachers** by 2030 [13].
+  With a class of forty, nobody can read every student's working, ask each one what they meant, and write each of
   them a repair.
 
-**What the research says does work: making the learner think, not giving them the answer.**
-- **Finding what a student actually thinks, and acting on it** (formative assessment). The classic review found
-  typical gains of 0.4 to 0.7 standard deviations. Later estimates are smaller but still positive [8].
-- **Struggling with a problem before being taught it** (productive failure). Across 53 studies, it beat being taught
-  first. The effect was strongest when the struggle was well designed (Hedges' g 0.37–0.58) [9].
-- **Being made to recall, rather than re-reading.** After two days and after a week, students who were tested
-  remembered more than students who studied again [10].
-- Bastani's own result points the same way [2]: **AI that makes students do the thinking does not cause the harm.**
+### 1.3 What works: making the learner think
 
-**Our answer.** As part of LoWisa's mission to strengthen cognitive abilities, From Exam to Mastery uses the same AI
-people fear to make students think again, never to think for them. **A failed question is not a verdict. It is the
-start of building real capability.** It works on four things:
+- **Find what a student actually thinks, and act on it** (formative assessment). The classic review found typical gains
+  of 0.4 to 0.7 standard deviations; later estimates are smaller but still positive [14].
+- **Let them struggle with a problem before teaching it** (productive failure). Across 53 studies it beat being taught
+  first, most strongly when the struggle was well designed (Hedges' g 0.37–0.58) [15].
+- **Make them recall instead of re-reading.** After two days and after a week, students who were tested remembered
+  more than students who studied again [16].
+- **Use AI that makes students do the work.** In Bastani's experiment, the tutor with guardrails did not cause the
+  harm [2].
 
-1. **The exam.** Marking takes seconds, not evenings. Nothing gives a verdict: every question not mastered goes into the
-   student's Mastery Plan.
-2. **Taught versus the real world.** Every level ends in a real task someone does at work with that idea, so the student
-   leaves able to *do* it, not only answer it.
-3. **Thinking, not answers.** Lo makes the student predict first, then tests the prediction. It asks "let's ask
-   ourselves" before it explains, and never says the answer first.
-4. **Repetition, so it lasts.** The exam question comes back. Flashcards are made from the student's own lessons, Insight
-   mode turns the lessons into a show they can listen to, and a re-check arrives days later.
+### 1.4 Our answer
+
+As part of LoWisa's mission to strengthen cognitive abilities, From Exam to Mastery uses the same AI people fear to
+make students think again, never to think for them. **A failed question is not a verdict. It is the start of building
+real capability.** Each finding above becomes something the product does:
+
+| The research says | So From Exam to Mastery… |
+|---|---|
+| A mark alone does not teach; feedback must be about the task and how it was done [8, 9] | reads the *reasoning* behind every answer from the handwriting, and names the idea. No verdict: every question not mastered goes into the student's Mastery Plan |
+| Repeating a year does not help [9] | turns each question not mastered into its own level, so the student repairs exactly that and moves on |
+| A confident wrong idea is corrected best when the student sees it fail [11] | has Lo make the student predict with their own rule, then shows the prediction failing in front of them |
+| Struggle before instruction [15] | opens every lesson with a first look and the student's own turn at the controls, before Lo explains |
+| AI that does the work weakens learning; AI that makes students work does not [1–4] | never gives the answer first. The student predicts, works out the number and gives the reason. When the ink is unclear, Lo asks instead of guessing |
+| Recall beats re-reading [16] | brings the exam question back, makes flashcards from the student's own lessons, and sends a re-check days later |
+| What is taught must become something the student can do | ends every level in a real task from work, with a number the student works out |
+| Teachers have no time [13] | marks a 30-question paper in under a minute and groups the class by reasoning. The teacher keeps every decision |
+
+These are LoWisa's four areas, applied to one exam:
+1. **The exam:** marking takes seconds, not evenings, and nothing ends in a verdict.
+2. **Taught versus the real world:** every level ends in a real work task.
+3. **Thinking, not answers:** predict, test, "let's ask ourselves", and only then explain.
+4. **Repetition, so it lasts:** the question comes back, flashcards, Insight mode, and a re-check.
 
 ## 2. The demo, frame by frame: one failed question to mastery
 
@@ -123,7 +137,7 @@ written this week**.
 | | |
 |---|---|
 | ![A failed paper marked by hand](evidence/film/01-marked-by-hand.jpg) | ![The teacher's desk: one photo of the paper](evidence/film/02-one-photo-marked.jpg) |
-| **The marking pain.** Every paper marked by hand, every evening. The red mark says "failed" and says nothing about why | **One photo.** Muse Spark reads the name and every handwritten answer, then marks all 30. Measured on this paper: under a minute, about $0.05, every decision right in 6 runs out of 6 (section 6) |
+| **The marking pain.** Every paper marked by hand, every evening. The red mark says "failed" and says nothing about why | **One photo.** Muse Spark reads the name and every handwritten answer, then marks all 30. Measured on this paper: under a minute, about $0.05, every decision right in 6 runs out of 6 (section 7) |
 | ![Daniel's Mastery Plan: 6 of 30, 24 to master](evidence/film/03-mastery-plan.jpg) | ![What his answer reveals: a weight-only rule](evidence/film/04-what-his-answer-reveals.jpg) |
 | **No verdict.** "6 of 30 · 24 to master". Every question he missed goes into his Mastery Plan | **The thinking behind the answer.** Question 24: *why does a steel ship float while a nail sinks?* He wrote "Heavy objects sink and light objects float". Muse Spark names the idea from his own words: a weight-only rule |
 | ![First look: how can the heavier thing float?](evidence/film/05-first-look.jpg) | ![Lo puts his own rule to the test](evidence/film/06-his-own-rule-tested.jpg) |
@@ -140,16 +154,17 @@ film had no time for them.
 
 ## 3. Beyond the 3 minutes: what the film had no time to show
 
-Everything below is built and was run live. The screenshots are from one continuous run on the production edge on
-31 Oct (a maths test: three students circled the same wrong answer). The film shows one student and one question.
-This shows how the system treats a whole class, and what it does when it is **not sure**.
+Everything below is built and was run live. The film follows one student and one question. This section shows how
+the system treats a whole class, and what it does when it is **not sure**. The screenshots are from one continuous
+run on the production edge on 31 Oct: a maths test where three students circled the same wrong answer (the question
+is in section 6).
 
 ### 3.1 The Misconception Fingerprint: three students, the same wrong answer, three different ideas
 
 | | |
 |---|---|
 | ![The teacher's desk: the fingerprint beside the student's own step](evidence/screens/desk-fingerprint-a.png) | ![A second student, the same answer, a different idea](evidence/screens/desk-fingerprint-b.png) |
-| The reasoning, the evidence quoted from the student's own lines, the idea it shows, and what repairs it. The student's step is cut from the photographed page | Same answer, different idea: a different repair. **A misconception is named only when a line read from the page shows it. Code decides this, not the model** (section 5) |
+| The reasoning, the evidence quoted from the student's own lines, the idea it shows, and what repairs it. The student's step is cut from the photographed page | Same answer, different idea: a different repair. **A misconception is named only when a line read from the page shows it. Code decides this, not the model** (section 6) |
 
 ### 3.2 When the ink can't tell, Lo asks first
 
@@ -196,11 +211,46 @@ planted faults held 30/30, false claims found 9/9, clean levels passed 30/30.
 
 ### 3.7 Also built, also measured
 
-| | |
-|---|---|
-| ![Muse Image draws the corrected step on lined paper](harness/probes/results-31oct/drawn-learner-a.webp) | **Muse Image draws the corrected step** on lined paper, with the changed line underlined ($0.015–0.021 a drawing). **Witness**, the optional way in for a homeschooled student or a student with no teacher nearby: the phone films the desk while the student writes. SAM 3.1 follows the ink, so every line has the second it was written. The desk replays the moment the thinking went wrong, and the video is deleted once marked. 13 clips in 6 languages: 45/46 questions marked exactly. **The examiner**: after marking, Muse Wonder asks the student two questions about a step they wrote themselves, which shows whether the work is their own. **Proof of Thinking**: a dated record the teacher can print |
+<img src="harness/probes/results-31oct/drawn-learner-a.webp" alt="Muse Image draws the corrected step on lined paper" width="420">
 
-## 4. What is new, who it is for, and who pays
+- **Muse Image draws the corrected step** on lined paper, with the changed line underlined ($0.015–0.021 a drawing).
+- **Witness, the optional way in.** For a homeschooled student, or one with no teacher nearby, the phone films the desk
+  while the student writes. SAM 3.1 follows the ink, so every line has the second it was written, and the desk replays
+  the moment the thinking went wrong. The video is deleted once it is marked. On 13 clips in 6 languages, 45 of 46
+  questions were marked exactly.
+- **The examiner.** After marking, Muse Wonder asks the student two questions about a step they wrote themselves. Their
+  answers show whether the work is their own.
+- **Proof of Thinking.** A dated record of the paper, the marks and the examiner's questions, which the teacher can
+  print.
+
+## 4. Meta's models: who does what
+
+Five Meta models are measured in the product; a sixth is wired and waiting for an endpoint. Each one does the job it
+is best at.
+
+| Model | Its job here | Code | Measured | Evidence |
+|---|---|---|---|---|
+| **Muse Spark 1.3** | Reads the teacher's exam file. Marks every photographed paper for the path, not only the answer. Writes the Misconception Fingerprint. Reads the student's answer to Lo. Writes the mastery level. Drafts the challenge, judges the reason, recommends the badge. Writes the re-check. Reads Lo's spoken turns for safety. | `witness_photo`, `witness_mark`, `witness_fingerprint`, `witness_challenge`, `witness_recheck`, `witness_recommend`, `witness_guard` | an exam it had never seen: 180/180 marking decisions right; held-out v2, 159 marked papers: right work 39/39, injection 30/30, ambiguous pages asked first 40/42, clear ideas named right 43/48 | `evidence/unseen-physics/`, `harness/heldout/` |
+| **Muse Wonder** | Plays each mastery level as the student who still holds the misconception and as one who has it right (in one reasoning pass), and holds a level that would not catch it or says a false thing. Groups the class by reasoning. Asks the examiner's questions. | `witness_check`, `witness_patterns`, `witness_examiner` | 20 levels × 3: planted faults held 30/30, the fault named 30/30; clean levels passed 30/30 | `harness/selfcheck/` |
+| **Muse Voice Transcribe** | The student's spoken answer to Lo; the teacher's spoken comment | `witness_meta:transcribe/2` | a 6.4 s spoken answer written down for $0.0003 | `harness/probes/results-31oct/transcript-31oct.json` |
+| **Muse Image** | Draws the corrected step on lined paper | `witness_draw` | the three learners' steps drawn, $0.015–0.021 each | `harness/probes/results-31oct/drawn-learner-*.webp` |
+| **SAM 3.1** | Desk filming (the optional way in): follows the ink through a video, so each line has the second it was written | `witness_sam`, `witness_timeline` | on a photo it answers "word" (not "handwriting"); its word boxes, joined into lines, found 52 of 64 handwritten lines (mean overlap 0.75) | `harness/probes/`, `harness/bench/results/line_placement.json` |
+| Muse Spark Open | The same marking, on a photographed paper or a desk video, through any OpenAI-compatible endpoint | `witness_open`, `witness_photo` | **wired, not yet run**: no hosted endpoint for it in this account | – |
+
+**What surprised us about Meta's models**
+- **Muse Spark changed its own reading from one sentence.** Leo's page (one of the three learners in section 6) read "half up, half down": its guess was
+  "cancel". His answer to Lo ("both halves are of 100") moved it to "the second change was taken of the original
+  amount", which no reading of the page could have shown.
+- **Muse Wonder caught a false sentence a level said in passing.** "Charging $100 loses the shop $25" is false: the shop
+  gains it. Asked to work out every number and claim, it found every planted false claim (9 of 9, over three runs).
+- **The API gave us things we expected to build ourselves:**
+  - `/responses` holds a strict JSON schema for Muse Spark and Muse Wonder.
+  - A prompt cache key made a second reading of the same pages 99.8% cached.
+  - SAM 3.1 follows written lines in the order they were written.
+
+Notes for Meta's API team: `harness/FINDINGS.md`.
+
+## 5. What is new, who it is for, and who pays
 
 | Before | From Exam to Mastery |
 |---|---|
@@ -245,7 +295,7 @@ planted faults held 30/30, false claims found 9/9, clean levels passed 30/30.
 - the store of settled fingerprints. Each one is a real student's reasoning, labelled with what repaired it, for each
   curriculum, and the store grows with every exam.
 
-## 5. One question, three learners: the Misconception Fingerprint
+## 6. One question, three learners: the Misconception Fingerprint
 
 > A product costs $100. Its price increases by 50%, then decreases by 50%. What is its final price?
 > **A** $100 · **B** $75 · **C** $50 · **D** $150
@@ -285,16 +335,16 @@ then down 50."* Muse Spark settled his fingerprint on the base: **B's idea, not 
 
 On a physics paper the explanation *is* the working, so a written sentence of five words or more counts as the
 student's own evidence. Daniel's "Heavy objects sink and light objects float" is named. A one-word recall answer still
-has Lo ask first (section 6).
+has Lo ask first (section 7).
 
 **What the check is, and what it is not.**
 - The quotes are checked against **the lines Muse Spark read from the page**, never the pixels themselves.
 - A line Muse Spark misread is therefore the limit of this check.
-- The marking's bench is that guard: questions read exactly from photos and video (section 10).
+- The marking's bench is that guard: questions read exactly from photos and video (section 11).
 
 Full write-up: [`docs/misconception-fingerprint.md`](docs/misconception-fingerprint.md).
 
-## 6. Measured: an exam it had never seen, a held-out set, a class of 40
+## 7. Measured: an exam it had never seen, a held-out set, a class of 40
 
 ### An exam it had never seen: the film's physics paper
 
@@ -365,7 +415,7 @@ then every question not mastered went to Muse Wonder's class patterns ([`class_r
 Raw results: [`harness/class/results/class-of-40.json`](harness/class/results/class-of-40.json). These are sample
 papers in one handwriting font; a real class is harder.
 
-## 7. The loop, end to end
+## 8. The loop, end to end
 
 ```mermaid
 flowchart LR
@@ -408,7 +458,7 @@ Each fix has a test.
 
 Look at it without an account: `node demo/desk-server.js --replay` (this exam, recorded from the desk; no account ids or signed links).
 
-## 8. How it meets the judging criteria
+## 9. How it meets the judging criteria
 
 ### Impact
 - **It answers the fear head-on (section 1).** The AI never does the student's work:
@@ -418,11 +468,11 @@ Look at it without an account: `node demo/desk-server.js --replay` (this exam, r
 - **It repairs the right thing.** Two ideas the ink shows get two repairs. A page that cannot tell is asked about before anything is decided.
 - **It gives teachers back their evenings.** A 30-question paper is marked in under a minute; a class of 40 in 32 s, for $1.01. The confident marks are accepted in one step.
 - **It is global.** Any subject, any level, any language the models read. The questions come from the teacher's own file, and an exam it had never seen was marked 180/180 right.
-- **The teacher holds the decisions** (section 12).
-- **Not yet proven:** learning gain with real students. A pilot with real classes follows the hackathon (section 14).
+- **The teacher holds the decisions** (section 13).
+- **Not yet proven:** learning gain with real students. A pilot with real classes follows the hackathon (section 15).
 
 ### Use of Meta's models
-- **Six Meta models in the product, five of them measured**, each doing the job it is best at (the table at the top).
+- **Six Meta models in the product, five of them measured**, each doing the job it is best at (section 4).
 - **The new use:** Muse Spark reading the *reasoning* in a student's handwriting, and writing a diagnosis that code checks against the lines it read.
 - **Around it, a gated pipeline of model agents with code-checked hand-offs:**
   - Lo's question;
@@ -453,9 +503,9 @@ Prices and calls: [`docs/integration.md`](docs/integration.md), `witness_meta:co
   a release build of the phone app.
   - Every shot is labelled "built this week", or "LoWisa, playing a level written this week".
   - Lo is heard from the phone's own audio; Lo's words are Muse Spark's.
-- **Judges can try it live** (section 11).
+- **Judges can try it live** (section 12).
 
-## 9. Architecture
+## 10. Architecture
 
 ```mermaid
 flowchart TB
@@ -491,7 +541,7 @@ flowchart TB
 - **Pure core, effects at the edge.** Marking, fingerprints, challenges, re-checks and mastery state are pure functions of a question; `witness_api` does the reading, saving and authorisation. Every model call is a seam a test replaces.
 - **Photographed pages go to the edge in the request.** They are kept in the host's storage, and reach Meta inline as base64 images. Only desk videos go straight to storage by signed upload and are read by Meta through a signed link.
 
-## 10. Evidence: every number and where it comes from
+## 11. Evidence: every number and where it comes from
 
 | Number | What it is | Raw results |
 |---|---|---|
@@ -513,7 +563,7 @@ flowchart TB
 Every bench number is recomputed from the raw files by `python harness/bench/summary.py`; every result file records
 the commit it ran on. Notes for Meta's API team, and what each run found: [`harness/FINDINGS.md`](harness/FINDINGS.md).
 
-## 11. Try it, and verify it yourself
+## 12. Try it, and verify it yourself
 
 **Live, as a judge.** During judging, From Exam to Mastery is open to every LoWisa account:
 1. Install **LoWisa** from Google Play or the App Store, and the **LoWisa desktop app** from [lowisa.dev](https://lowisa.dev).
@@ -549,7 +599,7 @@ MODEL_API_KEY=... escript harness/probes/panel31_probe.escript /tmp/probe page.j
 
 No keys, learner data or personal recordings are committed. `scripts/secret_scan.py` runs before every push and in CI.
 
-## 12. Safety, privacy and the teacher's authority
+## 13. Safety, privacy and the teacher's authority
 
 **The teacher decides** each of these, and the student sees none of it until the teacher acts:
 - the results and marks;
@@ -583,7 +633,7 @@ prompt, and held-out v2 tries ten injections in the ink: none was marked mastere
 
 Full statement: [`docs/privacy.md`](docs/privacy.md). It includes what the school must decide before a pilot with minors.
 
-## 13. What was built during the event, and what existed before
+## 14. What was built during the event, and what existed before
 
 **Built during the event (26 Oct – 4 Nov 2026), and all of it is in this repository:**
 
@@ -614,14 +664,14 @@ mastery mode, the checked practical task, the wiring of the phone and desktop ap
 files. **In the film, LoWisa's parts appear only playing what was made this week, and they are labelled.** Full list:
 [`docs/existed-before.md`](docs/existed-before.md).
 
-## 14. Limits, stated plainly
+## 15. Limits, stated plainly
 
 - **No real students yet.**
   - Every paper here is a sample: a handwriting font, or a paper written for the demo, on a simulated phone photo. Real handwriting and real classrooms are harder.
   - **A real pilot follows the hackathon.** Ten days were not enough to run one properly, with consenting schools and a delayed re-test.
   - The pilot will measure agreement with the teacher, the teacher's minutes, and the re-check a week later (`witness_measure` already records agreement, minutes, turned-around and re-checks).
-- **The research in section 1 is early.** The MIT study is a preprint with 54 participants; the Gerlich study is a survey. They show a risk worth designing against, not a settled law.
-- **The fingerprint's limits are measured, not solved** (section 6).
+- **The research in section 1 is evidence, not proof.** The MIT study is a preprint with 54 participants; the Gerlich and CHI studies are surveys; Butler's is one classroom experiment. Together they show a risk worth designing against and a direction that works, not a settled law. The 65% PISA figure is the OECD average as reported by ACER (source 6).
+- **The fingerprint's limits are measured, not solved** (section 7).
   - A wrong idea can still be named on an ambiguous page.
   - The check reads the lines Muse Spark read, not the pixels.
 - **Mastery is shown, not proven.** "Turned around" follows a level, a challenge answered with a reason, and the teacher's review. The re-check days later is the evidence that it lasted. One re-check is still one item.
@@ -629,29 +679,56 @@ files. **In the film, LoWisa's parts appear only playing what was made this week
 - **Muse Spark Open is wired but has not been run** on hosted open weights.
 - **The low-effort finding is from 36 papers.** The product stays at medium until it is measured on more.
 
-## 15. Sources
+## 16. Sources
+
+Every number in section 1 was checked against these. Where the original was reachable (the MIT paper, Hattie and
+Timperley, Kiray et al.), the figure was read in the original.
+
+**AI and thinking**
 
 1. Kosmyna, N., Hauptmann, E., Yuan, Y. T., et al. (2025). *Your Brain on ChatGPT: Accumulation of Cognitive Debt when
    Using an AI Assistant for Essay Writing Task.* MIT Media Lab, arXiv:2506.08872 (preprint). The quoting result is in
-   section "Question 3. Ability to Quote" (p. 31 of v1). https://arxiv.org/abs/2506.08872
-2. Bastani, H., Bastani, O., Sungu, A., et al. (2025). Generative AI without guardrails can
-   harm learning: Evidence from high school mathematics. *PNAS* 122(26), e2422633122.
-   https://doi.org/10.1073/pnas.2422633122
-3. Lee, H.-P., Sarkar, A., et al. (2025). The Impact of Generative AI on Critical Thinking:
-   Self-Reported Reductions in Cognitive Effort and Confidence Effects From a Survey of Knowledge Workers. *CHI '25*.
+   "Question 3. Ability to Quote" (p. 31 of v1). https://arxiv.org/abs/2506.08872
+2. Bastani, H., Bastani, O., Sungu, A., et al. (2025). Generative AI without guardrails can harm learning: Evidence
+   from high school mathematics. *PNAS* 122(26), e2422633122. https://doi.org/10.1073/pnas.2422633122
+3. Lee, H.-P., Sarkar, A., et al. (2025). The Impact of Generative AI on Critical Thinking: Self-Reported Reductions in
+   Cognitive Effort and Confidence Effects From a Survey of Knowledge Workers. *CHI '25*.
    https://doi.org/10.1145/3706598.3713778
 4. Gerlich, M. (2025). AI Tools in Society: Impacts on Cognitive Offloading and the Future of Critical Thinking.
    *Societies* 15(1), 6. https://doi.org/10.3390/soc15010006
-5. OECD (2023). *PISA 2022 Results (Volume I)*, executive summary.
+
+**Exam failure, feedback and mistakes**
+
+5. OECD (2023). *PISA 2022 Results (Volume I)*, executive summary: about 69% of students reached at least the basic
+   level in mathematics, and the OECD average fell by nearly 15 points.
    https://www.oecd.org/en/publications/pisa-2022-results-volume-i_53f23881-en/full-report/executive-summary_077a9867.html
-6. World Bank, UNESCO, UNICEF, FCDO, USAID, Bill & Melinda Gates Foundation (2022). *The State of Global Learning
+6. OECD (2024). *PISA 2022 Results (Volume V): Learning Strategies and Attitudes for Life.*
+   https://doi.org/10.1787/c2e44201-en. The 65% OECD average is as reported by ACER's *Teacher* magazine:
+   https://www.teachermagazine.com/au_en/articles/pisa-2022-insights-student-questions-mathematics-anxiety-and-homework
+7. World Bank, UNESCO, UNICEF, FCDO, USAID, Bill & Melinda Gates Foundation (2022). *The State of Global Learning
    Poverty: 2022 Update.* https://www.worldbank.org/en/topic/education/publication/state-of-global-learning-poverty
-7. UNESCO and the International Task Force on Teachers for Education 2030 (2024). *Global Report on Teachers:
-   Addressing Teacher Shortages and Transforming the Profession.*
-   https://www.unesco.org/en/articles/global-report-teachers-what-you-need-know
-8. Black, P., & Wiliam, D. (1998). Assessment and Classroom Learning. *Assessment in Education* 5(1), 7–74.
-   https://doi.org/10.1080/0969595980050102 (later meta-analyses estimate smaller effects, about 0.2–0.3)
-9. Sinha, T., & Kapur, M. (2021). When Problem Solving Followed by Instruction Works: Evidence for Productive Failure.
-   *Review of Educational Research*. https://doi.org/10.3102/00346543211019105
-10. Roediger, H. L., & Karpicke, J. D. (2006). Test-Enhanced Learning: Taking Memory Tests Improves Long-Term Retention.
+8. Butler, R. (1988). Enhancing and undermining intrinsic motivation: The effects of task-involving and ego-involving
+   evaluation on interest and performance. *British Journal of Educational Psychology* 58(1), 1–14.
+   https://doi.org/10.1111/j.2044-8279.1988.tb00874.x
+9. Hattie, J., & Timperley, H. (2007). The Power of Feedback. *Review of Educational Research* 77(1), 81–112.
+   https://doi.org/10.3102/003465430298487
+10. Metcalfe, J. (2017). Learning from Errors. *Annual Review of Psychology* 68, 465–489.
+    https://doi.org/10.1146/annurev-psych-010416-044022
+11. Butterfield, B., & Metcalfe, J. (2001). Errors committed with high confidence are hypercorrected. *Journal of
+    Experimental Psychology: Learning, Memory, and Cognition* 27(6), 1491–1494.
+    https://doi.org/10.1037/0278-7393.27.6.1491
+12. Kiray, S. A., Aktan, F., Kaynar, H., Kilinc, S., & Gorkemli, T. (2015). A descriptive study of pre-service science
+    teachers' misconceptions about sinking–floating. *Asia-Pacific Forum on Science Learning and Teaching* 16(2).
+    https://www.eduhk.hk/apfslt/v16_issue2/kiray/index.htm
+13. UNESCO and the International Task Force on Teachers for Education 2030 (2024). *Global Report on Teachers:
+    Addressing Teacher Shortages and Transforming the Profession.*
+    https://www.unesco.org/en/articles/global-report-teachers-what-you-need-know
+
+**What works**
+
+14. Black, P., & Wiliam, D. (1998). Assessment and Classroom Learning. *Assessment in Education* 5(1), 7–74.
+    https://doi.org/10.1080/0969595980050102. Later meta-analyses estimate smaller effects, about 0.2–0.3.
+15. Sinha, T., & Kapur, M. (2021). When Problem Solving Followed by Instruction Works: Evidence for Productive Failure.
+    *Review of Educational Research* 91(5), 761–798. https://doi.org/10.3102/00346543211019105
+16. Roediger, H. L., & Karpicke, J. D. (2006). Test-Enhanced Learning: Taking Memory Tests Improves Long-Term Retention.
     *Psychological Science* 17(3), 249–255. https://doi.org/10.1111/j.1467-9280.2006.01693.x
