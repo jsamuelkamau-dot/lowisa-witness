@@ -94,6 +94,11 @@ could not learn it. Nobody turned that mistake into the next thing they mastered
     hypercorrection effect) [11].
   - Wrong ideas are not rare, and they are not foolish: 377 student science teachers held **74 different
     misconceptions about floating and sinking** between them [12]. That is the question in our film.
+- **Marking itself is a burden, and it is time a teacher cannot give to the learner.**
+  - Across OECD countries, marking and correcting take **9% of teachers' working time**, the most after teaching and
+    lesson planning [14].
+  - **40% of teachers say too much marking is a source of stress.** In no country is it below 20%, and in some it is
+    over 70% [14].
 - **Teachers have no time to do this for every student.** The world needs **44 million more teachers** by 2030 [13].
   With a class of forty, nobody can read every student's working, ask each one what they meant, and write each of
   them a repair.
@@ -101,11 +106,11 @@ could not learn it. Nobody turned that mistake into the next thing they mastered
 ### 1.3 What works: making the learner think
 
 - **Find what a student actually thinks, and act on it** (formative assessment). The classic review found typical gains
-  of 0.4 to 0.7 standard deviations; later estimates are smaller but still positive [14].
+  of 0.4 to 0.7 standard deviations; later estimates are smaller but still positive [15].
 - **Let them struggle with a problem before teaching it** (productive failure). Across 53 studies it beat being taught
-  first, most strongly when the struggle was well designed (Hedges' g 0.37–0.58) [15].
+  first, most strongly when the struggle was well designed (Hedges' g 0.37–0.58) [16].
 - **Make them recall instead of re-reading.** After two days and after a week, students who were tested remembered
-  more than students who studied again [16].
+  more than students who studied again [17].
 - **Use AI that makes students do the work.** In Bastani's experiment, the tutor with guardrails did not cause the
   harm [2].
 
@@ -120,11 +125,11 @@ real capability.** Each finding above becomes something the product does:
 | A mark alone does not teach; feedback must be about the task and how it was done [8, 9] | reads the *reasoning* behind every answer from the handwriting, and names the idea. No verdict: every question not mastered goes into the student's Mastery Plan |
 | Repeating a year does not help [9] | turns each question not mastered into its own level, so the student repairs exactly that and moves on |
 | A confident wrong idea is corrected best when the student sees it fail [11] | has Lo make the student predict with their own rule, then shows the prediction failing in front of them |
-| Struggle before instruction [15] | opens every lesson with a first look and the student's own turn at the controls, before Lo explains |
+| Struggle before instruction [16] | opens every lesson with a first look and the student's own turn at the controls, before Lo explains |
 | AI that does the work weakens learning; AI that makes students work does not [1–4] | never gives the answer first. The student predicts, works out the number and gives the reason. When the ink is unclear, Lo asks instead of guessing |
-| Recall beats re-reading [16] | brings the exam question back, makes flashcards from the student's own lessons, and sends a re-check days later |
+| Recall beats re-reading [17] | brings the exam question back, makes flashcards from the student's own lessons, and sends a re-check days later |
 | What is taught must become something the student can do | ends every level in a real task from work, with a number the student works out |
-| Teachers have no time [13] | marks a 30-question paper in under a minute and groups the class by reasoning. The teacher keeps every decision |
+| Marking takes teachers' time and causes stress; teachers have no time for each student [13, 14] | marks a 30-question paper in under a minute, then gives the teacher's time to the learners: the few papers it is unsure of, the class grouped by reasoning, and the decisions only a teacher should make (section 5) |
 
 These are LoWisa's four areas, applied to one exam:
 1. **The exam:** marking takes seconds, not evenings, and nothing ends in a verdict.
@@ -281,6 +286,27 @@ Notes for Meta's API team: `harness/FINDINGS.md`.
 - **Model calls come from the teacher's or the school's existing LoWisa credits** (1 credit = 1 US cent).
 - **No new price was set for this.**
 - **Each account has a daily ceiling on every model route.** A whole class fits under it.
+
+**Time saved, and where it goes**
+
+The teacher no longer marks. The model's marking time on the production edge:
+
+| | Hand marking | From Exam to Mastery |
+|---|---|---|
+| One 30-question physics paper | the teacher reads and marks every answer | one photo; marked in 35–60 s with nothing for the teacher to do |
+| A class of 40, two-page papers | the teacher marks all 40 by hand | all 40 marked at once in 32 s; the class patterns ready a minute after the last photo |
+| What the mark tells the student | the score | the reasoning behind each answer, and a level for every question not mastered |
+
+The time that comes back is spent on the learners, on the work only a teacher should do:
+- **The few papers that need a human.** The desk lists the least certain marks first; the confident ones are accepted
+  in one step (15 of 15 agreed in the 31 Oct run).
+- **The class, by reasoning, not by score.** Muse Wonder groups the students who hold the same wrong idea, so the
+  teacher re-teaches each idea once, to the group that needs it (section 3.4).
+- **Each student's repair.** A focus note on a question, a level to let start, a challenge sent to a group, an
+  explanation to read, and the "Turned around" decision (sections 3.6 and 13).
+
+**Not yet measured:** a teacher's own minutes per paper with real teachers. The desk already records them
+(`witness_measure`: the seconds each paper is open while reviewed); the pilot will report them (section 15).
 
 **What it costs**, measured on the production edge and priced at Meta's published rates:
 
@@ -663,7 +689,7 @@ files. **In the film, LoWisa's parts appear only playing what was made this week
 ## 16. Sources
 
 Every number in section 1 was checked against these. Where the original was reachable (the MIT paper, Hattie and
-Timperley, Kiray et al.), the figure was read in the original.
+Timperley, Kiray et al., TALIS 2024), the figure was read in the original.
 
 **AI and thinking**
 
@@ -705,11 +731,15 @@ Timperley, Kiray et al.), the figure was read in the original.
     Addressing Teacher Shortages and Transforming the Profession.*
     https://www.unesco.org/en/articles/global-report-teachers-what-you-need-know
 
+14. OECD (2025). *Results from TALIS 2024: The State of Teaching*, chapter 3 "The demands of teaching" (Table 3.10:
+    marking and correcting, 9% of working time; Table 3.16: 40% report too much marking as a source of stress).
+    https://www.oecd.org/en/publications/results-from-talis-2024_90df6235-en/full-report/the-demands-of-teaching_0e941e2f.html
+
 **What works**
 
-14. Black, P., & Wiliam, D. (1998). Assessment and Classroom Learning. *Assessment in Education* 5(1), 7–74.
+15. Black, P., & Wiliam, D. (1998). Assessment and Classroom Learning. *Assessment in Education* 5(1), 7–74.
     https://doi.org/10.1080/0969595980050102. Later meta-analyses estimate smaller effects, about 0.2–0.3.
-15. Sinha, T., & Kapur, M. (2021). When Problem Solving Followed by Instruction Works: Evidence for Productive Failure.
+16. Sinha, T., & Kapur, M. (2021). When Problem Solving Followed by Instruction Works: Evidence for Productive Failure.
     *Review of Educational Research* 91(5), 761–798. https://doi.org/10.3102/00346543211019105
-16. Roediger, H. L., & Karpicke, J. D. (2006). Test-Enhanced Learning: Taking Memory Tests Improves Long-Term Retention.
+17. Roediger, H. L., & Karpicke, J. D. (2006). Test-Enhanced Learning: Taking Memory Tests Improves Long-Term Retention.
     *Psychological Science* 17(3), 249–255. https://doi.org/10.1111/j.1467-9280.2006.01693.x
