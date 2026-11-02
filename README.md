@@ -3,13 +3,21 @@
 **AI that finds where a learner's thinking broke down, then makes them think again until they can explain it and use
 it in the real world. It never thinks for them.**
 
-A teacher photographs a finished exam. Meta's models mark every answer, and they also read *how* the student reached
-each one, from their own handwriting. Every question the student did not master goes into their **Mastery Plan**.
-There it becomes a level built on that student's own mistake: Lo teaches it, the student practises it, and the level
-ends in a real task. The teacher decides when the student has turned it around.
+**In 60 seconds**
+- **The problem.** AI that does students' thinking weakens it (section 1). And a red mark tells a student *that* they
+  failed, never *why*; no teacher of forty can read every student's working.
+- **What it does.** A teacher photographs a finished exam. Meta's models mark every answer and read *how* the student
+  reached it, from their own handwriting. Every question not mastered becomes a level in the student's **Mastery
+  Plan**, built on their own mistake and ending in a real task. The teacher decides when they have turned it around.
+- **Built this week (26 Oct – 4 Nov 2026), all in this repository:** the marking and diagnosis server, the teacher's
+  Exam Desk, the phone screens, and every measurement.
+- **Existed before, named but not shown:** the LoWisa app it runs in, its lesson player, flashcards, Insight mode and
+  Lo's voice (section 14). In the film, every shot is labelled one or the other.
+- **Meta's models do the work:** Muse Spark marks and diagnoses, Muse Wonder plays every level as the student before
+  they see it, plus Muse Voice Transcribe, Muse Image and SAM 3.1 (section 4).
 
-Part of [LoWisa](https://lowisa.dev), built for the Meta Global AI Developer Hackathon, 26 Oct – 4 Nov 2026. The
-3-minute demo film is linked from the submission page; section 2 walks through it frame by frame.
+Part of [LoWisa](https://lowisa.dev), for the Meta Global AI Developer Hackathon. The 3-minute demo film is linked from
+the submission page; section 2 walks through it frame by frame.
 
 ![tests](https://github.com/jsamuelkamau-dot/lowisa-witness/actions/workflows/test.yml/badge.svg)
 
@@ -17,9 +25,6 @@ Part of [LoWisa](https://lowisa.dev), built for the Meta Global AI Developer Hac
 |---|---|
 | ![Daniel's answer to question 24: heavy objects sink, light objects float](evidence/film/12-before-and-after.jpg) | ![Lo hands Daniel the controls: push the log down until the water holds 200 kg](evidence/film/07-his-turn.jpg) |
 | One question from the film. Before: Daniel's answer on his exam. After: the idea he can explain, once the level is done | The level built from his answer. Lo gives him the controls and he finds the balance himself |
-
-**Meta's models do the work:** Muse Spark, Muse Wonder, Muse Voice Transcribe, Muse Image and SAM 3.1, each with
-its job and its measured result in section 4.
 
 ---
 
@@ -140,17 +145,23 @@ written this week**.
 | **The marking pain.** Every paper marked by hand, every evening. The red mark says "failed" and says nothing about why | **One photo.** Muse Spark reads the name and every handwritten answer, then marks all 30. Measured on this paper: under a minute, about $0.05, every decision right in 6 runs out of 6 (section 7) |
 | ![Daniel's Mastery Plan: 6 of 30, 24 to master](evidence/film/03-mastery-plan.jpg) | ![What his answer reveals: a weight-only rule](evidence/film/04-what-his-answer-reveals.jpg) |
 | **No verdict.** "6 of 30 · 24 to master". Every question he missed goes into his Mastery Plan | **The thinking behind the answer.** Question 24: *why does a steel ship float while a nail sinks?* He wrote "Heavy objects sink and light objects float". Muse Spark names the idea from his own words: a weight-only rule |
+| ![Question 1, answer Joules: nothing named, Lo asks first](evidence/film/04a-lo-asks-first.jpg) | ![Muse Wonder plays his level as Daniel and as a student who has it right](evidence/film/04b-muse-wonder-plays-his-level.jpg) |
+| **When the page can't show the thinking, nothing is named.** His one-word answer "Joules" shows no reasoning, so the code names no idea and Lo asks him first (section 6) | **Muse Wonder plays his level before he sees it,** once as Daniel still sure heavy things sink (caught on 3 of 4 steps) and once as a student who has it right (4 of 4). It passes only if it catches his idea |
 | ![First look: how can the heavier thing float?](evidence/film/05-first-look.jpg) | ![Lo puts his own rule to the test](evidence/film/06-his-own-rule-tested.jpg) |
 | **Lo shows it before explaining it.** The level starts with a first look built on his mistake, not a lecture | **His own rule, tested.** Lo makes him predict with his idea, the heavy log or the light coin, then the prediction fails in front of him |
 | ![His turn: push the log down until the water holds 200 kg](evidence/film/07-his-turn.jpg) | ![Let's ask ourselves: from the pond to a cargo ship](evidence/film/08-lets-ask-ourselves.jpg) |
 | **His turn.** Lo hands him the controls. He finds the point where the water pushed aside weighs as much as the log | **Into the real world.** "Let's ask ourselves": how deep can a loaded cargo ship sit before it becomes unsafe? |
 | ![The exam question comes back: exactly right](evidence/film/09-question-comes-back.jpg) | ![Flashcards from his three lessons](evidence/film/10-flashcards.jpg) |
-| **The exam question comes back.** Two lessons later he answers it right, with the reason | **Retention.** 18 flashcards made from his own three lessons |
-| ![Insight mode: two hosts talk his lessons through](evidence/film/11-insight.jpg) | ![Before and after](evidence/film/12-before-and-after.jpg) |
-| **Insight mode.** His lessons as a show he can listen to on the bus | **The transformation.** From "heavy objects sink" to *floating is a balance*. He can explain it and use it: the level's last task is loading a canoe safely |
+| **The exam question comes back.** Two lessons later he chooses the right reason | **Retention.** 18 flashcards made this week from his own three lessons, in LoWisa's flashcard player (labelled as LoWisa's in the film) |
 
-What happens next is in the next section: the teacher's challenge, the "Turned around" badge and the re-check. The
-film had no time for them.
+![Before and after](evidence/film/12-before-and-after.jpg)
+
+**The transformation.** From "heavy objects sink" to *floating is a balance*. The level ends in a real task, loading a
+canoe safely, where he works out the number himself. In the film this card is a summary written by us, and the "after"
+in his own words comes from the teacher's challenge (section 3.6).
+
+What happens next is in the next section: the teacher's challenge, the "Turned around" badge, the re-check, and Insight
+mode (his lessons as a show he can listen to). The film had no time for them.
 
 ## 3. Beyond the 3 minutes: what the film had no time to show
 
@@ -171,7 +182,7 @@ is in section 6).
 | | |
 |---|---|
 | ![The phone: Lo asks first, before anything is named](evidence/screens/phone-lo-asks-first.png) | ![The desk after the student answered](evidence/screens/desk-fingerprint-c-after-lo-asked.png) |
-| The third student wrote "Half up, half down. Same price." No calculation is visible, so **nothing is named and the student sees no label.** Lo asks one neutral question, out loud | His answer (typed, or spoken through Muse Voice Transcribe) settled it, and **not on the idea the model had guessed.** On held-out papers: ambiguous pages asked first 40 of 42 |
+| The third student wrote "Half up, half down. Same price." No calculation is visible, so **nothing is named and the student sees no label.** Lo asks one neutral question, out loud | His answer (typed, or spoken through Muse Voice Transcribe) settled it, and **not on the idea the model had guessed.** On held-out papers: ambiguous pages asked first 39 of 42. (The test phone's keyboard dropped a few characters of his typed answer here; the full sentence is in section 6 and in the replay) |
 
 Short recording: [`evidence/video/lo-asks-first.mp4`](evidence/video/lo-asks-first.mp4).
 
@@ -230,7 +241,7 @@ is best at.
 
 | Model | Its job here | Code | Measured | Evidence |
 |---|---|---|---|---|
-| **Muse Spark 1.3** | Reads the teacher's exam file. Marks every photographed paper for the path, not only the answer. Writes the Misconception Fingerprint. Reads the student's answer to Lo. Writes the mastery level. Drafts the challenge, judges the reason, recommends the badge. Writes the re-check. Reads Lo's spoken turns for safety. | `witness_photo`, `witness_mark`, `witness_fingerprint`, `witness_challenge`, `witness_recheck`, `witness_recommend`, `witness_guard` | an exam it had never seen: 180/180 marking decisions right; held-out v2, 159 marked papers: right work 39/39, injection 30/30, ambiguous pages asked first 40/42, clear ideas named right 43/48 | `evidence/unseen-physics/`, `harness/heldout/` |
+| **Muse Spark 1.3** | Reads the teacher's exam file. Marks every photographed paper for the path, not only the answer. Writes the Misconception Fingerprint. Reads the student's answer to Lo. Writes the mastery level. Drafts the challenge, judges the reason, recommends the badge. Writes the re-check. Reads Lo's spoken turns for safety. | `witness_photo`, `witness_mark`, `witness_fingerprint`, `witness_challenge`, `witness_recheck`, `witness_recommend`, `witness_guard` | one physics paper it had never seen: every marking decision right, 6 runs of 30; held-out v2 on the shipped code, 53 papers × 3 runs: right work 39/39, injection 30/30, ambiguous pages asked first 39/42, clear ideas named right 44/48 | `evidence/unseen-physics/`, `harness/heldout/` |
 | **Muse Wonder** | Plays each mastery level as the student who still holds the misconception and as one who has it right (in one reasoning pass), and holds a level that would not catch it or says a false thing. Groups the class by reasoning. Asks the examiner's questions. | `witness_check`, `witness_patterns`, `witness_examiner` | 20 levels × 3: planted faults held 30/30, the fault named 30/30; clean levels passed 30/30 | `harness/selfcheck/` |
 | **Muse Voice Transcribe** | The student's spoken answer to Lo; the teacher's spoken comment | `witness_meta:transcribe/2` | a 6.4 s spoken answer written down for $0.0003 | `harness/probes/results-31oct/transcript-31oct.json` |
 | **Muse Image** | Draws the corrected step on lined paper | `witness_draw` | the three learners' steps drawn, $0.015–0.021 each | `harness/probes/results-31oct/drawn-learner-*.webp` |
@@ -245,21 +256,12 @@ is best at.
   gains it. Asked to work out every number and claim, it found every planted false claim (9 of 9, over three runs).
 - **The API gave us things we expected to build ourselves:**
   - `/responses` holds a strict JSON schema for Muse Spark and Muse Wonder.
-  - A prompt cache key made a second reading of the same pages 99.8% cached.
-  - SAM 3.1 follows written lines in the order they were written.
+  - A prompt cache key made a second reading of the same pages 99.8% cached (one probe).
+  - SAM 3.1 followed written lines in the order they were written (on our rendered desk clips; real filmed desks are next).
 
 Notes for Meta's API team: `harness/FINDINGS.md`.
 
 ## 5. What is new, who it is for, and who pays
-
-| Before | From Exam to Mastery |
-|---|---|
-| A mark per question | **The reasoning that produced each answer**, read from the handwriting (Muse Spark), with the student's own step cut from their page |
-| "Wrong" | **A Misconception Fingerprint**: the reasoning, the evidence quoted from the lines read from the page, the misconception (named only when a quoted line shows it, decided by code), and the intervention that repairs it |
-| Guessing when the page is ambiguous | **Lo asks first**, out loud. Nothing is shown to the student until they answer; their answer settles the fingerprint (Muse Spark, Muse Voice Transcribe) |
-| A generic revision sheet | **A mastery level built around that one intervention**, checked by Muse Wonder as the student who still holds the misconception, held for the teacher. Its practical task ends in a number the student works out, checked by the app |
-| "Did they memorise it?" | **The teacher's new challenge** (the same principle in a new situation, the order reversed, answered with a reason), then **a re-check days later** on a different structure, answered with the student's own number and working |
-| A verdict | **No verdict.** Every question not mastered goes into the student's Mastery Plan; "Turned around" is the teacher's alone |
 
 **Why not an existing tool**
 
@@ -359,29 +361,42 @@ way a teacher would run it, on the production edge ([`evidence/unseen-physics/`]
 | Name, class and date read from the paper | 3 of 3 | 3 of 3 |
 | Time, photo in to marks out | 46–58 s | 40–52 s |
 
-The run found two faults, and both were fixed and re-run the same day. A written explanation had been treated as a
-bare answer, and "part way" was sometimes given full marks. The levels for questions 23 and 24 were then built live,
-and their self-checks passed.
+These six runs were the first time the code saw the paper, before anything was changed. They found two faults, both
+fixed and re-run the same day: a written explanation had been treated as a bare answer, and "part way" was sometimes
+given full marks. **So the marking result above is unseen, but for naming ideas this paper is now a development paper**:
+the rule was changed on it, and after the change question 24's idea was named in 6 of 6 runs (4 of 6 before). The levels
+for questions 23 and 24 were then built live, and their self-checks passed. One paper is one paper: more unseen
+subjects, marked by an outside teacher, are the next step (section 15).
 
-### Held out: 53 papers written after the rule froze
+### Held out: 53 papers, first run blind, then run again on the shipped code
 
-The first 36 papers (30 Oct) were used to design the rule in code, so they are now the **development set**. The held-out
+The first 36 papers (30 Oct) were used to design the rule in code, so they are the **development set**. The held-out
 set **v2** has 53 papers in 13 new topics:
 - 3 topics not maths, 2 not in English;
-- 22 hard items, 10 with injection written into the ink.
+- 22 hard items, 10 with instructions to the marker written into the ink.
 
 It was labelled by a rule stated in [`items_v2.py`](harness/heldout/items_v2.py) and committed before its first run.
 Scoring is strict: the name itself must carry a key, and an "ask" passes only when nothing at all names an idea.
 
-| v2, three runs on the committed code (159 marked papers, [`v2-held-out-steps-rule-3-runs.json`](harness/heldout/results/v2-held-out-steps-rule-3-runs.json)) | Result | Rate (95% interval) |
+**What is blind and what is not.** v2's first run (31 Oct, before anything was changed) is the blind result. The rule
+was then changed twice, partly after seeing that run, so every later v2 run has seen v2: **v2 is now a second
+development set.** A prompt example that resembled one v2 item was replaced on 3 Nov. Both are shown, with 95% intervals:
+
+| v2: 53 papers × 3 runs | Blind first run, 31 Oct ([`v2-held-out-3-runs.json`](harness/heldout/results/v2-held-out-3-runs.json)) | The code that ships, 3 Nov ([`v2-on-shipped-code-3-runs.json`](harness/heldout/results/v2-on-shipped-code-3-runs.json)) |
 |---|---|---|
-| Right work marked mastered | **39 of 39** | 100% (91–100%) |
-| Ink that tries to instruct the marker, never marked mastered | **30 of 30** | 100% (89–100%) |
-| Ink that cannot tell the idea: Lo asks | **40 of 42** | 95% (84–99%) |
-| … a wrong idea named instead (the harmful error) | 2 of 42 | 5% (1–16%) |
-| Ink that shows the idea: named right | **43 of 48** | 90% (78–96%) |
-| … named, but a different idea (both are the right idea in other words; scored as missed) | 2 of 48 | 4% (1–14%) |
-| … asked first instead (cautious) | 3 of 48 | |
+| Right work marked mastered | **39 of 39** | **39 of 39** (91–100%) |
+| Instructions in the ink, never marked mastered | **30 of 30** | **30 of 30** (89–100%) |
+| Ink that cannot tell the idea: Lo asks | **39 of 42** | **39 of 42** (81–97%) |
+| … a wrong idea named instead (the harmful error) | 3 of 42 | 3 of 42 (3–19%) |
+| Ink that shows the idea: named right | **41 of 48** | **44 of 48** (80–97%) |
+| … named, but a different idea | 4 of 48 | 1 of 48 |
+| … asked first instead (cautious) | 3 of 48 | 3 of 48 |
+
+The three runs mark the same 53 papers, so they show consistency, not 159 independent papers. The intervals are over
+the runs. Earlier v2 runs between these two are kept too (`v2-held-out-steps-rule-3-runs.json`,
+`v2-held-out-explain-rule-3-runs.json`), and which commit each ran on is in [`harness/PROVENANCE.md`](harness/PROVENANCE.md).
+**What would settle it:** a v3 set nobody on the team has seen, in real handwriting from outside writers, labelled by
+an outside teacher and run once (section 15).
 
 The misses are read by hand in [`harness/heldout/README.md`](harness/heldout/README.md), with the hinted-scheme ablation
 and the effort ablation (on the development set, low effort was as accurate as medium, 28% cheaper and 40% faster).
@@ -456,54 +471,16 @@ emulator, test account, the three sample papers; every screen in [`evidence/scre
 
 Each fix has a test.
 
-Look at it without an account: `node demo/desk-server.js --replay` (this exam, recorded from the desk; no account ids or signed links).
+Look at it without an account: `node demo/desk-server.js --replay`. It is this exam from an earlier rehearsal, recorded from the desk with no account ids or signed links, so its wording differs a little from the screens above.
 
 ## 9. How it meets the judging criteria
 
-### Impact
-- **It answers the fear head-on (section 1).** The AI never does the student's work:
-  - it reads where the thinking slipped, and asks when it cannot tell;
-  - it makes the student think again: a level built on their own mistake, a prediction that fails in front of them, their own wrong idea offered as a wrong option, a practical they work out, a challenge with a reason, a re-check days later.
-- **It turns a verdict into capability.** Every question not mastered becomes a level that ends in a real work task.
-- **It repairs the right thing.** Two ideas the ink shows get two repairs. A page that cannot tell is asked about before anything is decided.
-- **It gives teachers back their evenings.** A 30-question paper is marked in under a minute; a class of 40 in 32 s, for $1.01. The confident marks are accepted in one step.
-- **It is global.** Any subject, any level, any language the models read. The questions come from the teacher's own file, and an exam it had never seen was marked 180/180 right.
-- **The teacher holds the decisions** (section 13).
-- **Not yet proven:** learning gain with real students. A pilot with real classes follows the hackathon (section 15).
-
-### Use of Meta's models
-- **Six Meta models in the product, five of them measured**, each doing the job it is best at (section 4).
-- **The new use:** Muse Spark reading the *reasoning* in a student's handwriting, and writing a diagnosis that code checks against the lines it read.
-- **Around it, a gated pipeline of model agents with code-checked hand-offs:**
-  - Lo's question;
-  - the level, with Muse Wonder's two plays and its false-claim check;
-  - the challenge, the reason judge, the re-check;
-  - the safety read of every spoken turn.
-- **Structured outputs and prompt caching are used where the API offers them.**
-
-Prices and calls: [`docs/integration.md`](docs/integration.md), `witness_meta:cost/2`.
-
-### Technical depth
-- **The evidence rule is code, measured on a held-out set** written after it froze, with the misses read by hand.
-- **Handwriting placed where it is on the page.**
-  - Muse Spark's line boxes drift. `witness_page.erl` snaps each line onto real ink bands with dynamic programming, splits touching lines, leaves printed pictures out, and tells pen from print by colour.
-  - It is measured against the truth beside Muse Spark's own boxes and SAM 3.1's word boxes, on the 36 development papers (64 lines; a line is found at an overlap of 0.5 or more with the ink's own box): **`witness_page` 64 of 64 (mean overlap 0.92)**, SAM 3.1 52 of 64 (0.75), Muse Spark's own boxes 1 of 64 (0.06: they are loose and drift, which is why the product never cuts a step with them).
-- **Disagreement is measured, not hidden.** An unsure marking is read again at high effort, sharing the prompt cache; two readings that split are settled by a third.
-- **Production engineering:**
-  - Erlang/OTP on the edge, every model call metered;
-  - conditional writes, so forty joins at once all land and a paper deleted mid-marking stays deleted;
-  - every model route capped per account per day;
-  - the self-check's verdict bound to the level on the server;
-  - access by role: the join code, the photographing code, the student, the teacher.
-- **Tested.** 138 library tests from a fresh clone (`sh scripts/test.sh`, CI); the edge's own suite; 66 phone and 23 desk tests in the host app (copies in `phone/__tests__`, `desk/__tests__`).
-- Section 3 shows the depth the film had no time for.
-
-### Demo and experience
-- **The 3-minute film follows one real failed question from photo to mastery**, recorded on the production edge with
-  a release build of the phone app.
-  - Every shot is labelled "built this week", or "LoWisa, playing a level written this week".
-  - Lo is heard from the phone's own audio; Lo's words are Muse Spark's.
-- **Judges can try it live** (section 12).
+| Criterion | In one line | The evidence |
+|---|---|---|
+| **Impact** | Strengthens thinking instead of replacing it: a failed question becomes a level built on the student's own mistake that ends in a real task, and a teacher of forty gets their evenings back. Not yet proven with real students | sections 1, 2, 5; limits in 15 |
+| **Use of Meta's models** | Muse Spark reads the *reasoning* in handwriting and code checks its diagnosis against the lines it read; Muse Wonder plays every level as the student first; five models measured, in a gated pipeline of agents with code-checked hand-offs | sections 3, 4; `harness/FINDINGS.md` |
+| **Technical depth** | The evidence rule in code, measured blind and on the shipped code; handwriting placed on the page by dynamic programming (64 of 64 lines, against SAM 3.1's 52); Erlang/OTP with conditional writes, per-route daily ceilings, roles; 142 library tests | sections 6, 7, 10, 11 |
+| **Demo** | One real failed question from photo to mastery, recorded on the production edge; Muse Wonder's check and "Lo asks first" on screen; every shot labelled new or existing; judges can try it live | sections 2, 12 |
 
 ## 10. Architecture
 
@@ -547,7 +524,7 @@ flowchart TB
 |---|---|---|
 | 180/180 decisions, 6/30 every run, 40–58 s, ~$0.05 | the film's physics paper, never seen before, 6 live runs with and without a scheme | `evidence/unseen-physics/` |
 | A 5/5, B 5/5 named; C asked 5/5 | the three learners, five readings each, through `witness_photo:mark/4` | `evidence/misconceptions/runs-31oct-steps-rule.jsonl` |
-| asked 40/42, wrong name 2/42, named right 43/48, right work 39/39, injection 30/30 | held-out v2, 53 papers × 3 runs | `harness/heldout/results/v2-held-out-steps-rule-3-runs.json` |
+| asked 39/42, wrong name 3/42, named right 44/48, right work 39/39, injection 30/30 | held-out v2 on the shipped code (and the blind first run beside it), 53 papers × 3 runs | `harness/heldout/results/v2-on-shipped-code-3-runs.json`, `v2-held-out-3-runs.json` |
 | ambiguous asked 10/11 (development) | the 36 papers the rule was designed on, and the effort ablation | `harness/heldout/results/dev-set-*.json` |
 | clean 30/30, faults held 30/30, named 30/30, false claims 9/9 | Muse Wonder's self-check, 20 levels × 3 runs | `harness/selfcheck/results/selfcheck-3-runs.json` |
 | false accepts 0/36, false rejects 0/24 | the reason judge, 20 reasons × 3 runs | `harness/reasons/results/reasons-applied-3-runs.json` |
@@ -556,7 +533,7 @@ flowchart TB
 | 138/138 exact | 39 papers marked at once (28 Oct) | `harness/bench/results/load39.json` |
 | 40/40 names, 240/240 sound, no-calculation asked 5/5, 6 groups, $1.01 | a class of 40, two-page papers marked at once, then grouped | `harness/class/results/class-of-40.json` |
 | page 64/64, SAM 52/64, Spark 1/64 | where each handwritten line is on the photo | `harness/bench/results/line_placement.json` |
-| Voice Transcribe $0.0003; Muse Image $0.015–0.021; structured output; 99.8% cached | the live API probe | `harness/probes/results-31oct/` |
+| Voice Transcribe $0.0003; Muse Image $0.015–0.021; structured output; 99.8% cached (one probe) | the live API probe | `harness/probes/results-31oct/` |
 | the loop, photo to re-check | one continuous run on the production edge | `evidence/` (`evidence/screens/`, `evidence/replay/`) |
 | the demo | frames from the film | `evidence/film/` |
 
@@ -570,10 +547,10 @@ the commit it ran on. Notes for Meta's API team, and what each run found: [`harn
 2. Sign in with the same account on both. On the desktop, open **Exam Desk** and create an exam; you can read it from a photo or PDF of the paper.
 3. The desk shows a **join code** and a **photographing code**. On the phone, open **From Exam to Mastery** (Home, near the bottom), type the join code and put your name on the class list. Then type the photographing code in the same box and photograph a finished paper: take photos, or pick them from the gallery.
    - Sample papers: the physics paper from the film is [`evidence/unseen-physics/paper.jpg`](evidence/unseen-physics/paper.jpg). Three maths papers are in `evidence/misconceptions/learner-*-page*.jpg`: copy one learner's two pages to the phone's gallery. The name on a paper is the student's; join with that name to receive it.
-4. **Marking takes about 15 s a page.** The desk shows each fingerprint. Release the marks, and the Mastery Plan reaches the phone.
+4. **Marking takes about 15 s for a maths page, and 35–60 s for the 30-question physics paper in one photo.** The desk shows each fingerprint. Release the marks, and the Mastery Plan reaches the phone.
 5. **On the phone:**
    - answer Lo's question if it asks;
-   - start the level (about 2 minutes to build, and the self-check runs);
+   - start the level (2 to 8 minutes to build, including Muse Wonder's self-check);
    - play it.
 6. **On the desk:** let it start if it is held, send a challenge, read the reason, and issue "Turned around". "Send it now" brings the re-check forward.
 
@@ -613,7 +590,9 @@ No keys, learner data or personal recordings are committed. `scripts/secret_scan
 
 Muse Spark recommends, and never issues. A level the self-check did not pass always waits for the teacher, and the
 verdict is the server's own. The lessons are written as the student opens them, after the teacher has let the level
-start. Those questions are written by Muse Spark under the server's scope, and each spoken turn is read for safety.
+start. Those questions are written by Muse Spark under the server's scope, and each of Lo's turns is read for safety
+before it reaches the student. **That check fails closed**: a turn it could not read (no verdict, the check down, the
+day's ceiling reached) is replaced by a safe line, never sent.
 
 **The student is never sent a guess:** not the model's possible idea, not its rivals, not its confidence. While Lo is
 asking, they are not sent the reasoning either.
@@ -666,8 +645,10 @@ files. **In the film, LoWisa's parts appear only playing what was made this week
 
 ## 15. Limits, stated plainly
 
-- **No real students yet.**
+- **No real students, and no real handwriting, yet.**
   - Every paper here is a sample: a handwriting font, or a paper written for the demo, on a simulated phone photo. Real handwriting and real classrooms are harder.
+  - **The evaluation sets are ours.** The items, labels and code come from the same team, and v2 has been seen since its blind first run (section 7). The next measurement is a v3 set in real handwriting from outside writers, labelled by an outside teacher, run once on frozen code.
+  - The class of 40 measures speed and cost at class size; its 40 papers are built from 14 written answers (two to four per question), so it is not an accuracy test.
   - **A real pilot follows the hackathon.** Ten days were not enough to run one properly, with consenting schools and a delayed re-test.
   - The pilot will measure agreement with the teacher, the teacher's minutes, and the re-check a week later (`witness_measure` already records agreement, minutes, turned-around and re-checks).
 - **The research in section 1 is evidence, not proof.** The MIT study is a preprint with 54 participants; the Gerlich and CHI studies are surveys; Butler's is one classroom experiment. Together they show a risk worth designing against and a direction that works, not a settled law. The 65% PISA figure is the OECD average as reported by ACER (source 6).

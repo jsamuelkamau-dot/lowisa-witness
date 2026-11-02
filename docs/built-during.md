@@ -59,3 +59,5 @@ history. The table grows as the work lands. Code built this week inside LoWisa's
 | Structured output on every small JSON reply; prompt caching across the readings of one paper; explicit prices; Muse Spark Open on the photographed paper too | `witness/src/witness_meta.erl`, `witness/src/witness_photo.erl`, `witness/src/witness_open.erl` | done 31 Oct |
 | Held-out v2 (53 papers, written before any run), the self-check and reason-judge evaluations, the effort ablation, the live API probe | `harness/heldout/items_v2.py`, `harness/selfcheck/`, `harness/reasons/`, `harness/probes/results-31oct/` | done 31 Oct |
 | A local replay of the desk with no key; the privacy document | `demo/desk-server.js --replay`, `docs/privacy.md` | done 31 Oct |
+| Lo's live turns fail closed: a turn the safety check could not read never reaches the student (after the 3 Nov judges' panel) | `witness/src/witness_api.erl` | done 3 Nov |
+| Held-out v2 run again on the shipped code, beside its blind first run; which commit each result ran on | `harness/heldout/results/v2-on-shipped-code-3-runs.json`, `harness/PROVENANCE.md` | done 3 Nov |
