@@ -62,6 +62,7 @@ skill_rule() ->
 %% only when the student's own ink holds enough evidence for it; otherwise Lo asks one diagnostic question first.
 fingerprint_rule() ->
     %% 30 Oct (judges' panel): the rule names no question it is tested on; its one example is from another topic
+    %% 3 Nov (judges' panel): the worded example is from a topic in no test set (the soil example mirrored a held-out item)
     "- \"fingerprint\", for every question that is not mastered (null when mastered). The same wrong answer can come from\n"
     "  different wrong ideas, and each needs a different repair, so read WHICH idea from the ink alone:\n"
     "  \"reasoning\" is the reasoning that produced this answer, in one sentence; \"evidence\" is the student's own lines\n"
@@ -69,8 +70,8 @@ fingerprint_rule() ->
     "  is a short name for the wrong idea that evidence shows, and ONLY what it shows. Working that shows the calculation\n"
     "  can name an idea (in another topic, \"1/2 + 1/3 = 2/5\" shows adding the tops and the bottoms). When the question\n"
     "  asks for an explanation, a reason or a law in words and the student wrote one in words, that sentence IS their\n"
-    "  working: quote it and name the idea it states (in another topic, \"plants get their food from the soil\" states\n"
-    "  that idea); for such a sentence, rivals are other ideas that would make a student write it, never restatements of\n"
+    "  working: quote it and name the idea it states (in another topic, \"it is summer when the Earth is closest to the\n"
+    "  Sun\" states that idea); for such a sentence, rivals are other ideas that would make a student write it, never restatements of\n"
     "  it. This is only for answers in words: a calculation keeps every rule here, and a single word or term given for a\n"
     "  recall question (a unit, a name) shows no reasoning. Name what the\n"
     "  student's own steps DO (how each number in them was got), never the conclusion their final answer happens to match:\n"

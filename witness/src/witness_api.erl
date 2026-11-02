@@ -818,17 +818,18 @@ design_call(Payer, Uid, Req, Host, _Q) ->
         {error, _} -> {502, #{success => false, error => <<"The design call did not come back. Try again in a moment.">>}}
     end.
 
-%% Muse Spark reads one of Lo's live turns before it reaches a student (witness_guard); a guard that cannot answer lets
-%% the turn through (the turn itself was written under the server's scope), and its ceiling is the account's.
+%% Muse Spark reads one of Lo's live turns before it reaches a student (witness_guard); its ceiling is the account's.
+%% 3 Nov (judges' panel: the readers are often minors): it fails closed. A turn the guard could not read (no key, the
+%% day's ceiling reached, a guard that errs or gives no verdict) never reaches the student; the safe line goes instead.
 guarded(Payer, Text, Host) ->
     case {Host:meta_key(), daily(Payer, <<"guard">>, Host)} of
-        {undefined, _} -> ok;
-        {_, over} -> ok;
+        {undefined, _} -> report(Host, <<"witness.guard_unread">>, no_key), unsafe;
+        {_, over} -> report(Host, <<"witness.guard_unread">>, over), unsafe;
         {Key, ok} ->
             case safely(fun() -> (guard(Host))(Key, Text) end) of
                 {unsafe, _Why, Cost} -> Host:spend(Payer, <<"witness_guard">>, Cost), report(Host, <<"witness.guarded">>, Text), unsafe;
                 {ok, Cost} -> Host:spend(Payer, <<"witness_guard">>, Cost), ok;
-                _ -> ok
+                Other -> report(Host, <<"witness.guard_unread">>, Other), unsafe
             end
     end.
 

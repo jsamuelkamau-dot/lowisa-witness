@@ -17,7 +17,16 @@ save(Uid, Key, Row) -> ets:insert(witness_api_t, {{row, Uid, Key}, Row}), ok.
 %% the conditional write: one change to a row at a time (two at once both land)
 update(Uid, Key, F) ->
     global:trans({{witness_api_t_lock, Uid, Key}, self()}, fun() -> case F(load(Uid, Key)) of stop -> stop; Row -> save(Uid, Key, Row), {ok, Row} end end).
-guard() -> fun(<<"test-key">>, Text) -> ev({guarded, Text}), case binary:match(Text, <<"UNSAFE">>) of nomatch -> {ok, 0.0001}; _ -> {unsafe, <<"not a lesson">>, 0.0001} end end.
+guard() ->
+    fun(<<"test-key">>, Text) ->
+        ev({guarded, Text}),
+        case {binary:match(Text, <<"UNSAFE">>), binary:match(Text, <<"NOVERDICT">>), binary:match(Text, <<"CRASH">>)} of
+            {_, _, {_, _}} -> error(guard_down);
+            {_, {_, _}, _} -> {error, no_verdict};
+            {nomatch, _, _} -> {ok, 0.0001};
+            _ -> {unsafe, <<"not a lesson">>, 0.0001}
+        end
+    end.
 load(Uid, Key) -> case ets:lookup(witness_api_t, {row, Uid, Key}) of [{_, R}] -> {ok, R}; [] -> none end.
 list(Uid, Kind) -> [{Id, R} || {{row, U, {K, Id}}, R} <- ets:tab2list(witness_api_t), U =:= Uid, K =:= Kind].
 spend(Uid, F, Usd) -> ev({spend, Uid, F, Usd}), ok.
@@ -462,6 +471,22 @@ an_unsafe_turn_is_replaced_before_it_reaches_the_student_test() ->
     B = #{<<"requestId">> => <<"t">>, <<"reply">> => <<"text">>, <<"for">> => #{<<"sitting">> => S, <<"n">> => 3},
           <<"messages">> => [#{<<"role">> => <<"user">>, <<"content">> => <<"say something">>}]},
     ?assertMatch({200, #{text := <<"Let's keep to your level.", _/binary>>, guarded := true}}, r(<<"POST">>, [<<"design">>], B, <<"stud">>)),
+    persistent_term:erase(witness_api_design_text).
+
+%% 3 Nov (judges' panel): the guard fails closed. A turn it could not read (no verdict, the guard itself down) never
+%% reaches the student either: the safe line goes instead.
+a_turn_the_guard_could_not_read_is_replaced_too_test() ->
+    setup(),
+    {_P, S} = released_paper(#{questions => [q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
+    B = #{<<"requestId">> => <<"t">>, <<"reply">> => <<"text">>, <<"for">> => #{<<"sitting">> => S, <<"n">> => 3},
+          <<"messages">> => [#{<<"role">> => <<"user">>, <<"content">> => <<"say something">>}]},
+    [begin
+         persistent_term:put(witness_api_design_text, Said),
+         ?assertMatch({200, #{text := <<"Let's keep to your level.", _/binary>>, guarded := true}}, r(<<"POST">>, [<<"design">>], B, <<"stud">>))
+     end || Said <- [<<"NOVERDICT words">>, <<"CRASH words">>]],
+    %% a turn the guard reads as safe still goes through as written
+    persistent_term:put(witness_api_design_text, <<"Try the next step: what does the water push back with?">>),
+    ?assertMatch({200, #{text := <<"Try the next step", _/binary>>}}, r(<<"POST">>, [<<"design">>], B, <<"stud">>)),
     persistent_term:erase(witness_api_design_text).
 
 after_release_the_teacher_chooses_and_issues_the_badge_test() ->
