@@ -3,7 +3,7 @@
 %% From Exam to Mastery (29 Oct): a paper photographed after the exam by one phone, its name matched to the class list.
 %% This module is also the test host.
 -export([meta_key/0, put_url/4, get_url/2, drop_clip/2, save/3, load/2, list/2, spend/3, run/1, design/2, put_asset/4, asset_url/2,
-         retry_waits/0, photo_marker/0, cropper/0, regioner/0, examiner/0]).
+         retry_waits/0, photo_marker/0, cropper/0, regioner/0, examiner/0, orienter/0, turner/0]).
 
 meta_key() -> <<"test-key">>.
 put_url(_, Id, _, _) -> {ok, <<"https://store.example.com/", Id/binary>>, #{}}.
@@ -18,6 +18,9 @@ design(_, _) -> {error, none}.
 put_asset(Uid, Name, Bytes, Mime) -> ets:insert(witness_photo_t, {{asset, Uid, Name}, {Bytes, Mime}}), ok.
 asset_url(Uid, Name) -> case ets:lookup(witness_photo_t, {asset, Uid, Name}) of [_] -> {ok, <<"https://store.example.com/a/", Name/binary>>}; [] -> {error, none} end.
 retry_waits() -> [0, 0].
+%% which way up each page is: upright unless a test says otherwise (3 Nov)
+orienter() -> fun(_, Pages) -> ev({oriented, length(Pages)}), persistent_term:get(witness_photo_turns, {ok, #{}, 0.0}) end.
+turner() -> fun(Url, Deg, Ext) -> ev({turned, Url, Deg, Ext}), {ok, <<255, 216, "upright">>} end.
 examiner() -> fun(_, _, _) -> {error, off} end.
 cropper() -> fun(Url, T, Box) -> ev({cropped, Url, T, Box}), {ok, <<255, 216, "step">>} end.
 regioner() -> fun(Url, Box) -> ev({region, Url, Box}), {ok, <<255, 216, "still">>} end.
@@ -43,7 +46,7 @@ ev(E) -> ets:insert(witness_photo_t, {erlang:unique_integer([monotonic]), E}).
 events() -> [E || {K, E} <- lists:sort(ets:tab2list(witness_photo_t)), is_integer(K)].
 setup() ->
     case ets:whereis(witness_photo_t) of undefined -> ok; _ -> ets:delete(witness_photo_t) end,
-    ets:new(witness_photo_t, [named_table, public]), persistent_term:erase(witness_photo_name).
+    ets:new(witness_photo_t, [named_table, public]), persistent_term:erase(witness_photo_name), persistent_term:erase(witness_photo_turns).
 r(M, P, B, Uid) -> witness_api:route(M, P, B, Uid, ?MODULE).
 jpeg() -> base64:encode(<<255, 216, 255, "page">>).
 
@@ -119,6 +122,44 @@ photographed_paper_reaches_the_student_by_name_test() ->
     ?assertNot(maps:is_key(video, Proof)),
     [P1 | _] = maps:get(questions, Proof),
     ?assertMatch(#{n := 1, capabilities := [<<"Pattern Recognition">>], slip := 1, still := <<"still-1.jpg">>, step := <<"step-1.jpg">>}, P1).
+
+%% 3 Nov (a real student's papers: sideways pages misread): a page photographed sideways is turned upright and kept so
+%% before it is marked; the upright page is the one marked, and the look's cost is on the paper
+a_sideways_page_is_turned_upright_before_it_is_marked_test() ->
+    setup(),
+    persistent_term:put(witness_photo_turns, {ok, #{2 => 90}, 0.002}),
+    {_Pile, Code} = exam(),
+    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"kind">> => <<"photo">>, <<"pages">> => 2, <<"code">> => photo(Code)}, <<"school-phone">>),
+    [{200, _} = r(<<"POST">>, [<<"sitting">>, Id, <<"page">>], #{<<"n">> => N, <<"mime">> => <<"image/jpeg">>, <<"file">> => jpeg()}, <<"school-phone">>) || N <- [1, 2]],
+    {202, _} = r(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], #{}, <<"school-phone">>),
+    Page2 = <<"https://store.example.com/a/", Id/binary, "/page-2.jpg">>,
+    ?assert(lists:member({oriented, 2}, events())),
+    ?assertEqual([{turned, Page2, 90, ".jpg"}], [E || {turned, _, _, _} = E <- events()]),
+    ?assertMatch([{_, {<<255, 216, "upright">>, <<"image/jpeg">>}}], ets:lookup(witness_photo_t, {asset, <<"teacher">>, <<Id/binary, "/page-2.jpg">>})),
+    ?assertMatch([{_, {<<255, 216, 255, "page">>, _}}], ets:lookup(witness_photo_t, {asset, <<"teacher">>, <<Id/binary, "/page-1.jpg">>})),
+    {ok, #{result := Res}} = load(<<"teacher">>, {sitting, Id}),
+    ?assertMatch(#{turned := [2]}, Res),
+    ?assert(abs(maps:get(cost_usd, Res) - 0.020) < 1.0e-9),
+    %% a look that fails leaves the pages as they were, and the paper is still marked
+    setup(),
+    persistent_term:put(witness_photo_turns, {error, timeout}),
+    {_, Code2} = exam(),
+    {201, #{id := Id2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"kind">> => <<"photo">>, <<"pages">> => 1, <<"code">> => photo(Code2)}, <<"school-phone">>),
+    {200, _} = r(<<"POST">>, [<<"sitting">>, Id2, <<"page">>], #{<<"n">> => 1, <<"mime">> => <<"image/jpeg">>, <<"file">> => jpeg()}, <<"school-phone">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, Id2, <<"mark">>], #{}, <<"school-phone">>),
+    ?assertEqual([], [E || {turned, _, _, _} = E <- events()]),
+    {ok, #{status := <<"marked">>, result := Res2}} = load(<<"teacher">>, {sitting, Id2}),
+    ?assertNot(maps:is_key(turned, Res2)).
+
+%% the answer to "which way up": only the pages asked about, only real turns
+orientation_answer_test() ->
+    Read = fun(Text) -> fun(_, _) -> {ok, Text, #{}} end end,
+    Pages = [#{n => 1, url => <<"u1">>}, #{n => 2, url => <<"u2">>}],
+    Small = fun(_) -> {ok, <<255, 216>>} end,
+    ?assertMatch({ok, #{2 := 90}, _}, witness_photo:orient(k, Pages, #{small => Small, read => Read(<<"Sure: {\"pages\": [{\"n\": 1, \"top\": \"top\"}, {\"n\": 2, \"top\": \"left\"}]}">>)})),
+    {ok, T, _} = witness_photo:orient(k, Pages, #{small => Small, read => Read(<<"{\"pages\": [{\"n\": 7, \"top\": \"left\"}, {\"n\": 1, \"top\": \"diagonal\"}]}">>)}),
+    ?assertEqual(#{}, T),
+    ?assertMatch({ok, #{}, _}, witness_photo:orient(k, Pages, #{small => Small, read => Read(<<"no idea">>)})).
 
 %% a name the paper cannot settle waits for the teacher, who links it; the student who joins later finds their paper
 an_unclear_name_waits_for_the_teacher_test() ->

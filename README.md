@@ -277,14 +277,14 @@ Notes for Meta's API team: `harness/FINDINGS.md`.
 - **Every input Meta's models take:** photographed handwriting (Muse Spark), desk video (SAM 3.1 with Muse Spark),
   the student's voice (Muse Voice Transcribe), and pictures (Muse Image).
 - **Built for a class, priced per call:** forty papers marked at once in 32 s for $1.01; every call metered at Meta's
-  published prices, structured output on every reply, the prompt cache shared across the readings of one paper, and
+  published prices, every JSON reply parsed and checked before it is used, the prompt cache shared across the readings of one paper, and
   a daily ceiling on every route.
 
 **Meta across LoWisa, beyond this project**
 
 | How a learner reaches Meta's models | What it does | Built | Where to see it |
 |---|---|---|---|
-| **No key: paid from LoWisa credits** | Every From Exam to Mastery model call runs on Meta's models, paid from the teacher's or school's existing LoWisa credits, through the Meta provider on LoWisa's edge | During the event (27 Oct) | This repository (`witness/src/witness_meta.erl`) |
+| **No key: paid from LoWisa credits** | Every From Exam to Mastery model call runs on Meta's models, paid from the school's LoWisa credits, through the Meta provider on LoWisa's edge | During the event (27 Oct) | This repository (`witness/src/witness_meta.erl`) |
 | **The learner's own Meta key** | Muse Spark 1.3 is one of the tutor's models in the LoWisa desktop app: it teaches, works with the learner's files and builds quizzes. Meta bills the learner's own usage | Before the event (21 Oct), released in desktop app 0.9.32 on 2 Nov; **not part of this submission's new work** | [lowisa.dev/help/ide-models-and-keys](https://lowisa.dev/help/ide-models-and-keys/), and "Can I use Meta's Muse Spark with LoWisa?" on [lowisa.dev](https://lowisa.dev) |
 
 LoWisa's general tutor on managed credits (no key) runs on another provider's model. Meta's models on LoWisa credits
@@ -307,9 +307,11 @@ are, for now, From Exam to Mastery's.
 - **A student with no phone:** the teacher types the name and prints that student's Mastery Plan from the desk.
 
 **Who pays**
-- **Model calls come from the teacher's or the school's existing LoWisa credits** (1 credit = 1 US cent).
+- **The school pays.** Teachers sign in with their school's LoWisa login, and every model call their exams make is paid
+  from the school's LoWisa wallet (1 credit = 1 US cent). Students never pay for their Mastery Plan.
+- **Marking is not charged.** The school's credits pay for the mastery levels built from the marked papers.
 - **No new price was set for this.**
-- **Each account has a daily ceiling on every model route.** A whole class fits under it.
+- **Every login has a daily ceiling on every model route.** A whole class fits under it.
 
 **Time saved, and where it goes**
 
@@ -628,7 +630,7 @@ the commit it ran on. Notes for Meta's API team, and what each run found: [`harn
    - play it.
 6. **On the desk:** let it start if it is held, send a challenge, read the reason, and issue "Turned around". "Send it now" brings the re-check forward.
 
-One account can play both sides. A level's calls are paid from the teacher's credits.
+One account can play both sides. A level's calls are paid from the account that set the exam (in a school, the school's wallet).
 
 **Without an account or a key:**
 
@@ -723,8 +725,8 @@ files. **In the film, LoWisa's parts appear only playing what was made this week
 ## 15. Limits, stated plainly
 
 - **One real student's handwriting so far, and only multiple choice.**
-  - Apart from Student M's three papers (section 7), every paper here is a sample: a handwriting font, or a paper written for the demo, on a simulated phone photo. Real written working and real classrooms are harder.
-  - **The evaluation sets are ours.** The items, labels and code come from the same team, and v2 has been seen since its blind first run (section 7). Student M's papers are the first exception: his teacher's marks, not ours, are the key. The next measurement is a v3 set of written answers in real handwriting from many outside writers, labelled by an outside teacher, run once on frozen code.
+  - Apart from one Grade 5 student's three papers (section 7), every paper here is a sample: a handwriting font, or a paper written for the demo, on a simulated phone photo. Real written working and real classrooms are harder.
+  - **The evaluation sets are ours.** The items, labels and code come from the same team, and v2 has been seen since its blind first run (section 7). That student's papers are the first exception: his teacher's marks, not ours, are the key. The next measurement is a v3 set of written answers in real handwriting from many outside writers, labelled by an outside teacher, run once on frozen code.
   - The class of 40 measures speed and cost at class size; its 40 papers are built from 14 written answers (two to four per question), so it is not an accuracy test.
   - **A real pilot follows the hackathon.** Ten days were not enough to run one properly: it needs consenting schools,
     parents' consent for minors, real exams, and a re-test a week or more later. We plan to run it, in this order:

@@ -1286,6 +1286,8 @@ guard(Host) -> seam(Host, guard, fun witness_guard:check/2).
 challenge_judger(Host) -> seam(Host, challenge_judger, fun witness_challenge:judge/3).
 clipper(Host) -> seam(Host, clipper, case witness_media:available() of true -> fun witness_media:clip/3; false -> fun(_, _, _) -> {error, no_ffmpeg} end end).
 photo_marker(Host) -> seam(Host, photo_marker, fun witness_photo:mark/3).
+orienter(Host) -> seam(Host, orienter, fun witness_photo:orient/2).
+turner(Host) -> seam(Host, turner, case witness_media:available() of true -> fun witness_media:turn/3; false -> fun(_, _, _) -> {error, no_ffmpeg} end end).
 regioner(Host) -> seam(Host, regioner, case witness_media:available() of true -> fun witness_media:region/2; false -> fun(_, _) -> {error, no_ffmpeg} end end).
 cropper(Host) -> seam(Host, cropper, case witness_media:available() of true -> fun witness_media:step/3; false -> fun(_, _, _) -> {error, no_ffmpeg} end end).
 stiller(Host) -> seam(Host, stiller, case witness_media:available() of true -> fun witness_media:still/2; false -> fun(_, _) -> {error, no_ffmpeg} end end).
@@ -1498,6 +1500,7 @@ mark_video(Uid, Id, Key, Fps, Sitting, Row, Host) ->
 %% A photographed paper: read and marked from its pages (witness_photo), tried again while Meta is busy; the pages stay
 %% with the paper either way, so a paper Meta could not mark is marked again without taking the photos again.
 mark_photo(Uid, Id, Key, Sitting, Row, Host) ->
+    {Turned, TurnCost} = upright(Uid, Id, Key, Row, Host),
     Outcome = again(Host, fun() ->
         case pages(Uid, Id, Row, Host) of
             {ok, Pages} -> try photo_mark(Key, Pages, Sitting, Host) catch C:R -> {error, {C, R}} end;
@@ -1505,7 +1508,8 @@ mark_photo(Uid, Id, Key, Sitting, Row, Host) ->
         end
     end),
     case Outcome of
-        {ok, Res0} ->
+        {ok, Res1} ->
+            Res0 = case Turned of [] -> Res1; _ -> Res1#{turned => Turned, cost_usd => maps:get(cost_usd, Res1, 0) + TurnCost} end,
             Res = maps:merge(#{engine => photo_engine(Sitting, Host)}, Res0),
             Stills = case pages(Uid, Id, Row, Host) of {ok, Ps} -> page_stills(Uid, Id, Ps, Res, Host); _ -> [] end,
             done(Uid, Id, Key, Sitting, Row, {ok, Res}, Stills, Host),
@@ -1516,6 +1520,33 @@ mark_photo(Uid, Id, Key, Sitting, Row, Host) ->
                 false -> done(Uid, Id, Key, Sitting, Row, Outcome, [], Host)
             end;
         Other -> done(Uid, Id, Key, Sitting, Row, {error, Other}, [], Host)
+    end.
+
+%% 3 Nov (a real student's papers: three sideways pages cost three of ten wrong answers): every photographed page is
+%% turned upright before it is marked, and kept upright, so its stills and steps are cut from the page as it reads.
+%% A look or a turn that fails leaves the page as it was photographed: the paper is still marked.
+upright(Uid, Id, Key, Row, Host) ->
+    case pages(Uid, Id, Row, Host) of
+        {ok, Pages} when Pages =/= [] ->
+            case safely(fun() -> (orienter(Host))(Key, Pages) end) of
+                {ok, Turns, Cost} when map_size(Turns) > 0 ->
+                    Files = maps:from_list([{N, F} || #{n := N, file := F} <- maps:get(files, Row, [])]),
+                    Done = [N || #{n := N, url := Url, mime := Mime} <- Pages, Deg <- [maps:get(N, Turns, 0)], Deg =/= 0,
+                                 File <- [maps:get(N, Files, undefined)], File =/= undefined,
+                                 turn_page(Uid, <<Id/binary, "/", File/binary>>, Url, Deg, Mime, Host) =:= ok],
+                    report(Host, <<"witness.turned">>, {Id, Done}),
+                    {Done, Cost};
+                {ok, _, Cost} -> {[], Cost};
+                _ -> {[], 0}
+            end;
+        _ -> {[], 0}
+    end.
+
+turn_page(Uid, Path, Url, Deg, Mime, Host) ->
+    Ext = case Mime of <<"image/png">> -> ".png"; <<"image/webp">> -> ".webp"; _ -> ".jpg" end,
+    case safely(fun() -> (turner(Host))(Url, Deg, Ext) end) of
+        {ok, Bytes} when is_binary(Bytes), byte_size(Bytes) > 0 -> Host:put_asset(Uid, Path, Bytes, Mime);
+        _ -> no
     end.
 
 %% Meta could not be reached: the paper waits to be marked again (never onto a paper deleted meanwhile).

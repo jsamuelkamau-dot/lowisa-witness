@@ -11,6 +11,8 @@
 %%%-------------------------------------------------------------------
 -module(witness_media).
 -export([step/3, wav/1, still/2, clip/3, last/1, frames/3, gray/4, gray_image/2, tint_image/2, region/2, available/0]).
+%% 3 Nov: a photographed page turned upright before it is marked
+-export([small/2, turn/3]).
 
 -define(TIMEOUT_MS, 60000).
 -define(MAX_AUDIO, 25 * 1024 * 1024).
@@ -179,6 +181,27 @@ frames(Url, Fps, Max) when is_number(Fps), Fps > 0, is_integer(Max), Max > 0 ->
         end
     after
         [file:delete(F) || F <- filelib:wildcard(filename:join(Dir, "*"))], file:del_dir(Dir)
+    end.
+
+%% small(Url, W) -> {ok, Jpeg}: a photographed page W pixels wide, for a quick look at which way up it is (3 Nov).
+small(Url, W) when is_integer(W), W > 0 -> image_out(Url, ["-vf", "scale=" ++ integer_to_list(W) ++ ":-2"], ".jpg").
+
+%% turn(Url, Degrees, Ext) -> {ok, Bytes}: the page turned clockwise by 90, 180 or 270 degrees, kept in its own format
+%% (Ext ".jpg", ".png" or ".webp"), at full size (3 Nov: a real student's sideways pages were misread).
+turn(Url, 90, Ext) -> image_out(Url, ["-vf", "transpose=1"], Ext);
+turn(Url, 180, Ext) -> image_out(Url, ["-vf", "hflip,vflip"], Ext);
+turn(Url, 270, Ext) -> image_out(Url, ["-vf", "transpose=2"], Ext);
+turn(_, _, _) -> {error, bad_turn}.
+
+image_out(Url, Filter, Ext) ->
+    Out = tmp(Ext),
+    try
+        case run(["-v", "error", "-y", "-i", str(Url), "-frames:v", "1"] ++ Filter ++ ["-q:v", "2", Out]) of
+            ok -> case file:read_file(Out) of {ok, B} when byte_size(B) > 0 -> {ok, B}; {ok, _} -> {error, empty}; E -> E end;
+            E -> E
+        end
+    after
+        _ = file:delete(Out)
     end.
 
 run(Args) ->

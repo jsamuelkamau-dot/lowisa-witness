@@ -1,6 +1,6 @@
 # Real handwriting: one student, three papers, his teacher's marks
 
-The first real handwriting in this repository: answers written by a real Grade 5 student, Student M, in his own
+The first real handwriting in this repository: answers written by a real Grade 5 student in his own
 pencil, and marked by his class teacher, who is not on our team. Everything else in `harness/` is sample papers.
 
 **Consent and privacy.** His parent gave consent. His name, his school's name, his class and his student number are

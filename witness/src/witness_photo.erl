@@ -14,9 +14,13 @@
 %%%   mark(Key, Pages, Sitting) -> {ok, Result} | {error, Why}
 %%%       Pages = [#{n, url, mime}]  signed links to the photographed pages, in page order
 %%%       Result = #{questions, student => #{name, class, number, date, note}, pages, cost_usd}
+%%%   orient(Key, Pages) -> {ok, #{N => Degrees}, CostUsd} | {error, Why}
+%%%       how far each page must be turned clockwise to read upright (0, 90, 180 or 270)
 %%%-------------------------------------------------------------------
 -module(witness_photo).
 -export([prompt/1, mark/3, mark/4, place/3, place/4]).
+%% 3 Nov: which way up each photographed page is
+-export([orient/2, orient/3]).
 
 -define(SPARK, <<"muse-spark-1.3">>).
 
@@ -107,12 +111,47 @@ mark(Key, Pages, Sitting, Opts) ->
         E -> E
     end.
 
+%% 3 Nov (a real student's three papers, against his teacher's own marks): three of the nine question pages were
+%% photographed sideways, and that is where the marking lost three of the ten wrong answers (an option's value read from
+%% the wrong place on a turned page). One quick look at small copies of the pages says which way up each one is, so the
+%% host can turn them upright before they are marked.
+orient(Key, Pages) -> orient(Key, Pages, #{}).
+orient(Key, Pages, Opts) ->
+    Small = maps:get(small, Opts, fun(Url) -> witness_media:small(Url, 640) end),
+    Read = maps:get(read, Opts, fun(K, Content) -> witness_meta:read_content(K, ?SPARK, Content, #{effort => <<"low">>}) end),
+    case content(Pages, fun(Url) -> Small(Url) end, <<"image/jpeg">>) of
+        {ok, Images} ->
+            %% asked as "which edge is the top", not "how many degrees": live on 3 Nov, degrees found every sideways page
+            %% but turned two of three the wrong way
+            Ask = <<"Each photo below is one page of a student's exam paper, labelled with its page number. A page may have "
+                    "been photographed sideways or upside down. For each page, look at the printed text and say which edge "
+                    "of the photo the top of the printed page is at: \"top\" (it reads normally), \"left\", \"right\" or "
+                    "\"bottom\". Judge from the printed text, not the handwriting or the table under the paper. Answer with "
+                    "JSON only: {\"pages\": [{\"n\": 1, \"top\": \"top\"}]}">>,
+            case Read(Key, [#{type => input_text, text => Ask} | Images]) of
+                {ok, Text, Usage} -> {ok, turns(Text, [N || #{n := N} <- Pages]), witness_meta:cost({tokens, ?SPARK}, Usage)};
+                E -> E
+            end;
+        E -> E
+    end.
+
+%% only the pages asked about, only a page whose top is at another edge; anything else reads as upright
+turns(Text, Ns) ->
+    Found = case re:run(Text, <<"\\{.*\\}">>, [dotall, {capture, first, binary}]) of
+        {match, [J]} -> try json:decode(J) of #{<<"pages">> := L} when is_list(L) -> L; _ -> [] catch _:_ -> [] end;
+        nomatch -> []
+    end,
+    %% the page's top at the photo's left edge comes up with a quarter turn clockwise; at the right, three quarters
+    Turn = #{<<"left">> => 90, <<"bottom">> => 180, <<"right">> => 270},
+    maps:from_list([{N, maps:get(T, Turn)} || #{<<"n">> := N, <<"top">> := T} <- Found, lists:member(N, Ns), maps:is_key(T, Turn)]).
+
 %% each page as an image the model reads, labelled with its number
-content(Pages, Fetch) ->
+content(Pages, Fetch) -> content(Pages, Fetch, undefined).
+content(Pages, Fetch, AsMime) ->
     try
         {ok, lists:append([begin
                                {ok, Bytes} = Fetch(Url),
-                               Mime = maps:get(mime, P, <<"image/jpeg">>),
+                               Mime = case AsMime of undefined -> maps:get(mime, P, <<"image/jpeg">>); _ -> AsMime end,
                                [#{type => input_text, text => iolist_to_binary(["Page ", integer_to_list(N), ":"])},
                                 #{type => input_image, image_url => <<"data:", Mime/binary, ";base64,", (base64:encode(Bytes))/binary>>}]
                            end || #{n := N, url := Url} = P <- Pages])}
