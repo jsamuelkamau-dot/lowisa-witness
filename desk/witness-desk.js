@@ -305,6 +305,19 @@
           '<span><b>' + esc(r.student || 'Paper') + ' · Q' + esc(r.n) + '</b> <span class="wd-sub">' + esc(r.idea || '') + '</span><div>“' + esc(r.why || '') + '”</div>' +
           (r.verdict ? '<div class="wd-sub">Muse Spark: ' + (r.verdict.understood ? 'the reason holds. ' : 'the reason does not hold. ') + esc(r.verdict.why || '') + '</div>' : '') + '</span></label>';
       }).join('') + '<div style="margin-top:8px"><button class="wd-btn wd-main" data-act="readybadge">Issue Turned around for the ticked ones</button></div></div>' : '';
+    // 3 Nov (judges' panel, the teacher of forty: every held level was one click on one paper): the levels waiting for
+    // the teacher's look, across the exam. Those whose self-check passed start together; one that did not is listed to
+    // open on its own. A server without the list (before its next release) shows nothing here.
+    var held = (j.held || []);
+    var heldOk = held.filter(function (h) { return h.passed; }), heldNo = held.filter(function (h) { return !h.passed; });
+    var heldCard = held.length ? '<div class="wd-card"><h3>Levels waiting for you: ' + held.length + '</h3>' +
+      '<div class="wd-sub">Each level was made from one student\'s own mistake. Read any of them on its paper first, or let them start together.</div>' +
+      (heldOk.length ? '<div style="margin-top:8px"><button class="wd-btn wd-main" data-act="startall">Let all ' + heldOk.length + ' start</button> ' +
+        '<span class="wd-sub">These passed Muse Wonder\'s self-check. Each reaches its student at once.</span></div>' : '') +
+      (heldNo.length ? '<div class="wd-sub" style="margin-top:8px">Self-check still not right, open each on its own:</div>' + heldNo.map(function (h) {
+        return '<div class="wd-row" data-paper="' + esc(h.sitting) + '" data-n="' + esc(h.n) + '"><span class="wd-grow">' + esc(h.student || 'Paper') + ' · Q' + esc(h.n) +
+          (h.idea ? '<div class="wd-sub" style="white-space:normal">' + esc(h.idea) + '</div>' : '') + '</span><span class="wd-chip warn">Look first</span></div>';
+      }).join('') : '') + '</div>' : '';
     var released = j.pile && j.pile.released_ms;
     var waiting = (j.sittings || []).filter(function (x) { return x.status === 'marked'; }).length;
     var roster = (j.pile && j.pile.roster) || [];
@@ -321,7 +334,7 @@
         return '<span class="wd-chip">' + esc(r.name) + ' <button class="wd-btn" data-act="unroster" data-uid="' + esc(r.uid) + '" aria-label="Take ' + esc(r.name) + ' off the class list" style="padding:0 6px;margin-left:4px">×</button></span>'; }).join('') + '</div>' : '') +
       '<div style="margin-top:6px"><button class="wd-btn" data-act="joining" data-open="' + (closed ? '1' : '0') + '">' + (closed ? 'Open joining again' : 'Close joining') + '</button>' +
       ' <span class="wd-sub">Desk filming (optional): a student working alone films their desk while they write.</span></div></div>' : '';
-    return code + nums + measured() + readyCard + patternsCard(j.pile || {}, toMaster + turned) + '<div class="wd-cols"><div class="wd-card"><h3>Papers</h3>' + papers + '</div>' +
+    return code + nums + measured() + heldCard + readyCard + patternsCard(j.pile || {}, toMaster + turned) + '<div class="wd-cols"><div class="wd-card"><h3>Papers</h3>' + papers + '</div>' +
       '<div class="wd-card"><h3>To review: what needs you first</h3>' + queue + '</div></div>' +
       // a paper photographed after the release (a student who sat it late) waits for its own release (30 Oct, film take:
       // the second paper stayed "marked" and the button was gone)
@@ -773,6 +786,11 @@
     if (act === 'acceptsure') {
       var sure = ((S.pile && S.pile.queue) || []).filter(function (it) { return it.result === 'mastered' && (it.confidence || 0) >= 0.9; });
       return pileDo('bulk', { action: 'accept', items: sure.map(function (it) { return { sitting: it.sitting, n: it.n }; }) }, 'Accepted ' + sure.length + ' as marked.');
+    }
+    if (act === 'startall') {
+      var ok = ((S.pile && S.pile.held) || []).filter(function (h) { return h.passed; });
+      return pileDo('bulk', { action: 'approve', items: ok.map(function (h) { return { sitting: h.sitting, n: h.n }; }) },
+        ok.length + (ok.length === 1 ? ' level reaches its student now.' : ' levels reach their students now.'));
     }
     if (act === 'readybadge') {
       var ready = (S.pile && S.pile.ready) || [];

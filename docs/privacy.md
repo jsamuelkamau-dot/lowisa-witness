@@ -9,7 +9,7 @@ does today, and where.
 |---|---|---|---|
 | The teacher's exam file (questions and mark scheme) | the teacher's desk | Muse Spark (the Meta Model API), to read the questions | not kept; the questions read from it are kept with the exam |
 | Photographs of a finished paper (name, class, working) | the phone that photographs, with the exam's photographing code | the host's storage (signed links), then Muse Spark reads the pages | with the paper until the teacher deletes it |
-| A video of the desk while a student writes (desk filming, the optional way in) | the student's phone, by signed upload | SAM 3.1 and Muse Spark read it through a signed link | **deleted as soon as it is marked**; only short clips and stills at the moments that matter are kept |
+| A video of the desk while a student writes (desk filming, the optional way in) | the student's phone, by signed upload | SAM 3.1 and Muse Spark read it through a signed link | **deleted as soon as it is marked**; only short clips and stills at the moments that matter are kept. Faces: covered on Android before upload; not yet on iPhone, and on Android a video whose covering fails is still sent (being improved so both always cover) |
 | The student's answer to Lo, an explanation, a challenge reason (typed or spoken) | the student's phone | Muse Spark reads the text; a spoken answer goes to Muse Voice Transcribe first | the text, and the recording "for the teacher to hear", with the paper until the teacher deletes it |
 | Names | the paper, the class list | **never in a prompt except the page photo itself**: class patterns send students as numbers (`witness_patterns:prompt/2`) | with the exam |
 

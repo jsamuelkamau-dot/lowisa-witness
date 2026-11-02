@@ -787,6 +787,33 @@ the_record_names_only_the_models_that_read_this_paper_test() ->
     Open = #{result => #{questions => [], lines => [], engine => <<"muse-spark-open">>}},
     ?assertEqual([<<"Muse Spark Open on open weights (the marking)">>], maps:get(read_by, witness_proof:record(<<"s">>, Open, Pile, student))).
 
+%% 3 Nov (judges' panel, the teacher of forty): the exam lists every held level; the teacher lets the ones whose
+%% self-check passed start at once, and a level whose self-check did not pass stays for its own look
+the_teacher_lets_all_held_levels_start_at_once_test() ->
+    setup(),
+    {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Physics">>, <<"preview">> => true}, <<"teacher">>),
+    persistent_term:put(witness_api_result, #{questions => [q(3, <<"right_answer_wrong_thinking">>, 0.9), q(4, <<"not_yet">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
+    {201, #{id := S1}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amara">>}, <<"stud">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S1, <<"mark">>], #{}, <<"stud">>),
+    {201, #{id := S2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Kofi">>}, <<"stud2">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S2, <<"mark">>], #{}, <<"stud2">>),
+    {200, _} = r(<<"POST">>, [<<"pile">>, P, <<"release">>], #{}, <<"teacher">>),
+    {200, #{mastery := #{status := <<"held">>}}} = build_level(S1, 3, <<"stud">>, true, [<<"A">>]),
+    {200, #{mastery := #{status := <<"held">>}}} = build_level(S1, 4, <<"stud">>, false, [<<"B">>]),
+    {200, #{mastery := #{status := <<"held">>}}} = build_level(S2, 3, <<"stud2">>, true, [<<"C">>]),
+    {200, #{held := Held}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>),
+    ?assertEqual(lists:sort([{S1, 3, true}, {S1, 4, false}, {S2, 3, true}]),
+                 lists:sort([{Sid, N, Passed} || #{sitting := Sid, n := N, passed := Passed} <- Held])),
+    Pass = [#{<<"sitting">> => Sid, <<"n">> => N} || #{sitting := Sid, n := N, passed := true} <- Held],
+    ?assertMatch({200, #{done := 2}}, r(<<"POST">>, [<<"pile">>, P, <<"bulk">>], #{<<"action">> => <<"approve">>, <<"items">> => Pass}, <<"teacher">>)),
+    {200, #{held := Left}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>),
+    ?assertMatch([#{sitting := S1, n := 4, passed := false}], Left),
+    %% a level already started is not started twice; a student cannot let levels start
+    ?assertMatch({200, #{done := 0, results := [#{result := <<"not_held">>}, _]}},
+                 r(<<"POST">>, [<<"pile">>, P, <<"bulk">>], #{<<"action">> => <<"approve">>, <<"items">> => Pass}, <<"teacher">>)),
+    ?assertMatch({404, _}, r(<<"POST">>, [<<"pile">>, P, <<"bulk">>], #{<<"action">> => <<"approve">>, <<"items">> => Pass}, <<"stud">>)),
+    {200, #{result := #{questions := [#{n := 3, mastery := #{status := <<"ready">>}} | _]}}} = r(<<"GET">>, [<<"sitting">>, S2], #{}, <<"teacher">>).
+
 %% 28 Oct audit (the plan's step 4): the teacher may look at each level before it reaches the student
 the_teacher_can_look_at_each_level_first_test() ->
     setup(),

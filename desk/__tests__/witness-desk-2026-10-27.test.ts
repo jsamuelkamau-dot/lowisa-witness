@@ -262,6 +262,27 @@ describe('the Exam Desk', () => {
     expect(witnessDoor('POST', `/api/witness/mastery/${S1}/3/approve`)).not.toBeNull();
   });
 
+  // 3 Nov (judges' panel, the teacher of forty): the exam lists its held levels; those whose self-check passed start together
+  it('lets every held level whose self-check passed start at once, and lists the others to open one by one', async () => {
+    const pile = answers[`GET /api/witness/pile/${P}`].json as any;
+    pile.held = [{ sitting: S1, student: 'Amara', n: 3, idea: 'Cancelled the 6s.', passed: true },
+                 { sitting: S1, student: 'Amara', n: 4, idea: 'Added the bottoms.', passed: true },
+                 { sitting: S1, student: 'Kofi', n: 2, idea: 'Divided by the percent.', passed: false }];
+    answers[`POST /api/witness/pile/${P}/bulk`] = { json: { ok: true, done: 2, results: [{ result: 'ok' }, { result: 'ok' }] } };
+    await boot();
+    await (window as any).__lowisaWitnessDesk.show({ pile: P }); await flush();
+    expect(desk()!.textContent).toContain('Levels waiting for you: 3');
+    expect(desk()!.textContent).toContain('Let all 2 start');
+    expect(desk()!.textContent).toContain('Self-check still not right, open each on its own');
+    await click('[data-act="startall"]');
+    const bulk = calls.find((c) => c.method === 'POST' && c.path === `/api/witness/pile/${P}/bulk`)!;
+    expect(bulk.body).toEqual({ action: 'approve', items: [{ sitting: S1, n: 3 }, { sitting: S1, n: 4 }] });
+    expect(desk()!.textContent).toContain('2 levels reach their students now.');
+    // an exam whose server sends no list (before that server's release) shows no card
+    delete pile.held; await (window as any).__lowisaWitnessDesk.show({ pile: P }); await flush();
+    expect(desk()!.querySelector('[data-act="startall"]')).toBeNull();
+  });
+
   // 28 Oct, live: a level whose news reached the edge late came without its outline, and the button lived in the outline
   it('lets the student start a held level that came without its outline', async () => {
     const q3 = (answers[`GET /api/witness/sitting/${S1}`].json.result as any).questions[1];
@@ -441,7 +462,7 @@ describe('the Exam Desk after the re-audit', () => {
     await click('[data-act="new"]');
     const input = desk()!.querySelector('#wdRead') as HTMLInputElement;
     const file = new File(['%PDF-1.4'], 'scheme.pdf', { type: 'application/pdf' });
-    Object.defineProperty(input, 'files', { value: [file] });
+    Object.defineProperty(input, 'files', { value: [file], configurable: true });
     input.dispatchEvent(new Event('change', { bubbles: true }));
     await flush(40);
     const sent = calls.find((c) => c.path === '/api/witness/pile/read')!;
@@ -450,6 +471,16 @@ describe('the Exam Desk after the re-audit', () => {
     expect((desk()!.querySelector('#wdTitle') as HTMLInputElement).value).toBe('Algebra quiz');
     expect((desk()!.querySelector('#wdQs') as HTMLTextAreaElement).value).toBe('1. Expand 3(x + 4) (2)\n2. Factorise 6x + 9. (2)\n3. Solve (2 marks) for x (1)');
     expect((desk()!.querySelector('#wdScheme') as HTMLTextAreaElement).value).toBe('Q1: 1 mark each term\nQ2: 3(2x + 3) (2)\nQ3: x = 4 (1)');
+    // 31 Oct (physics test): a mark scheme read after the paper has the numbers but no question words; the paper's
+    // questions stay and the scheme fills in
+    answers['POST /api/witness/pile/read'] = { json: { ok: true, title: 'Algebra scheme', level: '',
+      questions: [{ n: 1, text: '', marks: 1 }, { n: 2, text: '', marks: 1 }, { n: 3, text: '', marks: 1 }], scheme: 'Q1: 3x + 12 Q2: 3(2x + 3) Q3: x = 4' } };
+    const again = desk()!.querySelector('#wdRead') as HTMLInputElement;
+    Object.defineProperty(again, 'files', { value: [new File(['%PDF-1.4'], 'answers.pdf', { type: 'application/pdf' })] });
+    again.dispatchEvent(new Event('change', { bubbles: true }));
+    await flush(40);
+    expect((desk()!.querySelector('#wdQs') as HTMLTextAreaElement).value).toBe('1. Expand 3(x + 4) (2)\n2. Factorise 6x + 9. (2)\n3. Solve (2 marks) for x (1)');
+    expect((desk()!.querySelector('#wdScheme') as HTMLTextAreaElement).value).toBe('Q1: 3x + 12\nQ2: 3(2x + 3)\nQ3: x = 4');
   });
 
   it('shows the clip, the recordings, the level activity and asks for a recommendation', async () => {

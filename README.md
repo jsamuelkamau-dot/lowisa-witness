@@ -634,7 +634,10 @@ prompt, and held-out v2 tries ten injections in the ink: none was marked mastere
 **Deleting:**
 - The teacher deletes a paper or a whole exam. With it go its pages, recordings, pictures, clips, cached marking and self-checks, and every pointer to it.
 - A desk video is deleted as soon as it is marked.
-- A face the camera caught is covered on the phone before upload.
+- **Faces in a desk video (desk filming is the optional way in; photographing the paper, the main way, films no one).**
+  On Android, a face or a person the camera caught beside the page is covered on the phone before the video leaves
+  it. On iPhone this covering is not built yet, and on Android a video whose covering fails is still sent. We will
+  keep improving it so that both phones cover every face, and a video is never sent uncovered.
 
 Full statement: [`docs/privacy.md`](docs/privacy.md). It includes what the school must decide before a pilot with minors.
 

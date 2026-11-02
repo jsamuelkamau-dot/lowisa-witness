@@ -122,7 +122,7 @@ route(<<"GET">>, [<<"pile">>, Id], _B, Uid, Host) ->
             Gone =:= [] orelse upd(Uid, {pile, Id}, fun({ok, X}) -> X#{sittings => maps:get(sittings, X, []) -- Gone}; (none) -> stop end, Host),
             Ss = [{S, settle(Uid, S, R, Host)} || {S, {ok, R}} <- All, not lists:member(S, Gone)],
             {200, #{ok => true, pile => maps:without([sittings], P#{id => Id}),
-                    sittings => [summary(S, R) || {S, R} <- Ss], queue => queue(Ss), ready => ready(Ss)}}
+                    sittings => [summary(S, R) || {S, R} <- Ss], queue => queue(Ss), ready => ready(Ss), held => held(Ss)}}
     end;
 %% 30 Oct (judges' panel: nothing could be deleted). The teacher deletes a paper, or a whole exam: its rows, the
 %% photographed pages, the recordings of spoken answers, the stills and drawn steps, the clip if one is still kept,
@@ -226,6 +226,8 @@ route(<<"POST">>, [<<"join">>], B, Uid, Host) ->
 %%   accept     the questions the teacher accepts as marked (the confident ones, from the queue)
 %%   challenge  one challenge ({q, options, answer}) sent to every question of a class-pattern group
 %%   badge      "Turned around" issued on every question the teacher ticked on the review screen
+%%   approve    3 Nov (judges' panel, the teacher of forty: every held level was one click on one paper): every held
+%%              level the teacher lets start at once; the desk sends only those whose self-check passed
 %% Each question goes through the same rule as one at a time; the reply says what happened to each.
 route(<<"POST">>, [<<"pile">>, Id, <<"bulk">>], B, Uid, Host) ->
     case Host:load(Uid, {pile, Id}) of
@@ -239,6 +241,7 @@ route(<<"POST">>, [<<"pile">>, Id, <<"bulk">>], B, Uid, Host) ->
                 <<"challenge">> -> fun(Q) -> witness_challenge:set(Q, maps:get(<<"challenge">>, B, #{}), now_ms()) end;
                 <<"badge">> -> fun(Q) -> witness_mastery:badge(Q, true, #{note => maps:get(<<"note">>, B, <<>>), at => now_ms(),
                                                                          recheck_days => maps:get(recheck_days, P, 7)}) end;
+                <<"approve">> -> fun(Q) -> witness_mastery:approve(Q, now_ms()) end;
                 _ -> none
             end,
             case Step of
@@ -1817,6 +1820,13 @@ ready(Ss) ->
         #{mastery := M} <- [Q], maps:is_key(completed_ms, M), maps:get(status, M, <<>>) =/= <<"badge">>,
         #{challenge := #{reply := #{right := true} = Reply}} <- [M],
         case maps:get(verdict, Reply, null) of #{understood := false} -> false; _ -> true end].
+
+%% 3 Nov (judges' panel): the levels made and held for the teacher's look, across the exam, so the teacher can let
+%% them all start at once; `passed` says whether the level's self-check passed (a level that did not is opened one by one).
+held(Ss) ->
+    [#{sitting => Id, student => maps:get(student, R, <<>>), n => maps:get(n, Q), idea => maps:get(diagnosis, Q, <<>>),
+       passed => case maps:get(check, M, null) of #{passes := true} -> true; _ -> false end}
+     || {Id, R = #{result := #{questions := Qs}}} <- Ss, Q <- Qs, #{mastery := M} <- [Q], maps:get(status, M, <<>>) =:= <<"held">>].
 
 %% queue(Sittings): every question not yet reviewed, the ones that most need a teacher first: anything not mastered
 %% above anything mastered (27 Oct, the live desk: a "mastered, 90% sure" sat above a right answer reached by wrong
