@@ -11,77 +11,81 @@ Remember an exam you failed? You remember the mark. But did anyone help you mast
 What if the AI we fear could make us think better? This is From Exam to Mastery, built this week inside LoWisa, powered by Meta's models.
 
 4
-00:00:25,229 --> 00:00:36,236
-One photo of Daniel's physics paper, and Meta's Muse Spark marks every answer, reading how each one was reached. Daniel is a sample student: his paper was written for this demo.
+00:00:25,029 --> 00:00:29,148
+Instead of a teacher marking every paper like this, by hand,
 
 5
-00:00:37,229 --> 00:00:47,921
-We also tested it on a real Grade 5 student, against his own teacher. It caught seven of the ten answers his teacher marked wrong. And every answer it wasn't sure of went to Lo to ask, never to a label.
+00:00:29,298 --> 00:00:38,593
+one photo, and Meta's Muse Spark marks every answer, reading how each one was reached. Daniel is a sample student: his paper was written for this demo.
 
 6
-00:00:48,571 --> 00:00:54,203
-Every question Daniel missed goes into his Mastery Plan. Let's follow one: question twenty-four.
+00:00:40,298 --> 00:00:51,410
+We also tested it on a real Grade 5 student, against his own teacher. It caught six or seven of the ten answers his teacher marked wrong, and every answer it wasn't sure of went to Lo to ask, never to a label.
 
 7
-00:00:54,453 --> 00:00:58,462
-Why does a massive steel ship float, while a tiny metal nail sinks?
+00:00:51,760 --> 00:00:57,392
+Every question Daniel missed goes into his Mastery Plan. Let's follow one: question twenty-four.
 
 8
-00:01:02,712 --> 00:01:09,093
-Daniel wrote: heavy objects sink, light objects float. Muse Spark names that idea, because his own words show it.
+00:00:57,642 --> 00:01:01,651
+Why does a massive steel ship float, while a tiny metal nail sinks?
 
 9
-00:01:09,643 --> 00:01:16,181
-Where the page can't show the thinking, like the single word Joules, nothing is named. Lo asks first.
+00:01:05,901 --> 00:01:12,281
+Daniel wrote: heavy objects sink, light objects float. Muse Spark names that idea, because his own words show it.
 
 10
-00:01:16,431 --> 00:01:22,794
-Here another sample learner answers out loud. Muse Voice Transcribe writes it down, and his own answer settles the idea.
+00:01:12,631 --> 00:01:19,169
+Where the page can't show the thinking, like the single word Joules, nothing is named. Lo asks first.
 
 11
-00:01:23,094 --> 00:01:29,474
-Both halves are of $100. Half of 100 is 50, so it goes up 50 and then down 50..
+00:01:19,419 --> 00:01:25,783
+Here another sample learner answers out loud. Muse Voice Transcribe writes it down, and his own answer settles the idea.
 
 12
-00:01:32,424 --> 00:01:42,265
-Before Daniel sees his level, Meta's Muse Wonder plays it twice: as Daniel, still sure heavy things sink, and as a student who has it right. It passes only if it catches his idea.
+00:01:26,083 --> 00:01:32,463
+Both halves are of $100. Half of 100 is 50, so it goes up 50 and then down 50..
 
 13
-00:01:47,424 --> 00:01:51,386
-Muse Image draws the corrected step, in ink, for him to see.
+00:01:35,413 --> 00:01:45,254
+Before Daniel sees his level, Meta's Muse Wonder plays it twice: as Daniel, still sure heavy things sink, and as a student who has it right. It passes only if it catches his idea.
 
 14
-00:01:52,924 --> 00:02:01,341
-Nothing reaches Daniel until his teacher says so. The teacher accepts the marks Muse Spark is sure of, checks the rest, and releases them.
+00:01:49,413 --> 00:01:53,375
+Muse Image draws the corrected step, in ink, for him to see.
 
 15
-00:02:01,991 --> 00:02:05,596
-Now Lo teaches him, starting with a first look.
+00:01:54,413 --> 00:02:02,829
+Nothing reaches Daniel until his teacher says so. The teacher accepts the marks Muse Spark is sure of, checks the rest, and releases them.
 
 16
-00:02:05,766 --> 00:02:17,566
-The log is lowered into water. As it goes down, it moves water aside. The water’s upward push grows until it exactly matches the log’s 200-kilogram weight.
+00:02:03,179 --> 00:02:06,785
+Now Lo teaches him, starting with a first look.
 
 17
-00:02:17,796 --> 00:02:21,218
-Then it's Daniel's turn. Lo hands him the controls.
+00:02:06,955 --> 00:02:18,755
+The log is lowered into water. As it goes down, it moves water aside. The water’s upward push grows until it exactly matches the log’s 200-kilogram weight.
 
 18
-00:02:24,300 --> 00:02:29,723
-Two lessons later, the exam question comes back. This time, Daniel gets it right.
+00:02:18,985 --> 00:02:22,407
+Then it's Daniel's turn. Lo hands him the controls.
 
 19
-00:02:29,993 --> 00:02:33,593
-Ship shape moves enough water to match its weight.
+00:02:25,488 --> 00:02:30,912
+Two lessons later, the exam question comes back. This time, Daniel gets it right.
 
 20
-00:02:36,023 --> 00:02:43,682
-Days later, a fresh question on the same idea checks that it lasted. Only then does the teacher mark it: turned around.
+00:02:31,182 --> 00:02:34,782
+Ship shape moves enough water to match its weight.
 
 21
-00:02:44,332 --> 00:02:51,050
-Daniel works through every question he failed, and comes out capable, with an understanding he can explain, and use.
+00:02:37,212 --> 00:02:44,870
+Days later, a fresh question on the same idea checks that it lasted. Only then does the teacher mark it: turned around.
 
 22
-00:02:51,600 --> 00:02:56,795
+00:02:45,320 --> 00:02:52,038
+Daniel works through every question he failed, and comes out capable, with an understanding he can explain, and use.
+
+23
+00:02:52,388 --> 00:02:57,584
 From Exam to Mastery. Built this week, inside LoWisa, on Meta's models.
