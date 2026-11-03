@@ -49,6 +49,7 @@ the submission page; section 2 walks through it frame by frame.
 17. [Sources](#17-sources)
 
 **Short on time?** Read sections 1 to 3 (the problem, the demo, and the depth behind it), then sections 4 and 7 (Meta's models, and the numbers).
+**Want to try it?** Section 12: the desktop app's demo school opens with no school details and no password, and marks an exam photographed on your phone.
 
 ---
 
@@ -619,7 +620,29 @@ the commit it ran on. Notes for Meta's API team, and what each run found: [`harn
 
 ## 12. Try it, and verify it yourself
 
-**Live, as a judge.** During judging, From Exam to Mastery is open to every LoWisa account:
+**Quickest: the demo school (no school details, no password).** Every new install of the LoWisa desktop app can open
+its own ready-made school and mark an exam straight away:
+1. Install the **LoWisa desktop app** (0.9.33 or newer) from [lowisa.dev](https://lowisa.dev), and **LoWisa** on a phone
+   from Google Play or the App Store.
+2. On the desktop: **Home → Your school → Try the demo school → As a teacher**. Nothing to fill in and no password;
+   LoWisa reopens inside the demo school in a few seconds. A yellow bar on every page says it is the demo school.
+3. Press **Mark an exam** on that bar. The Exam Desk opens: create an exam, from a photo or PDF of the paper, or leave
+   the questions to be read from the paper itself.
+4. On the phone: open **From Exam to Mastery** (Home, near the bottom), type the desk's **join code** and your name, then
+   type its **photographing code** in the same box and photograph a finished paper (or pick it from the gallery). The
+   physics paper from the film is [`evidence/unseen-physics/paper.jpg`](evidence/unseen-physics/paper.jpg).
+5. Go on from step 4 of the list below: the marks, the fingerprints, the Mastery Plan on the phone.
+
+What the demo school is, and is not:
+- **Your own copy.** One per LoWisa account, with twelve fictional learners and two classes. Open it again and it is the
+  same school; open it as the principal or a learner to see their side.
+- **Paid from your own free credits.** It is given no school credits: marking is not charged, and a mastery level's
+  calls come from the free credits every new LoWisa install starts with.
+- **For trying only.** Its school code signs nobody in, so no one else can enter it. It cannot buy anything, publish a
+  website or app, share links, link a sister school, invite anyone or take a real class list. Its logins' passwords are
+  random and never shown. "Leave the demo" on the bar goes back to your own LoWisa.
+
+**Live, as a judge, with your own exam.** During judging, From Exam to Mastery is open to every LoWisa account:
 1. Install **LoWisa** from Google Play or the App Store, and the **LoWisa desktop app** from [lowisa.dev](https://lowisa.dev).
 2. Sign in with the same account on both. On the desktop, open **Exam Desk** and create an exam; you can read it from a photo or PDF of the paper.
 3. The desk shows a **join code** and a **photographing code**. On the phone, open **From Exam to Mastery** (Home, near the bottom), type the join code and put your name on the class list. Then type the photographing code in the same box and photograph a finished paper: take photos, or pick them from the gallery.
