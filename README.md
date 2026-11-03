@@ -1,42 +1,99 @@
 # From Exam to Mastery
 
-## The problem we solve: cognitive ability
+## The Problem We Solve: Protecting and Strengthening Human Cognitive Ability
 
-**Every day, millions of us ask AI to think for us. And a fear is growing, in every country and every family: that it is
-weakening how we think, and how our children will.** The early research says the fear is real when AI does the work
-(section 1.1):
-- of the people who had just written an essay with an AI assistant, **83% could not quote a sentence of their own** (MIT, 2025, 15 of 18);
-- students who practised maths with a plain AI chat **scored 17% lower once it was taken away** (PNAS, 2025);
-- **the more people trusted AI, the less critical thinking they applied** (Microsoft Research and Carnegie Mellon, 2025).
+**Millions of us are embracing AI, yet quietly wondering: Are we becoming more capable, or slowly losing our ability to
+think for ourselves? And if we are already worried about our own ability to think independently, what does the future
+hold for our children?**
 
-**The problem is older than AI.** Think back to the last exam you failed. You probably remember the mark, and maybe how
-it felt. But did anyone show you exactly where your thinking went wrong, and help you fix it so you could use it in the
-real world? A failed question is treated as the end of the story: a verdict on what you cannot do. Many adults still
-carry a failed exam as proof that they "aren't a maths person" or "aren't smart enough". That is not because they could
-not learn it. It is because nobody turned that mistake into the next thing they mastered. Across OECD countries one
-15-year-old in three does not reach the basic level in mathematics, and two in three worry about poor marks; in low-
-and middle-income countries, 70% of 10-year-olds cannot understand a simple written text (section 1.2).
+This concern is no longer hypothetical. Emerging research reveals a troubling pattern: AI can make us more productive
+without necessarily making us more capable (the studies, with their limits, are in section 1.1):
 
-**So the problem is cognitive ability, and it touches everyone: every student, every parent, every teacher, everyone
-who now works with AI.** LoWisa's mission is to strengthen it, in four areas:
+- **83% could not quote their own writing:** in a small MIT study, 15 of 18 participants who had written an essay using
+  ChatGPT could not quote a sentence from it (MIT Media Lab, 2025).
+- **17% lower performance without AI:** students who practised mathematics with an unrestricted AI assistant performed
+  worse on a subsequent unassisted assessment than students who practised without AI (PNAS, 2025).
+- **Greater AI trust, less critical-thinking effort:** Microsoft Research and Carnegie Mellon found an association
+  between higher confidence in AI and reduced critical-thinking effort during AI-assisted work (2025).
 
-| The four areas of cognitive ability we target | What goes wrong today | What From Exam to Mastery does |
+These studies do not establish that AI inevitably weakens cognition. But they expose a critical challenge: **What happens
+when technology becomes better at producing answers than we are at understanding them?**
+
+### The Problem Didn't Begin With AI
+
+Think back to the last exam you failed.
+
+You probably remember the mark. Perhaps even the disappointment. But did anyone show you exactly where your thinking
+went wrong, help you understand why, and guide you until you could confidently apply that knowledge in the real world?
+
+For millions of learners, the answer is no.
+
+We have spent generations measuring what students get wrong, without consistently transforming those mistakes into
+capabilities they can carry beyond the classroom.
+
+A failed mathematics question becomes "I'm not good at maths." A difficult technical concept becomes "Maybe I'm not
+smart enough."
+
+**But a failed answer is not evidence of someone's inability to learn. It is evidence of something they have not yet
+mastered.**
+
+The scale of this challenge is global. OECD PISA 2022 results show that approximately 31% of 15-year-olds across OECD
+countries do not reach baseline proficiency in mathematics. The World Bank estimates that around 70% of 10-year-olds in
+low- and middle-income countries cannot read and understand a simple age-appropriate text (section 1.2).
+
+And now, with AI capable of producing answers almost instantly, the gap between getting the right answer and actually
+understanding it risks becoming even wider.
+
+### Our Mission: From Exam to Mastery
+
+At LoWisa, we believe AI should not replace the human ability to think. It should strengthen it.
+
+Our mission is to transform moments of failure into opportunities for genuine understanding, independent reasoning,
+practical experience, and lasting capability.
+
+Instead of treating an examination as the final judgement of what a learner knows, we see it as the beginning of
+discovering what they can become capable of doing.
+
+From Exam to Mastery brings that mission to life through four connected areas of cognitive development, addressing what
+traditional approaches often leave unresolved and showing how AI can help learners move beyond answers towards
+real-world capability.
+
+The table below explains the four areas we target, what goes wrong today, and how From Exam to Mastery addresses each
+one.
+
+### Four Critical Areas: From Cognitive Dependence to Human Capability
+
+**A correct answer is not proof of understanding. A passing grade is not proof of mastery. And using AI successfully is
+not proof that we can perform without it.**
+
+LoWisa addresses these gaps through four connected areas of cognitive development.
+
+| The cognitive ability we strengthen | The problem we can no longer ignore | How From Exam to Mastery changes this |
 |---|---|---|
-| **1. The exam: from a verdict to capability** | A mark says *that* a student failed, never *why*. Marking takes 9% of teachers' working time, and 40% say it causes them stress (TALIS 2024) | Meta's models mark a whole paper from one photo and read *how* each answer was reached. Nothing ends in a verdict: every question not mastered goes into the student's Mastery Plan |
-| **2. What is taught, against the real world** | What is learned for the exam stays on the paper | Every level ends in a real task from work, with a number the student works out themselves |
-| **3. How we think, not what we answer**: seven thinking capabilities (pattern recognition, probability and uncertainty, optimization, systems thinking, trade-offs, decision-making, root-cause analysis) | AI hands over answers, so the thinking behind them weakens | Lo never gives the answer first. The student predicts with their own idea, sees it tested, and explains it; each question is tagged with the capability it needs |
-| **4. Repetition, so it lasts** | Crammed for the exam, forgotten after it | The exam question comes back inside the level, and a re-check on the same idea arrives days later; LoWisa's own flashcards and Insight mode replay the student's lessons |
+| **1. From examination failure to capability** | **A grade tells a learner they failed, but rarely shows them how to succeed.** Students can leave an examination knowing their score but not understanding where their reasoning broke down. Teachers face substantial marking workloads, leaving limited time for individual feedback. A single failed question can become years of lost confidence. | **Failure becomes the starting point, not the final verdict.** Meta's AI models analyse handwritten examination papers, evaluate answers and identify gaps in understanding. Questions requiring improvement become part of a personalised Mastery Plan, turning mistakes into actionable learning opportunities rather than permanent labels. |
+| **2. From theoretical knowledge to real-world application** | **What good is knowing an answer if you cannot use it?** Learners can memorise formulas, pass examinations and complete courses yet struggle when confronted with practical problems. The distance between classrooms and real environments leaves people qualified on paper but uncertain in practice. | **Learning must lead to demonstrated capability.** LoWisa connects concepts to practical tasks and real-world environments. Learners apply what they have understood, work through challenges and develop the confidence to use their knowledge beyond an examination. |
+| **3. From AI-generated answers to independent thinking** | **The greatest danger is not getting a wrong answer. It is getting the right answer without knowing why.** When AI repeatedly performs the reasoning, learners risk becoming dependent on conclusions they cannot explain, challenge or reproduce independently. Convenience must not come at the expense of critical thinking. | **AI guides the thinking instead of replacing it.** Lo asks learners to predict, reason, test their ideas and explain their conclusions before revealing solutions. Questions target seven thinking capabilities: pattern recognition, probability and uncertainty, optimisation, systems thinking, trade-offs, decision-making and root-cause analysis. The learner remains an active problem-solver. |
+| **4. From temporary memorisation to lasting mastery** | **If knowledge disappears after the exam, what did we actually achieve?** Students cram, pass and forget. Without revisiting misconceptions and testing independent recall, yesterday's learning can become tomorrow's knowledge gap. Repeated exposure is not the same as lasting understanding. | **Mastery is revisited, reinforced and tested.** Previously failed questions return during learning, followed by later knowledge checks. LoWisa's flashcards and Insight mode support continued revision, helping learners revisit concepts, strengthen recall and build understanding that lasts beyond the original assessment. |
 
-**What we do: make AI useful for thinking, and so answer the fear.** What if the very AI we fear could weaken our
-thinking became a tool to strengthen it? The same AI can find where a learner's thinking broke down and make them think
-again, without ever thinking for them. A failed question should not be a verdict. It should be the start of building
-real capability.
+### The Change We Want to Make
+
+**Today, we risk raising a generation that knows how to ask AI for answers but struggles to explain, challenge or apply
+those answers independently.**
+
+LoWisa is working towards a different future: one where a failed examination is not the end of someone's confidence,
+where learning extends beyond the classroom, and where AI strengthens the very human abilities we cannot afford to lose.
+
+**We don't measure success by how many answers AI can generate. We measure it by what learners become capable of doing
+themselves.**
+
+**From Exam to Mastery isn't about making AI smarter. It's about making the people who use it more capable.**
 
 ## Introducing From Exam to Mastery
 
 **Built for this hackathon, inside LoWisa, powered by Meta's models: a way to turn every failed question into a moment
 of discovery. Confusion into understanding. Understanding into practice. And practice into the confidence and ability
-to solve real-world problems. Because a wrong answer should never define someone's ability.**
+to solve real-world problems. Because a wrong answer should never define someone's ability.** This is what the four
+areas above look like when they run, on a real exam, today.
 
 **The 3-minute film:** [`evidence/film/exam-to-mastery.mp4`](evidence/film/exam-to-mastery.mp4) (2:59; every word with
 its time and on-screen label: [`transcript.md`](evidence/film/transcript.md)). Its first 29 seconds are a short version
@@ -118,7 +175,7 @@ Where each Meta model works:
 
 ## Contents
 
-1. [The problem: cognitive ability](#1-the-problem-cognitive-ability)
+1. [The problem, in depth: human cognitive ability](#1-the-problem-in-depth-human-cognitive-ability)
 2. [The demo, frame by frame: one failed question to mastery](#2-the-demo-frame-by-frame-one-failed-question-to-mastery)
 3. [Beyond the 3 minutes: what the film had no time to show](#3-beyond-the-3-minutes-what-the-film-had-no-time-to-show)
 4. [Meta's models: who does what](#4-metas-models-who-does-what)
@@ -142,16 +199,17 @@ Where each Meta model works:
 
 ---
 
-## 1. The problem: cognitive ability
+## 1. The problem, in depth: human cognitive ability
 
-Two problems meet in every classroom, and both are about cognitive ability. AI can now do a student's thinking for
-them, and the fear that it weakens how we think is everyone's. And exams have always told a student *that* they
-failed, without helping them master what they missed. From Exam to Mastery answers both at once.
+Two problems meet in every classroom, and both are about human cognitive ability. **A new one:** AI can now do a
+learner's thinking for them, and millions of people already fear what that does to their minds and their children's.
+**An old one:** for generations, exams have told a student *that* they failed, without helping them master what they
+missed. From Exam to Mastery answers both at once, with the very AI people fear.
 
 ### 1.1 When AI does the thinking, the thinking weakens
 
-AI is changing how we think. As we let it do our thinking for us, a question grows: are we weakening our own minds,
-and our children's? The early research says the fear is real **when AI does the work**:
+AI can make us more productive without making us more capable. The early research says the fear is real **when AI
+does the work**, and points to the way out: AI that makes the learner do the thinking.
 
 | Study | What was measured | What it found |
 |---|---|---|
@@ -164,7 +222,8 @@ and our children's? The early research says the fear is real **when AI does the 
 
 For generations, education has measured what students get wrong, without making sure they master what they never
 understood. Many adults still carry a failed exam as proof that they "aren't a maths person". That is not because they
-could not learn it. Nobody turned that mistake into the next thing they mastered.
+could not learn it. Nobody turned that mistake into the next thing they mastered. **A failed answer is not evidence of
+someone's inability to learn; it is evidence of something not yet mastered.**
 
 - **Failing is common, and students fear it.**
   - In PISA 2022, about one in three 15-year-olds across OECD countries (31%) did not reach the basic level in
@@ -208,7 +267,7 @@ could not learn it. Nobody turned that mistake into the next thing they mastered
 
 ### 1.4 Our answer
 
-As part of LoWisa's mission to strengthen cognitive abilities, From Exam to Mastery uses the same AI people fear to
+LoWisa exists to protect and strengthen human cognitive ability. From Exam to Mastery uses the same AI people fear to
 make students think again, never to think for them. **A failed question is not a verdict. It is the start of building
 real capability.** Each finding above becomes something the product does:
 
@@ -221,16 +280,16 @@ real capability.** Each finding above becomes something the product does:
 | AI that does the work weakens learning; AI that makes students work does not [1–4] | never gives the answer first. The student predicts, works out the number and gives the reason. When the ink is unclear, Lo asks instead of guessing |
 | Recall beats re-reading [17] | brings the exam question back, makes flashcards from the student's own lessons, and sends a re-check days later |
 | What is taught must become something the student can do | ends every level in a real task from work, with a number the student works out |
-| Marking takes teachers' time and causes stress; teachers have no time for each student [13, 14] | marks a 30-question paper in under a minute, then gives the teacher's time to the learners: the few papers it is unsure of, the class grouped by reasoning, and the decisions only a teacher should make (section 5) |
+| Marking takes teachers' time and causes stress; teachers have no time for each student [13, 14] | marks a 30-question paper in a minute or two from one photo, then gives the teacher's time to the learners: the few papers it is unsure of, the class grouped by reasoning, and the decisions only a teacher should make (section 5) |
 
-These are the four areas of cognitive ability LoWisa targets, applied to one exam:
-1. **The exam, from a verdict to capability:** marking takes seconds, not evenings, and nothing ends in a verdict.
-2. **What is taught, against the real world:** every level ends in a real work task.
-3. **How we think, not what we answer:** predict, test, "let's ask ourselves", and only then explain, across seven
-   thinking capabilities (pattern recognition, probability and uncertainty, optimization, systems thinking,
-   trade-offs, decision-making, root-cause analysis); each marked question is tagged with the one it needs.
-4. **Repetition, so it lasts:** the question comes back, a re-check days later, and LoWisa's flashcards and Insight
-   mode.
+These are the four areas of the opening table, applied to one exam:
+1. **From examination failure to capability:** marking takes minutes, not evenings, and nothing ends in a verdict.
+2. **From theoretical knowledge to real-world application:** every level ends in a real work task.
+3. **From AI-generated answers to independent thinking:** predict, test, "let's ask ourselves", and only then explain,
+   across seven thinking capabilities (pattern recognition, probability and uncertainty, optimisation, systems
+   thinking, trade-offs, decision-making, root-cause analysis); each marked question is tagged with the one it needs.
+4. **From temporary memorisation to lasting mastery:** the question comes back, a re-check days later, and LoWisa's
+   flashcards and Insight mode.
 
 ## 2. The demo, frame by frame: one failed question to mastery
 
@@ -455,8 +514,10 @@ product work, named in [`host/README.md`](host/README.md) and not shown in the d
 
 ## 5. What is new, who it is for, and who pays
 
-From Exam to Mastery brings all four areas of cognitive ability (the opening, and section 1.4) together on one exam,
-from the marking to the real task: the same AI people fear, used to make students think rather than to think for them.
+Most AI in education competes to produce answers faster. From Exam to Mastery does the opposite: it uses the same AI
+people fear to make the learner do the thinking, and it brings all four areas of human cognitive ability (the opening,
+and section 1.4) together on one exam, from the marking to the real task. **A failed paper stops being a verdict and
+becomes a plan.**
 
 **Why not an existing tool**
 
@@ -749,7 +810,7 @@ Look at it without an account: `node demo/desk-server.js --replay`. It is this e
 
 | Criterion | In one line | The evidence |
 |---|---|---|
-| **Impact** | The problem is cognitive ability, and the fear that AI weakens it is everyone's. This uses AI to strengthen it in four areas (the exam, the real world, how we think, repetition): a failed question becomes a level built on the student's own mistake that ends in a real task, and a teacher of forty gets their evenings back. Measured against one real student's own teacher; not yet proven in a classroom pilot | the opening, sections 1, 2, 5, 7; limits in 16; plans in 17 |
+| **Impact** | The problem is human cognitive ability: a fear millions already feel about AI, joined to a problem education has not solved for generations (a failed exam that teaches nothing). This uses AI to strengthen it in four areas (from failure to capability, from knowledge to real-world application, from AI answers to independent thinking, from memorising to lasting mastery): a failed question becomes a level built on the student's own mistake that ends in a real task, and a teacher of forty checks instead of marking. Measured against one real student's own teacher; not yet proven in a classroom pilot | the opening, sections 1, 2, 5, 7; limits in 16; plans in 17 |
 | **Use of Meta's models** | Muse Spark reads the *reasoning* in handwriting and code checks its diagnosis against the lines it read; Muse Wonder plays every level as the student first; five models measured, in a gated pipeline of agents with code-checked hand-offs | sections 3, 4; `harness/FINDINGS.md` |
 | **Technical depth** | The evidence rule in code, measured blind and on the shipped code; handwriting placed on the page by dynamic programming (64 of 64 lines, against SAM 3.1's 52); Erlang/OTP with conditional writes, per-route daily ceilings, roles; 151 library tests; sixteen problems found by testing and how each was solved, from sideways pages to a safety check that failed open | sections 6, 7, 10, 11, 15 |
 | **Demo** | One failed question from photo to mastery: Muse Spark's marks landing on the page, the idea quoted from his own words, Lo asks first with a spoken answer, Muse Wonder's two plays, Muse Image's drawn step, the teacher's desk, the re-check; a real Grade 5 student's result against its baseline. Four Meta models on screen, about 1:42 of this week's work, every shot labelled, a word-for-word transcript; judges can try it in a minute with no account | sections 2, 12; `evidence/film/transcript.md` |
@@ -999,14 +1060,15 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
 
 ## 17. Future plans: after the hackathon
 
-From Exam to Mastery was built in ten days for one path: a teacher photographs an exam, and every failed question
-becomes a level. The plans below take it further, onto features LoWisa already has, so most of the work is joining
-what exists rather than starting again.
+In ten days we built one path end to end: a teacher photographs an exam, and every failed question becomes a level.
+The goal is bigger: **wherever a learner gets something wrong in LoWisa, that moment should become the start of
+mastering it.** The plans below take it there, onto features LoWisa already has, so most of the work is joining what
+exists rather than starting again.
 
 ### 17.1 Already joined to LoWisa's existing features
 
 A mastery level is played by LoWisa's own lesson player, so it already comes with two features that strengthen
-cognitive ability (area 4, repetition): the **flashcards** made from the level's lessons, and **Insight mode**, which
+cognitive ability (area 4, from temporary memorisation to lasting mastery): the **flashcards** made from the level's lessons, and **Insight mode**, which
 replays the student's lessons as an episode. Both existed before the event; the level they replay is new.
 
 ### 17.2 Next: a Mastery Plan wherever a learner fails a question
