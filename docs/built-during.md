@@ -1,6 +1,7 @@
 # Built during the hackathon (26 Oct – 4 Nov 2026)
 
-Everything in this repository was written during the event. The kickoff, 26 Oct at 12:00 PM ET, was 27 Oct at 2:30 AM in
+Everything in this repository was written during the event, with one marked exception: `host/mastery-mode/` shows lines
+of LoWisa's level builder, each dated, and the lines dated before 26 Oct are older LoWisa code shown for context. The kickoff, 26 Oct at 12:00 PM ET, was 27 Oct at 2:30 AM in
 our time zone (Adelaide, UTC+10:30); the first commit is 27 Oct at 10:36 AM there, eight hours after it. See the commit
 history. The table grows as the work lands. Code built this week inside LoWisa's own files is named in `host/README.md`; it is not copied here, so LoWisa's older code stays private.
 
@@ -25,7 +26,6 @@ history. The table grows as the work lands. Code built this week inside LoWisa's
 | The self-check: Muse Wonder plays each mastery level as the student who still holds the misconception and as one who has it right; a level passes only when the first is caught and the second clears, else it names what to change and the level is written again | `witness/src/witness_check.erl`, `phone/witness/mastery.ts` | done 27 Oct |
 | After release: the level's progress, ask-my-teacher threads, verification only when the teacher asks (explain back to Lo, judged by Muse Spark; a fresh paper; explain back to the teacher), and the teacher-issued "Turned around" badge | `witness/src/witness_mastery.erl`, `witness/src/witness_api.erl` | done 27 Oct |
 | The Exam Desk (desktop): exams, papers, the review queue, a replay of how each answer was written, the diagnosis at its moment, the teacher's result, marks and focus note, release | `desk/witness-desk.js`, `scripts/sync_desk.sh` | done 27 Oct |
-
 | The examiner: as soon as a paper is marked, Muse Wonder asks the student about at most two steps they wrote themselves; the student answers out loud (Muse Voice Transcribe) or in writing, and Muse Spark judges whether it is their own reasoning and whether they now understand | `witness/src/witness_examiner.erl`, `phone/witness/Examiner.tsx` | done 27 Oct |
 | The corrected step: Muse Spark writes the corrected working and Muse Image draws it on lined paper, the changed step underlined | `witness/src/witness_draw.erl` | done 27 Oct |
 | The teacher's spoken comment written down as feedback (Voice Transcribe's file door; ffmpeg makes the WAV it takes) | `witness/src/witness_meta.erl`, `witness/src/witness_media.erl` | done 27 Oct |
@@ -34,7 +34,7 @@ history. The table grows as the work lands. Code built this week inside LoWisa's
 | Practical mode: a practical task marked step by step against the teacher's procedure, SAM following the hands and the apparatus | `witness/src/witness_mark.erl`, `witness/src/witness_sitting.erl` | done 27 Oct |
 | A fresh question on paper, watched again: the teacher writes it, the student films it, its marking comes back onto the question it checks | `witness/src/witness_api.erl`, `witness/src/witness_mastery.erl` | done 27 Oct |
 | The pilot's numbers, measured: agreement with the teacher, wrong-thinking catches the teacher kept, marking seconds, the teacher's seconds per paper | `witness/src/witness_measure.erl` | done 27 Oct |
-| Marking on open weights: Muse Spark Open through any OpenAI-compatible endpoint, the same prompt and result | `witness/src/witness_open.erl` | built 27 Oct; wired, never run on hosted open weights (no hosted open-weight key during the event) |
+| Marking on open weights: Muse Spark Open through any OpenAI-compatible endpoint, the same prompt and result | `witness/src/witness_open.erl` | built 27 Oct; run on Baseten's Model API on 3 Nov (`harness/open/`) |
 | True clip times: SAM's sampled frames scaled onto the clip's own frame table, read in byte ranges from the stored clip | `witness/src/witness_mp4.erl` | done 27 Oct |
 | The Exam to Mastery flow: one phone photographs each finished paper page by page; the name read from the paper finds its student on the class list; each written line placed on its own ink on the photographed page (pen told from print by colour), so the student's own step is cut from their paper | `witness/src/witness_photo.erl`, `witness/src/witness_page.erl`, `witness/src/witness_names.erl` | done 29–30 Oct |
 | The exam read from the teacher's own file (photo or PDF of the paper and its scheme) by Muse Spark | `witness/src/witness_read.erl` | done 28 Oct |

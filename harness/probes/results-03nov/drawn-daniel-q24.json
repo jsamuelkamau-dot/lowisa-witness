@@ -1,0 +1,15 @@
+{
+ "what": "Muse Image draws Daniel's corrected step for question 24 (the film, 1:49), through witness_draw:run/3: Muse Spark writes the lines from his own answer and the diagnosis, Muse Image draws them",
+ "run_at": "2026-11-03",
+ "file": "drawn-daniel-q24.webp",
+ "lines": [
+  "Float if average density < water, sink if > water",
+  "Ship is hollow so average density is low",
+  "so large heavy ship floats",
+  "Nail is solid steel density > water",
+  "so small nail sinks"
+ ],
+ "changed": 1,
+ "cost_usd": 0.0168,
+ "made_by": "harness/probes/draw_q24.escript"
+}

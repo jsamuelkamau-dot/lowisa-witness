@@ -15,6 +15,10 @@ Recompute everything: `python3 harness/open/score.py`.
 | Failed runs | 3 of 9 (one physics run with a scheme timed out too) | none on these papers |
 | Cost | $0.05–0.17 a paper; $0.90 for every completed call | $0.05–0.11 a physics paper |
 
+**Against the baseline.** Marking every answer right would agree on 28 of 30 (English) and 47 of 49 (science), so on
+these two papers the agreement says little; what counts is that open weights caught 1 of his 2 wrong answers on each
+and named no wrong idea. It ran locally through the product's code; the edge's switch for open weights stays off.
+
 **What it shows.** Meta's open weights, served by a partner, mark the same paper the same way through the same code,
 and the evidence rule holds on them: no wrong idea was named on any answer they did not accept. **What it does not
 show yet:** reliability. The open model writes longer readings (up to 12,000 tokens, half of them reasoning), so a

@@ -51,6 +51,20 @@ screen; section 2 walks through it frame by frame.
 > 3. **Live, on your own phone:** LoWisa on Google Play or the App Store, then section 12 (a sample paper to photograph is
 >    [`evidence/unseen-physics/paper.jpg`](evidence/unseen-physics/paper.jpg)).
 
+**Submission facts.** Startups track, "Build for Your World". Built 26 Oct – 4 Nov 2026 (first commit 27 Oct, 8 hours
+after kickoff; `docs/built-during.md`). The headline numbers ran on the tag `v1.0-code`; the code on the production edge
+now is `v1.0.1-code` (two answer-comparison fixes and a longer open-weights timeout since; `harness/PROVENANCE.md`).
+Where each Meta model works:
+
+| Model | Its job | Where |
+|---|---|---|
+| Muse Spark 1.3 | marks every answer and reads how it was reached; writes the fingerprint; judges the student's reason | `witness_photo:mark/4`, `witness_mark:fingerprint/4`, `witness_challenge` |
+| Muse Wonder | plays each level as the student before the student sees it; asks the examiner's questions | `witness_check`, `witness_examiner` |
+| Muse Voice Transcribe | the student's spoken answer to Lo | `witness_meta:transcribe/2` |
+| Muse Image | draws the corrected step | `witness_draw:run/3` |
+| SAM 3.1 | follows the ink in a filmed desk (the optional way in) | `witness_sam`, `witness_timeline` |
+| Muse Spark Open | the same marking on Meta's open weights, run on Baseten | `witness_open:read_content/3`, `harness/open/` |
+
 - **What it does.** A teacher photographs a finished exam. Meta's models mark every answer and read *how* the student
   reached it, from their own handwriting. Every question not mastered becomes a level in the student's **Mastery
   Plan**, built on their own mistake and ending in a real task. The teacher decides when they have turned it around.
@@ -346,7 +360,7 @@ is best at.
 | **Muse Spark 1.3** | Reads the teacher's exam file. Marks every photographed paper for the path, not only the answer. Writes the Misconception Fingerprint. Reads the student's answer to Lo. Writes the mastery level. Drafts the challenge, judges the reason, recommends the badge. Writes the re-check. Reads Lo's spoken turns for safety. | `witness_photo`, `witness_mark`, `witness_fingerprint`, `witness_challenge`, `witness_recheck`, `witness_recommend`, `witness_guard` | one physics paper it had never seen: every marking decision right in 6 runs of 30, then 3 more on `v1.0-code`; held-out v2 on `v1.0-code`, 53 papers × 3 runs: right work 39/39, injection 30/30, ambiguous pages asked first 40/42, clear ideas named right 42/48 | `evidence/unseen-physics/`, `harness/heldout/` |
 | **Muse Wonder** | Plays each mastery level as the student who still holds the misconception and as one who has it right (in one reasoning pass), and holds a level that would not catch it or says a false thing. Groups the class by reasoning. Asks the examiner's questions. | `witness_check`, `witness_patterns`, `witness_examiner` | 20 levels × 3: planted faults held 30/30, the fault named 30/30; clean levels passed 30/30 | `harness/selfcheck/` |
 | **Muse Voice Transcribe** | The student's spoken answer to Lo; the teacher's spoken comment | `witness_meta:transcribe/2` | a 6.4 s spoken answer written down for $0.0003 | `harness/probes/results-31oct/transcript-31oct.json` |
-| **Muse Image** | Draws the corrected step on lined paper | `witness_draw` | the three learners' steps drawn, $0.017–0.019 each (redrawn 3 Nov, `harness/probes/redraw_3nov.escript`) | `harness/probes/results-03nov/` |
+| **Muse Image** | Draws the corrected step on lined paper | `witness_draw` | the three learners' steps drawn, $0.017–0.019 each (redrawn 3 Nov, `harness/probes/redraw_3nov.escript`); Daniel's question 24 for the film, $0.017 (`drawn-daniel-q24.json`) | `harness/probes/results-03nov/` |
 | **SAM 3.1** | Desk filming (the optional way in): follows the ink through a video, so each line has the second it was written | `witness_sam`, `witness_timeline` | on a photo it answers "word" (not "handwriting"); its word boxes, joined into lines, found 52 of 64 handwritten lines (mean overlap 0.75) | `harness/probes/`, `harness/bench/results/line_placement.json` |
 | Muse Spark Open | The same marking, on a photographed paper or a desk video, through any OpenAI-compatible endpoint | `witness_open`, `witness_photo` | **run on Baseten's Model API** (3 Nov): the physics paper 30 of 30 decisions right in 4 of 4 runs; the real student's English 29 of 30 and science 46 of 49 against his teacher, no wrong idea named; his maths paper failed twice (a reading past the 5-minute limit), 3 of 9 runs failed in all | [`harness/open/`](harness/open/README.md) |
 
@@ -388,7 +402,7 @@ flowchart LR
 | Step | Model | What it hands on | The code check before the next step | Where |
 |---|---|---|---|---|
 | Orientation | Muse Spark (low effort) | which edge of each photo is the page's top | only 0, 90, 180 or 270; anything else leaves the page as it is | `witness_photo:orient/3` |
-| Marking | Muse Spark (medium) | every answer, its steps, a result and a fingerprint, as strict JSON | parsed and fitted to the exam's questions; a part's questions kept to its range | `witness_photo:mark/4` |
+| Marking | Muse Spark (medium) | every answer, its steps, a result and a fingerprint, as JSON that the code parses and checks before using it | parsed and fitted to the exam's questions; a part's questions kept to its range | `witness_photo:mark/4` |
 | Two readings | Muse Spark (answers only, low; full, high) | the same paper read again | a short answer read differently, or a result that differs, is a split; a third reading decides; until two agree nothing joins "Accept all" | `witness_mark:checked/2`, `reconcile/2`, `decide/4` |
 | The evidence rule | (code only) | — | an idea is named only when a quoted line is the student's own ink, and the option circled is no evidence | `witness_mark:fingerprint/4`, `chosen_option/2` |
 | Lo asks first | Muse Voice Transcribe, then Muse Spark | the student's spoken or typed answer, read with the page | the same evidence rule on the answer | `witness_api` (`POST sitting/:id/answer`), `witness_meta:transcribe/2` |

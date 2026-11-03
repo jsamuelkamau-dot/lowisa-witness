@@ -1,6 +1,6 @@
 # From Exam to Mastery: the film, word for word
 
-Every line spoken in [`exam-to-mastery.mp4`](exam-to-mastery.mp4) (2:58), when it is said, and the label on the screen at that moment. The narrator is a synthetic voice (OpenAI `gpt-4o-mini-tts`, voice Cedar), not a Meta model and not a person. Lo speaks in LoWisa's own voice; the words Lo says in a mastery level are written by Muse Spark. Daniel is a sample student and his paper was made for the demo; the learner who answers out loud is another sample learner, his answer read by a synthetic voice (Amazon Polly) and written down by Muse Voice Transcribe. Subtitles: [`exam-to-mastery.srt`](exam-to-mastery.srt).
+Every line spoken in [`exam-to-mastery.mp4`](exam-to-mastery.mp4) (2:59), when it is said, and the label on the screen at that moment. The narrator is a synthetic voice (OpenAI `gpt-4o-mini-tts`, voice Cedar), not a Meta model and not a person. Lo speaks in LoWisa's own voice; the words Lo says in a mastery level are written by Muse Spark. Daniel is a sample student and his paper was made for the demo; the learner who answers out loud is another sample learner, his answer read by a synthetic voice (Amazon Polly) and written down by Muse Voice Transcribe. Subtitles: [`exam-to-mastery.srt`](exam-to-mastery.srt).
 
 | Time | Who | What is said | On screen |
 |---|---|---|---|
