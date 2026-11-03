@@ -198,3 +198,8 @@ From the teacher's PDF to the re-check, on a fresh exam (README §5). Fixed the 
   42, a wrong idea named 2 of 42 (3 before), named right 42 of 48 (44 before), at $3.71 for 159 markings ($2.61 before)
   and a median 22 s (13 s). Physics: 90 of 90 decisions. The answers-only reading caught his misread science Q33 in one
   run of three; in the other two both readings read the same wrong letter.
+- **Muse Spark Open on Baseten's Model API** (`harness/open/`, 3 Nov): the same photo path with each reading through
+  `witness_open:read_content/3`. Physics: 30 of 30 decisions right in each of 4 completed runs. The real student's
+  English 29 of 30, science 46 of 49 (Muse Spark: 29 and 47); no wrong idea named. 3 of 9 runs failed: a reading past
+  the 5-minute limit per call (twice) and one reply that was not a marking; the open model writes up to 12,000 tokens a
+  reading, half of them reasoning. $0.90 for every completed call.

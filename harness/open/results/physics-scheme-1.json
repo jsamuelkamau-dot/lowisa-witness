@@ -1,0 +1,1 @@
+{"calls":[{"error":"timeout","ok":false,"usage":{},"effort":"medium","ms":300064}],"scheme":true,"status":"error","tag":"physics-scheme-1","why":"timeout","engine":"meta-models/muse-spark-open","endpoint":"https://inference.baseten.co/v1","marking_seconds":300.081,"commit":"189b9d1"}

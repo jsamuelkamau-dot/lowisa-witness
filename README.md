@@ -81,7 +81,7 @@ screen; section 2 walks through it frame by frame.
   [`host/README.md`](host/README.md), not shown.
 - **Meta's models do the work:** Muse Spark marks and diagnoses, Muse Wonder plays each level as the student, Muse Voice
   Transcribe writes down spoken answers, Muse Image draws the corrected step, and SAM 3.1 follows the ink in a filmed
-  desk (section 4). Muse Spark Open is wired but has not been run. Section 4 maps the hand-offs between the models,
+  desk (section 4). Muse Spark Open, Meta's open weights, has been run on Baseten through the same code (`harness/open/`). Section 4 maps the hand-offs between the models,
   the code check between each, and what each check changed, measured.
 - **Try it in one minute:** `node demo/desk-server.js --replay`, with no account and no key; or live with your own phone
   (section 12).
@@ -338,7 +338,7 @@ planted faults held 30/30, false claims found 9/9, clean levels passed 30/30.
 
 ## 4. Meta's models: who does what
 
-Five Meta models are measured in the product; a sixth is wired and waiting for an endpoint. Each one does the job it
+Five Meta models are measured in the product, and a sixth, Muse Spark Open, has been run on partner inference. Each one does the job it
 is best at.
 
 | Model | Its job here | Code | Measured | Evidence |
@@ -348,7 +348,7 @@ is best at.
 | **Muse Voice Transcribe** | The student's spoken answer to Lo; the teacher's spoken comment | `witness_meta:transcribe/2` | a 6.4 s spoken answer written down for $0.0003 | `harness/probes/results-31oct/transcript-31oct.json` |
 | **Muse Image** | Draws the corrected step on lined paper | `witness_draw` | the three learners' steps drawn, $0.017–0.019 each (redrawn 3 Nov, `harness/probes/redraw_3nov.escript`) | `harness/probes/results-03nov/` |
 | **SAM 3.1** | Desk filming (the optional way in): follows the ink through a video, so each line has the second it was written | `witness_sam`, `witness_timeline` | on a photo it answers "word" (not "handwriting"); its word boxes, joined into lines, found 52 of 64 handwritten lines (mean overlap 0.75) | `harness/probes/`, `harness/bench/results/line_placement.json` |
-| Muse Spark Open | The same marking, on a photographed paper or a desk video, through any OpenAI-compatible endpoint | `witness_open`, `witness_photo` | **wired, not yet run**: no hosted endpoint for it in this account | – |
+| Muse Spark Open | The same marking, on a photographed paper or a desk video, through any OpenAI-compatible endpoint | `witness_open`, `witness_photo` | **run on Baseten's Model API** (3 Nov): the physics paper 30 of 30 decisions right in 4 of 4 runs; the real student's English 29 of 30 and science 46 of 49 against his teacher, no wrong idea named; his maths paper failed twice (a reading past the 5-minute limit), 3 of 9 runs failed in all | [`harness/open/`](harness/open/README.md) |
 
 **What surprised us about Meta's models**
 - **Muse Spark changed its own reading from one sentence.** Leo's page (one of the three learners in section 6) read "half up, half down": its guess was
@@ -978,7 +978,7 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
   - The check reads the lines Muse Spark read, not the pixels.
 - **Mastery is shown, not proven.** "Turned around" follows a level, a challenge answered with a reason, and the teacher's review. The re-check days later is the evidence that it lasted. One re-check is still one item.
 - **The self-check plays the level's outline.** The questions inside each lesson are written as the lesson opens, after the teacher has let it start; they are not checked one by one.
-- **Muse Spark Open is wired but has not been run** on hosted open weights.
+- **Muse Spark Open has run on partner inference, but not reliably yet:** 6 of 9 runs completed (all of them right on physics), and a long four-photo paper failed twice on the 5-minute limit per call (`harness/open/`).
 - **The low-effort finding is from 36 papers.** The product stays at medium until it is measured on more.
 
 ## 17. Future plans: after the hackathon
