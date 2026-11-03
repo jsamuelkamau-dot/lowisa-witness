@@ -1,0 +1,113 @@
+// From LoWisa's private level builder (Master any topic): clients/mobile/src/paths/custom/course.ts
+// Exact excerpts, as at LoWisa commit b502fcf.
+// Only the lines git blame dates 26 Oct 2026 or later (during the event) are shown, each with its date and line number;
+// the LoWisa code around them existed before the event, stays private, and is marked "...".
+
+// ---- lines 160-275: The build's mastery fields, the self-check hook, the rewrite count and MASTERY_RULE
+  ...
++ 2026-10-27   165    /** 2026-10-27 (Witness, Meta hackathon): every design call of this build asks this model (Muse Spark for a mastery
++ 2026-10-27   166     *  level; the edge lets a Meta model through only for an account open on Witness). */
++ 2026-10-27   167    designModel?: string;
++ 2026-10-27   168    /** 2026-10-27 (Witness): the door the design calls go to (a mastery level: /api/witness/design, the edge's own
++ 2026-10-27   169     *  metered call on Muse Spark); unset, the managed-AI request as always. */
++ 2026-10-27   170    designPath?: string;
++ 2026-10-28   171    /** 2026-10-28 (Witness re-audit): what the design calls are for ({sitting, n}): the exam's teacher pays for a mastery
++ 2026-10-28   172     *  level's calls (the plan: "charged to the school wallet"). */
++ 2026-10-28   173    designFor?: {sitting: string; n: number};
++ 2026-10-27   174    /** 2026-10-27 (Witness): the build is ONE mastery level for one question a student did not master (MASTERY_RULE). */
++ 2026-10-27   175    mastery?: boolean;
++ 2026-10-27   176    /** 2026-10-27 (Witness; owner: "an agent plays it once as a student who still has the misconception and once as one
++ 2026-10-27   177     *  who doesn't, and repairs it if the results come out wrong"): the written level, checked before it is saved; null
++ 2026-10-27   178     *  when the check could not run (the level is kept as written). */
++ 2026-10-27   179    masteryCheck?(level: MasteryLevelText): Promise<{passes: boolean; problems: string[]} | null>;
+  ...
++ 2026-10-27   182  /** A written level as its self-check reads it: each lesson's title and what each beat teaches. */
++ 2026-10-27   183  export interface MasteryLevelText { title: string; lessons: Array<{title: string; beats: string[]}> }
++ 2026-10-27   184  
++ 2026-10-27   185  export function masteryLevelText(level: {title: string; modules: Array<{title: string; beats: unknown[]}>}): MasteryLevelText {
++ 2026-10-27   186    return {
++ 2026-10-27   187      title: level.title,
++ 2026-10-27   188      lessons: level.modules.map(m => ({
++ 2026-10-27   189        title: m.title,
++ 2026-10-27   190        beats: (m.beats || []).map(b => {
++ 2026-10-27   191          const x = b as {name?: unknown; teach?: unknown; analogy?: unknown};
++ 2026-10-27   192          return [x && x.name, x && x.teach, x && x.analogy].filter(v => typeof v === 'string' && v).join(': ');
++ 2026-10-27   193        }).filter(Boolean),
++ 2026-10-27   194      })),
++ 2026-10-27   195    };
++ 2026-10-27   196  }
++ 2026-10-27   197  
++ 2026-10-27   198  /** How many times a mastery level that fails its self-check is written again with what the check named. */
++ 2026-10-28   199  // the plan: the level rewrites what its self-check names "up to 3 times" (28 Oct re-audit; it was 2)
++ 2026-10-28   200  export const MASTERY_CHECK_ROUNDS = 3;
++ 2026-10-27   201  
++ 2026-10-27   202  /**
++ 2026-10-27   203   * 2026-10-27 (Witness, Meta hackathon; owner: "generated exactly as it is generated currently on Master any topic"):
++ 2026-10-27   204   * a mastery level is a Master any topic build of ONE level, to the same standard (outline, second look, repair, the
++ 2026-10-27   205   * level's lessons and beats; at play its first look, halfway twist, main run, Lo asks, Insight, flashcards and notes),
++ 2026-10-27   206   * for the one question a student did not master. Only what goes in is new: the question, the student's own working,
++ 2026-10-27   207   * the diagnosis and the teacher's focus note (the material), and this rule.
++ 2026-10-27   208   */
++ 2026-10-27   209  export const MASTERY_RULE = [
++ 2026-10-27   210    'MASTERY LEVEL. This is not a course: write EXACTLY ONE level of exactly 3 lessons, for one student who did not master',
++ 2026-10-27   211    'one exam question (the material says which, how they worked it, what went wrong and what their teacher wants).',
++ 2026-10-27   212    'judgement.breadth is "material". The level fixes that one misconception and nothing else.',
++ 2026-10-27   213    'Lesson 1 runs the student\'s OWN step, as they wrote it, inside a real-world setting where this exact mistake has a',
++ 2026-10-27   214    'visible consequence, chosen for their level and the teacher\'s note (never medical advice, never a real person).',
++ 2026-10-27   215    'Lesson 2 is the idea underneath: why the step fails. Lesson 3 fixes it in the same setting AS A REAL TASK someone does at',
++ 2026-10-27   216    'work with this idea (a stock order, a budget, a measurement, a dose of a recipe, a contract clause, a line of code, a',
++ 2026-10-27   217    'report), at the student\'s level, so the outcome turns around and the student leaves able to DO it, not only answer it.',
++ 2026-10-27   218    'Lesson 3\'s title names that task as work is named ("Price the boots sale", "Fix the stock order"), never "an example".',
++ 2026-10-27   219    'Follow the teacher\'s focus note when there is one. Use the subject\'s real terms at the student\'s level.',
++ 2026-11-01   220    // 1 Nov (an unseen physics exam): the level coined "Float number (push minus weight)" for what a physics teacher calls
++ 2026-11-01   221    // the resultant force, and lesson 3's last line said "from Question 24"
++ 2026-11-01   222    'Every quantity is named as a teacher of the subject names it; never coin a name for one. The level never names the',
++ 2026-11-01   223    'exam, the paper or a question number in any title, beat, line or task: it teaches the idea, not the paper.',
++ 2026-10-29   224    // 29 Oct (emulator): a level said "1 part syrup in 4" and "a true 1 to 4 mix" for the same jug, and a question's options
++ 2026-10-29   225    // then had no right answer
++ 2026-10-29   226    'Every number stays exact in every line: a fraction of a whole is said as a part of the whole ("1 part syrup in 4": 1',
++ 2026-10-29   227    'syrup and 3 water), never as a ratio ("1 to 4" is 1 syrup to 4 water), and every question\'s right option agrees with',
++ 2026-10-29   228    'the numbers the level set up.',
++ 2026-10-30   229    // 30 Oct (rehearsal): lesson 1's third beat was named after the old idea ("Expect same hundred dollars"), and the
++ 2026-10-30   230    // finished-lesson screen listed it under "What this lesson taught you"
++ 2026-10-30   231    'Every beat\'s name says something TRUE the student can now do or see ("Spot the new base"); the old wrong step is',
++ 2026-10-30   232    'shown and tested inside a beat\'s teaching, never as a beat\'s name.',
++ 2026-10-27   233  ].join(' ');
++ 2026-10-27   234  
+  ...
++ 2026-10-26   275  /** 2026-10-12 (P-PERF-1): how many courses of their own a learner keeps on the phone (cohort lessons not counted).
+
+// ---- lines 1092-1105: The outline and lessons written with the mastery rule
+  ...
++ 2026-10-27  1097    const outlineAsk = outlineUserPrompt('topic', ask, context) + (env.mastery ? '\n' + MASTERY_RULE : '') + lang;
++ 2026-10-27  1098    const cut = <T>(ls: T[]): T[] => (env.mastery ? ls.slice(0, 1) : ls);
++ 2026-10-27  1099    // 2026-10-27 (emulator): the lessons are written with the mastery rule too, not only the outline (they came back
++ 2026-10-27  1100    // abstract, and the self-check failed them twice)
++ 2026-10-27  1101    const mastered = env.mastery ? '\n' + MASTERY_RULE : '';
+  ...
+
+// ---- lines 1200-1230: The self-check after writing, and the rewrites with what it found
+  ...
++ 2026-10-27  1204    // A mastery level plays itself as both students before it is kept; what fails is written again with the findings.
++ 2026-10-27  1205    if (env.mastery && env.masteryCheck && filled.length === 1) {
++ 2026-10-27  1206      const l = levels[0];
++ 2026-10-27  1207      const moduleTitles = l.modules.map(m => m.title).slice(0, limits.modules);
++ 2026-10-27  1208      // the last rewrite is checked too, so the verdict the teacher sees is the kept level's own
++ 2026-10-27  1209      for (let round = 0; ; round += 1) {
++ 2026-10-27  1210        progress({stage: 'check'});
++ 2026-10-27  1211        const verdict = await env.masteryCheck(masteryLevelText(filled[0])).catch(() => null);
++ 2026-10-27  1212        if (!verdict || verdict.passes || round >= MASTERY_CHECK_ROUNDS) break;
++ 2026-10-27  1213        progress({stage: 'redesign'});
++ 2026-10-27  1214        const again = await askDesignWithRetry(env, token, stemId + '-chk' + round, LEVEL_SYSTEM_DEEP,
++ 2026-10-27  1215          levelUserPrompt('topic', ask, excerptFor(context, [l.title, ...moduleTitles]), {title, levelTitle: l.title, levelIndex: 0, levelCount: 1, moduleTitles}) + mastered +
++ 2026-10-28  1216          '\nTHIS LEVEL FAILED ITS SELF-CHECK. Write it again and fix every one of these: ' + verdict.problems.join(' | ') +
++ 2026-10-28  1217          '\nEach module keeps its place; a module whose title a finding asks to change gets the new title in its "title" (here, and only for those, instead of keeping the title you were given).' + lang,
++ 2026-10-27  1218          DESIGN_TIMEOUT_MS, HINTS.level);
++ 2026-10-27  1219        if (again.kind === 'gate') return {ok: false, failure: again};
++ 2026-10-27  1220        if (again.kind !== 'ok') break;
++ 2026-10-28  1221        filled[0] = pairLevel({levelTitle: l.title, moduleTitles}, again.object, true);
++ 2026-10-27  1222      }
++ 2026-10-27  1223    }
+  ...
++ 2026-10-27  1226    if (madeProjects.kind !== 'ok' && judged && judged.kind === 'code' && judged.breadth !== 'narrow' && !env.mastery) {
+  ...

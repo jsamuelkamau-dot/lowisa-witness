@@ -904,7 +904,7 @@ repository. It is named here so that it is clear what From Exam to Mastery stand
 
 **Work done inside LoWisa's own files during the event** (the edge host and Meta provider, the level builder's
 mastery mode, the checked practical task, the wiring of the phone and desktop apps) is described in
-[`host/README.md`](host/README.md), with dates. The code is not copied here, because it sits inside LoWisa's private
+[`host/README.md`](host/README.md), with dates. The level builder's mastery mode is published line by line, each line dated: [`host/mastery-mode/`](host/mastery-mode/README.md). The code is not copied here, because it sits inside LoWisa's private
 files. **In the film, LoWisa's parts appear only playing what was made this week, and they are labelled.** Full list:
 [`docs/existed-before.md`](docs/existed-before.md).
 
