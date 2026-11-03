@@ -295,7 +295,7 @@
     }).join('') || '<div class="wd-sub">Nothing left to review.</div>';
     // 31 Oct (judges' panel, the school leader: forty papers, one question at a time)
     var sure = q.filter(function (it) { return it.result === 'mastered' && (it.confidence || 0) >= 0.9; });
-    if (sure.length) queue = '<div class="wd-row" style="cursor:default"><span class="wd-grow wd-sub">' + sure.length + ' marked mastered, Muse Spark 90% sure or more</span>' +
+    if (sure.length) queue = '<div class="wd-row" style="cursor:default"><span class="wd-grow wd-sub">' + sure.length + ' marked mastered: two readings agree, 90% sure or more</span>' +
       '<button class="wd-btn" data-act="acceptsure">Accept all ' + sure.length + '</button></div>' + queue;
     var ready = (j.ready || []);
     var readyCard = ready.length ? '<div class="wd-card"><h3>Ready for Turned around: ' + ready.length + '</h3>' +

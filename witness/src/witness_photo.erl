@@ -105,7 +105,7 @@ mark(Key, Pages, Sitting, Opts) ->
                     Student = case [S || #{student := S} <- Ms, is_map(S), maps:get(name, S, <<>>) =/= <<>>] of [S1 | _] -> S1; [] -> maps:get(student, hd(Ms), #{}) end,
                     Marked0 = #{questions => [Q || {_, Q} <- Qs], cost_usd => lists:sum([maps:get(cost_usd, M, 0) || M <- Ms])},
                     Marked1 = lists:foldl(fun(F, A) -> case lists:any(fun(M) -> maps:get(F, M, false) =:= true end, Ms) of true -> A#{F => true}; false -> A end end,
-                                          Marked0, [read_twice, read_thrice]),
+                                          Marked0, [read_twice, read_thrice, checked]),
                     Marked = case length(Ms) of 1 -> Marked1; N -> Marked1#{parts => N} end,
                     {ok, Marked#{questions => place(maps:get(questions, Marked), Pages, Gray, Tint), student => Student, pages => length(Pages)}};
                 [E | _] -> E
@@ -231,8 +231,24 @@ content(Pages, Fetch, AsMime) ->
     catch error:{badmatch, E} -> E
     end.
 
-%% unsure questions read again at high effort, a split settled by a third reading (as a filmed paper is)
-again(Key, Content, Sitting, Read, Price, #{questions := Qs} = Marked) ->
+%% unsure questions read again at high effort, a split settled by a third reading (as a filmed paper is). 3 Nov
+%% (judges' panel: a misread letter at 90% sure went into "Accept all" on one reading): a part with no unsure question
+%% is first checked by a reading of its answers alone, after the same prompt and pages (from Meta's prompt cache, at
+%% low effort); an answer it read differently is unsure, so the full second reading follows
+again(Key, Content, Sitting, Read, Price, #{questions := Qs0} = Marked0) ->
+    Marked = case witness_mark:unsure(Qs0) of
+        true -> Marked0;
+        false ->
+            Check = try Read(Key, Content ++ [#{type => input_text, text => witness_mark:check_prompt()}], <<"low">>) catch _:_ -> error end,
+            case Check of
+                {ok, CT, CU} -> Marked0#{questions => witness_mark:checked(Qs0, CT), checked => true,
+                                         cost_usd => maps:get(cost_usd, Marked0) + witness_meta:cost(Price, CU)};
+                _ -> Marked0#{questions => witness_mark:checked(Qs0, error)}
+            end
+    end,
+    again_full(Key, Content, Sitting, Read, Price, Marked).
+
+again_full(Key, Content, Sitting, Read, Price, #{questions := Qs} = Marked) ->
     Reading = fun() ->
         case Read(Key, Content, <<"high">>) of
             {ok, T, U} -> case witness_mark:parse(T) of {ok, #{questions := Q2}} -> {ok, witness_mark:fit(Q2, Sitting), U}; E -> E end;

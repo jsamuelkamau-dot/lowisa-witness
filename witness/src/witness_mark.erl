@@ -19,6 +19,8 @@
 -export([fit/2, unsure/1, reconcile/2, decide/4, split/1, prompt/1, parse/1, needs_level/1, results/0, capabilities/0,
          fingerprint_rule/0, fingerprint_json/0, fingerprint/4, norm/1, in_ink/3, quote_in_ink/3, chosen_option/2, calculation/1, numbers/1,
          skill_rule/0]).
+%% 3 Nov: two readings must agree before a question can be accepted with the rest
+-export([check_prompt/0, checked/2, same_answer/2]).
 
 %% 27 Oct, emulator: a video of no paper at all (the camera pointed at a picture) was marked "to master" on every
 %% question at 20% sure, so each would have become a mastery level for a paper nobody filmed. A video that does not
@@ -150,8 +152,9 @@ held_words(Steps, Final) ->
     case {words(Final) >= 5, [W || #{wrote := W} <- Steps, W =/= <<>>, W =/= Final]} of
         %% an answer in words is more than a result: what the page lacks is which idea is behind it (31 Oct, physics test)
         {true, _} -> <<"The page shows the answer in the student's own words, but not yet which idea is behind it. Lo asks first.">>;
-        {false, []} -> <<"Only ", Answer/binary, " is on the page, not the working behind it. Lo asks first.">>;
-        {false, _} -> <<"The page shows ", Answer/binary, " but not which calculation led to it. Lo asks first.">>
+        %% "how it was reached", not "which calculation": the same note goes on a history or art answer (3 Nov, judges' panel)
+        {false, []} -> <<"Only ", Answer/binary, " is on the page, not how it was reached. Lo asks first.">>;
+        {false, _} -> <<"The page shows ", Answer/binary, " but not how it was reached. Lo asks first.">>
     end.
 
 %% A quoted line is the student's own when it is (part of) a line read from their page, or that line with a reading's
@@ -442,9 +445,11 @@ short_of_full(#{result := R, marks := K, out_of := O} = Q) when R =/= <<"mastere
 short_of_full(Q) -> Q.
 
 %% A second reading (the plan's calibration): when Muse Spark is unsure of any question, the paper is read again at
-%% high effort. unsure(Qs) says whether it is needed; reconcile(First, Second) keeps each sure question as it is and,
-%% for an unsure one, takes the agreed result at the surer confidence, or, when the two readings differ, the more
-%% cautious result (never "mastered" on a split) at low confidence, first in the teacher's queue.
+%% high effort. unsure(Qs) says whether it is needed; reconcile(First, Second) takes the agreed result at the surer
+%% confidence, or, when the two readings differ, the more cautious result (never "mastered" on a split) at low
+%% confidence, first in the teacher's queue. 3 Nov (judges' panel): that holds for a sure question too. A letter read
+%% at 90% sure as the right one (C where he wrote D) went into "Accept all" with one reading behind it; now two readings
+%% must agree, and a paper with no unsure question is checked by a reading of its answers alone (check_prompt/0).
 -define(UNSURE, 0.7).
 unsure(Qs) -> lists:any(fun(Q) -> num(maps:get(confidence, Q, 1.0)) < ?UNSURE end, Qs).
 
@@ -479,13 +484,14 @@ split(Qs) -> lists:any(fun(Q) -> maps:get(split, Q, false) =:= true end, Qs).
 reconcile(First, Second) ->
     ByN = maps:from_list([{maps:get(n, Q), Q} || Q <- Second]),
     [case {num(maps:get(confidence, Q, 1.0)) < ?UNSURE, maps:get(maps:get(n, Q), ByN, undefined)} of
-         {false, _} -> Q;
-         {true, undefined} -> Q;
+         {_, undefined} -> Q;
+         {false, Q2} when not is_map_key(result, Q2) -> Q;
+         {false, #{result := R}} when R =:= map_get(result, Q) -> Q;
          {true, #{result := R} = Q2} when R =:= map_get(result, Q) ->
              Q#{confidence => max(num(maps:get(confidence, Q, 0)), num(maps:get(confidence, Q2, 0))), read_twice => true};
-         {true, Q2} ->
+         {_, Q2} ->
              %% the first reading's steps stay: they carry SAM's places on the page
-             Cautious = case {maps:get(result, Q), maps:get(result, Q2)} of {<<"mastered">>, _} -> Q2#{steps => maps:get(steps, Q, [])}; _ -> Q end,
+             Cautious = case {maps:get(result, Q), maps:get(result, Q2, <<"not_yet">>)} of {<<"mastered">>, _} -> Q2#{steps => maps:get(steps, Q, [])}; _ -> Q end,
              %% "the work", not "the video": photographed papers and practicals are read the same way (3 Nov, live: a paper said "video")
              Cautious#{confidence => min(0.4, num(maps:get(confidence, Cautious, 0))), read_twice => true, split => true,
                        diagnosis => case maps:get(diagnosis, Cautious, <<>>) of
@@ -493,4 +499,56 @@ reconcile(First, Second) ->
                                         D -> <<D/binary, " (Two readings of the work disagreed: the teacher decides.)">>
                                     end}
      end || Q <- First].
+
+%% The answers-only reading of a paper no question of which was unsure: what the student wrote as each final answer,
+%% nothing else. It is sent after the same prompt and pages, so they come from Meta's prompt cache.
+check_prompt() ->
+    <<"\n\nIGNORE the marking instructions above for this reply. Read the paper again and write down only what the student "
+      "wrote as the final answer to each question (a letter, a number, a word or a short phrase), exactly as written, "
+      "with nothing judged. Return JSON only: {\"questions\":[{\"n\":1,\"final_answer\":\"...\"}]}">>.
+
+%% checked(Qs, Text | error) -> Qs: a short final answer the check read differently is no longer sure (confidence 0.6,
+%% so the full second reading compares it); when the check could not be read, or left a question out, nothing on the
+%% paper is as sure as two readings make it, so none of it joins "Accept all" (below 0.9).
+-define(ACCEPT_ALL, 0.9).
+checked(Qs, error) -> [cap(Q, ?ACCEPT_ALL - 0.01) || Q <- Qs];
+checked(Qs, Text) ->
+    Read = case decode(Text) of
+               #{<<"questions">> := L} when is_list(L) ->
+                   maps:from_list([{N, str(maps:get(<<"final_answer">>, A, <<>>))} || A <- L, is_map(A), N <- [maps:get(<<"n">>, A, none)], is_integer(N)]);
+               _ -> none
+           end,
+    case Read of
+        none -> checked(Qs, error);
+        _ -> [case {maps:get(maps:get(n, Q), Read, missing), str(maps:get(final_answer, Q, <<>>))} of
+                  {missing, _} -> cap(Q, ?ACCEPT_ALL - 0.01);
+                  {Again, Final} ->
+                      case words(Final) > 4 orelse same_answer(Final, Again) of
+                          true -> Q;
+                          false -> (cap(Q, 0.6))#{read_again_as => Again}
+                      end
+              end || Q <- Qs]
+    end.
+
+cap(Q, Max) -> Q#{confidence => min(Max, num(maps:get(confidence, Q, 1.0)))}.
+
+%% the same final answer: the same option letter ("D Cow peas circled" and "D"), or the same letters and digits once
+%% case, spaces and punctuation are set aside, or one of them inside the other
+same_answer(A, B) ->
+    case {option_letter(A), option_letter(B)} of
+        {L, L} when L =/= none -> true;
+        {L1, L2} when L1 =/= none, L2 =/= none -> false;
+        _ ->
+            {NA, NB} = {plain(A), plain(B)},
+            NA =:= NB orelse (byte_size(NA) >= 3 andalso byte_size(NB) >= 3 andalso
+                              (binary:match(NA, NB) =/= nomatch orelse binary:match(NB, NA) =/= nomatch))
+    end.
+
+option_letter(B) ->
+    case re:run(B, <<"^\\s*\\(?([A-Ea-e])(\\)|\\.|\\s|$)">>, [{capture, all_but_first, binary}]) of
+        {match, [L | _]} -> string:uppercase(L);
+        nomatch -> none
+    end.
+
+plain(B) -> iolist_to_binary(re:replace(string:lowercase(B), <<"[^a-z0-9]+">>, <<>>, [global, unicode])).
 

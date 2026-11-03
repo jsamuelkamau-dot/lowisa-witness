@@ -95,11 +95,12 @@ an_unsure_question_is_read_twice_test() ->
     Agree = #{n => 3, result => <<"not_yet">>, confidence => 0.6, steps => [p3], diagnosis => <<"d">>},
     ?assertNot(witness_mark:unsure([Sure])),
     ?assert(witness_mark:unsure([Sure, Unsure])),
-    Second = [Sure#{result => <<"not_yet">>, confidence => 0.9},                          %% a sure first reading is never changed
+    Second = [Sure#{result => <<"not_yet">>, confidence => 0.9},                          %% a sure reading the second contradicts
               #{n => 2, result => <<"part_way">>, confidence => 0.8, steps => [unplaced], diagnosis => <<"Skipped a step.">>},
               #{n => 3, result => <<"not_yet">>, confidence => 0.85}],
     [A, B, C] = witness_mark:reconcile([Sure, Unsure, Agree], Second),
-    ?assertEqual(Sure, A),
+    %% 3 Nov (judges' panel): two readings must agree, sure or not; a contradicted sure reading is a split, never mastered
+    ?assertMatch(#{result := <<"not_yet">>, confidence := 0.4, steps := [a], split := true}, A),
     %% split: never mastered, low confidence, the teacher decides, steps still placed on the page
     ?assertMatch(#{result := <<"part_way">>, confidence := 0.4, steps := [placed], read_twice := true}, B),
     ?assertNotEqual(nomatch, binary:match(maps:get(diagnosis, B), <<"Two readings of the work disagreed">>)),
@@ -139,3 +140,31 @@ a_split_is_decided_by_a_third_reading_test() ->
     [C, _] = witness_mark:decide(Rec, First, Second, []),
     ?assertMatch(#{confidence := 0.4}, C), ?assertNot(maps:is_key(split, C)),
     ?assertNot(witness_mark:split(witness_mark:decide(Rec, First, Second, Third))).
+
+%% 3 Nov (judges' panel): with no unsure question a paper had one reading, so a letter read wrongly at 90% sure went into
+%% "Accept all". A reading of the answers alone checks it: an answer read differently is no longer sure
+a_sure_answer_read_differently_is_no_longer_sure_test() ->
+    Qs = [#{n => 33, result => <<"mastered">>, confidence => 0.9, final_answer => <<"C">>},
+          #{n => 34, result => <<"mastered">>, confidence => 0.95, final_answer => <<"D Cow peas circled">>},
+          #{n => 35, result => <<"mastered">>, confidence => 0.95, final_answer => <<"It helps our clothes to be neat and beautiful">>},
+          #{n => 36, result => <<"mastered">>, confidence => 0.95, final_answer => <<"4 x 400 metres">>},
+          #{n => 37, result => <<"mastered">>, confidence => 0.95, final_answer => <<"Abu">>}],
+    Text = <<"```json\n{\"questions\":[{\"n\":33,\"final_answer\":\"D\"},{\"n\":34,\"final_answer\":\"D\"},"
+             "{\"n\":35,\"final_answer\":\"it helps clothes look neat\"},{\"n\":36,\"final_answer\":\"4x400 metres\"}]}\n```">>,
+    [Q33, Q34, Q35, Q36, Q37] = witness_mark:checked(Qs, Text),
+    %% C against D: unsure now, so the full second reading compares it
+    ?assertMatch(#{confidence := 0.6, read_again_as := <<"D">>}, Q33),
+    ?assert(witness_mark:unsure([Q33])),
+    %% the same letter with its printed words; a long answer in words is left to the full reading; spacing set aside
+    ?assertEqual(0.95, maps:get(confidence, Q34)),
+    ?assertEqual(0.95, maps:get(confidence, Q35)),
+    ?assertEqual(0.95, maps:get(confidence, Q36)),
+    %% a question the check left out is not as sure as two readings make it: kept out of "Accept all"
+    ?assert(maps:get(confidence, Q37) < 0.9),
+    ?assertNot(witness_mark:unsure([Q37])),
+    %% no check at all (it failed): nothing joins "Accept all"
+    ?assert(lists:all(fun(Q) -> maps:get(confidence, Q) < 0.9 end, witness_mark:checked(Qs, error))),
+    ?assert(lists:all(fun(Q) -> maps:get(confidence, Q) < 0.9 end, witness_mark:checked(Qs, <<"no json">>))),
+    ?assert(witness_mark:same_answer(<<"(b) Airtight sack">>, <<"B">>)),
+    ?assertNot(witness_mark:same_answer(<<"B">>, <<"D">>)),
+    ?assertNot(witness_mark:same_answer(<<"iron">>, <<"vitamin D">>)).

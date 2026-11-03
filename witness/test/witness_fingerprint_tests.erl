@@ -83,7 +83,7 @@ the_recorded_learner_c_reply_names_nothing_while_lo_asks_test() ->
     %% the final answer alone is no evidence; the intuition is the student's own line
     ?assertEqual([<<"Half up, half down. Same price.">>], maps:get(evidence, F)),
     %% the diagnosis says only what the page shows (the reasoning itself can name the guess); the one-idea reading waits
-    ?assertEqual(<<"The page shows the answer A $100 but not which calculation led to it. Lo asks first.">>, maps:get(diagnosis, Q)),
+    ?assertEqual(<<"The page shows the answer A $100 but not how it was reached. Lo asks first.">>, maps:get(diagnosis, Q)),
     ?assertEqual(<<"Thought a 50% increase and a 50% decrease cancel to return to the original price.">>, maps:get(diagnosis_draft, Q)).
 
 %% evidence the model wrote itself is not the student's ink: the label goes, Lo asks
@@ -107,7 +107,7 @@ the_settled_fingerprint_becomes_the_diagnosis_test() ->
         "\"misconception\":\"second change taken of the original amount\",\"intervention\":\"Find the base.\",\"ask\":\"\"}">>),
     Q1 = witness_fingerprint:answer(Q, <<"Both halves of 100.">>, Read, 2),
     ?assertEqual(<<"second change taken of the original amount">>, maps:get(diagnosis, Q1)),
-    ?assertEqual(<<"The page shows the answer $100 but not which calculation led to it. Lo asks first.">>, maps:get(diagnosis_first, Q1)),
+    ?assertEqual(<<"The page shows the answer $100 but not how it was reached. Lo asks first.">>, maps:get(diagnosis_first, Q1)),
     ?assertNot(maps:is_key(possible, maps:get(fingerprint, Q1))),
     %% a reply that names an idea and still asks names nothing yet
     {ok, Unsure} = witness_fingerprint:parse(<<"{\"reasoning\":\"r\",\"evidence\":[\"said: x\"],\"misconception\":\"m\",\"intervention\":\"\",\"ask\":\"And then?\"}">>),
@@ -226,3 +226,16 @@ part_way_never_holds_every_mark_test() ->
     ?assertMatch(#{marks := 2, out_of := 3}, B),
     ?assertMatch(#{marks := 1, out_of := 1}, C),
     ?assertMatch(#{marks := 1, out_of := 2}, D).
+
+%% a recalled answer in a non-maths subject: the note says the page lacks how it was reached, never a "calculation"
+%% (3 Nov, judges' panel: "not which calculation led to it" was written on a creative-arts answer)
+a_recalled_answer_is_held_without_talk_of_calculation_test() ->
+    J = #{<<"questions">> => [#{<<"n">> => 28, <<"final_answer">> => <<"Digo community">>, <<"result">> => <<"not_yet">>, <<"marks">> => 0, <<"out_of">> => 1,
+            <<"steps">> => [#{<<"wrote">> => <<"Digo community">>}],
+            <<"diagnosis">> => <<"Named the wrong community for the Olwika.">>, <<"confidence">> => 0.8,
+            <<"fingerprint">> => #{<<"ask">> => <<>>, <<"evidence">> => [<<"Digo community">>],
+                                   <<"misconception">> => <<"instruments belong to the coast">>, <<"reasoning">> => <<"Guessed from a coastal horn.">>}}]},
+    {ok, #{questions := [Q]}} = witness_mark:parse(iolist_to_binary(json:encode(J))),
+    ?assertEqual(<<"Only the answer Digo community is on the page, not how it was reached. Lo asks first.">>, maps:get(diagnosis, Q)),
+    ?assertEqual(nomatch, binary:match(maps:get(diagnosis, Q), <<"calculation">>)),
+    ?assertEqual(<<>>, maps:get(misconception, maps:get(fingerprint, Q))).

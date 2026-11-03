@@ -189,8 +189,11 @@ a_long_paper_is_marked_in_parts_at_once_test() ->
     ?assertEqual(lists:seq(1, 30), [maps:get(n, X) || X <- maps:get(questions, M)]),
     ?assertMatch(#{parts := 3, read_twice := true, student := #{name := <<"Amani">>}}, M),
     Reads = lists:sort(fun(A, B) -> A =< B end, [R || R <- flush_reads()]),
-    ?assertEqual([{1, <<"medium">>}, {11, <<"high">>}, {11, <<"medium">>}, {21, <<"medium">>}], [{F, E} || {read, F, E, _} <- Reads]),
-    ?assert(lists:all(fun({read, _, _, Imgs}) -> Imgs =:= 4 end, Reads)),          % every part sees both pages
+    %% the parts with no unsure question are checked by a reading of their answers alone (3 Nov: two readings must agree)
+    ?assertEqual([{1, <<"low">>}, {1, <<"medium">>}, {11, <<"high">>}, {11, <<"medium">>}, {21, <<"low">>}, {21, <<"medium">>}],
+                 [{F, E} || {read, F, E, _} <- Reads]),
+    %% every part sees both pages; the answers-only check adds its own instruction after them
+    ?assert(lists:all(fun({read, _, E, Imgs}) -> Imgs =:= 4 + case E of <<"low">> -> 1; _ -> 0 end end, Reads)),
     ?assert(Ms < 900),                                                                % the parts ran at once (3 x 200 ms read + one reread)
     %% a one-page paper is one reading, however many questions it has (the physics page: no faster in parts)
     {ok, M1} = witness_photo:mark(k, [hd(Pages)], #{question_count => 30}, Opts),
@@ -469,3 +472,27 @@ no_scheme_gives_a_right_question_all_its_marks_test() ->
      end || Prompt <- [fun witness_photo:prompt/1, fun witness_mark:prompt/1]],
     %% and the scheme, when given, is still what is followed
     ?assertNotEqual(nomatch, binary:match(witness_photo:prompt(S#{scheme => <<"Q1: x = 4 (2)">>}), <<"follow it exactly">>)).
+
+%% 3 Nov (judges' panel; the real student's science Q33, his D read as C at 90%): on a paper with no unsure question the
+%% answers-only check reads the letter again; read differently, the paper is read in full again and the third reading
+%% decides, so the misread letter is never accepted as mastered
+a_letter_read_differently_is_read_again_before_it_is_accepted_test() ->
+    Self = self(),
+    Q = fun(Final, Result, C) -> #{<<"n">> => 33, <<"final_answer">> => Final, <<"result">> => Result, <<"marks">> => 0,
+                                   <<"out_of">> => 1, <<"confidence">> => C, <<"steps">> => [#{<<"wrote">> => Final}]} end,
+    Read = fun(_K, _Content, Effort) ->
+        Self ! {effort, Effort},
+        Qs = case Effort of
+            <<"medium">> -> [(Q(<<"C">>, <<"mastered">>, 0.95))#{<<"marks">> => 1}];
+            <<"low">> -> [#{<<"n">> => 33, <<"final_answer">> => <<"D">>}];
+            <<"high">> -> [Q(<<"D">>, <<"not_yet">>, 0.9)]
+        end,
+        {ok, iolist_to_binary(json:encode(#{<<"questions">> => Qs})), #{}}
+    end,
+    Opts = #{fetch => fun(_) -> {ok, <<255, 216>>} end, read => Read, gray => fun(_) -> {error, none} end, tint => fun(_) -> none end,
+             price => {price, {0.0, 0.0}}},
+    {ok, #{questions := [Q33]} = M} = witness_photo:mark(k, [#{n => 1, url => <<"u1">>}], #{}, Opts),
+    ?assertMatch(#{result := <<"not_yet">>, read_thrice := true}, Q33),
+    ?assertMatch(#{checked := true, read_twice := true}, M),
+    Efforts = (fun F() -> receive {effort, E} -> [E | F()] after 0 -> [] end end)(),
+    ?assertEqual([<<"medium">>, <<"low">>, <<"high">>, <<"high">>], Efforts).
