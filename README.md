@@ -27,17 +27,19 @@ who now works with AI.** LoWisa's mission is to strengthen it, in four areas:
 | **3. How we think, not what we answer**: seven thinking capabilities (pattern recognition, probability and uncertainty, optimization, systems thinking, trade-offs, decision-making, root-cause analysis) | AI hands over answers, so the thinking behind them weakens | Lo never gives the answer first. The student predicts with their own idea, sees it tested, and explains it; each question is tagged with the capability it needs |
 | **4. Repetition, so it lasts** | Crammed for the exam, forgotten after it | The exam question comes back inside the level, and a re-check on the same idea arrives days later; LoWisa's own flashcards and Insight mode replay the student's lessons |
 
-**What we do: make AI useful for thinking, and so answer the fear.** The same AI people fear can find where a
-learner's thinking broke down and make them think again, without ever thinking for them. A failed question should not
-be a verdict. It should be the start of building real capability.
+**What we do: make AI useful for thinking, and so answer the fear.** What if the very AI we fear could weaken our
+thinking became a tool to strengthen it? The same AI can find where a learner's thinking broke down and make them think
+again, without ever thinking for them. A failed question should not be a verdict. It should be the start of building
+real capability.
 
 ## Introducing From Exam to Mastery
 
 **Built for this hackathon, inside LoWisa, powered by Meta's models: a way to turn every failed question into a moment
 of discovery. Confusion into understanding. Understanding into practice. And practice into the confidence and ability
-to solve real-world problems.**
+to solve real-world problems. Because a wrong answer should never define someone's ability.**
 
-**The 3-minute film:** [`evidence/film/exam-to-mastery.mp4`](evidence/film/exam-to-mastery.mp4) (2:57). Section 2 walks
+**The 3-minute film:** [`evidence/film/exam-to-mastery.mp4`](evidence/film/exam-to-mastery.mp4) (2:57). Its first
+37 seconds are a short version of the problem above, so the rest can show the product working; section 2 walks
 through it frame by frame.
 
 - **What it does.** A teacher photographs a finished exam. Meta's models mark every answer and read *how* the student
