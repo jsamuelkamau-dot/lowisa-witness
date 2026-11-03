@@ -21,5 +21,5 @@ They run on the build machine: the earlier cuts' drawing engine, the phone recor
 fonts are not in this repository, so the paths in them are that machine's.
 
 ```bash
-VOICE=gordon VO_TEMPO=1.04 python build11.py
+VOICE=gordon VO_TEMPO=1.11 python build11.py
 ```

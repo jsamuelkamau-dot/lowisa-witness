@@ -16,6 +16,9 @@ EDIT = [
     dict(line='dt1', kind='teacher', tag=TAG_BUILT, chip=('The teacher', 'decides what reaches the student'), hold=0.2),
     dict(line='g0', kind='clip', src=FL2, a=10.1, b=17.9, zoom=(0.36, 0.65), zoom_hold=10.9, tag=TAG_LO, chip=LO_CHIP, side=('1 · First look', 'The heavy log floats;', 'the light coin sinks.'),
          say='A 200-kilogram log stays on top of water. A 5-gram coin drops to the bottom. So floating cannot mean simply light things float.'),
+    # owner 4 Nov: straight after the first look, Lo's "Let's ask ourselves" question (the cargo ship), back from v10; Gordon quicker to fit
+    dict(kind='clip', src=TRY, a=98.8, b=106.6, zoom=(0.33, 0.73), tag=TAG_LO, chip=LO_CHIP, side=('2 · Let’s ask ourselves', 'From the pond to a cargo ship', None),
+         say='Let’s ask ourselves: when a cargo ship is loaded, how do crews know how deep it may sit before the waterline becomes unsafe?'),
     # v11c (round-6 panel): the sliders beat is LoWisa's older player feature; its time goes to Muse Wonder holding a level
     dict(line='g4', over=True, kind='clip', src=Q24P, a=4.2, b=13.8, say_from=10.2, zoom=(0.05, 0.42), zoom2=(0.64, 0.99), zoom_at=9.75, tag=TAG_LO, chip=LO_CHIP, side=('3 · Question 24 comes back', 'Lesson 2: he chooses', 'the balance. Exactly right.'),
          say='Ship shape moves enough water to match its weight.', hold=2.2),

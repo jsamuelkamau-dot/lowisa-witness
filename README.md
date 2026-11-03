@@ -14,7 +14,7 @@
 >   written answers it agrees with the teacher about as often as marking everything right would (36–38 of 42, against
 >   38); there it never names a wrong idea, and asks him first instead (the Measured table).
 > - **Try it in a minute, no account and no key:** `node demo/desk-server.js --replay`, then http://localhost:4747. The
->   2:58 film and the measured results follow the introduction below.
+>   2:59 film and the measured results follow the introduction below.
 
 ## The Problem We Solve: Protecting and Strengthening Human Cognitive Ability
 
@@ -115,9 +115,9 @@ of discovery. Confusion into understanding. Understanding into practice. And pra
 to solve real-world problems. Because a wrong answer should never define someone's ability.** This is what the four
 areas above look like when they run, on a real exam, today.
 
-**The 3-minute film:** [`evidence/film/exam-to-mastery.mp4`](evidence/film/exam-to-mastery.mp4) (2:58; every word with
+**The 3-minute film:** [`evidence/film/exam-to-mastery.mp4`](evidence/film/exam-to-mastery.mp4) (2:59; every word with
 its time and on-screen label: [`transcript.md`](evidence/film/transcript.md)). Its first 30 seconds are a short version
-of the problem above; then it follows one student's failed question to mastery (0:30–2:05), with four of Meta's models
+of the problem above; then it follows one student's failed question to mastery (0:28–2:09), with four of Meta's models
 on screen, and ends on a real Grade 5 student and the rest of the loop. Section 2 walks through it frame by frame.
 
 > **Judge it in 2 minutes**
@@ -327,7 +327,7 @@ These are the four areas of the opening table, applied to one exam:
 
 ## 2. The demo, frame by frame: one failed question to mastery
 
-These frames are from the film ([`evidence/film/exam-to-mastery.mp4`](evidence/film/exam-to-mastery.mp4), 2:58; every
+These frames are from the film ([`evidence/film/exam-to-mastery.mp4`](evidence/film/exam-to-mastery.mp4), 2:59; every
 word, with its time and the label on screen: [`evidence/film/transcript.md`](evidence/film/transcript.md), subtitles
 [`exam-to-mastery.srt`](evidence/film/exam-to-mastery.srt)). Daniel Kwan is a sample student: his physics paper (30
 questions) was written for the demo, and nothing in the code or the prompts names it. His story runs first and
@@ -365,21 +365,21 @@ own words comes from the teacher's challenge (section 3.6).
 | ![Muse Wonder holds a test level that says a false thing](evidence/film/04f-held-and-rewritten.jpg) | ![Days later, the re-check; then Turned around](evidence/film/11-it-lasted.jpg) |
 | **A level that would teach something false is held**, and rewritten with the fix Muse Wonder names (a test level with a planted false claim; 30 of 30 planted faults held) | **It lasted.** Days later a fresh question on the same idea, then the teacher's "Turned around" (on another sample learner, maths: the same loop) |
 
-**Every second of the film, and what it shows** (2:58):
+**Every second of the film, and what it shows** (2:59):
 
 | Time | On screen | Label | New this week? |
 |---|---|---|---|
-| 0:00–0:30 | The problem (human cognitive ability); his paper marked by hand; the name and the four Meta models | sample paper; the film's cards | The cards are the film's own; the paper is a prop made for the demo |
-| 0:30–0:45 | "Instead of a teacher marking every paper like this, by hand", then Muse Spark's marks landing on his photographed paper | sample paper; built this week · Muse Spark's returned marks, drawn on the photo | **New.** Each mark is the result Muse Spark returned for that question |
-| 0:45–1:11 | His Mastery Plan; question 24, with a moment to think; the desk's fingerprint, with his own words as evidence; Lo asks first on "Joules" | built this week | **New** |
-| 1:11–1:37 | Muse Wonder's two plays; Muse Image's drawn step; the teacher's desk | built this week | **New** |
-| 1:37–1:59 | Lo teaching the level: the first look (the log floats, the coin sinks), question 24 again | LoWisa · a level written this week | The player and Lo's voice are LoWisa's; the level, written from his answer by Muse Spark and checked by Muse Wonder, is new |
-| 1:59–2:05 | Before and after | sample paper | A summary card written by us |
-| 2:05–2:17 | A real Grade 5 student's sheet, as his teacher marked it and as it was sent; then one question caught (Q11, Lo asks first) and one honest miss (Q24, marked right where his teacher marked it wrong) | built this week | **New:** section 7 |
-| 2:17–2:50 | A spoken answer written down by Muse Voice Transcribe, then the desk naming the idea from his own words; Muse Wonder holding a test level with a false claim; the re-check days later, and "Turned around" | built this week · another sample learner; a test level | **New**. The spoken answer is another sample learner's, read by a synthetic voice |
-| 2:50–2:58 | The end card: the six Meta models, each checked by another and by code, the replay command, and where to get LoWisa (Google Play, the App Store and the desktop) | | |
+| 0:00–0:28 | The problem (human cognitive ability); his paper marked by hand; the name and the four Meta models | sample paper; the film's cards | The cards are the film's own; the paper is a prop made for the demo |
+| 0:28–0:43 | "Instead of a teacher marking every paper like this, by hand", then Muse Spark's marks landing on his photographed paper | sample paper; built this week · Muse Spark's returned marks, drawn on the photo | **New.** Each mark is the result Muse Spark returned for that question |
+| 0:43–1:08 | His Mastery Plan; question 24, with a moment to think; the desk's fingerprint, with his own words as evidence; Lo asks first on "Joules" | built this week | **New** |
+| 1:08–1:33 | Muse Wonder's two plays; Muse Image's drawn step; the teacher's desk | built this week | **New** |
+| 1:33–2:03 | Lo teaching the level: the first look (the log floats, the coin sinks), Lo's question "Let's ask ourselves" (how deep a loaded cargo ship may sit), question 24 again | LoWisa · a level written this week | The player and Lo's voice are LoWisa's; the level, written from his answer by Muse Spark and checked by Muse Wonder, is new |
+| 2:03–2:09 | Before and after | sample paper | A summary card written by us |
+| 2:09–2:20 | A real Grade 5 student's sheet, as his teacher marked it and as it was sent; then one question caught (Q11, Lo asks first) and one honest miss (Q24, marked right where his teacher marked it wrong) | built this week | **New:** section 7 |
+| 2:20–2:51 | A spoken answer written down by Muse Voice Transcribe, then the desk naming the idea from his own words; Muse Wonder holding a test level with a false claim; the re-check days later, and "Turned around" | built this week · another sample learner; a test level | **New**. The spoken answer is another sample learner's, read by a synthetic voice |
+| 2:51–2:59 | The end card: the six Meta models, each checked by another and by code, the replay command, and where to get LoWisa (Google Play, the App Store and the desktop) | | |
 
-In all, about 1:48 shows work built this week and 22 s shows LoWisa's player playing a level written this week; the
+In all, about 1:44 shows work built this week and 30 s shows LoWisa's player playing a level written this week; the
 rest are the opening cards, the sample paper, before and after, and the end. Four of Meta's models are on screen (Muse
 Spark, Muse Wonder, Muse Voice Transcribe, Muse Image); SAM 3.1 works in the optional desk-filming path (section 4).
 
@@ -885,7 +885,7 @@ Look at it without an account: `node demo/desk-server.js --replay`. It is this e
 | **Impact** | The problem is human cognitive ability: a fear millions already feel about AI, joined to a problem education has not solved for generations (a failed exam that teaches nothing). This uses AI to strengthen it in four areas (from failure to capability, from knowledge to real-world application, from AI answers to independent thinking, from memorising to lasting mastery): a failed question becomes a level built on the student's own mistake that ends in a real task, and a teacher of forty checks instead of marking. Measured against one real student's own teacher; not yet proven in a classroom pilot | the opening, sections 1, 2, 5, 7; limits in 16; plans in 17 |
 | **Use of Meta's models** | Muse Spark reads the *reasoning* in handwriting and code checks its diagnosis against the lines it read; Muse Wonder plays every level as the student first; five models measured, in a gated pipeline of agents with code-checked hand-offs | sections 3, 4; `harness/FINDINGS.md` |
 | **Technical depth** | The evidence rule in code, measured blind and on the shipped code; handwriting placed on the page by dynamic programming (64 of 64 lines, against SAM 3.1's 52); Erlang/OTP with conditional writes, per-route daily ceilings, roles; 152 library tests; sixteen problems found by testing and how each was solved, from sideways pages to a safety check that failed open | sections 6, 7, 10, 11, 15 |
-| **Demo** | One failed question from photo to mastery: Muse Spark's marks landing on the page, the idea quoted from his own words, Lo asks first with a spoken answer, Muse Wonder's two plays, Muse Image's drawn step, the teacher's desk, the re-check; a real Grade 5 student's result against its baseline. Four Meta models on screen, about 1:48 of this week's work, every shot labelled, a word-for-word transcript; judges can try it in a minute with no account | sections 2, 12; `evidence/film/transcript.md` |
+| **Demo** | One failed question from photo to mastery: Muse Spark's marks landing on the page, the idea quoted from his own words, Lo asks first with a spoken answer, Muse Wonder's two plays, Muse Image's drawn step, the teacher's desk, the re-check; a real Grade 5 student's result against its baseline. Four Meta models on screen, about 1:44 of this week's work, every shot labelled, a word-for-word transcript; judges can try it in a minute with no account | sections 2, 12; `evidence/film/transcript.md` |
 
 ## 10. Architecture
 
