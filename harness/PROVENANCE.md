@@ -23,3 +23,15 @@ runs, never as the headline (see `harness/heldout/README.md`), with one exceptio
 | `harness/heldout/results/v2-held-out-3-runs.json`, v2's **blind first run** (31 Oct) | `ab0e88a`, dirty | It ran on the working copy before the evidence rule's next change was committed, so its exact code is not in the history. It is shown as the blind result *beside* the clean run on the code that ships (`v2-on-shipped-code-3-runs.json`, `0b7502c`, clean), which is the headline. |
 | `evidence/unseen-physics/hard-ask-papers-5-runs-old-rule.json` (31 Oct) | `fatal: not a git repository`, dirty | It ran from a copy of the old rule outside this repository, to compare it with the new rule; the commit could not be read there. It is a development run. |
 | `harness/probes/results-31oct/`, `harness/probes/results-03nov/` | `run_at` only | Live probes of Meta's API; no marking code is measured. |
+
+## The tagged code, `v1.0-code` (3 Nov)
+
+Every headline set was run again on one tagged commit, `v1.0-code` (`8d3b44a`; its `witness/` is the same as `d221731`,
+live as edge vb1104f): two readings must agree before "Accept all", and the held note says "how it was reached".
+
+| Result | Where it ran | Note |
+|---|---|---|
+| `evidence/real-handwriting/results/condition-c-on-v1.0-code-3-runs.json` | the live edge vb1104f | three runs |
+| `evidence/real-handwriting/results/written-answers-on-v1.0-code-3-runs.json` | the live edge vb1104f | three runs |
+| `harness/heldout/results/v2-on-v1.0-code-3-runs.json` | locally, `fingerprint_eval.escript` | its meta says `7475ba1`: a later commit (the film) made while it ran; `git diff 8d3b44a 7475ba1 -- witness` is empty |
+| `evidence/unseen-physics/v1.0-code-3-runs.json` | locally, `local_mark.escript` | with a scheme once, without twice (one is the marking the film shows) |

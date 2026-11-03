@@ -192,3 +192,9 @@ From the teacher's PDF to the re-check, on a fresh exam (README §5). Fixed the 
   (`evidence/real-handwriting/results/written-answers-3-runs.json`). Two things found: an answer squeezed onto the
   printed lines was read as crossed out once the ink was removed, and when two readings split, the note to the teacher
   said "Two readings of the video disagreed" on a photographed paper. The wording is now "of the work" (with the tests).
+- **Every headline set again on the tagged code `v1.0-code`** (two readings before "Accept all"). The real student's
+  multiple choice: 105, 104, 104 of 109; no idea named on any answer not accepted in any run (0 of 24; 4 named on the
+  earlier code). His written answers: 39, 37, 38 of 42; 18 of 18 not accepted held. Held-out v2: Lo asks first 40 of
+  42, a wrong idea named 2 of 42 (3 before), named right 42 of 48 (44 before), at $3.71 for 159 markings ($2.61 before)
+  and a median 22 s (13 s). Physics: 90 of 90 decisions. The answers-only reading caught his misread science Q33 in one
+  run of three; in the other two both readings read the same wrong letter.

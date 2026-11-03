@@ -43,7 +43,7 @@ def wilson(k, n, z=1.96):
     d = 1 + z * z / n
     c = (p + z * z / (2 * n)) / d
     h = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d
-    return [round(c - h, 2), round(c + h, 2)]
+    return [max(0.0, round(c - h, 2)), min(1.0, round(c + h, 2))]
 
 
 def scored(subject_rows):
@@ -111,6 +111,15 @@ def main():
             line(f'Written answers run {run["run"]}', run['papers'])
             held('', run['papers'])
         by_question('Written answers', w['runs'])
+    # 3 Nov: both sets again on the tagged code v1.0-code (two readings must agree before Accept all)
+    for name, f in (('C on v1.0-code', 'condition-c-on-v1.0-code-3-runs.json'), ('Written on v1.0-code', 'written-answers-on-v1.0-code-3-runs.json')):
+        path = os.path.join(HERE, 'results', f)
+        if os.path.exists(path):
+            t = json.load(open(path, encoding='utf-8'))
+            for run in t['runs']:
+                line(f'{name} run {run["run"]}', run['papers'])
+                held('', run['papers'])
+            by_question(name, t['runs'])
 
 
 if __name__ == '__main__':

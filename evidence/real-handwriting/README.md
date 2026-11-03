@@ -76,6 +76,16 @@ was named from the choice alone on 4 of the 26 answers it did not accept, over t
 from the wrong place on a sideways page, and read an unclear letter on Q12 as the right one. B, turned by hand, caught
 both; C, with the server turning the pages itself, catches both in every run.
 
+## Again on the tagged code `v1.0-code`
+
+Both sets were run three more times on 3 Nov on the tagged code (edge vb1104f: two readings must agree before "Accept
+all"): [`results/condition-c-on-v1.0-code-3-runs.json`](results/condition-c-on-v1.0-code-3-runs.json) and
+[`results/written-answers-on-v1.0-code-3-runs.json`](results/written-answers-on-v1.0-code-3-runs.json); `score.py` prints
+both. Multiple choice: 105, 104, 104 of 109 agree; 7, 6, 7 of 10 wrong answers caught; **no idea named on any answer not
+accepted, in any run**. Written answers: 39, 37, 38 of 42; 3 of 4 caught; all 18 not accepted held for Lo to ask. His
+misread science Q33 was caught by the answers-only reading once (run 3: read as D, kept out of "Accept all"); in runs 1
+and 2 both readings read the same wrong letter.
+
 ## His written answers: 42 questions, no marking scheme
 
 The papers above are multiple choice. These are his own words: short written answers, a sequence, a list, a music

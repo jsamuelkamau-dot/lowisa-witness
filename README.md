@@ -63,11 +63,11 @@ through it frame by frame.
 
 | What was tested | Result | Raw results |
 |---|---|---|
-| A real Grade 5 student's three multiple-choice papers, against his own teacher's marks, on the code that ships (photos as taken, three of them sideways) | **7 of his teacher's 10 wrong answers caught in each of three runs** (6 of the 10 in every run); 105, 103 and 105 of 109 agree, where marking everything right would agree on 99; kappa 0.67–0.76 | [`condition-c-shipped-code-3-runs.json`](evidence/real-handwriting/results/condition-c-shipped-code-3-runs.json), `python3 evidence/real-handwriting/score.py` |
-| The same student's **written answers** (42 questions, three more papers, no marking scheme), three runs | **Every answer it did not accept was held for Lo to ask, with no wrong idea named: 19 of 19** (7 questions); 3 of his teacher's 4 wrong answers caught in every run; 37, 38 and 38 of 42 agree, where marking everything right would agree on 38 | [`written-answers-3-runs.json`](evidence/real-handwriting/results/written-answers-3-runs.json), the same script |
-| A physics exam it had never seen, six live runs | **180 of 180** marking decisions right | [`evidence/unseen-physics/`](evidence/unseen-physics/README.md) |
-| 53 held-out papers × 3 runs: ink that cannot show the idea | Lo asks first **39 of 42**; a wrong idea named 3 of 42 (the harmful error) | [`v2-on-shipped-code-3-runs.json`](harness/heldout/results/v2-on-shipped-code-3-runs.json) |
-| … ink that shows the idea; right work; instructions written in the ink | named right **44 of 48**; mastered **39 of 39**; never obeyed **30 of 30** | the same file |
+| A real Grade 5 student's three multiple-choice papers, against his own teacher's marks, on the tagged code `v1.0-code` (photos as taken, three of them sideways) | **7, 6 and 7 of his teacher's 10 wrong answers caught over three runs** (6 of the 10 in every run); **no wrong idea named in any run** (0 of 24 answers not accepted); 105, 104 and 104 of 109 agree, where marking everything right would agree on 99 | [`condition-c-on-v1.0-code-3-runs.json`](evidence/real-handwriting/results/condition-c-on-v1.0-code-3-runs.json), `python3 evidence/real-handwriting/score.py` |
+| The same student's **written answers** (42 questions, three more papers, no marking scheme), three runs on `v1.0-code` | **Every answer it did not accept was held for Lo to ask, with no wrong idea named: 18 of 18** (19 of 19 on the earlier code); 3 of his teacher's 4 wrong answers caught in every run; 39, 37 and 38 of 42 agree, where marking everything right would agree on 38 | [`written-answers-on-v1.0-code-3-runs.json`](evidence/real-handwriting/results/written-answers-on-v1.0-code-3-runs.json), the same script |
+| A physics exam it had never seen: six live runs, then three on `v1.0-code` | **180 of 180** marking decisions right, then **90 of 90** on the tagged code (with and without a mark scheme) | [`evidence/unseen-physics/`](evidence/unseen-physics/README.md), `python3 -X utf8 evidence/unseen-physics/score.py` |
+| 53 held-out papers × 3 runs on `v1.0-code`: ink that cannot show the idea | Lo asks first **40 of 42**; a wrong idea named 2 of 42 (the harmful error) | [`v2-on-v1.0-code-3-runs.json`](harness/heldout/results/v2-on-v1.0-code-3-runs.json) |
+| … ink that shows the idea; right work; instructions written in the ink | named right **42 of 48** (3 named a different idea); mastered **39 of 39**; never obeyed **30 of 30** | the same file |
 | Muse Wonder playing each level as the student first (20 levels × 3 runs) | planted faults held **30 of 30**; false claims found **9 of 9** | [`selfcheck-3-runs.json`](harness/selfcheck/results/selfcheck-3-runs.json) |
 | A class of 40 | all marked in **32 s** for **$1.01** | [`class-of-40.json`](harness/class/results/class-of-40.json) |
 | Phone photos taken sideways or upside down (4 papers × 3 runs) | **45 of 45** pages turned the right way up | [`orient-03nov.json`](harness/orient/results/orient-03nov.json) |
@@ -410,7 +410,7 @@ a spoken answer written down by Muse Voice Transcribe ([`voice-transcribe.png`](
 | One prompt-cache key per paper, for every reading of it | every page sent again at full price | a second reading **99.8% cached** (one probe) | [`harness/probes/results-31oct/`](harness/probes/results-31oct/) |
 | Room to reason, for Muse Wonder | at 4,000 output tokens it spent 3,998 reasoning and returned no verdict | medium effort with 16,000 tokens: a verdict every time | section 15, [`harness/FINDINGS.md`](harness/FINDINGS.md) |
 | Muse Wonder as a simulated learner | — | planted faults held **30 of 30**, false claims found **9 of 9** | [`selfcheck-3-runs.json`](harness/selfcheck/results/selfcheck-3-runs.json) |
-| Two readings must agree before "Accept all" (3 Nov) | a letter misread at 90% sure was accepted with one reading (the real student's science Q33) | every short answer read twice; measured on the re-runs in section 7 | `witness_mark:checked/2`, `witness/test/witness_photo_tests.erl` |
+| Two readings must agree before "Accept all" (3 Nov) | a letter misread at 90% sure was accepted with one reading (the real student's science Q33) | every short answer read twice: it caught that misread letter in 1 of 3 runs on the tagged code (in the other two both readings read the same wrong letter); the cost of a held-out marking rose from $0.016 to $0.023 | [`condition-c-on-v1.0-code-3-runs.json`](evidence/real-handwriting/results/condition-c-on-v1.0-code-3-runs.json), `witness_mark:checked/2` |
 
 **Beyond a basic integration**
 - **Meta's models check each other, with code between them.** Muse Spark reads and diagnoses; code checks every quote
@@ -571,12 +571,13 @@ publication, his name included (the written consent is available if required); w
 class and student number. We removed the
 teacher's red ink by colour so the model could not copy his ticks, then the live product's photo path marked each paper.
 
-| | A: as photographed | B: sideways pages turned upright by hand | C: the code that ships, 3 runs |
-|---|---|---|---|
-| Witness agrees with the teacher | 102 of 109 | 105 of 109 | **105, 103, 105 of 109** |
-| The teacher's wrong answers Witness also caught | 4 of 10 | 7 of 10 | **7 of 10** every run |
-| Right by the teacher, wrong by Witness | 1 | 1 | 1, 3, 1 |
-| Cohen's kappa | 0.50 | 0.76 | 0.67–0.76 |
+| | A: as photographed | B: sideways pages turned upright by hand | C: 3 runs (`a1be423`) | C again on `v1.0-code`, 3 runs |
+|---|---|---|---|---|
+| Witness agrees with the teacher | 102 of 109 | 105 of 109 | 105, 103, 105 of 109 | **105, 104, 104 of 109** |
+| The teacher's wrong answers Witness also caught | 4 of 10 | 7 of 10 | 7 of 10 every run | **7, 6, 7 of 10** |
+| Right by the teacher, wrong by Witness | 1 | 1 | 1, 3, 1 | 1, 1, 2 |
+| A wrong idea named on an answer not accepted | | | 0, 1, 3 | **0, 0, 0** |
+| Cohen's kappa | 0.50 | 0.76 | 0.67–0.76 | 0.68–0.76 |
 
 Three of the nine question pages were photographed sideways, and that is where A lost most. B turned them by hand to
 measure what turning would gain; C is the product doing it itself (it stored the sideways page upright in 9 of 9
@@ -585,6 +586,12 @@ answers caught: 7 of 10 in each run (95% interval 40–89%); by question, 6 of t
 named from the circled option alone, which the evidence rule should have held. It is fixed in `6611ef2` and the four are
 held (section 15). Every question, every run, the disagreements and the sheets the teacher marked:
 [`evidence/real-handwriting/`](evidence/real-handwriting/README.md).
+
+**Again on the tagged code `v1.0-code`** (edge vb1104f, 3 Nov): no idea was named on any answer it did not accept, in
+any run (the circled-option fix, live). The new rule that two readings must agree before "Accept all" caught his
+misread letter on science Q33 once: in run 3 the answers-only reading read his D, the question became unsure and was
+kept out of "Accept all". In runs 1 and 2 both readings read the same wrong letter, which a second reading cannot
+catch; the teacher's review is what remains for that.
 
 **His written answers.** Three more of his papers (creative arts twice, integrated science: 42 questions, 30 of them
 written answers or drawings) were marked the same way, three runs, with **no marking scheme given**: **37, 38 and 38 of
@@ -629,17 +636,19 @@ Scoring is strict: the name itself must carry a key, and an "ask" passes only wh
 was then changed twice, partly after seeing that run, so every later v2 run has seen v2: **v2 is now a second
 development set.** A prompt example that resembled one v2 item was replaced on 3 Nov. Both are shown, with 95% intervals:
 
-| v2: 53 papers × 3 runs | Blind first run, 31 Oct ([`v2-held-out-3-runs.json`](harness/heldout/results/v2-held-out-3-runs.json)) | The code that ships, 3 Nov ([`v2-on-shipped-code-3-runs.json`](harness/heldout/results/v2-on-shipped-code-3-runs.json)) |
-|---|---|---|
-| Right work marked mastered | **39 of 39** | **39 of 39** (91–100%) |
-| Instructions in the ink, never marked mastered | **30 of 30** | **30 of 30** (89–100%) |
-| Ink that cannot tell the idea: Lo asks | **39 of 42** | **39 of 42** (81–97%) |
-| … a wrong idea named instead (the harmful error) | 3 of 42 | 3 of 42 (3–19%) |
-| Ink that shows the idea: named right | **41 of 48** | **44 of 48** (80–97%) |
-| … named, but a different idea | 4 of 48 | 1 of 48 |
-| … asked first instead (cautious) | 3 of 48 | 3 of 48 |
+| v2: 53 papers × 3 runs | Blind first run, 31 Oct ([`v2-held-out-3-runs.json`](harness/heldout/results/v2-held-out-3-runs.json)) | 3 Nov, `0b7502c` ([`v2-on-shipped-code-3-runs.json`](harness/heldout/results/v2-on-shipped-code-3-runs.json)) | 3 Nov, the tagged code `v1.0-code` ([`v2-on-v1.0-code-3-runs.json`](harness/heldout/results/v2-on-v1.0-code-3-runs.json)) |
+|---|---|---|---|
+| Right work marked mastered | **39 of 39** | **39 of 39** (91–100%) | **39 of 39** (91–100%) |
+| Instructions in the ink, never marked mastered | **30 of 30** | **30 of 30** (89–100%) | **30 of 30** (89–100%) |
+| Ink that cannot tell the idea: Lo asks | **39 of 42** | **39 of 42** (81–97%) | **40 of 42** (84–99%) |
+| … a wrong idea named instead (the harmful error) | 3 of 42 | 3 of 42 (3–19%) | 2 of 42 (1–16%) |
+| Ink that shows the idea: named right | **41 of 48** | **44 of 48** (80–97%) | **42 of 48** (75–94%) |
+| … named, but a different idea | 4 of 48 | 1 of 48 | 3 of 48 |
+| … asked first instead (cautious) | 3 of 48 | 3 of 48 | 3 of 48 |
 
-The three runs mark the same 53 papers, so they show consistency, not 159 independent papers. The intervals are over
+On the tagged code the harmful error fell by one and a different idea was named twice more on clear ink: within the
+run-to-run spread, and reported as it came. Its cost rose from $2.61 to $3.71 for the 159 markings, and the median time
+from 13 s to 22 s, with the answers-only second reading. The three runs mark the same 53 papers, so they show consistency, not 159 independent papers. The intervals are over
 the runs. Earlier v2 runs between these two are kept too (`v2-held-out-steps-rule-3-runs.json`,
 `v2-held-out-explain-rule-3-runs.json`), and which commit each ran on is in [`harness/PROVENANCE.md`](harness/PROVENANCE.md).
 **What would settle it:** a v3 set nobody on the team has seen, in real handwriting from outside writers, labelled by
@@ -769,10 +778,10 @@ flowchart TB
 
 | Number | What it is | Raw results |
 |---|---|---|
-| Multiple choice: 102/109 (A), 105/109 (B), 105, 103, 105 of 109 (C, three runs on the code that ships); his wrong answers caught 4/10, 7/10, then 7/10 in each run of C. Written answers: 37, 38, 38 of 42; 3 of 4 caught; 19 of 19 not accepted held for Lo, none named; 0/9 invented reasons (A and B) | one real student's handwriting, six papers, his teacher's marks | `evidence/real-handwriting/results/` (three files), `score.py` |
-| 180/180 decisions, 6/30 every run, 40–58 s, ~$0.05 | the film's physics paper, never seen before, 6 live runs with and without a scheme | `evidence/unseen-physics/` |
+| Multiple choice: 102/109 (A), 105/109 (B), 105, 103, 105 of 109 (C), 105, 104, 104 of 109 on `v1.0-code`; his wrong answers caught 4/10, 7/10, 7/10 each run of C, 7, 6, 7 on `v1.0-code`, with no wrong idea named. Written answers: 37, 38, 38 then 39, 37, 38 of 42; 3 of 4 caught; every answer not accepted held for Lo, none named; 0/9 invented reasons (A and B) | one real student's handwriting, six papers, his teacher's marks | `evidence/real-handwriting/results/` (five files), `score.py` |
+| 180/180 decisions, 6/30 every run, 40–58 s, ~$0.05; then 90/90 on `v1.0-code` | the film's physics paper, never seen before, 6 live runs with and without a scheme, then 3 on the tagged code | `evidence/unseen-physics/` |
 | A 5/5, B 5/5 named; C asked 5/5 | the three learners, five readings each, through `witness_photo:mark/4` | `evidence/misconceptions/runs-31oct-steps-rule.jsonl` |
-| asked 39/42, wrong name 3/42, named right 44/48, right work 39/39, injection 30/30 | held-out v2 on the shipped code (and the blind first run beside it), 53 papers × 3 runs | `harness/heldout/results/v2-on-shipped-code-3-runs.json`, `v2-held-out-3-runs.json` |
+| on `v1.0-code`: asked 40/42, wrong name 2/42, named right 42/48, right work 39/39, injection 30/30 (on `0b7502c`: 39/42, 3/42, 44/48) | held-out v2 (and the blind first run beside it) | `harness/heldout/results/` |
 | ambiguous asked 10/11 (development) | the 36 papers the rule was designed on, and the effort ablation | `harness/heldout/results/dev-set-*.json` |
 | clean 30/30, faults held 30/30, named 30/30, false claims 9/9 | Muse Wonder's self-check, 20 levels × 3 runs | `harness/selfcheck/results/selfcheck-3-runs.json` |
 | false accepts 0/36, false rejects 0/24 | the reason judge, 20 reasons × 3 runs | `harness/reasons/results/reasons-applied-3-runs.json` |
