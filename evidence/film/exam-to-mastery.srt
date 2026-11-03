@@ -79,13 +79,13 @@ The same loop works on every paper. Here another sample learner answers out loud
 Both halves are of $100. Half of 100 is 50, so it goes up 50 and then down 50..
 
 21
-00:02:36,750 --> 00:02:42,019
+00:02:37,950 --> 00:02:43,219
 And a level that would teach something false is held, and rewritten, before any student sees it.
 
 22
-00:02:42,469 --> 00:02:50,068
+00:02:43,669 --> 00:02:51,268
 Days later, a fresh question on the same idea checks that it lasted. Only then does the teacher mark it: turned around.
 
 23
-00:02:50,518 --> 00:02:55,966
+00:02:51,718 --> 00:02:57,166
 From Exam to Mastery. Built this week, inside LoWisa, on Meta's models.

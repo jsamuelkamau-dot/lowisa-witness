@@ -536,7 +536,8 @@ cap(Q, Max) -> Q#{confidence => min(Max, num(maps:get(confidence, Q, 1.0)))}.
 %% numbers in the same order ("4 x 400 metres" and "4x400 metres"; never "2.4" and "24", "-5" and "5" or "150" and
 %% "1500"); otherwise the same letters once case, spaces and punctuation are set aside, or one inside the other
 %% (3 Nov, judges' panel: setting every non-letter aside made "2.4" and "24" agree, and "a dog" and "a cat" both read
-%% as option A)
+%% as option A); the same numbers in different units are not the same answer ("5 cm", "5 m"), and an answer that says
+%% "not" never agrees with one that does not ("does not float", "float") (4 Nov, judges' panel)
 same_answer(A, B) ->
     case {option_letter(A), option_letter(B)} of
         %% the same letter, and the words after it agree too when both readings have them ("A dog" is not "A cat")
@@ -545,7 +546,7 @@ same_answer(A, B) ->
         _ ->
             case {numbers_in(A), numbers_in(B)} of
                 {[], []} -> words_agree(A, B);
-                {Ns, Ns} -> true;
+                {Ns, Ns} -> units_agree(units_in(A), units_in(B)) andalso negated(word_list(A)) =:= negated(word_list(B));
                 _ -> false
             end
     end.
@@ -556,9 +557,53 @@ words_agree(A, B) ->
     case {word_list(A), word_list(B)} of
         {[], _} -> true;
         {_, []} -> true;
-        {WA, WB} -> WA =:= WB orelse lists:all(fun(W) -> lists:member(W, WB) end, WA)
-                    orelse lists:all(fun(W) -> lists:member(W, WA) end, WB)
+        {WA, WB} -> negated(WA) =:= negated(WB)
+                    andalso (WA =:= WB orelse lists:all(fun(W) -> lists:member(W, WB) end, WA)
+                             orelse lists:all(fun(W) -> lists:member(W, WA) end, WB))
     end.
+
+%% a "not" anywhere in the answer: a word of its own, or a word ending in n before a lone t ("doesn't" splits into
+%% "doesn" and "t")
+negated(Ws) ->
+    lists:any(fun(W) -> lists:member(W, [<<"not">>, <<"no">>, <<"never">>, <<"cannot">>, <<"none">>, <<"nothing">>,
+                                         <<"neither">>, <<"nor">>]) end, Ws) orelse nt(Ws).
+
+nt([W, <<"t">> | R]) -> (byte_size(W) > 1 andalso binary:last(W) =:= $n) orelse nt([<<"t">> | R]);
+nt([_ | R]) -> nt(R);
+nt([]) -> false.
+
+%% the units written after the numbers, in one spelling each ("5cm", "5 centimetres" -> cm); words that are not units
+%% are left out, so "150 rabbits" and "150" still agree. Both readings must name a unit before units can disagree.
+units_agree([], _) -> true;
+units_agree(_, []) -> true;
+units_agree(UA, UB) -> UA =:= UB.
+
+units_in(B) ->
+    case re:run(string:lowercase(B), <<"\\d\\s*([a-z]+)">>, [global, unicode, {capture, all_but_first, binary}]) of
+        {match, Ms} -> [U || [W] <- Ms, U <- [unit(W)], U =/= none];
+        nomatch -> []
+    end.
+
+unit(W) ->
+    Units = #{<<"mm">> => mm, <<"millimetre">> => mm, <<"millimeter">> => mm,
+              <<"cm">> => cm, <<"centimetre">> => cm, <<"centimeter">> => cm,
+              <<"m">> => m, <<"metre">> => m, <<"meter">> => m,
+              <<"km">> => km, <<"kilometre">> => km, <<"kilometer">> => km,
+              <<"mg">> => mg, <<"milligram">> => mg, <<"g">> => g, <<"gram">> => g,
+              <<"kg">> => kg, <<"kilogram">> => kg, <<"kilo">> => kg,
+              <<"ms">> => ms, <<"s">> => s, <<"sec">> => s, <<"second">> => s,
+              <<"min">> => min, <<"minute">> => min, <<"h">> => h, <<"hr">> => h, <<"hour">> => h,
+              <<"n">> => n, <<"newton">> => n, <<"kn">> => kn, <<"j">> => j, <<"joule">> => j, <<"kj">> => kj,
+              <<"w">> => w, <<"watt">> => w, <<"kw">> => kw, <<"v">> => v, <<"volt">> => v,
+              <<"amp">> => a, <<"ampere">> => a, <<"ma">> => ma,
+              <<"l">> => l, <<"litre">> => l, <<"liter">> => l, <<"ml">> => ml, <<"millilitre">> => ml,
+              <<"milliliter">> => ml, <<"pa">> => pa, <<"pascal">> => pa, <<"kpa">> => kpa, <<"hz">> => hz,
+              <<"hertz">> => hz},
+    Singular = case byte_size(W) > 2 andalso binary:last(W) =:= $s of
+                   true -> binary:part(W, 0, byte_size(W) - 1);
+                   false -> W
+               end,
+    maps:get(W, Units, maps:get(Singular, Units, none)).
 
 word_list(B) -> [W || W <- re:split(string:lowercase(B), <<"[^a-z0-9]+">>, [unicode, {return, binary}, trim]), W =/= <<>>].
 

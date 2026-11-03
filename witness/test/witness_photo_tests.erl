@@ -151,6 +151,15 @@ a_sideways_page_is_turned_upright_before_it_is_marked_test() ->
     {ok, #{status := <<"marked">>, result := Res2}} = load(<<"teacher">>, {sitting, Id2}),
     ?assertNot(maps:is_key(turned, Res2)).
 
+%% 4 Nov (a real written paper that came back unreadable once): a photographed paper is photographed again, never
+%% "filmed again"; a video keeps its own words
+an_unreadable_photo_is_photographed_again_test() ->
+    W = <<"The photos show only questions 11 to 30.">>,
+    ?assertMatch(#{status := <<"failed">>, unreadable := W, error := <<"The paper couldn't be read in these photos", _/binary>>},
+                 witness_api:view(<<"s1">>, #{status => <<"failed">>, unreadable => W, kind => <<"photo">>})),
+    ?assertMatch(#{error := <<"The paper couldn't be seen in this video", _/binary>>},
+                 witness_api:view(<<"s2">>, #{status => <<"failed">>, unreadable => W, kind => <<"video">>})).
+
 %% the answer to "which way up": only the pages asked about, only real turns
 orientation_answer_test() ->
     Read = fun(Text) -> fun(_, _) -> {ok, Text, #{}} end end,

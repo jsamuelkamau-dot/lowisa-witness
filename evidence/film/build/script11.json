@@ -1,0 +1,107 @@
+[
+ [
+  "o1",
+  "Our problem is human cognitive ability. Millions of us are embracing AI, yet quietly wondering: are we becoming more capable, or slowly losing our ability to think for ourselves? And if we're worried about ourselves, shouldn't we be terrified for our children's future?",
+  null
+ ],
+ [
+  "o2",
+  "Remember an exam you failed? You remember the mark. But did anyone help you master what you got wrong?",
+  null
+ ],
+ [
+  "o5",
+  "What if the AI we fear could make us think better? This is From Exam to Mastery, built this week inside LoWisa, powered by Meta's models.",
+  null
+ ],
+ [
+  "a2",
+  "Instead of a teacher marking every paper like this, by hand,",
+  null
+ ],
+ [
+  "a1",
+  "one photo, and Meta's Muse Spark marks every answer, reading how each one was reached. Daniel is a sample student: his paper was written for this demo.",
+  null
+ ],
+ [
+  "r1",
+  "We also tested it on a real Grade 5 student, against his own teacher. It caught six or seven of the ten answers his teacher marked wrong, and every answer it wasn't sure of went to Lo to ask, never to a label.",
+  null
+ ],
+ [
+  "d2",
+  "Every question Daniel missed goes into his Mastery Plan. Let's follow one: question twenty-four.",
+  null
+ ],
+ [
+  "q1",
+  "Why does a massive steel ship float, while a tiny metal nail sinks?",
+  null
+ ],
+ [
+  "d3",
+  "Daniel wrote: heavy objects sink, light objects float. Muse Spark names that idea, because his own words show it.",
+  null
+ ],
+ [
+  "dw1",
+  "Where the page can't show the thinking, like the single word Joules, nothing is named. Lo asks first.",
+  null
+ ],
+ [
+  "dv1",
+  "The same loop works on every paper. Here another sample learner answers out loud. Muse Voice Transcribe writes it down, and his own answer settles the idea.",
+  null
+ ],
+ [
+  "dw2",
+  "Before Daniel sees his level, Meta's Muse Wonder plays it twice: as Daniel, still sure heavy things sink, and as a student who has it right. It passes only if it catches his idea.",
+  null
+ ],
+ [
+  "dh1",
+  "And a level that would teach something false is held, and rewritten, before any student sees it.",
+  null
+ ],
+ [
+  "di1",
+  "Muse Image draws the corrected step, in ink, for him to see.",
+  null
+ ],
+ [
+  "dt1",
+  "Nothing reaches Daniel until his teacher says so. The teacher accepts the marks Muse Spark is sure of, checks the rest, and releases them.",
+  null
+ ],
+ [
+  "g0",
+  "Now Lo teaches him, starting with a first look.",
+  null
+ ],
+ [
+  "g2",
+  "Then it's Daniel's turn. Lo hands him the controls.",
+  null
+ ],
+ [
+  "g4",
+  "Two lessons later, the exam question comes back. This time, Daniel gets it right.",
+  null
+ ],
+ [
+  "dl1",
+  "Days later, a fresh question on the same idea checks that it lasted. Only then does the teacher mark it: turned around.",
+  null
+ ],
+ [
+  "e1",
+  "Daniel works through every question he failed, and comes out capable, with an understanding he can explain, and use.",
+  null
+ ],
+ [
+  "e2",
+  "From Exam to Mastery. Built this week, inside LoWisa, on Meta's models.",
+  null
+ ]
+]

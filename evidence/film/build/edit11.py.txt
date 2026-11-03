@@ -1,0 +1,29 @@
+EDIT = [
+    # v11 (3 Nov, judges' panel round 4): the product by 0:20; this week's work in motion; four of Meta's models seen
+    dict(line='o1', kind='card', img=lambda lt: C.lines_card(['Our problem:', 'human cognitive ability'], sub='Are we becoming more capable, or losing our ability to think for ourselves?', size=104), hold=0.1),
+    dict(line='o2', kind='paper', img=MARKED, path=[(0.0, FULL), (1.6, Q24), (3.6, Q24), (4.8, FAILED)], tag=TAG_SAMPLE, hold=0.1),
+    dict(line='o5', kind='title', hold=0.1),
+    # v11b (owner, 3 Nov: bring back the paper marked by hand, about 2 s, then straight into Muse Spark's marking)
+    dict(line='a2', kind='paper', img=MARKED, path=[(0.0, FULL), (2.2, (380, 40, 1380, 760))], tag=TAG_SAMPLE, hold=0.0),
+    dict(line='a1', kind='marks', tag=TAG_BUILT, chip=('Muse Spark', 'marks every answer, and how it was reached'), speed_note='Muse Spark’s returned marks, drawn on the photo', hold=0.4, min=11.0),
+    dict(line='d2', kind='pstill', png=S6(1), tag=TAG_BUILT, side=('Daniel’s Mastery Plan', '6 of 30 · 24 to master', 'For this demo: question 24.'), hold=0.1),
+    dict(line='q1', kind='card', img=lambda lt: C.lines_card(Q_LINES, sub='Question 24  ·  Physics, Form 3', size=78), hold=0.1),
+    dict(kind='think', min=2.5),
+    dict(line='d3', kind='dstill', png='desk_q24.png', crop=(800, 520, 1900, 1128), mark=(836, 905, 1860, 1000), tag=TAG_BUILT, chip=('Muse Spark', 'names the idea his own words show'), hold=0.2),
+    dict(line='dw1', kind='dstill', png=D9('ask1.png'), crop=(810, 150, 1880, 700), mark=(836, 382, 1860, 640), tag=TAG_BUILT, chip=('Muse Spark', 'names an idea only when his writing shows it'), hold=0.1),
+    dict(line='dw2', kind='wonder', tag=TAG_BUILT, chip=('Muse Wonder', 'plays the level as both students'), hold=0.2, min=13.0),
+    dict(line='di1', kind='image', tag=TAG_BUILT, chip=('Muse Image', 'draws the corrected step'), hold=0.4, min=5.0),
+    dict(line='dt1', kind='teacher', tag=TAG_BUILT, chip=('The teacher', 'decides what reaches the student'), hold=0.2),
+    dict(line='g0', kind='clip', src=FL2, a=10.1, b=17.9, zoom=(0.36, 0.65), zoom_hold=10.9, tag=TAG_LO, chip=LO_CHIP, side=('1 · First look', 'The heavy log floats;', 'the light coin sinks.'),
+         say='A 200-kilogram log stays on top of water. A 5-gram coin drops to the bottom. So floating cannot mean simply light things float.'),
+    # v11c (round-6 panel): the sliders beat is LoWisa's older player feature; its time goes to Muse Wonder holding a level
+    dict(line='g4', over=True, kind='clip', src=Q24P, a=4.2, b=13.8, say_from=10.2, zoom=(0.05, 0.42), zoom2=(0.64, 0.99), zoom_at=9.75, tag=TAG_LO, chip=LO_CHIP, side=('3 · Question 24 comes back', 'Lesson 2: he chooses', 'the balance. Exactly right.'),
+         say='Ship shape moves enough water to match its weight.', hold=2.2),
+    dict(line='e1', kind='card', img=lambda lt: before_after(), tag=TAG_SAMPLE, hold=0.2),
+    # v11d (owner, 3 Nov: Daniel's story first, unbroken; the other sample learner and the test level after it)
+    dict(line='r1', kind='real', tag=TAG_REAL, chip=('Muse Spark', 'marked against his own teacher'), hold=0.2),
+    dict(line='dv1', kind='voice', wav=S11.LEO_WAV, after=3.0, tag=TAG_BUILT + ' · another sample learner, a synthetic voice', chip=('Muse Voice Transcribe', 'writes down his spoken answer'), hold=0.2),
+    dict(line='dh1', kind='held', tag=TAG_BUILT + ' · a test level with a planted false claim', chip=('Muse Wonder', 'holds a level that says a false thing'), hold=0.3),
+    dict(line='dl1', kind='lasting', tag=TAG_BUILT + ' · the same loop, on another sample learner (maths)', hold=0.3, min=7.2),
+    dict(line='e2', kind='card', img=lambda lt: S11.end_card(K, C, E, lt), hold=0.4),
+]

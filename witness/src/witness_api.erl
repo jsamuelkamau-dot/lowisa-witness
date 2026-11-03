@@ -1822,6 +1822,10 @@ view(Id, #{status := S, result := R} = Row) when S =:= <<"marked">>; S =:= <<"re
           result => #{questions => maps:get(questions, R, []), pauses => maps:get(pauses, R, []), returns => maps:get(returns, R, []), lines => maps:get(lines, R, []),
                       stills => maps:get(stills, R, []), engine => maps:get(engine, R, <<"muse-spark-1.3">>)}},
     case maps:get(examiner, Row, undefined) of undefined -> V; Ex -> V#{examiner => examiner_view(Ex, teacher)} end;
+%% a photographed paper is photographed again, not filmed (4 Nov: a photo sitting was told "in this video")
+view(Id, #{status := <<"failed">>, unreadable := W, kind := <<"photo">>}) ->
+    #{ok => true, id => Id, status => <<"failed">>, unreadable => W,
+      error => <<"The paper couldn't be read in these photos, so nothing was marked. Photograph it again.">>};
 view(Id, #{status := <<"failed">>, unreadable := W}) ->
     #{ok => true, id => Id, status => <<"failed">>, unreadable => W,
       error => <<"The paper couldn't be seen in this video, so nothing was marked. Ask for it to be filmed again.">>};

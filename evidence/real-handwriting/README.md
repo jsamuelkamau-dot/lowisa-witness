@@ -86,6 +86,25 @@ accepted, in any run**. Written answers: 39, 37, 38 of 42; 3 of 4 caught; all 18
 misread science Q33 was caught by the answers-only reading once (run 3: read as D, kept out of "Accept all"); in runs 1
 and 2 both readings read the same wrong letter.
 
+## On the code live now, `v1.0.1-code`
+
+Three runs of both sets on the live edge vb1104h (run 1 on 3 Nov, runs 2 and 3 on 4 Nov):
+[`results/condition-c-on-v1.0.1-code-3-runs.json`](results/condition-c-on-v1.0.1-code-3-runs.json) and
+[`results/written-answers-on-v1.0.1-code-3-runs.json`](results/written-answers-on-v1.0.1-code-3-runs.json). Multiple
+choice: 104, 104, 104 of 109 agree; 7, 6, 6 of 10 caught; no idea named on any answer not accepted. Written answers: 36,
+37, 38 of 42 (marking everything right gives 38); 2, 2, 3 of 4 caught; no idea named on any answer not accepted.
+
+**Why 2 of 4, not 3.** The difference is one question, science Q35. On the tagged code Muse Spark read his final
+answer as "Cow peas" in every run, and marked it wrong as his teacher did. On the live code it read "A. Wheat" in runs 1
+and 2 and marked it right, but only 0.65 and 0.75 sure, so it stayed out of "Accept all" and went to the teacher; in
+run 3 it read "Cow peas" again. The live code changed only how the two readings are compared, not the reading itself,
+so this is the reading varying from run to run; the uncertainty it reported is what kept it from the student.
+Q41 (the order of laundry steps) is marked right in every run on both codes, sure enough for "Accept all": the one
+written answer where it and his teacher disagree every time.
+
+In written run 3 one paper (creative arts SBA006) came back "could not be read": the product marked nothing and asked
+for it again. The same photos were sent again, and marked; the first attempt is kept in the file (`not_read_first_time`).
+
 ## His written answers: 42 questions, no marking scheme
 
 The papers above are multiple choice. These are his own words: short written answers, a sequence, a list, a music

@@ -40,6 +40,10 @@ live as edge vb1104f): two readings must agree before "Accept all", and the held
 
 `v1.0.1-code` (`29c0ddc`), live as edge vb1104h: `v1.0-code` plus the two answer-comparison fixes (numbers must be the
 same numbers; the same letter with different words is not the same answer), ten minutes a reading for open weights, and
-the challenge push without a deprecated catch. One run each on it: `evidence/real-handwriting/results/condition-c-on-v1.0.1-code-1-run.json`
-and `written-answers-on-v1.0.1-code-1-run.json` (the live edge), `harness/heldout/results/v2-on-v1.0.1-code-1-run.json`
-(locally). The Muse Spark Open runs after 29c0ddc used its ten-minute limit (`harness/open/`).
+the challenge push without a deprecated catch. One run each on it on 3 Nov (`*-on-v1.0.1-code-1-run.json`), then two more
+on 4 Nov; the three together are `evidence/real-handwriting/results/condition-c-on-v1.0.1-code-3-runs.json` and
+`written-answers-on-v1.0.1-code-3-runs.json` (the live edge, run 1 identical to the one-run files), and
+`harness/heldout/results/v2-on-v1.0.1-code-3-runs.json` (locally; runs 2 and 3 ran at `5b6ba60`, whose `witness/` is
+identical to `29c0ddc`, from beams compiled before `witness/src` was next edited, which is why that run's file says
+dirty). In written run 3 one paper came back "could not be read" (the product asked for it again, nothing marked);
+the same photos were sent again, and the failure is recorded in the file (`not_read_first_time`). The Muse Spark Open runs after 29c0ddc used its ten-minute limit (`harness/open/`).

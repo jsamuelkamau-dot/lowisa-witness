@@ -1,6 +1,6 @@
 # From Exam to Mastery: the film, word for word
 
-Every line spoken in [`exam-to-mastery.mp4`](exam-to-mastery.mp4) (2:57), when it is said, and the label on the screen at that moment. The narrator is a synthetic voice (Murf, voice Gordon), not a Meta model and not a person. Lo speaks in LoWisa's own voice; the words Lo says in a mastery level are written by Muse Spark. Daniel is a sample student and his paper was made for the demo; the learner who answers out loud is another sample learner, his answer read by a synthetic voice (Amazon Polly) and written down by Muse Voice Transcribe. Subtitles: [`exam-to-mastery.srt`](exam-to-mastery.srt).
+Every line spoken in [`exam-to-mastery.mp4`](exam-to-mastery.mp4) (2:58), when it is said, and the label on the screen at that moment. The narrator is a synthetic voice (Murf, voice Gordon), not a Meta model and not a person. Lo speaks in LoWisa's own voice; the words Lo says in a mastery level are written by Muse Spark. Daniel is a sample student and his paper was made for the demo; the learner who answers out loud is another sample learner, his answer read by a synthetic voice (Amazon Polly) and written down by Muse Voice Transcribe. Subtitles: [`exam-to-mastery.srt`](exam-to-mastery.srt).
 
 | Time | Who | What is said | On screen |
 |---|---|---|---|
@@ -24,6 +24,6 @@ Every line spoken in [`exam-to-mastery.mp4`](exam-to-mastery.mp4) (2:57), when i
 | 2:06.9 | Narrator | We also tested it on a real Grade 5 student, against his own teacher. It caught six or seven of the ten answers his teacher marked wrong, and every answer it wasn't sure of went to Lo to ask, never to a label. | BUILT THIS WEEK · tested on a real Grade 5 student’s papers (name blurred, parent’s consent) |
 | 2:19.0 | Narrator | The same loop works on every paper. Here another sample learner answers out loud. Muse Voice Transcribe writes it down, and his own answer settles the idea. | BUILT THIS WEEK · another sample learner, a synthetic voice |
 | 2:28.2 | Sample learner (a synthetic voice) | Both halves are of $100. Half of 100 is 50, so it goes up 50 and then down 50.. | BUILT THIS WEEK · another sample learner, a synthetic voice |
-| 2:36.8 | Narrator | And a level that would teach something false is held, and rewritten, before any student sees it. | BUILT THIS WEEK · a test level with a planted false claim |
-| 2:42.5 | Narrator | Days later, a fresh question on the same idea checks that it lasted. Only then does the teacher mark it: turned around. | BUILT THIS WEEK · the same loop, on another sample learner (maths) |
-| 2:50.5 | Narrator | From Exam to Mastery. Built this week, inside LoWisa, on Meta's models. | no label (card) |
+| 2:38.0 | Narrator | And a level that would teach something false is held, and rewritten, before any student sees it. | BUILT THIS WEEK · a test level with a planted false claim |
+| 2:43.7 | Narrator | Days later, a fresh question on the same idea checks that it lasted. Only then does the teacher mark it: turned around. | BUILT THIS WEEK · the same loop, on another sample learner (maths) |
+| 2:51.7 | Narrator | From Exam to Mastery. Built this week, inside LoWisa, on Meta's models. | no label (card) |

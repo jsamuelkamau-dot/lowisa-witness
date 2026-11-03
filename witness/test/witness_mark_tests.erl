@@ -183,4 +183,17 @@ a_sure_answer_read_differently_is_no_longer_sure_test() ->
     ?assertNot(witness_mark:same_answer(<<"A dog">>, <<"A cat">>)),
     ?assert(witness_mark:same_answer(<<"D Cow peas circled">>, <<"D. Cow peas">>)),
     ?assertNot(witness_mark:same_answer(<<"red">>, <<"infrared">>)),
-    ?assert(witness_mark:same_answer(<<"Bowling square">>, <<"bowling square">>)).
+    ?assert(witness_mark:same_answer(<<"Bowling square">>, <<"bowling square">>)),
+    %% judges' panel, round 7: "not" on one side only, and the same number in different units
+    ?assertNot(witness_mark:same_answer(<<"does not float">>, <<"float">>)),
+    ?assertNot(witness_mark:same_answer(<<"It doesn't float">>, <<"It floats">>)),
+    ?assertNot(witness_mark:same_answer(<<"can't dissolve">>, <<"dissolve">>)),
+    ?assertNot(witness_mark:same_answer(<<"A not soluble">>, <<"A soluble">>)),
+    ?assert(witness_mark:same_answer(<<"does not float">>, <<"Does not float.">>)),
+    ?assert(witness_mark:same_answer(<<"It doesn't float">>, <<"doesn't float">>)),
+    ?assertNot(witness_mark:same_answer(<<"5 cm">>, <<"5 m">>)),
+    ?assertNot(witness_mark:same_answer(<<"3kg">>, <<"3 g">>)),
+    ?assert(witness_mark:same_answer(<<"5cm">>, <<"5 centimetres">>)),
+    ?assert(witness_mark:same_answer(<<"200 kg">>, <<"200 kilograms">>)),
+    ?assert(witness_mark:same_answer(<<"5 m">>, <<"5">>)),
+    ?assertNot(witness_mark:same_answer(<<"not 5 m">>, <<"5 m">>)).

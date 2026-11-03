@@ -3,7 +3,8 @@
 Everything in this repository was written during the event, with one marked exception: `host/mastery-mode/` shows lines
 of LoWisa's level builder, each dated, and the lines dated before 26 Oct are older LoWisa code shown for context. The kickoff, 26 Oct at 12:00 PM ET, was 27 Oct at 2:30 AM in
 our time zone (Adelaide, UTC+10:30); the first commit is 27 Oct at 10:36 AM there, eight hours after it. See the commit
-history. The table grows as the work lands. Code built this week inside LoWisa's own files is named in `host/README.md`; it is not copied here, so LoWisa's older code stays private.
+history: it was rewritten once, on 2 Nov before the repository was made public, to take out three files that copied older LoWisa
+code; the commit dates were kept, and `harness/PROVENANCE.md` maps the old hashes to the new. The table grows as the work lands. Code built this week inside LoWisa's own files is named in `host/README.md`; it is not copied here, so LoWisa's older code stays private.
 
 | Part | Where | Status |
 |---|---|---|
@@ -77,3 +78,12 @@ history. The table grows as the work lands. Code built this week inside LoWisa's
 | One real paper traced call by call; Muse Image and Voice Transcribe in pictures; the level builder's mastery mode published line by line, dated | `harness/trace/`, `evidence/models/`, `host/mastery-mode/` | done 3 Nov |
 | Muse Spark Open run on partner inference (Baseten): the physics paper and the real student's papers through the product's own photo path; a scorer | `harness/open/` | done 3 Nov |
 | The film, final (3 Nov, owner): narrated by Murf's Gordon; Daniel's story first and unbroken, then the real Grade 5 student, the spoken answer, a test level held, the re-check; the first look shows the log floating while the coin sinks; cards in the film's own colours; "Our problem: human cognitive ability"; 2:57 | `evidence/film/` | done 3 Nov |
+| Two readings agree on a number only when the numbers are the same (never 2.4 and 24); a sentence starting with "a" is not option A; the live exam codes in the replay and phone tests replaced with dummy codes (`189b9d1`) | `witness/src/witness_mark.erl` (`same_answer/2`, `numbers_in/1`), `witness/test/witness_mark_tests.erl`, `evidence/replay/` | done 3 Nov |
+| The same letter with different words is not the same answer ("A dog", "A cat"), nor a word inside another word; Muse Spark Open gets ten minutes a reading; tagged `v1.0.1-code`, live as edge vb1104h (`29c0ddc`) | `witness/src/witness_mark.erl` (`words_agree/2`), `witness/src/witness_open.erl` (`TIMEOUT_MS`) | done 3 Nov |
+| Muse Spark Open's three failed runs re-run with ten minutes a reading, all completed (`c0f50b6`) | `harness/open/results/` | done 3 Nov |
+| The real sets and the held-out v2 set on the live code `v1.0.1-code` (`9420690`), then twice more (4 Nov) | `evidence/real-handwriting/results/*-on-v1.0.1-code-*`, `harness/heldout/results/v2-on-v1.0.1-code-*` | done 4 Nov |
+| The README opens with the owner's introduction and four-areas table (`e73f12c`), and a short box for judges above it (4 Nov) | `README.md` | done 4 Nov |
+| Two readings no longer agree when one says "not" and the other does not, or when their units differ ("5 cm", "5 m"); tested, not yet deployed (4 Nov) | `witness/src/witness_mark.erl` (`same_answer/2`), `witness/test/witness_mark_tests.erl` | done 4 Nov, not live |
+| An unreadable photographed paper is to be photographed again, not "filmed again" (found by the written re-run); tested, not yet deployed (4 Nov) | `witness/src/witness_api.erl` (`view/2`), `witness/test/witness_photo_tests.erl` | done 4 Nov, not live |
+| The film, final, round-7 pass (4 Nov): the first look's panel starts on its drawing, not blank white; the real student's shot zooms into one question caught and one honest miss; the spoken answer's payoff, the idea named from his words, held on screen; the end card shows the six models and the replay command | `evidence/film/`, `evidence/film/build/` | done 4 Nov |
+| READMEs for the self-check, reasons, class, orientation, screens, phone and desk folders; the film's build scripts | `harness/*/README.md`, `evidence/screens/README.md`, `phone/README.md`, `desk/README.md`, `evidence/film/build/` | done 4 Nov |
