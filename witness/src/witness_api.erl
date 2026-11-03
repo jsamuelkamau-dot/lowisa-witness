@@ -1500,10 +1500,12 @@ mark_video(Uid, Id, Key, Fps, Sitting, Row, Host) ->
 %% A photographed paper: read and marked from its pages (witness_photo), tried again while Meta is busy; the pages stay
 %% with the paper either way, so a paper Meta could not mark is marked again without taking the photos again.
 mark_photo(Uid, Id, Key, Sitting, Row, Host) ->
-    {Turned, TurnCost} = upright(Uid, Id, Key, Row, Host),
+    {Turned, TurnCost, Count} = upright(Uid, Id, Key, Row, Host),
+    %% 4 Nov: the quick look's count of the paper's questions, so a long paper is marked in parts at once
+    Counted = case Count of N when is_integer(N), N > 0 -> Sitting#{question_count => N}; _ -> Sitting end,
     Outcome = again(Host, fun() ->
         case pages(Uid, Id, Row, Host) of
-            {ok, Pages} -> try photo_mark(Key, Pages, Sitting, Host) catch C:R -> {error, {C, R}} end;
+            {ok, Pages} -> try photo_mark(Key, Pages, Counted, Host) catch C:R -> {error, {C, R}} end;
             E -> E
         end
     end),
@@ -1529,18 +1531,21 @@ upright(Uid, Id, Key, Row, Host) ->
     case pages(Uid, Id, Row, Host) of
         {ok, Pages} when Pages =/= [] ->
             case safely(fun() -> (orienter(Host))(Key, Pages) end) of
-                {ok, Turns, Cost} when map_size(Turns) > 0 ->
-                    Files = maps:from_list([{N, F} || #{n := N, file := F} <- maps:get(files, Row, [])]),
-                    Done = [N || #{n := N, url := Url, mime := Mime} <- Pages, Deg <- [maps:get(N, Turns, 0)], Deg =/= 0,
-                                 File <- [maps:get(N, Files, undefined)], File =/= undefined,
-                                 turn_page(Uid, <<Id/binary, "/", File/binary>>, Url, Deg, Mime, Host) =:= ok],
-                    report(Host, <<"witness.turned">>, {Id, Done}),
-                    {Done, Cost};
-                {ok, _, Cost} -> {[], Cost};
-                _ -> {[], 0}
+                {ok, Turns, Cost} -> turn_pages(Uid, Id, Row, Pages, Turns, Cost, 0, Host);
+                {ok, Turns, Cost, Count} -> turn_pages(Uid, Id, Row, Pages, Turns, Cost, Count, Host);
+                _ -> {[], 0, 0}
             end;
-        _ -> {[], 0}
+        _ -> {[], 0, 0}
     end.
+
+turn_pages(_Uid, _Id, _Row, _Pages, Turns, Cost, Count, _Host) when map_size(Turns) =:= 0 -> {[], Cost, Count};
+turn_pages(Uid, Id, Row, Pages, Turns, Cost, Count, Host) ->
+    Files = maps:from_list([{N, F} || #{n := N, file := F} <- maps:get(files, Row, [])]),
+    Done = [N || #{n := N, url := Url, mime := Mime} <- Pages, Deg <- [maps:get(N, Turns, 0)], Deg =/= 0,
+                 File <- [maps:get(N, Files, undefined)], File =/= undefined,
+                 turn_page(Uid, <<Id/binary, "/", File/binary>>, Url, Deg, Mime, Host) =:= ok],
+    report(Host, <<"witness.turned">>, {Id, Done}),
+    {Done, Cost, Count}.
 
 turn_page(Uid, Path, Url, Deg, Mime, Host) ->
     Ext = case Mime of <<"image/png">> -> ".png"; <<"image/webp">> -> ".webp"; _ -> ".jpg" end,

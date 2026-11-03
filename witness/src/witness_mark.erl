@@ -413,13 +413,19 @@ clamp(_) -> 0.0.
 fit(Qs, Sitting) ->
     Worth = maps:from_list([{N, M} || #{n := N} = Q <- maps:get(questions, Sitting, []), M <- [maps:get(marks, Q, undefined)],
                                       is_integer(M), M > 0]),
-    [case {Q, maps:get(maps:get(n, Q, x), Worth, undefined)} of
+    [short_of_full(case {Q, maps:get(maps:get(n, Q, x), Worth, undefined)} of
          {_, undefined} -> Q;
          {#{result := <<"mastered">>}, M} -> Q#{marks => M, out_of => M};
          {#{marks := K, out_of := O}, M} when is_number(K), is_number(O), O > 0 ->
              Q#{marks => min(M, max(0, round(K * M / O))), out_of => M};
          {_, M} -> Q#{marks => 0, out_of => M}
-     end || Q <- Qs].
+     end) || Q <- Qs].
+
+%% 4 Nov (the physics paper on the parts code, no scheme): "part way" came back with 1 of 1 on one-mark questions (half a
+%% mark rounded up). Full marks belong to a mastered question only; anything else keeps at least one mark short.
+short_of_full(#{result := R, marks := K, out_of := O} = Q) when R =/= <<"mastered">>, is_number(K), is_number(O), O > 0, K >= O ->
+    Q#{marks => max(0, O - 1)};
+short_of_full(Q) -> Q.
 
 %% A second reading (the plan's calibration): when Muse Spark is unsure of any question, the paper is read again at
 %% high effort. unsure(Qs) says whether it is needed; reconcile(First, Second) keeps each sure question as it is and,

@@ -156,10 +156,53 @@ orientation_answer_test() ->
     Read = fun(Text) -> fun(_, _) -> {ok, Text, #{}} end end,
     Pages = [#{n => 1, url => <<"u1">>}, #{n => 2, url => <<"u2">>}],
     Small = fun(_) -> {ok, <<255, 216>>} end,
-    ?assertMatch({ok, #{2 := 90}, _}, witness_photo:orient(k, Pages, #{small => Small, read => Read(<<"Sure: {\"pages\": [{\"n\": 1, \"top\": \"top\"}, {\"n\": 2, \"top\": \"left\"}]}">>)})),
-    {ok, T, _} = witness_photo:orient(k, Pages, #{small => Small, read => Read(<<"{\"pages\": [{\"n\": 7, \"top\": \"left\"}, {\"n\": 1, \"top\": \"diagonal\"}]}">>)}),
+    ?assertMatch({ok, #{2 := 90}, _, 30}, witness_photo:orient(k, Pages, #{small => Small, read => Read(<<"Sure: {\"pages\": [{\"n\": 1, \"top\": \"top\"}, {\"n\": 2, \"top\": \"left\"}], \"questions\": 30}">>)})),
+    {ok, T, _, 0} = witness_photo:orient(k, Pages, #{small => Small, read => Read(<<"{\"pages\": [{\"n\": 7, \"top\": \"left\"}, {\"n\": 1, \"top\": \"diagonal\"}], \"questions\": \"many\"}">>)}),
     ?assertEqual(#{}, T),
-    ?assertMatch({ok, #{}, _}, witness_photo:orient(k, Pages, #{small => Small, read => Read(<<"no idea">>)})).
+    ?assertMatch({ok, #{}, _, 0}, witness_photo:orient(k, Pages, #{small => Small, read => Read(<<"no idea">>)})).
+
+%% 4 Nov (a real 30-question paper took 4.5 minutes live): a long paper is read in parts at once, each part only its own
+%% questions with every page; the parts come back in order, an unsure question is read again only in its own part, and a
+%% short paper is still one reading
+a_long_paper_is_marked_in_parts_at_once_test() ->
+    Q = fun(N, C) -> #{<<"n">> => N, <<"result">> => <<"mastered">>, <<"marks">> => 1, <<"out_of">> => 1, <<"confidence">> => C, <<"steps">> => []} end,
+    Self = self(),
+    Read = fun(_K, [#{text := Prompt} | Images], Effort) ->
+        {From, To} = case re:run(Prompt, <<"questions? ([0-9]+) to (the last|[0-9]+)">>, [{capture, all_but_first, binary}]) of
+            {match, [F, <<"the last">>]} -> {binary_to_integer(F), 30};
+            {match, [F, T]} -> {binary_to_integer(F), binary_to_integer(T)};
+            nomatch -> {1, 30}
+        end,
+        Self ! {read, From, Effort, length(Images)},
+        timer:sleep(200),
+        %% the part from 11 is unsure of question 12 at medium effort; every part also returns its neighbours' questions
+        Qs = [Q(N, case {N, Effort} of {12, <<"medium">>} -> 0.5; _ -> 0.95 end) || N <- lists:seq(From, To)] ++
+             [Q(N, 0.1) || N <- [From - 1, To + 1], N >= 1, N =< 30],
+        {ok, iolist_to_binary(json:encode(#{<<"student">> => #{<<"name">> => <<"Amani">>}, <<"questions">> => Qs})), #{}}
+    end,
+    Pages = [#{n => 1, url => <<"u1">>}, #{n => 2, url => <<"u2">>}],
+    Opts = #{fetch => fun(_) -> {ok, <<255, 216>>} end, read => Read, gray => fun(_) -> {error, none} end, tint => fun(_) -> none end,
+             price => {price, {0.0, 0.0}}},
+    T0 = erlang:monotonic_time(millisecond),
+    {ok, M} = witness_photo:mark(k, Pages, #{question_count => 30}, Opts),
+    Ms = erlang:monotonic_time(millisecond) - T0,
+    ?assertEqual(lists:seq(1, 30), [maps:get(n, X) || X <- maps:get(questions, M)]),
+    ?assertMatch(#{parts := 3, read_twice := true, student := #{name := <<"Amani">>}}, M),
+    Reads = lists:sort(fun(A, B) -> A =< B end, [R || R <- flush_reads()]),
+    ?assertEqual([{1, <<"medium">>}, {11, <<"high">>}, {11, <<"medium">>}, {21, <<"medium">>}], [{F, E} || {read, F, E, _} <- Reads]),
+    ?assert(lists:all(fun({read, _, _, Imgs}) -> Imgs =:= 4 end, Reads)),          % every part sees both pages
+    ?assert(Ms < 900),                                                                % the parts ran at once (3 x 200 ms read + one reread)
+    %% a one-page paper is one reading, however many questions it has (the physics page: no faster in parts)
+    {ok, M1} = witness_photo:mark(k, [hd(Pages)], #{question_count => 30}, Opts),
+    ?assertNot(maps:is_key(parts, M1)),
+    ?assertEqual([{1, <<"high">>}, {1, <<"medium">>}], lists:sort([{F, E} || {read, F, E, _} <- flush_reads()])),
+    %% a short paper is one reading, as before
+    {ok, M2} = witness_photo:mark(k, Pages, #{question_count => 8}, Opts),
+    ?assertNot(maps:is_key(parts, M2)),
+    %% (one reading of the whole paper, and its unsure question 12 read again)
+    ?assertEqual([{1, <<"high">>}, {1, <<"medium">>}], lists:sort([{F, E} || {read, F, E, _} <- flush_reads()])).
+
+flush_reads() -> receive {read, _, _, _} = R -> [R | flush_reads()] after 0 -> [] end.
 
 %% a name the paper cannot settle waits for the teacher, who links it; the student who joins later finds their paper
 an_unclear_name_waits_for_the_teacher_test() ->
@@ -405,6 +448,18 @@ no_question_ends_in_a_verdict_test() ->
 
 %% 31 Oct, photo bench on the committed code: with no mark scheme the prompt said "give 1 mark" beside questions
 %% listed as 2 marks, and right work came back 1 of 2, part way. A fully correct question earns all of its worth.
+%% 4 Nov: full marks are a mastered question's only; half a mark on a one-mark question no longer rounds up to full
+full_marks_only_when_mastered_test() ->
+    Sitting = #{questions => [#{n => 1, text => <<"a">>, marks => 1}, #{n => 2, text => <<"b">>, marks => 2}, #{n => 3, text => <<"c">>, marks => 1}]},
+    [Q1, Q2, Q3, Q4] = witness_mark:fit([#{n => 1, result => <<"part_way">>, marks => 0.5, out_of => 1},
+                                         #{n => 2, result => <<"part_way">>, marks => 2, out_of => 2},
+                                         #{n => 3, result => <<"mastered">>, marks => 1, out_of => 1},
+                                         #{n => 4, result => <<"right_answer_wrong_thinking">>, marks => 3, out_of => 3}], Sitting),
+    ?assertMatch(#{marks := 0, out_of := 1}, Q1),
+    ?assertMatch(#{marks := 1, out_of := 2}, Q2),
+    ?assertMatch(#{marks := 1, out_of := 1}, Q3),
+    ?assertMatch(#{marks := 2, out_of := 3}, Q4).
+
 no_scheme_gives_a_right_question_all_its_marks_test() ->
     S = #{level => <<"Year 8">>, questions => [#{n => 1, text => <<"Solve 2x + 3 = 11">>, marks => 2}]},
     [begin

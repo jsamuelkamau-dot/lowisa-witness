@@ -14,8 +14,8 @@
 %%%   mark(Key, Pages, Sitting) -> {ok, Result} | {error, Why}
 %%%       Pages = [#{n, url, mime}]  signed links to the photographed pages, in page order
 %%%       Result = #{questions, student => #{name, class, number, date, note}, pages, cost_usd}
-%%%   orient(Key, Pages) -> {ok, #{N => Degrees}, CostUsd} | {error, Why}
-%%%       how far each page must be turned clockwise to read upright (0, 90, 180 or 270)
+%%%   orient(Key, Pages) -> {ok, #{N => Degrees}, CostUsd, QuestionCount} | {error, Why}
+%%%       how far each page must be turned clockwise to read upright (0, 90, 180 or 270), and how many questions it has
 %%%-------------------------------------------------------------------
 -module(witness_photo).
 -export([prompt/1, mark/3, mark/4, place/3, place/4]).
@@ -94,22 +94,87 @@ mark(Key, Pages, Sitting, Opts) ->
     Price = maps:get(price, Opts, {tokens, ?SPARK}),
     case content(Pages, Fetch) of
         {ok, Images} ->
-            Content = [#{type => input_text, text => prompt(Sitting)} | Images],
-            case Read(Key, Content, <<"medium">>) of
-                {ok, Text, Usage} ->
-                    case witness_mark:parse(Text) of
-                        {ok, #{questions := Qs0} = M} ->
-                            Qs = witness_mark:fit(Qs0, Sitting),
-                            Cost = witness_meta:cost(Price, Usage),
-                            Marked = again(Key, Content, Sitting, Read, Price, #{questions => Qs, cost_usd => Cost}),
-                            {ok, Marked#{questions => place(maps:get(questions, Marked), Pages, Gray, Tint),
-                                         student => maps:get(student, M, #{}), pages => length(Pages)}};
-                        E -> E
-                    end;
+            %% 4 Nov (a real 30-question paper took 4.5 minutes on the live edge: one reading wrote 11,650 tokens, 108 s,
+            %% and an unsure question read the whole paper again after it): a long paper is marked in parts of about ten
+            %% questions at once, each part seeing every page; an unsure question is read again within its own part
+            Parts = pmap(fun(Range) -> read_part(Key, Images, Sitting, Read, Price, Range) end, parts(Sitting, length(Pages))),
+            case [E || E <- Parts, element(1, E) =/= ok] of
+                [] ->
+                    Ms = [M || {ok, M} <- Parts],
+                    Qs = lists:ukeysort(1, [{maps:get(n, Q), Q} || M <- Ms, Q <- maps:get(questions, M)]),
+                    Student = case [S || #{student := S} <- Ms, is_map(S), maps:get(name, S, <<>>) =/= <<>>] of [S1 | _] -> S1; [] -> maps:get(student, hd(Ms), #{}) end,
+                    Marked0 = #{questions => [Q || {_, Q} <- Qs], cost_usd => lists:sum([maps:get(cost_usd, M, 0) || M <- Ms])},
+                    Marked1 = lists:foldl(fun(F, A) -> case lists:any(fun(M) -> maps:get(F, M, false) =:= true end, Ms) of true -> A#{F => true}; false -> A end end,
+                                          Marked0, [read_twice, read_thrice]),
+                    Marked = case length(Ms) of 1 -> Marked1; N -> Marked1#{parts => N} end,
+                    {ok, Marked#{questions => place(maps:get(questions, Marked), Pages, Gray, Tint), student => Student, pages => length(Pages)}};
+                [E | _] -> E
+            end;
+        E -> E
+    end.
+
+%% parts(Sitting, PageCount) -> [all] | [{From, To}]: a paper of two or more pages with more questions than ?PART_FROM
+%% (its listed questions, or the count the quick look made of the photographed pages) in parts of about ?PART; the last
+%% part runs to the end of the paper, so a count that came out short still has every question marked. A one-page paper
+%% stays one reading: the film's 30-question physics page took 34-58 s whole, and in parts it was no faster at twice
+%% the cost (4 Nov); four pages of 30 questions took 108 s whole and 69 s in three parts.
+-define(PART, 10).
+-define(PART_FROM, 12).
+parts(_Sitting, Pages) when Pages < 2 -> [all];
+parts(Sitting, _Pages) ->
+    Count = case maps:get(questions, Sitting, []) of
+        L when is_list(L), L =/= [] -> length(L);
+        _ -> case maps:get(question_count, Sitting, 0) of C when is_integer(C) -> C; _ -> 0 end
+    end,
+    case Count > ?PART_FROM of
+        false -> [all];
+        true ->
+            N = (Count + ?PART - 1) div ?PART,
+            Size = (Count + N - 1) div N,
+            [{(I - 1) * Size + 1, case I of N -> last; _ -> I * Size end} || I <- lists:seq(1, N)]
+    end.
+
+%% one part of the paper: read, fitted to the exam, and an unsure question read again (only this part's questions)
+read_part(Key, Images, Sitting, Read, Price, Range) ->
+    Content = [#{type => input_text, text => iolist_to_binary([prompt(Sitting), range_words(Range)])} | Images],
+    case Read(Key, Content, <<"medium">>) of
+        {ok, Text, Usage} ->
+            case witness_mark:parse(Text) of
+                {ok, #{questions := Qs0} = M} ->
+                    Qs = in_range(witness_mark:fit(Qs0, Sitting), Range),
+                    Marked = again(Key, Content, Sitting, Read, Price, #{questions => Qs, cost_usd => witness_meta:cost(Price, Usage)}),
+                    {ok, Marked#{questions => in_range(maps:get(questions, Marked), Range), student => maps:get(student, M, #{})}};
                 E -> E
             end;
         E -> E
     end.
+
+range_words(all) -> <<>>;
+range_words({From, last}) ->
+    io_lib:format("
+
+This reading marks only question ~b to the last question on the paper (the others are marked in another "
+                  "reading at the same time). Give questions only for those numbers; still read the student's details.", [From]);
+range_words({From, To}) ->
+    io_lib:format("
+
+This reading marks only questions ~b to ~b (the others are marked in other readings at the same "
+                  "time). Give questions only for those numbers; still read the student's details.", [From, To]).
+
+in_range(Qs, all) -> Qs;
+in_range(Qs, {From, To}) -> [Q || Q <- Qs, N <- [maps:get(n, Q, 0)], is_integer(N), N >= From, To =:= last orelse N =< To].
+
+%% pmap(F, L): F on every item at once, the answers in L's order; a part that crashes or takes longer than every try
+%% together is an error for that part, never a hang
+pmap(F, [One]) -> [F(One)];
+pmap(F, L) ->
+    Me = self(),
+    Ws = [{spawn_monitor(fun() -> Me ! {part, self(), try F(X) catch C:W -> {'EXIT', {C, W}} end} end)} || X <- L],
+    [receive
+         {part, Pid, R} -> erlang:demonitor(Ref, [flush]), case R of {'EXIT', Why} -> {error, {part_crashed, Why}}; _ -> R end;
+         {'DOWN', Ref, process, Pid, Why} -> {error, {part_down, Why}}
+     after 900000 -> exit(Pid, kill), {error, part_timeout}
+     end || {{Pid, Ref}} <- Ws].
 
 %% 3 Nov (a real student's three papers, against his teacher's own marks): three of the nine question pages were
 %% photographed sideways, and that is where the marking lost three of the ten wrong answers (an option's value read from
@@ -126,10 +191,12 @@ orient(Key, Pages, Opts) ->
             Ask = <<"Each photo below is one page of a student's exam paper, labelled with its page number. A page may have "
                     "been photographed sideways or upside down. For each page, look at the printed text and say which edge "
                     "of the photo the top of the printed page is at: \"top\" (it reads normally), \"left\", \"right\" or "
-                    "\"bottom\". Judge from the printed text, not the handwriting or the table under the paper. Answer with "
-                    "JSON only: {\"pages\": [{\"n\": 1, \"top\": \"top\"}]}">>,
+                    "\"bottom\". Judge from the printed text, not the handwriting or the table under the paper. Also count "
+                    "the numbered questions on the whole paper. Answer with JSON only: "
+                    "{\"pages\": [{\"n\": 1, \"top\": \"top\"}], \"questions\": 30}">>,
             case Read(Key, [#{type => input_text, text => Ask} | Images]) of
-                {ok, Text, Usage} -> {ok, turns(Text, [N || #{n := N} <- Pages]), witness_meta:cost({tokens, ?SPARK}, Usage)};
+                %% 4 Nov: the count lets a long paper be marked in parts at once (mark/4)
+                {ok, Text, Usage} -> {ok, turns(Text, [N || #{n := N} <- Pages]), witness_meta:cost({tokens, ?SPARK}, Usage), count(Text)};
                 E -> E
             end;
         E -> E
@@ -137,13 +204,19 @@ orient(Key, Pages, Opts) ->
 
 %% only the pages asked about, only a page whose top is at another edge; anything else reads as upright
 turns(Text, Ns) ->
-    Found = case re:run(Text, <<"\\{.*\\}">>, [dotall, {capture, first, binary}]) of
-        {match, [J]} -> try json:decode(J) of #{<<"pages">> := L} when is_list(L) -> L; _ -> [] catch _:_ -> [] end;
-        nomatch -> []
-    end,
+    Found = case answer_json(Text) of #{<<"pages">> := L} when is_list(L) -> L; _ -> [] end,
     %% the page's top at the photo's left edge comes up with a quarter turn clockwise; at the right, three quarters
     Turn = #{<<"left">> => 90, <<"bottom">> => 180, <<"right">> => 270},
     maps:from_list([{N, maps:get(T, Turn)} || #{<<"n">> := N, <<"top">> := T} <- Found, lists:member(N, Ns), maps:is_key(T, Turn)]).
+
+%% how many questions the paper has, as the quick look counted them (0 when it gave none that reads as a count)
+count(Text) -> case answer_json(Text) of #{<<"questions">> := N} when is_integer(N), N > 0, N =< 200 -> N; _ -> 0 end.
+
+answer_json(Text) ->
+    case re:run(Text, <<"\\{.*\\}">>, [dotall, {capture, first, binary}]) of
+        {match, [J]} -> try json:decode(J) of M when is_map(M) -> M; _ -> #{} catch _:_ -> #{} end;
+        nomatch -> #{}
+    end.
 
 %% each page as an image the model reads, labelled with its number
 content(Pages, Fetch) -> content(Pages, Fetch, undefined).
