@@ -1,7 +1,7 @@
 # Built during the hackathon (26 Oct – 4 Nov 2026)
 
-Everything in this repository was written during the event, with one marked exception: `host/mastery-mode/` shows lines
-of LoWisa's level builder, each dated, and the lines dated before 26 Oct are older LoWisa code shown for context. The kickoff, 26 Oct at 12:00 PM ET, was 27 Oct at 2:30 AM in
+Everything in this repository was written during the event. `host/mastery-mode/` shows only the lines of LoWisa's
+private level builder written during the event, each dated; the LoWisa code around them is not published. The kickoff, 26 Oct at 12:00 PM ET, was 27 Oct at 2:30 AM in
 our time zone (Adelaide, UTC+10:30); the first commit is 27 Oct at 10:36 AM there, eight hours after it. See the commit
 history: it was rewritten once, on 2 Nov before the repository was made public, to take out three files that copied older LoWisa
 code; the commit dates were kept, and `harness/PROVENANCE.md` maps the old hashes to the new. The table grows as the work lands. Code built this week inside LoWisa's own files is named in `host/README.md`; it is not copied here, so LoWisa's older code stays private.
