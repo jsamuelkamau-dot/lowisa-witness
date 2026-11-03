@@ -1,0 +1,9 @@
+{
+ "what": "Which way up the real Grade 5 student's photographed pages are. turn = degrees clockwise that make the printed page read normally. The photos are private (a commercial question paper and a minor's answer sheet); only these labels and the results are committed.",
+ "sets": {
+  "maths": [{"page": "57", "turn": 0}, {"page": "58", "turn": 270}, {"page": "59", "turn": 0}, {"page": "43 (answer sheet, ink removed)", "turn": 0}],
+  "science": [{"page": "44", "turn": 0}, {"page": "45", "turn": 270}, {"page": "46", "turn": 0}, {"page": "47 (answer sheet, ink removed)", "turn": 0}],
+  "english": [{"page": "53", "turn": 0}, {"page": "54", "turn": 270}, {"page": "55", "turn": 0}, {"page": "56 (answer sheet, ink removed)", "turn": 0}],
+  "made_harder": [{"page": "57 turned a quarter clockwise", "turn": 270}, {"page": "53 turned upside down", "turn": 180}, {"page": "44", "turn": 0}]
+ }
+}

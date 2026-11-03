@@ -12,3 +12,4 @@ jobs:
       - run: python3 scripts/secret_scan.py
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
       - run: python3 scripts/check_media.py
+      - run: python3 scripts/check_links.py

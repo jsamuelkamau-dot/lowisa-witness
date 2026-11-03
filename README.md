@@ -3,21 +3,45 @@
 **AI that finds where a learner's thinking broke down, then makes them think again until they can explain it and use
 it in the real world. It never thinks for them.**
 
-**In 60 seconds**
-- **The problem.** AI that does students' thinking weakens it (section 1). And a red mark tells a student *that* they
-  failed, never *why*; no teacher of forty can read every student's working.
+**The 3-minute film:** [`evidence/film/exam-to-mastery.mp4`](evidence/film/exam-to-mastery.mp4) (2:59). Section 2 walks
+through it frame by frame.
+
+- **The problem is cognitive ability.** AI that does students' thinking for them weakens it (section 1). And a red mark
+  tells a student *that* they failed, never *why*: no teacher of forty can read every student's working.
 - **What it does.** A teacher photographs a finished exam. Meta's models mark every answer and read *how* the student
   reached it, from their own handwriting. Every question not mastered becomes a level in the student's **Mastery
   Plan**, built on their own mistake and ending in a real task. The teacher decides when they have turned it around.
-- **Built this week (26 Oct – 4 Nov 2026), all in this repository:** the marking and diagnosis server, the teacher's
-  Exam Desk, the phone screens, and every measurement.
-- **Existed before, named but not shown:** the LoWisa app it runs in, its lesson player, flashcards, Insight mode and
-  Lo's voice (section 14). In the film, every shot is labelled one or the other.
-- **Meta's models do the work:** Muse Spark marks and diagnoses, Muse Wonder plays every level as the student before
-  they see it, plus Muse Voice Transcribe, Muse Image and SAM 3.1 (section 4).
+- **Not a chatbot, and not a photo grader.** The student is never handed an answer. An idea is named as the student's
+  mistake only when code finds their own ink to back it (`witness_mark:fingerprint/4`); otherwise Lo asks them first.
+  Muse Wonder plays every level as the student before they see it, and nothing reaches a student until the teacher
+  lets it.
 
-Part of [LoWisa](https://lowisa.dev), for the Meta Global AI Developer Hackathon. The 3-minute demo film is linked from
-the submission page; section 2 walks through it frame by frame.
+**Measured.** Every number below is recomputed from the file beside it.
+
+| What was tested | Result | Raw results |
+|---|---|---|
+| A real Grade 5 student's three papers, against his own teacher's marks, on the code that ships (photos as taken, three of them sideways) | **105, 103 and 105 of 109** agree over three runs; 7 of his teacher's 10 wrong answers caught in every run; kappa 0.67–0.76 (marking every answer right would agree on 99) | [`condition-c-shipped-code-3-runs.json`](evidence/real-handwriting/results/condition-c-shipped-code-3-runs.json), `python3 evidence/real-handwriting/score.py` |
+| A physics exam it had never seen, six live runs | **180 of 180** marking decisions right | [`evidence/unseen-physics/`](evidence/unseen-physics/README.md) |
+| 53 held-out papers × 3 runs: ink that cannot show the idea | Lo asks first **39 of 42**; a wrong idea named 3 of 42 (the harmful error) | [`v2-on-shipped-code-3-runs.json`](harness/heldout/results/v2-on-shipped-code-3-runs.json) |
+| … ink that shows the idea; right work; instructions written in the ink | named right **44 of 48**; mastered **39 of 39**; never obeyed **30 of 30** | the same file |
+| Muse Wonder playing each level as the student first (20 levels × 3 runs) | planted faults held **30 of 30**; false claims found **9 of 9** | [`selfcheck-3-runs.json`](harness/selfcheck/results/selfcheck-3-runs.json) |
+| A class of 40 | all marked in **32 s** for **$1.01** | [`class-of-40.json`](harness/class/results/class-of-40.json) |
+| Phone photos taken sideways or upside down (4 papers × 3 runs) | **45 of 45** pages turned the right way up | [`orient-03nov.json`](harness/orient/results/orient-03nov.json) |
+
+- **Built during the event (26 Oct – 4 Nov 2026), all in this repository:** the marking and diagnosis server
+  (`witness/`, Erlang/OTP, 148 tests), the teacher's Exam Desk (`desk/`), the phone screens (`phone/`), and every
+  measurement (`harness/`, `evidence/`).
+- **Existed before, named but not shown:** the LoWisa app it runs in, its lesson player, flashcards, Insight mode and
+  Lo's voice (section 14, [`docs/existed-before.md`](docs/existed-before.md)). In the film every shot is labelled one or
+  the other. The demo school that judges can open (section 12) was added to LoWisa's own code this week; it is named in
+  [`host/README.md`](host/README.md), not shown.
+- **Meta's models do the work:** Muse Spark marks and diagnoses, Muse Wonder plays each level as the student, Muse Voice
+  Transcribe writes down spoken answers, Muse Image draws the corrected step, and SAM 3.1 follows the ink in a filmed
+  desk (section 4). Muse Spark Open is wired but has not been run.
+- **Try it in one minute:** `node demo/desk-server.js --replay`, with no account and no key; or live with your own phone
+  (section 12).
+- **Names used here:** *Lo* is LoWisa's tutor. *Witness* is the code name of the marker (the `witness_*` modules) and of
+  the optional desk-filming mode. Part of [LoWisa](https://lowisa.dev), for the Meta Global AI Developer Hackathon.
 
 ![tests](https://github.com/jsamuelkamau-dot/lowisa-witness/actions/workflows/test.yml/badge.svg)
 
@@ -49,7 +73,7 @@ the submission page; section 2 walks through it frame by frame.
 17. [Sources](#17-sources)
 
 **Short on time?** Read sections 1 to 3 (the problem, the demo, and the depth behind it), then sections 4 and 7 (Meta's models, and the numbers).
-**Want to try it?** Section 12: the desktop app's demo school opens with no school details and no password, and marks an exam photographed on your phone.
+**Want to try it?** Section 12: a recorded exam on the teacher's desk in one minute with no account, or live with your own phone.
 
 ---
 
@@ -141,10 +165,10 @@ These are LoWisa's four areas, applied to one exam:
 
 ## 2. The demo, frame by frame: one failed question to mastery
 
-These frames are from the film, recorded on LoWisa's production server with a release build of the phone app on an emulator.
-Daniel Kwan is a sample student. His physics paper (30 questions) was written for the demo, and nothing in the code
-or the prompts names it. Each frame in the film is labelled either **built this week** or **LoWisa, playing a level
-written this week**.
+These frames are from the film ([`evidence/film/exam-to-mastery.mp4`](evidence/film/exam-to-mastery.mp4)), recorded on
+LoWisa's production server with a release build of the phone app on an emulator. Daniel Kwan is a sample student. His
+physics paper (30 questions) was written for the demo, and nothing in the code or the prompts names it. Each shot in
+the film carries a label: **built this week**, **LoWisa, playing a level written this week**, or **sample paper**.
 
 | | |
 |---|---|
@@ -158,8 +182,8 @@ written this week**.
 | **Lo shows it before explaining it.** The level starts with a first look built on his mistake, not a lecture | **His own rule, tested.** Lo makes him predict with his idea, the heavy log or the light coin, then the prediction fails in front of him |
 | ![His turn: push the log down until the water holds 200 kg](evidence/film/07-his-turn.jpg) | ![Let's ask ourselves: from the pond to a cargo ship](evidence/film/08-lets-ask-ourselves.jpg) |
 | **His turn.** Lo hands him the controls. He finds the point where the water pushed aside weighs as much as the log | **Into the real world.** "Let's ask ourselves": how deep can a loaded cargo ship sit before it becomes unsafe? |
-| ![The exam question comes back: exactly right](evidence/film/09-question-comes-back.jpg) | ![Flashcards from his three lessons](evidence/film/10-flashcards.jpg) |
-| **The exam question comes back.** Two lessons later he chooses the right reason | **Retention.** 18 flashcards made this week from his own three lessons, in LoWisa's flashcard player (labelled as LoWisa's in the film) |
+| ![The exam question comes back: exactly right](evidence/film/09-question-comes-back.jpg) | ![A real Grade 5 student's sheet, as his teacher marked it and as it was sent](evidence/film/10-real-student.jpg) |
+| **The exam question comes back.** Two lessons later he chooses the right reason | **A real student.** A Grade 5 student's sheet as his teacher marked it, and as it was sent with the red ink removed: 105 of 109 answers agree with his teacher (section 7) |
 
 ![Before and after](evidence/film/12-before-and-after.jpg)
 
@@ -169,6 +193,21 @@ in his own words comes from the teacher's challenge (section 3.6).
 
 What happens next is in the next section: the teacher's challenge, the "Turned around" badge, the re-check, and Insight
 mode (his lessons as a show he can listen to). The film had no time for them.
+
+**Every second of the film, and what it shows** (2:56):
+
+| Time | On screen | Label | New this week? |
+|---|---|---|---|
+| 0:00–0:37 | The problem (cognitive ability), Daniel's hand-marked paper, "What if AI made us think better?", then the name over three phone screens of his level | sample paper; LoWisa | The cards are the film's own. The paper is a prop made for the demo: its red total says 8/30, but the true mark is 6/30, which Muse Spark gives. The phones are LoWisa's player, playing a level written this week |
+| 0:37–0:47 | The teacher's desk marks one photo of the paper | built this week · shown at 10× speed | **New.** The exam's join and photographing codes are blurred |
+| 0:47–0:57 | A real Grade 5 student's sheet, as marked and as sent | built this week | **New:** the measurement of section 7 |
+| 0:57–1:37 | His Mastery Plan, question 24 with five seconds to think, what his answer reveals, Lo asks first, Muse Wonder plays his level | built this week | **New** |
+| 1:37–2:42 | Lo teaching the level: the first look, his rule tested, his turn, "Let's ask ourselves", question 24 again | LoWisa · a level written this week · "his turn" shown at 2.6× speed | The player and Lo's voice are LoWisa's; the level, written from his answer by Muse Spark and checked by Muse Wonder, is new |
+| 2:42–2:56 | Before and after; the name | sample paper | A summary card written by us |
+
+In all, 46 s show work built this week on screen and 79 s show LoWisa's player playing a level written this week; the
+rest are cards and the sample paper. Muse Voice Transcribe, Muse Image and SAM 3.1 are not on screen; section 4 shows
+what each does.
 
 ## 3. Beyond the 3 minutes: what the film had no time to show
 
@@ -405,25 +444,25 @@ Full write-up: [`docs/misconception-fingerprint.md`](docs/misconception-fingerpr
 ### Real handwriting: one student's three papers, against his own teacher's marks
 
 A real Grade 5 student's pencil answers on three end-of-term papers (maths, English, science: 110 multiple-choice
-questions), marked by his class teacher, who is not on our team. His parent gave consent; his name, school, class and
-student number are blurred. We removed the teacher's red ink by colour so the model could not copy his ticks, then the
-live product's photo path marked each paper once, on frozen code (3 Nov, edge vb1103a, `witness/src` `0b7502c`).
+questions, 109 scored), marked by his class teacher, who is not on our team. His parent consented to their use and
+publication, his name included; we blurred it anyway, with his school, class and student number. We removed the
+teacher's red ink by colour so the model could not copy his ticks, then the live product's photo path marked each paper.
 
-| | Pages as photographed | Sideways pages turned upright |
-|---|---|---|
-| Witness agrees with the teacher | **102 of 109** | **105 of 109** |
-| The teacher's wrong answers Witness also caught | 4 of 10 | **7 of 10** |
-| Right by the teacher, wrong by Witness | 1 | 1 |
-| Wrong answers given an invented reason | 0 | **0 of 9** (only a letter on the page: Lo asks first) |
+| | A: as photographed | B: sideways pages turned upright by hand | C: the code that ships, 3 runs |
+|---|---|---|---|
+| Witness agrees with the teacher | 102 of 109 | 105 of 109 | **105, 103, 105 of 109** |
+| The teacher's wrong answers Witness also caught | 4 of 10 | 7 of 10 | **7 of 10** every run |
+| Right by the teacher, wrong by Witness | 1 | 1 | 1, 3, 1 |
+| Cohen's kappa | 0.50 | 0.76 | 0.67–0.76 |
 
-Three of the nine question pages were photographed sideways, and that is where the first run lost most: on maths Q11
-it read his letter right but took the option's value from the wrong place on the turned page. Turning pages upright
-before marking is the fix this points to. Of the four disagreements left, one is a plain reading error (science Q33:
-he wrote D, Witness read the correct C), one is a sheet and a question paper that disagree (he circled D on the paper,
-wrote B on the sheet), and two are questions whose right answer the photos cannot settle. Every question, both runs,
-and the sheets the teacher marked: [`evidence/real-handwriting/`](evidence/real-handwriting/). It is one student and
-multiple choice only, so it tests reading a child's handwriting and marking against a real teacher, not the written
-working the fingerprint reads.
+Three of the nine question pages were photographed sideways, and that is where A lost most. B turned them by hand to
+measure what turning would gain; C is the product doing it itself (it stored the sideways page upright in 9 of 9
+papers) and matches B. Marking every answer right would agree on 99 of 109, so the number that matters is the wrong
+answers caught: 7 of 10 (95% interval 40–89%). C also found a fault in our code: on 4 of 27 wrong answers an idea was
+named from the circled option alone, which the evidence rule should have held. It is fixed in `6611ef2` and the four are
+held (section 15). Every question, every run, the disagreements and the sheets the teacher marked:
+[`evidence/real-handwriting/`](evidence/real-handwriting/README.md). It is one student and multiple choice only, so it
+tests reading a child's handwriting and marking against a real teacher, not the written working the fingerprint reads.
 
 ### An exam it had never seen: the film's physics paper
 
@@ -620,47 +659,51 @@ the commit it ran on. Notes for Meta's API team, and what each run found: [`harn
 
 ## 12. Try it, and verify it yourself
 
-**Quickest: the demo school (no school details, no password).** Every new install of the LoWisa desktop app can open
-its own ready-made school and mark an exam straight away:
-1. Install the **LoWisa desktop app** (0.9.33 or newer) from [lowisa.dev](https://lowisa.dev), and **LoWisa** on a phone
-   from Google Play or the App Store.
-2. On the desktop: **Home → Your school → Try the demo school → As a teacher**. Nothing to fill in and no password;
-   LoWisa reopens inside the demo school in a few seconds. A yellow bar on every page says it is the demo school.
-3. Press **Mark an exam** on that bar. The Exam Desk opens: create an exam, from a photo or PDF of the paper, or leave
-   the questions to be read from the paper itself.
-4. On the phone: open **From Exam to Mastery** (Home, near the bottom), type the desk's **join code** and your name, then
-   type its **photographing code** in the same box and photograph a finished paper (or pick it from the gallery). The
-   physics paper from the film is [`evidence/unseen-physics/paper.jpg`](evidence/unseen-physics/paper.jpg).
-5. Go on from step 4 of the list below: the marks, the fingerprints, the Mastery Plan on the phone.
+**In one minute, with no account and no key:** the teacher's Exam Desk on an exam recorded on the production edge.
+
+```bash
+node demo/desk-server.js --replay        # then open http://localhost:4747
+```
+
+**Live, with your own phone (works today: LoWisa 1.10.4 on Google Play and the App Store).** During judging, From
+Exam to Mastery is open to every LoWisa account; nothing needs a sign-up form.
+1. Install **LoWisa** on a phone and the **LoWisa desktop app** from [lowisa.dev](https://lowisa.dev). Link them once:
+   on the desktop, click **Link your phone** in the status bar; on the phone, Profile → **Link a computer** → **Scan**.
+2. On the desktop, open **Exam Desk** and create an exam (from a photo or PDF of the paper, or let the questions be read
+   from the paper itself). The desk shows a **join code** and a **photographing code**.
+3. On the phone, open **From Exam to Mastery** (Home, near the bottom). Type the join code and your name to join the
+   class list. Then type the photographing code in the same box and photograph a finished paper, or pick it from the
+   gallery.
+   - **Sample papers:** the film's physics paper is [`evidence/unseen-physics/paper.jpg`](evidence/unseen-physics/paper.jpg);
+     the name on it is **Daniel Kwan**, so join as Daniel Kwan to receive his Mastery Plan. Three maths papers are in
+     `evidence/misconceptions/learner-*-page*.jpg` (two pages each).
+4. **Marking takes** about 15 s for a maths page, 35–60 s for the 30-question physics page, and about a minute and a half
+   for a 30-question paper of four photos (69–299 s over nine live runs, median about 100 s; section 7). The desk shows
+   each fingerprint. Release the marks, and the Mastery Plan reaches the phone.
+5. **On the phone:** answer Lo's question if it asks; start the level (2 to 8 minutes to build, including Muse Wonder's
+   self-check); play it.
+6. **On the desk:** let it start if it is held, send a challenge, read the reason, and issue "Turned around". "Send it
+   now" brings the re-check forward.
+
+**What it costs you.** Marking is not charged. A mastery level is built on the free credits every new LoWisa install
+starts with (20): building one took 2.6–7.8 credits, median 5, over the last 23 levels built on the production edge,
+and each of Lo's live turns in it under 1. So the free credits cover two or three levels; after that LoWisa asks for a
+plan, as it does for everything else. One account can play both sides. In a school, a level is paid from the school's
+wallet, never by the student.
+
+**Quicker still, from desktop 0.9.33 (released 4 Nov): the demo school.** No school details and no password:
+1. On the desktop: **Home → Your school → Try the demo school → As a teacher**. LoWisa reopens inside the demo school
+   in a few seconds, and a yellow bar on every page says so.
+2. Press **Mark an exam** on that bar, and go on from step 2 above.
 
 What the demo school is, and is not:
 - **Your own copy.** One per LoWisa account, with twelve fictional learners and two classes. Open it again and it is the
   same school; open it as the principal or a learner to see their side.
-- **Paid from your own free credits.** It is given no school credits: marking is not charged, and a mastery level's
-  calls come from the free credits every new LoWisa install starts with.
+- **Paid from your own free credits.** It is given no school credits.
 - **For trying only.** Its school code signs nobody in, so no one else can enter it. It cannot buy anything, publish a
   website or app, share links, link a sister school, invite anyone or take a real class list. Its logins' passwords are
   random and never shown. "Leave the demo" on the bar goes back to your own LoWisa.
-
-**Live, as a judge, with your own exam.** During judging, From Exam to Mastery is open to every LoWisa account:
-1. Install **LoWisa** from Google Play or the App Store, and the **LoWisa desktop app** from [lowisa.dev](https://lowisa.dev).
-2. Sign in with the same account on both. On the desktop, open **Exam Desk** and create an exam; you can read it from a photo or PDF of the paper.
-3. The desk shows a **join code** and a **photographing code**. On the phone, open **From Exam to Mastery** (Home, near the bottom), type the join code and put your name on the class list. Then type the photographing code in the same box and photograph a finished paper: take photos, or pick them from the gallery.
-   - Sample papers: the physics paper from the film is [`evidence/unseen-physics/paper.jpg`](evidence/unseen-physics/paper.jpg). Three maths papers are in `evidence/misconceptions/learner-*-page*.jpg`: copy one learner's two pages to the phone's gallery. The name on a paper is the student's; join with that name to receive it.
-4. **Marking takes about 15 s for a maths page, 35–60 s for the 30-question physics paper in one photo, and about a minute and a half for a 30-question paper of four photos.** The desk shows each fingerprint. Release the marks, and the Mastery Plan reaches the phone.
-5. **On the phone:**
-   - answer Lo's question if it asks;
-   - start the level (2 to 8 minutes to build, including Muse Wonder's self-check);
-   - play it.
-6. **On the desk:** let it start if it is held, send a challenge, read the reason, and issue "Turned around". "Send it now" brings the re-check forward.
-
-One account can play both sides. A level's calls are paid from the account that set the exam (in a school, the school's wallet).
-
-**Without an account or a key:**
-
-```bash
-node demo/desk-server.js --replay        # the desk on a recorded exam from the rehearsal: http://localhost:4747
-```
+- **Not part of this repository.** The demo school, like the rest of the app it runs in, is LoWisa's (section 14).
 
 **The code and the numbers:**
 
@@ -755,10 +798,10 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
 
 | Problem | What we saw | What we did | Result |
 |---|---|---|---|
-| **Pages photographed sideways** (3 Nov) | On a real student's papers, three of nine question pages were sideways. On one, Witness read his letter right but took the option's value from the wrong place on the turned page | Before marking, Muse Spark looks at small copies of the pages and says which edge of each photo is the page's top; the server turns that page upright with ffmpeg and keeps it so, so the stills and steps are cut from the upright page. If the look fails, the paper is marked as photographed | His wrong answers caught: **4 of 10 → 7 of 10**. Live on the production edge the sideways page was stored upright and both missed questions were caught |
-| **Asking "how many degrees" turned pages the wrong way** | Muse Spark found every sideways page, but two of three turns would have left the page upside down | Ask which *edge* is the top (top, left, right, bottom) and work out the turn in code | **6 of 6** turns right, 6 upright pages left alone, ~14 s and ~$0.01 a paper |
-| **A long paper took four and a half minutes** (3 Nov) | A real 30-question paper of four photos: one Muse Spark reading wrote 11,650 tokens (108 s), and an unsure question read the whole paper again after it | The quick look that turns pages upright also counts the questions; a paper of two or more pages with more than 12 is marked in parts of about ten **at once**, each part seeing every page, and an unsure question is read again only in its own part | The same paper in **69 s** locally and **96 s** live (from 332 s), 28 and 29 of 30 with the teacher. A one-page paper stays one reading: the physics page was no faster in parts |
-| **Half a mark rounded up to full** (3 Nov) | Re-running the physics page without a scheme, three one-mark answers marked "part way" came back 1 of 1 | Full marks belong to a mastered question only | Back to 6 of 30, every decision right |
+| **Pages photographed sideways** (3 Nov) | On a real student's papers, three of nine question pages were sideways. On one, Witness read his letter right but took the option's value from the wrong place on the turned page | Before marking, Muse Spark looks at small copies of the pages and says which edge of each photo is the page's top; the server turns that page upright with ffmpeg and keeps it so, so the stills and steps are cut from the upright page. If the look fails, the paper is marked as photographed | Turned by hand first, to measure it: wrong answers caught **4 of 10 → 7 of 10**. Then the code that ships, nothing turned by hand, three live runs: the sideways page stored upright in **9 of 9** papers, 7 of 10 caught every run ([`condition-c-shipped-code-3-runs.json`](evidence/real-handwriting/results/condition-c-shipped-code-3-runs.json)) |
+| **Asking "how many degrees" turned pages the wrong way** (3 Nov) | In the first live try, Muse Spark found every sideways page but two of three turns would have left the page upside down | Ask which *edge* is the top (top, left, right, bottom) and work out the turn in code | Measured after, on the same small images, 4 papers × 3 runs each way: by edge **45 of 45** pages (15 of 15 sideways); by degrees 44 of 45 (14 of 15). Degrees was better than the first try showed, edge still the surer ([`harness/orient/`](harness/orient/results/orient-03nov.json)) |
+| **A long paper took four and a half minutes** (3 Nov) | A real 30-question paper of four photos took 332 s live: one Muse Spark reading wrote 11,650 tokens (108 s), and an unsure question read the whole paper again after it | The quick look that turns pages upright also counts the questions; a paper of two or more pages with more than 12 is marked in parts of about ten **at once**, each part seeing every page, and an unsure question is read again only in its own part | Measured on the same code, two runs each way: one reading **220 and 232 s**, in parts **63 and 65 s**, 28 against 29 of 30 with the teacher ([`harness/parts/`](harness/parts/results/parts-03nov.json)). Live, 69–299 s a paper over nine runs (section 7). A one-page paper stays one reading: the physics page was no faster in parts |
+| **Half a mark rounded up to full** (3 Nov) | Re-running the physics page without a scheme, three one-mark answers marked "part way" came back 1 of 1 | Full marks belong to a mastered question only | Back to **6 of 30**, 30 of 30 decisions right, in 3 of 3 runs ([`no-scheme-after-half-mark-fix-3-runs.json`](evidence/unseen-physics/no-scheme-after-half-mark-fix-3-runs.json)) |
 | **The teacher's ticks could leak into the test** | His red-pen marks sit on the answer sheet the model reads | The teacher's ink is removed by colour (his letters are grey pencil) before marking; his marks stay the answer key | Every disagreement is published with what the photos show (section 7) |
 | **A line's place on the photo** | Muse Spark's own boxes overlapped the ink on 1 of 64 lines, so a crop of a student's step could miss it | `witness_page` finds each line on its own ink; Spark's boxes are never used for a cut | **64 of 64** lines placed (SAM 3.1: 52 of 64) |
 

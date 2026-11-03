@@ -1,0 +1,3818 @@
+{
+ "what": "Condition C: the same three papers exactly as photographed (three question pages sideways, nothing turned by hand), answer sheets with the teacher's red ink removed, sent to the live product three times. The server turned the pages upright itself (witness_photo:orient) and marked each paper in parts at once.",
+ "ran_on": {
+  "edge": "vb1104c (live, 3 Nov 2026)",
+  "witness_src_commit": "a1be423 (witness/src as deployed in edge vb1104a to vb1104c; before 6611ef2, which holds a circled option as the final answer)",
+  "engine": "muse-spark-1.3",
+  "date": "2026-11-03"
+ },
+ "teacher": "as in three-papers-two-conditions.json (maths wrong 11 12 14 24 26 29; English 23 27; science 33 42; science 20 unclear, left out)",
+ "runs": [
+  {
+   "run": 1,
+   "papers": {
+    "english": [
+     {
+      "n": 1,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 2,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 3,
+      "read": [
+       "D circled",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.85,
+      "teacher_right": true
+     },
+     {
+      "n": 4,
+      "read": [
+       "D circled",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.85,
+      "teacher_right": true
+     },
+     {
+      "n": 5,
+      "read": [
+       "C circled",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 6,
+      "read": [
+       "D circled",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 7,
+      "read": [
+       "B circled",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 8,
+      "read": [
+       "B circled",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 9,
+      "read": [
+       "A circled",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 10,
+      "read": [
+       "C circled",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 11,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.96,
+      "teacher_right": true
+     },
+     {
+      "n": 12,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.96,
+      "teacher_right": true
+     },
+     {
+      "n": 13,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": false,
+      "confidence": 0.82,
+      "teacher_right": true
+     },
+     {
+      "n": 14,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.96,
+      "teacher_right": true
+     },
+     {
+      "n": 15,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.96,
+      "teacher_right": true
+     },
+     {
+      "n": 16,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 17,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 18,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.94,
+      "teacher_right": true
+     },
+     {
+      "n": 19,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.94,
+      "teacher_right": true
+     },
+     {
+      "n": 20,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.94,
+      "teacher_right": true
+     },
+     {
+      "n": 21,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 22,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 23,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": false
+     },
+     {
+      "n": 24,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.85,
+      "teacher_right": true
+     },
+     {
+      "n": 25,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 26,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 27,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": false,
+      "confidence": 0.85,
+      "teacher_right": false
+     },
+     {
+      "n": 28,
+      "read": [
+       "he",
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 29,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 30,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     }
+    ],
+    "science": [
+     {
+      "n": 1,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B - response to the changes in the environment",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 2,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D - trachea",
+      "right": true,
+      "confidence": 0.99,
+      "teacher_right": true
+     },
+     {
+      "n": 3,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C - Millipende",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 4,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B - They have no backbone",
+      "right": true,
+      "confidence": 0.97,
+      "teacher_right": true
+     },
+     {
+      "n": 5,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D - reuse",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 6,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C - spiracles",
+      "right": true,
+      "confidence": 0.96,
+      "teacher_right": true
+     },
+     {
+      "n": 7,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A - two",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 8,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B - baloon, rubber band",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 9,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D - Stomata",
+      "right": true,
+      "confidence": 0.99,
+      "teacher_right": true
+     },
+     {
+      "n": 10,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D - sun",
+      "right": true,
+      "confidence": 0.99,
+      "teacher_right": true
+     },
+     {
+      "n": 11,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 12,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 13,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 14,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 15,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 16,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 17,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.8,
+      "teacher_right": true
+     },
+     {
+      "n": 18,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 19,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 20,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": false,
+      "confidence": 0.88,
+      "teacher_right": null
+     },
+     {
+      "n": 21,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C - bananas",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 22,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B - rainy",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 23,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A - mulching",
+      "right": true,
+      "confidence": 0.96,
+      "teacher_right": true
+     },
+     {
+      "n": 24,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B - scarecrow",
+      "right": true,
+      "confidence": 0.96,
+      "teacher_right": true
+     },
+     {
+      "n": 25,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D - mutton and wool",
+      "right": true,
+      "confidence": 0.96,
+      "teacher_right": true
+     },
+     {
+      "n": 26,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D - rake",
+      "right": true,
+      "confidence": 0.93,
+      "teacher_right": true
+     },
+     {
+      "n": 27,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C - Transfering of seeds from a nursery to the seedbed",
+      "right": true,
+      "confidence": 0.94,
+      "teacher_right": true
+     },
+     {
+      "n": 28,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C - Drip irrigation",
+      "right": true,
+      "confidence": 0.94,
+      "teacher_right": true
+     },
+     {
+      "n": 29,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A - is used as medicine",
+      "right": true,
+      "confidence": 0.93,
+      "teacher_right": true
+     },
+     {
+      "n": 30,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B - peas",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 31,
+      "read": [
+       "B circled",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 32,
+      "read": [
+       "A circled",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 33,
+      "read": [
+       "D circled",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": false,
+      "confidence": 0.7,
+      "teacher_right": false
+     },
+     {
+      "n": 34,
+      "read": [
+       "D circled",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 35,
+      "read": [
+       "A circled",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 36,
+      "read": [
+       "B circled",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 37,
+      "read": [
+       "B Gas circled",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 38,
+      "read": [
+       "C circled",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 39,
+      "read": [
+       "D circled",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 40,
+      "read": [
+       "B Gloves circled",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 41,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C - carbohydrates",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 42,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D - Beans, peas",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": false
+     },
+     {
+      "n": 43,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A - Thimble, needle",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 44,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C - Wearing dirty clothes",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 45,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C - lack of proteins",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 46,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A - laundering",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 47,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B - Eating expired food",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 48,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C - Broom",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 49,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C - Running stitch",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 50,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B - Goat",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     }
+    ],
+    "maths": [
+     {
+      "n": 1,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A 300303",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 2,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B 3/4",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 3,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D Thousandths",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 4,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C 536800",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 5,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C 166cm",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 6,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B 2555 litres",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 7,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.97,
+      "teacher_right": true
+     },
+     {
+      "n": 8,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 9,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C 2916cm2",
+      "right": true,
+      "confidence": 0.97,
+      "teacher_right": true
+     },
+     {
+      "n": 10,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A 12",
+      "right": true,
+      "confidence": 0.97,
+      "teacher_right": true
+     },
+     {
+      "n": 11,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": false,
+      "confidence": 0.85,
+      "teacher_right": false
+     },
+     {
+      "n": 12,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": false,
+      "confidence": 0.8,
+      "teacher_right": false
+     },
+     {
+      "n": 13,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 14,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": false,
+      "confidence": 0.9,
+      "teacher_right": false
+     },
+     {
+      "n": 15,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.85,
+      "teacher_right": true
+     },
+     {
+      "n": 16,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 17,
+      "read": [
+       "13",
+       "6",
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 18,
+      "read": [
+       "8",
+       "12",
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 19,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 20,
+      "read": [
+       "D",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.75,
+      "teacher_right": true
+     },
+     {
+      "n": 21,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D 80",
+      "right": true,
+      "confidence": 0.96,
+      "teacher_right": true
+     },
+     {
+      "n": 22,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B x + 5",
+      "right": true,
+      "confidence": 0.96,
+      "teacher_right": true
+     },
+     {
+      "n": 23,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C 3510cm3",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 24,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B 10:55pm",
+      "right": true,
+      "confidence": 0.82,
+      "teacher_right": false
+     },
+     {
+      "n": 25,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C Ensures you buy only the necessity",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 26,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C 361",
+      "right": false,
+      "confidence": 0.88,
+      "teacher_right": false
+     },
+     {
+      "n": 27,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A 30,000",
+      "right": true,
+      "confidence": 0.94,
+      "teacher_right": true
+     },
+     {
+      "n": 28,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B 5/8",
+      "right": true,
+      "confidence": 0.82,
+      "teacher_right": true
+     },
+     {
+      "n": 29,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C 66",
+      "right": false,
+      "confidence": 0.9,
+      "teacher_right": false
+     },
+     {
+      "n": 30,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B 0.567",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     }
+    ]
+   },
+   "seconds": {
+    "english": 91,
+    "science": 113,
+    "maths": 127
+   },
+   "pages_turned": {
+    "english": [
+     {
+      "page": 1,
+      "sent": "portrait",
+      "stored": "portrait"
+     },
+     {
+      "page": 2,
+      "sent": "portrait",
+      "stored": "landscape"
+     },
+     {
+      "page": 3,
+      "sent": "portrait",
+      "stored": "portrait"
+     },
+     {
+      "page": 4,
+      "sent": "portrait",
+      "stored": "portrait"
+     }
+    ],
+    "science": [
+     {
+      "page": 1,
+      "sent": "portrait",
+      "stored": "portrait"
+     },
+     {
+      "page": 2,
+      "sent": "portrait",
+      "stored": "landscape"
+     },
+     {
+      "page": 3,
+      "sent": "portrait",
+      "stored": "portrait"
+     },
+     {
+      "page": 4,
+      "sent": "portrait",
+      "stored": "portrait"
+     }
+    ],
+    "maths": [
+     {
+      "page": 1,
+      "sent": "portrait",
+      "stored": "portrait"
+     },
+     {
+      "page": 2,
+      "sent": "portrait",
+      "stored": "landscape"
+     },
+     {
+      "page": 3,
+      "sent": "portrait",
+      "stored": "portrait"
+     },
+     {
+      "page": 4,
+      "sent": "portrait",
+      "stored": "portrait"
+     }
+    ]
+   },
+   "status": {
+    "english": "marked",
+    "science": "marked",
+    "maths": "marked"
+   }
+  },
+  {
+   "run": 2,
+   "papers": {
+    "maths": [
+     {
+      "n": 1,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 2,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 3,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 4,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.97,
+      "teacher_right": true
+     },
+     {
+      "n": 5,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.97,
+      "teacher_right": true
+     },
+     {
+      "n": 6,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.97,
+      "teacher_right": true
+     },
+     {
+      "n": 7,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.96,
+      "teacher_right": true
+     },
+     {
+      "n": 8,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.96,
+      "teacher_right": true
+     },
+     {
+      "n": 9,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.96,
+      "teacher_right": true
+     },
+     {
+      "n": 10,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.96,
+      "teacher_right": true
+     },
+     {
+      "n": 11,
+      "read": [
+       "A 24 (circled)",
+       "A"
+      ],
+      "final_answer": "A (24)",
+      "right": false,
+      "confidence": 0.85,
+      "teacher_right": false
+     },
+     {
+      "n": 12,
+      "read": [
+       "D W Y X Z (circled)",
+       "D"
+      ],
+      "final_answer": "D (W Y X Z)",
+      "right": false,
+      "confidence": 0.8,
+      "teacher_right": false
+     },
+     {
+      "n": 13,
+      "read": [
+       "D. Sh. 855 (circled)",
+       "D"
+      ],
+      "final_answer": "D (Sh. 855)",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 14,
+      "read": [
+       "A 1300768 (circled)",
+       "A"
+      ],
+      "final_answer": "A (1300768)",
+      "right": false,
+      "confidence": 0.9,
+      "teacher_right": false
+     },
+     {
+      "n": 15,
+      "read": [
+       "C. 432 (circled)",
+       "C"
+      ],
+      "final_answer": "C (432)",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 16,
+      "read": [
+       "A 36 (circled)",
+       "A"
+      ],
+      "final_answer": "A (36)",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 17,
+      "read": [
+       "D 19 (circled)",
+       "13, 6 written beside table",
+       "D"
+      ],
+      "final_answer": "D (19)",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 18,
+      "read": [
+       "A 39 (circled)",
+       "A"
+      ],
+      "final_answer": "A (39)",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 19,
+      "read": [
+       "B 6 (circled)",
+       "B"
+      ],
+      "final_answer": "B (6)",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 20,
+      "read": [
+       "D 1t 9743kg (circled on question paper)",
+       "B"
+      ],
+      "final_answer": "B (19t 743kg)",
+      "right": true,
+      "confidence": 0.75,
+      "teacher_right": true
+     },
+     {
+      "n": 21,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 22,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 23,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 24,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": false
+     },
+     {
+      "n": 25,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 26,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": false,
+      "confidence": 0.85,
+      "teacher_right": false
+     },
+     {
+      "n": 27,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 28,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 29,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": false,
+      "confidence": 0.85,
+      "teacher_right": false
+     },
+     {
+      "n": 30,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     }
+    ],
+    "english": [
+     {
+      "n": 1,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C. Purity",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 2,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C. Three",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 3,
+      "read": [
+       "D circled",
+       "D"
+      ],
+      "final_answer": "D. showing Purity around",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 4,
+      "read": [
+       "D circled",
+       "D"
+      ],
+      "final_answer": "D. Laptop and briefcase",
+      "right": true,
+      "confidence": 0.85,
+      "teacher_right": true
+     },
+     {
+      "n": 5,
+      "read": [
+       "C circled",
+       "C"
+      ],
+      "final_answer": "C. It was spacious",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 6,
+      "read": [
+       "A circled",
+       "A"
+      ],
+      "final_answer": "A. Not playing with the ball again",
+      "right": true,
+      "confidence": 0.85,
+      "teacher_right": true
+     },
+     {
+      "n": 7,
+      "read": [
+       "B circled",
+       "B"
+      ],
+      "final_answer": "B. Football",
+      "right": true,
+      "confidence": 0.85,
+      "teacher_right": true
+     },
+     {
+      "n": 8,
+      "read": [
+       "B circled",
+       "B"
+      ],
+      "final_answer": "B. It was kicked so hard",
+      "right": true,
+      "confidence": 0.85,
+      "teacher_right": true
+     },
+     {
+      "n": 9,
+      "read": [
+       "D circled",
+       "A"
+      ],
+      "final_answer": "D. Break a windowpane or hurt someone",
+      "right": true,
+      "confidence": 0.8,
+      "teacher_right": true
+     },
+     {
+      "n": 10,
+      "read": [
+       "C circled",
+       "C"
+      ],
+      "final_answer": "C. Furious",
+      "right": true,
+      "confidence": 0.85,
+      "teacher_right": true
+     },
+     {
+      "n": 11,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.92,
+      "teacher_right": true
+     },
+     {
+      "n": 12,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 13,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "right": false,
+      "confidence": 0.7,
+      "teacher_right": true
+     },
+     {
+      "n": 14,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 15,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 16,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 17,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 18,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 19,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 20,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 21,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 22,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 23,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.85,
+      "teacher_right": false
+     },
+     {
+      "n": 24,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 25,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 26,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 27,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D",
+      "right": false,
+      "confidence": 0.9,
+      "teacher_right": false
+     },
+     {
+      "n": 28,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 29,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 30,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     }
+    ],
+    "science": [
+     {
+      "n": 1,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 2,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 3,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 4,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 5,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 6,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 7,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.85,
+      "teacher_right": true
+     },
+     {
+      "n": 8,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 9,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 10,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 11,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 12,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 13,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.88,
+      "teacher_right": true
+     },
+     {
+      "n": 14,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 15,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 16,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.88,
+      "teacher_right": true
+     },
+     {
+      "n": 17,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.7,
+      "teacher_right": true
+     },
+     {
+      "n": 18,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.88,
+      "teacher_right": true
+     },
+     {
+      "n": 19,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.88,
+      "teacher_right": true
+     },
+     {
+      "n": 20,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D",
+      "right": false,
+      "confidence": 0.75,
+      "teacher_right": null
+     },
+     {
+      "n": 21,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 22,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.85,
+      "teacher_right": true
+     },
+     {
+      "n": 23,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 24,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 25,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 26,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D",
+      "right": false,
+      "confidence": 0.75,
+      "teacher_right": true
+     },
+     {
+      "n": 27,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 28,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "right": false,
+      "confidence": 0.7,
+      "teacher_right": true
+     },
+     {
+      "n": 29,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.85,
+      "teacher_right": true
+     },
+     {
+      "n": 30,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 31,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.85,
+      "teacher_right": true
+     },
+     {
+      "n": 32,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 33,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": false
+     },
+     {
+      "n": 34,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 35,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 36,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 37,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 38,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 39,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 40,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 41,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 42,
+      "read": [
+       "D",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": false,
+      "confidence": 0.75,
+      "teacher_right": false
+     },
+     {
+      "n": 43,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 44,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 45,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 46,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 47,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 48,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.93,
+      "teacher_right": true
+     },
+     {
+      "n": 49,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.93,
+      "teacher_right": true
+     },
+     {
+      "n": 50,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     }
+    ]
+   },
+   "seconds": {
+    "maths": 100,
+    "english": 244,
+    "science": 299
+   },
+   "pages_turned": {
+    "maths": [
+     {
+      "page": 1,
+      "sent": "portrait",
+      "stored": "portrait"
+     },
+     {
+      "page": 2,
+      "sent": "portrait",
+      "stored": "landscape"
+     },
+     {
+      "page": 3,
+      "sent": "portrait",
+      "stored": "portrait"
+     },
+     {
+      "page": 4,
+      "sent": "portrait",
+      "stored": "portrait"
+     }
+    ],
+    "english": [
+     {
+      "page": 1,
+      "sent": "portrait",
+      "stored": "portrait"
+     },
+     {
+      "page": 2,
+      "sent": "portrait",
+      "stored": "landscape"
+     },
+     {
+      "page": 3,
+      "sent": "portrait",
+      "stored": "portrait"
+     },
+     {
+      "page": 4,
+      "sent": "portrait",
+      "stored": "portrait"
+     }
+    ],
+    "science": [
+     {
+      "page": 1,
+      "sent": "portrait",
+      "stored": "portrait"
+     },
+     {
+      "page": 2,
+      "sent": "portrait",
+      "stored": "landscape"
+     },
+     {
+      "page": 3,
+      "sent": "portrait",
+      "stored": "portrait"
+     },
+     {
+      "page": 4,
+      "sent": "portrait",
+      "stored": "portrait"
+     }
+    ]
+   },
+   "status": {
+    "maths": "marked",
+    "english": "marked",
+    "science": "marked"
+   }
+  },
+  {
+   "run": 3,
+   "papers": {
+    "english": [
+     {
+      "n": 1,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 2,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 3,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.85,
+      "teacher_right": true
+     },
+     {
+      "n": 4,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.85,
+      "teacher_right": true
+     },
+     {
+      "n": 5,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 6,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 7,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 8,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 9,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 10,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 11,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 12,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 13,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "right": false,
+      "confidence": 0.8,
+      "teacher_right": true
+     },
+     {
+      "n": 14,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 15,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 16,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 17,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 18,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 19,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 20,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 21,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 22,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 23,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": false
+     },
+     {
+      "n": 24,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.92,
+      "teacher_right": true
+     },
+     {
+      "n": 25,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 26,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 27,
+      "read": [
+       "D. Isn't it",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": false,
+      "confidence": 0.9,
+      "teacher_right": false
+     },
+     {
+      "n": 28,
+      "read": [
+       "B. and",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 29,
+      "read": [
+       "A. or",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 30,
+      "read": [
+       "C. oursleves ourselves",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.97,
+      "teacher_right": true
+     }
+    ],
+    "maths": [
+     {
+      "n": 1,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.99,
+      "teacher_right": true
+     },
+     {
+      "n": 2,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.99,
+      "teacher_right": true
+     },
+     {
+      "n": 3,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.99,
+      "teacher_right": true
+     },
+     {
+      "n": 4,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 5,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 6,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 7,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.97,
+      "teacher_right": true
+     },
+     {
+      "n": 8,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 9,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 10,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.97,
+      "teacher_right": true
+     },
+     {
+      "n": 11,
+      "read": [
+       "A 24 circled",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": false,
+      "confidence": 0.9,
+      "teacher_right": false
+     },
+     {
+      "n": 12,
+      "read": [
+       "D W Y X Z circled",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": false,
+      "confidence": 0.85,
+      "teacher_right": false
+     },
+     {
+      "n": 13,
+      "read": [
+       "D. Sh. 855 circled",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 14,
+      "read": [
+       "A 1300768 circled",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": false,
+      "confidence": 0.9,
+      "teacher_right": false
+     },
+     {
+      "n": 15,
+      "read": [
+       "C. 432 circled",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 16,
+      "read": [
+       "A 36 circled",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 17,
+      "read": [
+       "D 19 circled",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 18,
+      "read": [
+       "A 39 circled",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 19,
+      "read": [
+       "B 6 circled",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 20,
+      "read": [
+       "D 1t 9743kg circled",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.8,
+      "teacher_right": true
+     },
+     {
+      "n": 21,
+      "read": [
+       "D circled",
+       "D"
+      ],
+      "final_answer": "D 80",
+      "right": true,
+      "confidence": 0.97,
+      "teacher_right": true
+     },
+     {
+      "n": 22,
+      "read": [
+       "B circled",
+       "B"
+      ],
+      "final_answer": "B x + 5",
+      "right": true,
+      "confidence": 0.97,
+      "teacher_right": true
+     },
+     {
+      "n": 23,
+      "read": [
+       "C circled",
+       "C"
+      ],
+      "final_answer": "C 3510cm3",
+      "right": true,
+      "confidence": 0.96,
+      "teacher_right": true
+     },
+     {
+      "n": 24,
+      "read": [
+       "B circled",
+       "B"
+      ],
+      "final_answer": "B 10:55pm",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": false
+     },
+     {
+      "n": 25,
+      "read": [
+       "C circled",
+       "C"
+      ],
+      "final_answer": "C Ensures you buy only the necessity",
+      "right": true,
+      "confidence": 0.96,
+      "teacher_right": true
+     },
+     {
+      "n": 26,
+      "read": [
+       "C circled",
+       "C"
+      ],
+      "final_answer": "C 361",
+      "right": false,
+      "confidence": 0.9,
+      "teacher_right": false
+     },
+     {
+      "n": 27,
+      "read": [
+       "A circled",
+       "A"
+      ],
+      "final_answer": "A 30,000",
+      "right": true,
+      "confidence": 0.96,
+      "teacher_right": true
+     },
+     {
+      "n": 28,
+      "read": [
+       "B circled",
+       "B"
+      ],
+      "final_answer": "B 5/8",
+      "right": true,
+      "confidence": 0.85,
+      "teacher_right": true
+     },
+     {
+      "n": 29,
+      "read": [
+       "C circled",
+       "C"
+      ],
+      "final_answer": "C 66",
+      "right": false,
+      "confidence": 0.88,
+      "teacher_right": false
+     },
+     {
+      "n": 30,
+      "read": [
+       "B circled",
+       "B"
+      ],
+      "final_answer": "B 0.567",
+      "right": true,
+      "confidence": 0.96,
+      "teacher_right": true
+     }
+    ],
+    "science": [
+     {
+      "n": 1,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 2,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 3,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 4,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 5,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 6,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 7,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 8,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 9,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 10,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 11,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 12,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 13,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.97,
+      "teacher_right": true
+     },
+     {
+      "n": 14,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 15,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 16,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.97,
+      "teacher_right": true
+     },
+     {
+      "n": 17,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.94,
+      "teacher_right": true
+     },
+     {
+      "n": 18,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.97,
+      "teacher_right": true
+     },
+     {
+      "n": 19,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.97,
+      "teacher_right": true
+     },
+     {
+      "n": 20,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "right": false,
+      "confidence": 0.92,
+      "teacher_right": null
+     },
+     {
+      "n": 21,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C. bananas",
+      "right": true,
+      "confidence": 0.96,
+      "teacher_right": true
+     },
+     {
+      "n": 22,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B. rainy",
+      "right": true,
+      "confidence": 0.94,
+      "teacher_right": true
+     },
+     {
+      "n": 23,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A. mulching",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 24,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B. scarecrow",
+      "right": true,
+      "confidence": 0.98,
+      "teacher_right": true
+     },
+     {
+      "n": 25,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D. mutton and wool",
+      "right": true,
+      "confidence": 0.97,
+      "teacher_right": true
+     },
+     {
+      "n": 26,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D. rake",
+      "right": true,
+      "confidence": 0.94,
+      "teacher_right": true
+     },
+     {
+      "n": 27,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C. Transfering of seeds from a nursery to the seedbed",
+      "right": true,
+      "confidence": 0.96,
+      "teacher_right": true
+     },
+     {
+      "n": 28,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C. Drip irrigation",
+      "right": true,
+      "confidence": 0.97,
+      "teacher_right": true
+     },
+     {
+      "n": 29,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A. is used as medicine",
+      "right": true,
+      "confidence": 0.93,
+      "teacher_right": true
+     },
+     {
+      "n": 30,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B. peas",
+      "right": true,
+      "confidence": 0.97,
+      "teacher_right": true
+     },
+     {
+      "n": 31,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 32,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 33,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": false
+     },
+     {
+      "n": 34,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 35,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 36,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 37,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 38,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 39,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 40,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 41,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 42,
+      "read": [
+       "D",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": false,
+      "confidence": 0.85,
+      "teacher_right": false
+     },
+     {
+      "n": 43,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 44,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 45,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 46,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 47,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 48,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     },
+     {
+      "n": 49,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "right": true,
+      "confidence": 0.9,
+      "teacher_right": true
+     },
+     {
+      "n": 50,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "right": true,
+      "confidence": 0.95,
+      "teacher_right": true
+     }
+    ]
+   },
+   "seconds": {
+    "english": 69,
+    "maths": 90,
+    "science": 89
+   },
+   "pages_turned": {
+    "english": [
+     {
+      "page": 1,
+      "sent": "portrait",
+      "stored": "portrait"
+     },
+     {
+      "page": 2,
+      "sent": "portrait",
+      "stored": "landscape"
+     },
+     {
+      "page": 3,
+      "sent": "portrait",
+      "stored": "portrait"
+     },
+     {
+      "page": 4,
+      "sent": "portrait",
+      "stored": "portrait"
+     }
+    ],
+    "maths": [
+     {
+      "page": 1,
+      "sent": "portrait",
+      "stored": "portrait"
+     },
+     {
+      "page": 2,
+      "sent": "portrait",
+      "stored": "landscape"
+     },
+     {
+      "page": 3,
+      "sent": "portrait",
+      "stored": "portrait"
+     },
+     {
+      "page": 4,
+      "sent": "portrait",
+      "stored": "portrait"
+     }
+    ],
+    "science": [
+     {
+      "page": 1,
+      "sent": "portrait",
+      "stored": "portrait"
+     },
+     {
+      "page": 2,
+      "sent": "portrait",
+      "stored": "landscape"
+     },
+     {
+      "page": 3,
+      "sent": "portrait",
+      "stored": "portrait"
+     },
+     {
+      "page": 4,
+      "sent": "portrait",
+      "stored": "portrait"
+     }
+    ]
+   },
+   "status": {
+    "english": "marked",
+    "maths": "marked",
+    "science": "marked"
+   }
+  }
+ ]
+}

@@ -155,3 +155,34 @@ From the teacher's PDF to the re-check, on a fresh exam (README §5). Fixed the 
   **the class patterns called Lo a student** ("Ask Lo first to explain how he got $100"). All reworded at the source.
 - **Bulk accept failed in the desktop app** that had run since before the panel fixes: its compiled door list predated
   the route. Rebuilt; a release build compiles it.
+
+## 2 Nov: held-out v2 on the code that ships
+
+- **v2 run again on the shipped code, beside its blind first run** (`harness/heldout/results/v2-on-shipped-code-3-runs.json`,
+  `0b7502c`, clean): named right 44 of 48, Lo asks first 39 of 42, a wrong idea named 3 of 42, right work 39 of 39,
+  instructions in the ink never obeyed 30 of 30. The blind first run ran on an uncommitted working copy; both are shown
+  (`harness/PROVENANCE.md`).
+
+## 3 Nov: a real student's handwriting, and what it found
+
+- **A real Grade 5 student's three papers against his own teacher's marks** (`evidence/real-handwriting/`). As
+  photographed: 102 of 109 agree, 4 of his 10 wrong answers caught. With the three sideways pages turned upright by hand:
+  105 of 109, 7 of 10.
+- **Pages turned upright by the server.** Asked "how many degrees", the first live try turned two of three sideways pages
+  the wrong way; asked "which edge is the top", it turned them right. Measured after, 4 papers × 3 runs each way: by edge
+  45 of 45 pages, by degrees 44 of 45 (`harness/orient/results/orient-03nov.json`).
+- **A long paper took 332 s live.** One reading wrote 11,650 tokens. Marked in parts of about ten questions at once:
+  63 and 65 s, against 220 and 232 s for one reading, on the same code (`harness/parts/results/parts-03nov.json`).
+- **Half a mark rounded up.** On the parts code, the physics page without a scheme gave three one-mark "part way" answers
+  1 of 1. Full marks now belong to a mastered question only (`witness_mark:short_of_full`); the page back to 6 of 30
+  (`evidence/unseen-physics/no-scheme-after-half-mark-fix-3-runs.json`).
+- **Condition C, the code that ships, three live runs, nothing turned by hand:** 105, 103 and 105 of 109; 7 of 10
+  caught every run; the sideways page stored upright in 9 of 9 papers
+  (`evidence/real-handwriting/results/condition-c-shipped-code-3-runs.json`).
+- **The circled option taken as evidence.** In runs 2 and 3 of condition C the reading included the option he circled
+  with its printed text ("A 24 circled"), and an idea was named from it on 4 of 27 wrong answers. The option chosen is
+  the final answer, which is no evidence: `witness_mark:chosen_option/2` (`6611ef2`), with a test. Re-applied to the
+  four, all four are held and Lo asks first.
+- **Sixteen committed images were damaged by git** (CR stripped from every CR LF pair; only `*.png` was marked binary).
+  Every one restored or redrawn, every media type marked binary, and `scripts/check_media.py` runs in CI
+  (`evidence/MEDIA-REPAIR.md`).
