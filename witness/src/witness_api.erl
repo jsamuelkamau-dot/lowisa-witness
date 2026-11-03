@@ -1043,9 +1043,10 @@ payer(Uid, _, _) -> Uid.
 %% 31 Oct (filming): the teacher's new challenge reached the student only if they happened to open the paper. It is
 %% pushed to their phone (lowisa_edge_push, kind witness_challenge), and opens From Exam to Mastery. Never throws.
 told(teacher, <<"challenge">>, #{student_uid := S, status := <<"released">>}, Sid, N) when is_binary(S), S =/= <<>> ->
-    _ = (catch lowisa_edge_push:send(S, <<"witness_challenge">>,
-                                     #{<<"text">> => <<"Your teacher sent you a new challenge on question ", (integer_to_binary(N))/binary, ".">>,
-                                       <<"target">> => <<"witness:", Sid/binary>>})),
+    %% LoWisa's push service when this runs inside LoWisa; in the library alone the call is skipped (3 Nov, judges' panel)
+    _ = quietly(fun() -> lowisa_edge_push:send(S, <<"witness_challenge">>,
+                                               #{<<"text">> => <<"Your teacher sent you a new challenge on question ", (integer_to_binary(N))/binary, ".">>,
+                                                 <<"target">> => <<"witness:", Sid/binary>>}) end),
     ok;
 told(_, _, _, _, _) -> ok.
 

@@ -539,18 +539,30 @@ cap(Q, Max) -> Q#{confidence => min(Max, num(maps:get(confidence, Q, 1.0)))}.
 %% as option A)
 same_answer(A, B) ->
     case {option_letter(A), option_letter(B)} of
-        {L, L} when L =/= none -> true;
+        %% the same letter, and the words after it agree too when both readings have them ("A dog" is not "A cat")
+        {L, L} when L =/= none -> words_agree(after_letter(A), after_letter(B));
         {L1, L2} when L1 =/= none, L2 =/= none -> false;
         _ ->
             case {numbers_in(A), numbers_in(B)} of
-                {[], []} ->
-                    {NA, NB} = {plain(A), plain(B)},
-                    NA =:= NB orelse (byte_size(NA) >= 3 andalso byte_size(NB) >= 3 andalso
-                                      (binary:match(NA, NB) =/= nomatch orelse binary:match(NB, NA) =/= nomatch));
+                {[], []} -> words_agree(A, B);
                 {Ns, Ns} -> true;
                 _ -> false
             end
     end.
+
+%% the same words once case and punctuation are set aside, or every word of the shorter inside the longer
+%% ("secondary colour" in "a secondary colour"; never "red" in "infrared"); an empty side agrees with anything
+words_agree(A, B) ->
+    case {word_list(A), word_list(B)} of
+        {[], _} -> true;
+        {_, []} -> true;
+        {WA, WB} -> WA =:= WB orelse lists:all(fun(W) -> lists:member(W, WB) end, WA)
+                    orelse lists:all(fun(W) -> lists:member(W, WA) end, WB)
+    end.
+
+word_list(B) -> [W || W <- re:split(string:lowercase(B), <<"[^a-z0-9]+">>, [unicode, {return, binary}, trim]), W =/= <<>>].
+
+after_letter(B) -> re:replace(B, <<"^\\s*\\(?[A-Ea-e]\\)?\\.?\\s*">>, <<>>, [{return, binary}]).
 
 %% a capital A to E, or a bracketed one, at the start: "D Cow peas", "(b) Airtight sack", "B." (never "a dog")
 option_letter(B) ->
@@ -565,5 +577,4 @@ numbers_in(B) ->
         nomatch -> []
     end.
 
-plain(B) -> iolist_to_binary(re:replace(string:lowercase(B), <<"[^a-z0-9]+">>, <<>>, [global, unicode])).
 

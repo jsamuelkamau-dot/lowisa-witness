@@ -17,7 +17,9 @@
 
 -define(FPS, 1).
 -define(MAX_FRAMES, 120).
--define(TIMEOUT_MS, 300000).
+%% 3 Nov (Muse Spark Open on Baseten, harness/open): the open model writes up to 12,000 tokens a reading, half of it
+%% reasoning, and a four-photo paper passed five minutes twice; ten minutes, for an open endpoint only
+-define(TIMEOUT_MS, 600000).
 
 mark(#{url := Base, key := Key, model := Model} = Cfg, #{url := Clip}, Sitting) ->
     case witness_media:frames(Clip, ?FPS, ?MAX_FRAMES) of

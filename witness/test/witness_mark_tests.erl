@@ -178,4 +178,9 @@ a_sure_answer_read_differently_is_no_longer_sure_test() ->
     ?assert(witness_mark:same_answer(<<"150 rabbits">>, <<"150">>)),
     %% a sentence that starts with "a" is not option A
     ?assertNot(witness_mark:same_answer(<<"a dog">>, <<"a cat">>)),
-    ?assert(witness_mark:same_answer(<<"a secondary colour">>, <<"secondary colour">>)).
+    ?assert(witness_mark:same_answer(<<"a secondary colour">>, <<"secondary colour">>)),
+    %% judges' panel, round 6: the same capital letter with different words after it, and a word inside another word
+    ?assertNot(witness_mark:same_answer(<<"A dog">>, <<"A cat">>)),
+    ?assert(witness_mark:same_answer(<<"D Cow peas circled">>, <<"D. Cow peas">>)),
+    ?assertNot(witness_mark:same_answer(<<"red">>, <<"infrared">>)),
+    ?assert(witness_mark:same_answer(<<"Bowling square">>, <<"bowling square">>)).
