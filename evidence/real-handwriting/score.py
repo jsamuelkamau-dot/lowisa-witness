@@ -5,14 +5,14 @@
 
 Against the class teacher's own marks: agreement, the teacher's wrong answers the product also marked wrong (recall),
 answers it marked wrong that the teacher marked right, Cohen's kappa, and the all-right baseline (the agreement a marker
-would get by marking every answer right). Science question 20 is left out: the teacher's mark on it is unclear.
+would get by marking every answer right). Science question 20 is left out: the teacher's mark on it is unclear. The written-answer papers
+(results/written-answers-3-runs.json) are scored the same way.
 """
 import json
 import math
 import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SUBJECTS = ('maths', 'english', 'science')
 
 
 def score(rows):
@@ -47,9 +47,10 @@ def scored(subject_rows):
 
 
 def line(name, rows_by_subject):
-    allrows = [r for s in SUBJECTS for r in scored(rows_by_subject.get(s, []))]
+    subjects = list(rows_by_subject)
+    allrows = [r for s in subjects for r in scored(rows_by_subject[s])]
     s = score(allrows)
-    per = '  '.join(f'{x} {score(scored(rows_by_subject[x]))["agree"]}/{len(scored(rows_by_subject[x]))}' for x in SUBJECTS if x in rows_by_subject)
+    per = '  '.join(f'{x} {score(scored(rows_by_subject[x]))["agree"]}/{len(scored(rows_by_subject[x]))}' for x in subjects)
     print(f'{name:44} {s["agree"]}/{s["questions"]} agree; caught {s["caught"]}/{s["teacher_wrong"]} '
           f'(95% CI {s["recall_95ci"]}); {s["false_wrong"]} marked wrong that the teacher marked right; '
           f'kappa {s["kappa"]}; all-right baseline {s["all_right_baseline"]}   [{per}]')
@@ -65,6 +66,11 @@ def main():
         c = json.load(open(c_path))
         for run in c['runs']:
             line(f'C_shipped_code run {run["run"]}', run['papers'])
+    w_path = os.path.join(HERE, 'results', 'written-answers-3-runs.json')
+    if os.path.exists(w_path):
+        w = json.load(open(w_path, encoding='utf-8'))
+        for run in w['runs']:
+            line(f'Written answers run {run["run"]}', run['papers'])
 
 
 if __name__ == '__main__':

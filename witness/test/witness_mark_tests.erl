@@ -102,7 +102,7 @@ an_unsure_question_is_read_twice_test() ->
     ?assertEqual(Sure, A),
     %% split: never mastered, low confidence, the teacher decides, steps still placed on the page
     ?assertMatch(#{result := <<"part_way">>, confidence := 0.4, steps := [placed], read_twice := true}, B),
-    ?assertNotEqual(nomatch, binary:match(maps:get(diagnosis, B), <<"Two readings of the video disagreed">>)),
+    ?assertNotEqual(nomatch, binary:match(maps:get(diagnosis, B), <<"Two readings of the work disagreed">>)),
     %% agreed: the surer confidence
     ?assertMatch(#{result := <<"not_yet">>, confidence := 0.85, steps := [p3], read_twice := true}, C).
 
@@ -134,7 +134,7 @@ a_split_is_decided_by_a_third_reading_test() ->
     ?assertNot(maps:is_key(split, A)),
     %% three different: the teacher decides
     ?assertMatch(#{confidence := 0.4, read_thrice := true}, B),
-    ?assertNotEqual(nomatch, binary:match(maps:get(diagnosis, B), <<"Three readings of the video disagreed">>)),
+    ?assertNotEqual(nomatch, binary:match(maps:get(diagnosis, B), <<"Three readings of the work disagreed">>)),
     %% no third reading (it failed): the split stays as two readings left it, without the internal flag
     [C, _] = witness_mark:decide(Rec, First, Second, []),
     ?assertMatch(#{confidence := 0.4}, C), ?assertNot(maps:is_key(split, C)),

@@ -1,10 +1,11 @@
-# Real handwriting: one student, three papers, his teacher's marks
+# Real handwriting: one student, his papers, his teacher's marks
 
 The first real handwriting in this repository: answers written by a real Grade 5 student in his own
 pencil, and marked by his class teacher, who is not on our team. Everything else in `harness/` is sample papers.
 
-**Consent and privacy.** His parent consented to these papers being used and published, his name included. We chose to
-blur his name anyway, with his school's name, his class and his student number, on every photo. The photos carried no
+**Consent and privacy.** His parent consented to these papers being used and published, his name included; **the
+written consent is available if required.** We chose to blur his name anyway, with his school's name, his class and his
+student number, on every photo. The photos carried no
 location or other metadata. To ask about them or have them taken down: [lowisa.dev](https://lowisa.dev).
 
 **What was marked.** Three multiple-choice papers from the end of his school term: maths (30 questions),
@@ -12,7 +13,8 @@ English (30) and integrated science (50), 110 questions in all, 109 scored (the 
 unclear). The printed question papers are a commercial practice series, so this folder shows his answer sheets and two
 questions from one page, not the full papers. Two more
 answer sheets (social studies/RE and creative arts) were left out because the question paper photographed with them is a
-different paper: the answers he circled on it do not match either sheet.
+different paper: the answers he circled on it do not match either sheet. **His written answers** (42 questions on three
+more papers) are a second test, below.
 
 ## How it was run
 
@@ -74,15 +76,62 @@ was named from the choice alone on 4 of 27 wrong answers (for example "LCM is th
 from the wrong place on a sideways page, and read an unclear letter on Q12 as the right one. B, turned by hand, caught
 both; C, with the server turning the pages itself, catches both in every run.
 
+## His written answers: 42 questions, no marking scheme
+
+The papers above are multiple choice. These are his own words: short written answers, a sequence, a list, a music
+rhythm written in note symbols, written on the printed question pages themselves, with no separate answer sheet and
+**no marking scheme given to Witness**. Three papers from the same term: creative arts (SBA006, pages 3 and 4, Q15–30),
+integrated science (SBA006, page 4, Q35–50) and creative arts (SBA003, page 4, Q21–30). 42 questions, of which 30 are
+written answers or drawings and 12 circled options.
+
+- **The key is his teacher's**, read by us from the red pen (a long tick is right, a short curl or hook is wrong):
+  creative arts Q28 wrong ("Digo community" for the Olwika); science Q35 (cow peas as a cereal), Q41 (the order of
+  laundry steps) and Q46 ("iron" for rickets) wrong; every other answer right. Each page total that is visible agrees
+  (10 and 5 on the two creative-arts pages).
+- **Run the same way as condition C:** the ink removed by colour, the photos as taken, the live product (edge vb1104d,
+  `witness/src` `6611ef2`), three runs on 3 Nov 2026. A page from another student was sent by mistake in the same
+  runs; it was removed, and it is in no file here.
+- [`results/written-answers-3-runs.json`](results/written-answers-3-runs.json) records every answer as read, every
+  mark, and every note to the teacher; `score.py` recomputes the numbers. Two excerpts, as marked and as sent:
+  [`sheets/written-creative-arts-q28-30.jpg`](sheets/written-creative-arts-q28-30.jpg),
+  [`sent/written-creative-arts-q28-30.jpg`](sent/written-creative-arts-q28-30.jpg),
+  [`sheets/written-science-q41.jpg`](sheets/written-science-q41.jpg),
+  [`sent/written-science-q41.jpg`](sent/written-science-q41.jpg).
+
+| | Run 1 | Run 2 | Run 3 |
+|---|---|---|---|
+| Questions where Witness and the teacher agree | 37 of 42 | 38 of 42 | 38 of 42 |
+| The teacher's wrong answers Witness also marked not yet mastered | 3 of 4 | 3 of 4 | 3 of 4 |
+| Marked not yet by Witness, right by the teacher | 4 | 3 | 3 |
+| A wrong idea named to the student | **0** | **0** | **0** |
+| Time per paper | 119–155 s | 127–163 s | 90–145 s |
+
+**What the numbers mean.** Marking every answer right would agree on 38 of 42 too, so agreement here says little, and
+kappa is 0.48–0.55. Four wrong answers is far too few to measure how many are caught (3 of 4; 95% interval 30–95%).
+What this does show: Witness read a Grade 5 student's written words from phone photos, in subjects it was never tuned on
+(it was built on mathematics), without a marking scheme, and judged most of them as his teacher did, including two
+things he drew: a rhythm in note symbols and a quaver rest (both Q30, right in every run). **And every answer it did not accept, right or wrong, was held for Lo to ask, with no idea
+named and no label shown to him**: the design choice, *when unsure, ask*, held on all 19 of them.
+
+**Every disagreement:**
+
+| Question | Teacher | Witness | Runs | What happened |
+|---|---|---|---|---|
+| Science Q41, laundry steps | wrong | right | 3 of 3 | He wrote *sorting, mending, soaking, washing, rinsing, drying, ironing*. That is the order textbooks usually give; from the page we cannot see why the teacher marked it wrong. Over the answer, not the reading. |
+| Creative arts Q18, first step of a mosaic | right (B, collect materials) | not yet, Lo asks | 3 of 3 | Witness judged making a sketch to come first. The answer key, not the reading. |
+| Creative arts Q20, the fabric picture | right (B, applique) | not yet, Lo asks | 3 of 3 | Witness took the printed picture for batik. A reading of the printed picture, not of his ink. |
+| Science Q44, an organic waste pit | right | not yet, Lo asks | 3 of 3 | His answer is squeezed onto the question's own printed lines, and the teacher's tick ran through it; with the ink removed, Witness read it as crossed out (and once misread it). **A reading error**, made worse by the ink removal. |
+| Creative arts (SBA003) Q21, "Abu" | right | not yet, Lo asks | 1 of 3 | Run 1 took the name of the horn for a cut-off word; runs 2 and 3 marked it right. |
+
 ## Limits
 
-- **One student, one teacher, multiple choice only.** This tests reading a child's handwritten letters from phone
-  photos and marking them against a real teacher. It does not test written working, which is where the fingerprint
-  does its work; for multiple choice, Witness rightly names no wrong idea and has Lo ask. Written answers from many
-  students are the pilot's first step (main README, section 16).
+- **One student, one teacher.** The multiple-choice papers test reading a child's handwritten letters; the written
+  answers test reading his words, without a scheme. Neither tests long written working (a calculation over several
+  lines), which is where the fingerprint does its work: none of these answers shows a method, so Witness rightly named
+  no idea and had Lo ask. Written working from many students is the pilot's first step (main README, section 17).
 - **The teacher's marks were read by us**, from the photos. Where his marks were unclear (science Q20) the question is
   left out rather than guessed.
 - **Removing the ink by colour** left faint pink specks, and where a tick crossed a letter a little of the stroke may
   be lost. The letters Witness misread in B (Q33, Q42) were checked against the originals and are still clear.
-- **A and B ran once each, C three times.** No run was repeated or chosen; run 2 of C was slow (244 and 299 s for two
+- **A and B ran once each, C and the written answers three times.** No run was repeated or chosen; run 2 of C was slow (244 and 299 s for two
   papers) and is reported as it came.

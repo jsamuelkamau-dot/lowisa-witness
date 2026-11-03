@@ -467,8 +467,8 @@ decide(Reconciled, First, Second, Third) ->
                  {X, _, X} -> Agree(Q1, Q3);
                  {_, X, X} -> Agree(Q2, Q3);
                  _ -> (maps:remove(split, Q))#{read_thrice => true,
-                                               diagnosis => binary:replace(maps:get(diagnosis, Q, <<>>), <<"Two readings of the video disagreed">>,
-                                                                           <<"Three readings of the video disagreed">>)}
+                                               diagnosis => binary:replace(maps:get(diagnosis, Q, <<>>), <<"Two readings of the work disagreed">>,
+                                                                           <<"Three readings of the work disagreed">>)}
              end;
          _ -> maps:remove(split, Q)
      end || Q <- Reconciled].
@@ -486,10 +486,11 @@ reconcile(First, Second) ->
          {true, Q2} ->
              %% the first reading's steps stay: they carry SAM's places on the page
              Cautious = case {maps:get(result, Q), maps:get(result, Q2)} of {<<"mastered">>, _} -> Q2#{steps => maps:get(steps, Q, [])}; _ -> Q end,
+             %% "the work", not "the video": photographed papers and practicals are read the same way (3 Nov, live: a paper said "video")
              Cautious#{confidence => min(0.4, num(maps:get(confidence, Cautious, 0))), read_twice => true, split => true,
                        diagnosis => case maps:get(diagnosis, Cautious, <<>>) of
-                                        <<>> -> <<"Two readings of the video disagreed: the teacher decides.">>;
-                                        D -> <<D/binary, " (Two readings of the video disagreed: the teacher decides.)">>
+                                        <<>> -> <<"Two readings of the work disagreed: the teacher decides.">>;
+                                        D -> <<D/binary, " (Two readings of the work disagreed: the teacher decides.)">>
                                     end}
      end || Q <- First].
 
