@@ -1,0 +1,936 @@
+{
+ "what": "Daniel's physics paper marked through witness_photo:mark/4 on the tagged code v1.0-code (two readings must agree; local_mark.escript), 3 Nov 2026: once with the teacher's scheme, twice without (one of them the marking the film shows)",
+ "ran_on": "v1.0-code",
+ "runs": [
+  {
+   "run": "v1code-scheme",
+   "scheme": true,
+   "seconds": 64.3,
+   "cost_usd": 0.0536,
+   "score": 6,
+   "decisions_right": 30,
+   "questions": [
+    {
+     "n": 1,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Joules",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.98
+    },
+    {
+     "n": 2,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Magnetic force",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.97
+    },
+    {
+     "n": 3,
+     "marks": 1,
+     "out_of": 1,
+     "result": "mastered",
+     "final_answer": "60 ÷ 4 = 15 m/s",
+     "truth_mark": 1,
+     "decision_right": true,
+     "confidence": 0.99
+    },
+    {
+     "n": 4,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Gravity",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.97
+    },
+    {
+     "n": 5,
+     "marks": 0,
+     "out_of": 1,
+     "result": "part_way",
+     "final_answer": "Moving in a straight line",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.9
+    },
+    {
+     "n": 6,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "a = 20 ÷ 5 = 2",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 7,
+     "marks": 0,
+     "out_of": 1,
+     "result": "part_way",
+     "final_answer": "Energy cannot be created.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.92
+    },
+    {
+     "n": 8,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Nuclear",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.97
+    },
+    {
+     "n": 9,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Ampere",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.97
+    },
+    {
+     "n": 10,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "It gets smaller.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.93
+    },
+    {
+     "n": 11,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "It attracts all metals.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.94
+    },
+    {
+     "n": 12,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Heat it up.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.94
+    },
+    {
+     "n": 13,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Conduction",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.96
+    },
+    {
+     "n": 14,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Melting",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.96
+    },
+    {
+     "n": 15,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Angle of incidence is bigger than angle of reflection.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 16,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Transverse wave",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.97
+    },
+    {
+     "n": 17,
+     "marks": 1,
+     "out_of": 1,
+     "result": "mastered",
+     "final_answer": "20 Hz - 20 000 Hz",
+     "truth_mark": 1,
+     "decision_right": true,
+     "confidence": 0.99
+    },
+    {
+     "n": 18,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "It can travel in a vacuum.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 19,
+     "marks": 1,
+     "out_of": 1,
+     "result": "mastered",
+     "final_answer": "ρ = 200 ÷ 50 = 4 g/cm³",
+     "truth_mark": 1,
+     "decision_right": true,
+     "confidence": 0.99
+    },
+    {
+     "n": 20,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "P = F x A",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.96
+    },
+    {
+     "n": 21,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "P = 100 x 0.5 = 50 Pa",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 22,
+     "marks": 0,
+     "out_of": 1,
+     "result": "part_way",
+     "final_answer": "N/m",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.9
+    },
+    {
+     "n": 23,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "There is less oxygen higher up.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.92
+    },
+    {
+     "n": 24,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "The ship floats because it is very light and the nail sinks because it is heavier. Heavy objects sink and light objects float.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.94
+    },
+    {
+     "n": 25,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "kg",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.97
+    },
+    {
+     "n": 26,
+     "marks": 0,
+     "out_of": 1,
+     "result": "part_way",
+     "final_answer": "W = 10 x 10 = 100 kg",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.93
+    },
+    {
+     "n": 27,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "The fastest speed at the start.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.93
+    },
+    {
+     "n": 28,
+     "marks": 1,
+     "out_of": 1,
+     "result": "mastered",
+     "final_answer": "To cook food.",
+     "truth_mark": 1,
+     "decision_right": true,
+     "confidence": 0.99
+    },
+    {
+     "n": 29,
+     "marks": 1,
+     "out_of": 1,
+     "result": "mastered",
+     "final_answer": "300 000 km/s",
+     "truth_mark": 1,
+     "decision_right": true,
+     "confidence": 0.99
+    },
+    {
+     "n": 30,
+     "marks": 1,
+     "out_of": 1,
+     "result": "mastered",
+     "final_answer": "Telescope",
+     "truth_mark": 1,
+     "decision_right": true,
+     "confidence": 0.99
+    }
+   ]
+  },
+  {
+   "run": "v1code-noscheme",
+   "scheme": false,
+   "seconds": 90.9,
+   "cost_usd": 0.0664,
+   "score": 6,
+   "decisions_right": 30,
+   "questions": [
+    {
+     "n": 1,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Joules",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 2,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Magnetic force",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 3,
+     "marks": 1,
+     "out_of": 1,
+     "result": "mastered",
+     "final_answer": "15 m/s",
+     "truth_mark": 1,
+     "decision_right": true,
+     "confidence": 0.99
+    },
+    {
+     "n": 4,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Gravity",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 5,
+     "marks": 0,
+     "out_of": 1,
+     "result": "part_way",
+     "final_answer": "Moving in a straight line",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.9
+    },
+    {
+     "n": 6,
+     "marks": 0,
+     "out_of": 1,
+     "result": "part_way",
+     "final_answer": "a = 20 ÷ 5 = 2",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.9
+    },
+    {
+     "n": 7,
+     "marks": 0,
+     "out_of": 1,
+     "result": "part_way",
+     "final_answer": "Energy cannot be created.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.9
+    },
+    {
+     "n": 8,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Nuclear",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 9,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Ampere",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 10,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "It gets smaller.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.9
+    },
+    {
+     "n": 11,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "It attracts all metals.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 12,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Heat it up.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.9
+    },
+    {
+     "n": 13,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Conduction",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 14,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Melting",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 15,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Angle of incidence is bigger than angle of reflection.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 16,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Transverse wave",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 17,
+     "marks": 1,
+     "out_of": 1,
+     "result": "mastered",
+     "final_answer": "20 Hz - 20 000 Hz",
+     "truth_mark": 1,
+     "decision_right": true,
+     "confidence": 0.99
+    },
+    {
+     "n": 18,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "It can travel in a vacuum.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 19,
+     "marks": 1,
+     "out_of": 1,
+     "result": "mastered",
+     "final_answer": "4 g/cm³",
+     "truth_mark": 1,
+     "decision_right": true,
+     "confidence": 0.99
+    },
+    {
+     "n": 20,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "P = F × A",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 21,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "50 Pa",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 22,
+     "marks": 0,
+     "out_of": 1,
+     "result": "part_way",
+     "final_answer": "N/m",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.9
+    },
+    {
+     "n": 23,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "There is less oxygen higher up.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.9
+    },
+    {
+     "n": 24,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "The ship floats because it is very light and the nail sinks because it is heavier. Heavy objects sink and light objects float.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 25,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "kg",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 26,
+     "marks": 0,
+     "out_of": 1,
+     "result": "part_way",
+     "final_answer": "100 kg",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 27,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "The fastest speed at the start.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.9
+    },
+    {
+     "n": 28,
+     "marks": 1,
+     "out_of": 1,
+     "result": "mastered",
+     "final_answer": "To cook food.",
+     "truth_mark": 1,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 29,
+     "marks": 1,
+     "out_of": 1,
+     "result": "mastered",
+     "final_answer": "300 000 km/s",
+     "truth_mark": 1,
+     "decision_right": true,
+     "confidence": 0.98
+    },
+    {
+     "n": 30,
+     "marks": 1,
+     "out_of": 1,
+     "result": "mastered",
+     "final_answer": "Telescope",
+     "truth_mark": 1,
+     "decision_right": true,
+     "confidence": 0.99
+    }
+   ]
+  },
+  {
+   "run": "film11",
+   "scheme": false,
+   "seconds": 160.8,
+   "cost_usd": 0.1145,
+   "score": 6,
+   "decisions_right": 30,
+   "questions": [
+    {
+     "n": 1,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Joules",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 2,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Magnetic force",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 3,
+     "marks": 1,
+     "out_of": 1,
+     "result": "mastered",
+     "final_answer": "60 ÷ 4 = 15 m/s",
+     "truth_mark": 1,
+     "decision_right": true,
+     "confidence": 0.99
+    },
+    {
+     "n": 4,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Gravity",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 5,
+     "marks": 0,
+     "out_of": 1,
+     "result": "part_way",
+     "final_answer": "Moving in a straight line",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.9
+    },
+    {
+     "n": 6,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "a = 20 ÷ 5 = 2",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 7,
+     "marks": 0,
+     "out_of": 1,
+     "result": "part_way",
+     "final_answer": "Energy cannot be created.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.9
+    },
+    {
+     "n": 8,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Nuclear",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 9,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Ampere",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 10,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "It gets smaller.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.9
+    },
+    {
+     "n": 11,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "It attracts all metals.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.92
+    },
+    {
+     "n": 12,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Heat it up.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.92
+    },
+    {
+     "n": 13,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Conduction",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 14,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Melting",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 15,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Angle of incidence is bigger than angle of reflection.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 16,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "Transverse wave",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 17,
+     "marks": 1,
+     "out_of": 1,
+     "result": "mastered",
+     "final_answer": "20 Hz - 20 000 Hz",
+     "truth_mark": 1,
+     "decision_right": true,
+     "confidence": 0.99
+    },
+    {
+     "n": 18,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "It can travel in a vacuum.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 19,
+     "marks": 1,
+     "out_of": 1,
+     "result": "mastered",
+     "final_answer": "ρ = 200 ÷ 50 = 4 g/cm³",
+     "truth_mark": 1,
+     "decision_right": true,
+     "confidence": 0.99
+    },
+    {
+     "n": 20,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "P = F × A",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.92
+    },
+    {
+     "n": 21,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "P = 100 × 0.5 = 50 Pa",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.9
+    },
+    {
+     "n": 22,
+     "marks": 0,
+     "out_of": 1,
+     "result": "part_way",
+     "final_answer": "N/m",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.9
+    },
+    {
+     "n": 23,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "There is less oxygen higher up.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.92
+    },
+    {
+     "n": 24,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "The ship floats because it is very light and the nail sinks because it is heavier. Heavy objects sink and light objects float.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 25,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "kg",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 26,
+     "marks": 0,
+     "out_of": 1,
+     "result": "part_way",
+     "final_answer": "W = 10 × 10 = 100 kg",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.9
+    },
+    {
+     "n": 27,
+     "marks": 0,
+     "out_of": 1,
+     "result": "not_yet",
+     "final_answer": "The fastest speed at the start.",
+     "truth_mark": 0,
+     "decision_right": true,
+     "confidence": 0.92
+    },
+    {
+     "n": 28,
+     "marks": 1,
+     "out_of": 1,
+     "result": "mastered",
+     "final_answer": "To cook food.",
+     "truth_mark": 1,
+     "decision_right": true,
+     "confidence": 0.95
+    },
+    {
+     "n": 29,
+     "marks": 1,
+     "out_of": 1,
+     "result": "mastered",
+     "final_answer": "300 000 km/s",
+     "truth_mark": 1,
+     "decision_right": true,
+     "confidence": 0.98
+    },
+    {
+     "n": 30,
+     "marks": 1,
+     "out_of": 1,
+     "result": "mastered",
+     "final_answer": "Telescope",
+     "truth_mark": 1,
+     "decision_right": true,
+     "confidence": 0.99
+    }
+   ]
+  }
+ ]
+}

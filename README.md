@@ -38,9 +38,18 @@ real capability.
 of discovery. Confusion into understanding. Understanding into practice. And practice into the confidence and ability
 to solve real-world problems. Because a wrong answer should never define someone's ability.**
 
-**The 3-minute film:** [`evidence/film/exam-to-mastery.mp4`](evidence/film/exam-to-mastery.mp4) (2:57). Its first
-37 seconds are a short version of the problem above, so the rest can show the product working; section 2 walks
+**The 3-minute film:** [`evidence/film/exam-to-mastery.mp4`](evidence/film/exam-to-mastery.mp4) (2:58; every word with
+its time and on-screen label: [`transcript.md`](evidence/film/transcript.md)). Its first 25 seconds are a short version
+of the problem above; from 0:25 to 2:01 it shows this week's work, four of Meta's models on screen; section 2 walks
 through it frame by frame.
+
+> **Judge it in 2 minutes**
+> 1. **No account, no key:** `node demo/desk-server.js --replay`, then open http://localhost:4747: the teacher's Exam
+>    Desk on an exam recorded on the production edge (marks, fingerprints, Lo asks first, class patterns).
+> 2. **Check the numbers:** `python3 evidence/real-handwriting/score.py` and `python3 -X utf8 evidence/unseen-physics/score.py`
+>    recompute the real student's and the physics results from the committed files; `sh scripts/test.sh` runs the 151 tests.
+> 3. **Live, on your own phone:** LoWisa on Google Play or the App Store, then section 12 (a sample paper to photograph is
+>    [`evidence/unseen-physics/paper.jpg`](evidence/unseen-physics/paper.jpg)).
 
 - **What it does.** A teacher photographs a finished exam. Meta's models mark every answer and read *how* the student
   reached it, from their own handwriting. Every question not mastered becomes a level in the student's **Mastery
@@ -86,8 +95,8 @@ through it frame by frame.
 
 | | |
 |---|---|
-| ![Daniel's answer to question 24: heavy objects sink, light objects float](evidence/film/12-before-and-after.jpg) | ![Lo hands Daniel the controls: push the log down until the water holds 200 kg](evidence/film/07-his-turn.jpg) |
-| One question from the film. Before: Daniel's answer on his exam. After: the idea he can explain, once the level is done | The level built from his answer. Lo gives him the controls and he finds the balance himself |
+| ![Muse Spark's marks on Daniel's photographed paper: 6 of 30 right, 24 into his Mastery Plan](evidence/film/02-one-photo-marked.jpg) | ![Muse Wonder plays his level as Daniel and as a student who has it right](evidence/film/04b-muse-wonder-plays-his-level.jpg) |
+| Built this week: one photo, and Muse Spark marks every answer (a sample paper made for the demo) | Built this week: before Daniel sees his level, Muse Wonder plays it as him and as a student who has it right |
 
 ---
 
@@ -209,49 +218,52 @@ These are the four areas of cognitive ability LoWisa targets, applied to one exa
 
 ## 2. The demo, frame by frame: one failed question to mastery
 
-These frames are from the film ([`evidence/film/exam-to-mastery.mp4`](evidence/film/exam-to-mastery.mp4)), recorded on
-LoWisa's production server with a release build of the phone app on an emulator. Daniel Kwan is a sample student. His
-physics paper (30 questions) was written for the demo, and nothing in the code or the prompts names it. Each shot in
-the film carries a label: **built this week**, **LoWisa, playing a level written this week**, or **sample paper**.
+These frames are from the film ([`evidence/film/exam-to-mastery.mp4`](evidence/film/exam-to-mastery.mp4), 2:58; every
+word, with its time and the label on screen: [`evidence/film/transcript.md`](evidence/film/transcript.md), subtitles
+[`exam-to-mastery.srt`](evidence/film/exam-to-mastery.srt)). Daniel Kwan is a sample student: his physics paper (30
+questions) was written for the demo, and nothing in the code or the prompts names it. Each shot carries a label:
+**built this week**, **LoWisa, playing a level written this week**, or **sample paper**. The narrator is a synthetic
+voice (OpenAI's text-to-speech), not a Meta model.
 
 | | |
 |---|---|
-| ![A failed paper marked by hand](evidence/film/01-marked-by-hand.jpg) | ![The teacher's desk: one photo of the paper](evidence/film/02-one-photo-marked.jpg) |
-| **The marking pain.** Every paper marked by hand, every evening. The red mark says "failed" and says nothing about why | **One photo.** Muse Spark reads the name and every handwritten answer, then marks all 30. Measured on this paper: under a minute, about $0.05, every decision right in 6 runs out of 6 (section 7) |
-| ![Daniel's Mastery Plan: 6 of 30, 24 to master](evidence/film/03-mastery-plan.jpg) | ![What his answer reveals: a weight-only rule](evidence/film/04-what-his-answer-reveals.jpg) |
-| **No verdict.** "6 of 30 · 24 to master". Every question he missed goes into his Mastery Plan | **The thinking behind the answer.** Question 24: *why does a steel ship float while a nail sinks?* He wrote "Heavy objects sink and light objects float". Muse Spark names the idea from his own words: a weight-only rule |
-| ![Question 1, answer Joules: nothing named, Lo asks first](evidence/film/04a-lo-asks-first.jpg) | ![Muse Wonder plays his level as Daniel and as a student who has it right](evidence/film/04b-muse-wonder-plays-his-level.jpg) |
-| **When the page can't show the thinking, nothing is named.** His one-word answer "Joules" shows no reasoning, so the code names no idea and Lo asks him first (section 6) | **Muse Wonder plays his level before he sees it,** once as Daniel still sure heavy things sink (caught on 3 of 4 steps) and once as a student who has it right (4 of 4). It passes only if it catches his idea |
-| ![First look: how can the heavier thing float?](evidence/film/05-first-look.jpg) | ![Lo puts his own rule to the test](evidence/film/06-his-own-rule-tested.jpg) |
-| **Lo shows it before explaining it.** The level starts with a first look built on his mistake, not a lecture | **His own rule, tested.** Lo makes him predict with his idea, the heavy log or the light coin, then the prediction fails in front of him |
-| ![His turn: push the log down until the water holds 200 kg](evidence/film/07-his-turn.jpg) | ![Let's ask ourselves: from the pond to a cargo ship](evidence/film/08-lets-ask-ourselves.jpg) |
-| **His turn.** Lo hands him the controls. He finds the point where the water pushed aside weighs as much as the log | **Into the real world.** "Let's ask ourselves": how deep can a loaded cargo ship sit before it becomes unsafe? |
-| ![The exam question comes back: exactly right](evidence/film/09-question-comes-back.jpg) | ![A real Grade 5 student's sheet, as his teacher marked it and as it was sent](evidence/film/10-real-student.jpg) |
-| **The exam question comes back.** Two lessons later he chooses the right reason | **A real student.** A Grade 5 student's sheet as his teacher marked it, and as it was sent with the red ink removed: 105 of 109 answers agree with his teacher (section 7) |
+| ![His paper, marked by hand: FAILED](evidence/film/01-marked-by-hand.jpg) | ![Muse Spark's marks on his photographed paper: 6 of 30 right, 24 into his Mastery Plan](evidence/film/02-one-photo-marked.jpg) |
+| **The marking pain.** A red "FAILED" says nothing about why. (The prop's red total was taken off: its marks were made up for the demo; Muse Spark's 6 of 30 is the true mark) | **One photo, every answer.** Muse Spark's marks land where each question is on his page: 6 of 30 right, 24 into his Mastery Plan. Marked again on 3 Nov through the code that ships (`v1.0-code`); on this paper every marking decision was right in 6 of 6 earlier runs (section 7) |
+| ![A real Grade 5 student's sheet, as his teacher marked it and as it was sent](evidence/film/10-real-student.jpg) | ![Daniel's Mastery Plan: 6 of 30, 24 to master](evidence/film/03-mastery-plan.jpg) |
+| **A real student, against his own teacher.** 7 of his teacher's 10 wrong answers caught; every answer it was unsure of went to Lo to ask (section 7) | **No verdict.** "6 of 30 · 24 to master". Every question he missed goes into his Mastery Plan |
+| ![The desk: the idea behind question 24, with the evidence in his own writing](evidence/film/04-what-his-answer-reveals.jpg) | ![Question 1, answer Joules: nothing named, Lo asks first](evidence/film/04a-lo-asks-first.jpg) |
+| **The thinking behind the answer.** Question 24: *why does a steel ship float while a nail sinks?* He wrote "Heavy objects sink and light objects float". Muse Spark names the idea, and the evidence is his own writing | **When the page can't show the thinking, nothing is named.** His one-word "Joules" shows no reasoning, so the code names no idea and Lo asks first (section 6) |
+| ![Lo asks first; a spoken answer, written down by Muse Voice Transcribe](evidence/film/04c-voice-transcribe.jpg) | ![Muse Wonder plays his level as Daniel and as a student who has it right](evidence/film/04b-muse-wonder-plays-his-level.jpg) |
+| **The answer, out loud.** Another sample learner answers Lo by voice (a synthetic voice); Muse Voice Transcribe writes it down, and his own answer settles the idea | **Muse Wonder plays his level before he sees it**, as Daniel still sure heavy things sink (caught at all 3 checks) and as a student who has it right (3 of 3), from the level's own self-check |
+| ![Muse Image draws the corrected step](evidence/film/04d-muse-image.jpg) | ![The teacher's desk: accept the sure marks, the paper's Mastery Plan](evidence/film/04e-the-teacher.jpg) |
+| **Muse Image draws the corrected step** for question 24, in ink, for him to see ($0.017, 3 Nov) | **The teacher decides.** Nothing reaches Daniel until the teacher accepts the marks Muse Spark is sure of, checks the rest and releases them |
+| ![First look: the log settles as the water pushed aside climbs to 200 kg](evidence/film/05-first-look.jpg) | ![His turn: push the log down until the water holds 200 kg](evidence/film/07-his-turn.jpg) |
+| **Lo teaches, in LoWisa's player.** The level written from his mistake starts with a first look, running for real | **His turn.** Lo hands him the controls: he finds where the water pushed aside weighs as much as the log |
+| ![The exam question comes back: exactly right](evidence/film/09-question-comes-back.jpg) | ![Days later, the re-check; then Turned around](evidence/film/11-it-lasted.jpg) |
+| **The exam question comes back.** Two lessons later he chooses the right reason | **It lasted.** Days later a fresh question on the same idea, then the teacher's "Turned around" (shown on another sample learner, maths: the same loop) |
 
 ![Before and after](evidence/film/12-before-and-after.jpg)
 
 **The transformation.** From "heavy objects sink" to *floating is a balance*. The level ends in a real task, loading a
-canoe safely, where he works out the number himself. In the film this card is a summary written by us, and the "after"
-in his own words comes from the teacher's challenge (section 3.6).
+canoe safely, where he works out the number himself. This card is a summary written by us; the "after" in a student's
+own words comes from the teacher's challenge (section 3.6).
 
-What happens next is in the next section: the teacher's challenge, the "Turned around" badge, the re-check, and Insight
-mode (his lessons as a show he can listen to). The film had no time for them.
-
-**Every second of the film, and what it shows** (2:56):
+**Every second of the film, and what it shows** (2:58):
 
 | Time | On screen | Label | New this week? |
 |---|---|---|---|
-| 0:00–0:37 | The problem (cognitive ability), Daniel's hand-marked paper, "What if AI made us think better?", then the name over three phone screens of his level | sample paper; LoWisa | The cards are the film's own. The paper is a prop made for the demo: its red total says 8/30, but the true mark is 6/30, which Muse Spark gives. The phones are LoWisa's player, playing a level written this week |
-| 0:37–0:47 | The teacher's desk marks one photo of the paper | built this week · shown at 10× speed | **New.** The exam's join and photographing codes are blurred |
-| 0:47–0:57 | A real Grade 5 student's sheet, as marked and as sent | built this week | **New:** the measurement of section 7 |
-| 0:57–1:37 | His Mastery Plan, question 24 with five seconds to think, what his answer reveals, Lo asks first, Muse Wonder plays his level | built this week | **New** |
-| 1:37–2:42 | Lo teaching the level: the first look, his rule tested, his turn, "Let's ask ourselves", question 24 again | LoWisa · a level written this week · "his turn" shown at 2.6× speed | The player and Lo's voice are LoWisa's; the level, written from his answer by Muse Spark and checked by Muse Wonder, is new |
-| 2:42–2:56 | Before and after; the name | sample paper | A summary card written by us |
+| 0:00–0:25 | The problem (cognitive ability); his paper marked by hand; the name and the four Meta models | sample paper; the film's cards | The cards are the film's own; the paper is a prop made for the demo |
+| 0:25–0:37 | Muse Spark's marks landing on his photographed paper | built this week · shown faster | **New.** Drawn from the marking itself: each mark is the result Muse Spark returned for that question |
+| 0:37–0:48 | A real Grade 5 student's sheet, as his teacher marked it and as it was sent | built this week | **New:** section 7 |
+| 0:48–1:16 | His Mastery Plan; question 24, with four seconds to think; the desk's fingerprint, with his own words as evidence; Lo asks first on "Joules" | built this week | **New** |
+| 1:16–2:01 | A spoken answer written down by Muse Voice Transcribe; Muse Wonder's two plays; Muse Image's drawn step; the teacher's desk | built this week | **New**. The spoken answer is another sample learner's, read by a synthetic voice |
+| 2:01–2:35 | Lo teaching the level: the first look, his turn, question 24 again | LoWisa · a level written this week · "his turn" shown at 2.6× speed | The player and Lo's voice are LoWisa's; the level, written from his answer by Muse Spark and checked by Muse Wonder, is new |
+| 2:35–2:43 | The re-check days later, and "Turned around" | built this week · another sample learner (maths) | **New** |
+| 2:43–2:58 | Before and after; the end card | sample paper | A summary card written by us |
 
-In all, 46 s show work built this week on screen and 79 s show LoWisa's player playing a level written this week; the
-rest are cards and the sample paper. Muse Voice Transcribe, Muse Image and SAM 3.1 are not on screen; section 4 shows
-what each does.
+In all, about 1:44 shows work built this week and 34 s shows LoWisa's player playing a level written this week; the
+rest are the opening cards, the sample paper and the end. Four of Meta's models are on screen (Muse Spark, Muse
+Wonder, Muse Voice Transcribe, Muse Image); SAM 3.1 works in the optional desk-filming path (section 4).
 
 ## 3. Beyond the 3 minutes: what the film had no time to show
 
@@ -384,8 +396,8 @@ flowchart LR
 | The reason | Muse Spark | whether the student's reason shows the idea, and what next | the teacher issues "Turned around"; nothing is issued by a model | `witness_challenge`, `witness_recommend` |
 
 **One real paper, every call:** [`harness/trace/`](harness/trace/README.md) follows the real student's English paper
-through these steps (8 calls to Meta, $0.23, each with its effort, time, tokens and what the code did next). The models
-the film has no time for, in pictures: Muse Image's drawn step ([`muse-image.png`](evidence/models/muse-image.png)) and
+through these steps (8 calls to Meta, $0.23, each with its effort, time, tokens and what the code did next). Muse
+Image and Muse Voice Transcribe, also in the film, in pictures with their sources: Muse Image's drawn step ([`muse-image.png`](evidence/models/muse-image.png)) and
 a spoken answer written down by Muse Voice Transcribe ([`voice-transcribe.png`](evidence/models/voice-transcribe.png)).
 
 ### Findings for Meta: what the code between the models changed, measured
@@ -715,7 +727,7 @@ Look at it without an account: `node demo/desk-server.js --replay`. It is this e
 | **Impact** | The problem is cognitive ability, and the fear that AI weakens it is everyone's. This uses AI to strengthen it in four areas (the exam, the real world, how we think, repetition): a failed question becomes a level built on the student's own mistake that ends in a real task, and a teacher of forty gets their evenings back. Measured against one real student's own teacher; not yet proven in a classroom pilot | the opening, sections 1, 2, 5, 7; limits in 16; plans in 17 |
 | **Use of Meta's models** | Muse Spark reads the *reasoning* in handwriting and code checks its diagnosis against the lines it read; Muse Wonder plays every level as the student first; five models measured, in a gated pipeline of agents with code-checked hand-offs | sections 3, 4; `harness/FINDINGS.md` |
 | **Technical depth** | The evidence rule in code, measured blind and on the shipped code; handwriting placed on the page by dynamic programming (64 of 64 lines, against SAM 3.1's 52); Erlang/OTP with conditional writes, per-route daily ceilings, roles; 147 library tests; sixteen problems found by testing and how each was solved, from sideways pages to a safety check that failed open | sections 6, 7, 10, 11, 15 |
-| **Demo** | One real failed question from photo to mastery, recorded on the production edge; Muse Wonder's check, "Lo asks first" and a real Grade 5 student's result on screen; every shot labelled, with a timecoded ledger; judges can try it live | sections 2, 12 |
+| **Demo** | One failed question from photo to mastery: Muse Spark's marks landing on the page, the idea quoted from his own words, Lo asks first with a spoken answer, Muse Wonder's two plays, Muse Image's drawn step, the teacher's desk, the re-check; a real Grade 5 student's result against its baseline. Four Meta models on screen, about 1:44 of this week's work, every shot labelled, a word-for-word transcript; judges can try it in a minute with no account | sections 2, 12; `evidence/film/transcript.md` |
 
 ## 10. Architecture
 

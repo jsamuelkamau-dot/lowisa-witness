@@ -39,6 +39,11 @@ def committed():
     ns = json.load(open(os.path.join(HERE, 'no-scheme-after-half-mark-fix-3-runs.json'), encoding='utf-8'))
     for r in ns['runs']:
         print(f"no scheme, run {r['run']}: score {r['score']}, decisions right {r['decisions_right']}")
+    tagged = os.path.join(HERE, 'v1.0-code-3-runs.json')
+    if os.path.exists(tagged):
+        for r in json.load(open(tagged, encoding='utf-8'))['runs']:
+            right = sum(((q['marks'] or 0) >= 1) == bool(TRUTH[q['n']][1]) for q in r['questions'])
+            print(f"v1.0-code, {r['run']} ({'scheme' if r['scheme'] else 'no scheme'}): score {r['score']}, decisions right {right}/30, {r['seconds']} s")
 
 
 if len(sys.argv) < 2:
