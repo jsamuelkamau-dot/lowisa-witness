@@ -1140,8 +1140,8 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
   agree when only one says "not", or when their units differ ("5 cm", "5 m"); and an unreadable photographed paper is
   asked to be photographed again, not "filmed again". Both are tested; the real sets and the held-out set
   were run on `v1.0.1-code`, not yet on `v1.0.2-code`. The teacher's desk says "photograph again" too from the next
-  desktop release. One more wording fix is in this repository but not yet live: a photographed paper that could not be
-  marked for another reason, or is no longer kept, is never told about a video (`witness_api`, tested).
+  desktop release. Since edge vb1104j (4 Nov) a photographed paper that could not be marked for another reason, or is
+  no longer kept, is never told about a video either.
 - **Security fixes from a review before going public, in this repository but not yet live:** a join code tried through
   the video upload now counts against the same per-minute limit as joining, and a closed exam takes no new paper there;
   the server's scope for a mastery level's calls comes after any system words the phone sends; a kept recording is
