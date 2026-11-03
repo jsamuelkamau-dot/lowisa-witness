@@ -1,0 +1,736 @@
+{
+ "what": "The student's written answers again, on the tagged code v1.0.1-code (edge vb1104h), no marking scheme, one run, 3 Nov 2026",
+ "ran_on": "vb1104h (v1.0.1-code)",
+ "teacher": {
+  "creative006": {
+   "questions": [
+    15,
+    30
+   ],
+   "wrong": [
+    28
+   ],
+   "how": "read by us from his red-pen marks: a long tick is right, a short curl or hook is wrong; every page total that is visible agrees"
+  },
+  "science": {
+   "questions": [
+    35,
+    50
+   ],
+   "wrong": [
+    35,
+    41,
+    46
+   ],
+   "how": "read by us from his red-pen marks: a long tick is right, a short curl or hook is wrong; every page total that is visible agrees"
+  },
+  "creative003": {
+   "questions": [
+    21,
+    30
+   ],
+   "wrong": [],
+   "how": "read by us from his red-pen marks: a long tick is right, a short curl or hook is wrong; every page total that is visible agrees"
+  }
+ },
+ "papers": {
+  "creative006": "Creative arts (paper SBA006), pages 3 and 4, Q15-30",
+  "science": "Integrated science (paper SBA006), page 4, Q35-50",
+  "creative003": "Creative arts (paper SBA003), page 4, Q21-30"
+ },
+ "runs": [
+  {
+   "run": 1,
+   "seconds": {
+    "creative006": 116,
+    "creative003": 145,
+    "science": 177
+   },
+   "papers": {
+    "creative006": [
+     {
+      "n": 15,
+      "read": [
+       "A glove puppet"
+      ],
+      "final_answer": "A glove puppet",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 16,
+      "read": [
+       "D sticks"
+      ],
+      "final_answer": "D sticks",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 17,
+      "read": [
+       "A red and yellow"
+      ],
+      "final_answer": "A red and yellow",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.98,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 18,
+      "read": [
+       "B Collect needed materials"
+      ],
+      "final_answer": "B Collect needed materials",
+      "result": "not_yet",
+      "marks": 0,
+      "out_of": 1,
+      "right": false,
+      "teacher_right": true,
+      "confidence": 0.8,
+      "read_again_as": null,
+      "diagnosis": "Only the answer B Collect needed materials is on the page, not how it was reached. Lo asks first.",
+      "idea_named": ""
+     },
+     {
+      "n": 19,
+      "read": [
+       "C puppeteer"
+      ],
+      "final_answer": "C puppeteer",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.98,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 20,
+      "read": [
+       "B applique"
+      ],
+      "final_answer": "B applique",
+      "result": "not_yet",
+      "marks": 0,
+      "out_of": 1,
+      "right": false,
+      "teacher_right": true,
+      "confidence": 0.82,
+      "read_again_as": null,
+      "diagnosis": "Only the answer B applique is on the page, not how it was reached. Lo asks first.",
+      "idea_named": ""
+     },
+     {
+      "n": 21,
+      "read": [
+       "white clean cloth"
+      ],
+      "final_answer": "white clean cloth",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 22,
+      "read": [
+       "it helps the colour applied to the fabric not to move out"
+      ],
+      "final_answer": "it helps the colour applied to the fabric not to move out",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 23,
+      "read": [
+       "a secondary colour"
+      ],
+      "final_answer": "a secondary colour",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.97,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 24,
+      "read": [
+       "old magazines"
+      ],
+      "final_answer": "old magazines",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 25,
+      "read": [
+       "4 x 400 metres"
+      ],
+      "final_answer": "4 x 400 metres",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.85,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 26,
+      "read": [
+       "Bowling square"
+      ],
+      "final_answer": "Bowling square",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.85,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 27,
+      "read": [
+       "batting skill"
+      ],
+      "final_answer": "batting skill",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 28,
+      "read": [
+       "Digo community"
+      ],
+      "final_answer": "Digo community",
+      "result": "not_yet",
+      "marks": 0,
+      "out_of": 1,
+      "right": false,
+      "teacher_right": false,
+      "confidence": 0.8,
+      "read_again_as": null,
+      "diagnosis": "Only the answer Digo community is on the page, not how it was reached. Lo asks first.",
+      "idea_named": ""
+     },
+     {
+      "n": 29,
+      "read": [
+       "the Highness or lowness of sound"
+      ],
+      "final_answer": "the Highness or lowness of sound",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.97,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 30,
+      "read": [
+       "♩ ♫ ♫ d"
+      ],
+      "final_answer": "♩ ♫ ♫ d",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": "[hand-drawn note symbols]",
+      "diagnosis": "",
+      "idea_named": ""
+     }
+    ],
+    "science": [
+     {
+      "n": 35,
+      "read": [
+       "D"
+      ],
+      "final_answer": "A. Wheat",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": false,
+      "confidence": 0.65,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 36,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B - Airtight sack",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 37,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C - energy",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 38,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D - kwashiorkor",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 39,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D - boiling",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 40,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A - abrasives",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.85,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 41,
+      "read": [
+       "Sorting, Mending, Soaking,",
+       "Washing, Rinsing, Drying,",
+       "Ironing"
+      ],
+      "final_answer": "Sorting, Mending, Soaking, Washing, Rinsing, Drying, Ironing",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": false,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 42,
+      "read": [
+       "because the colour will",
+       "mix / run"
+      ],
+      "final_answer": "because the colour will run",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.8,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 43,
+      "read": [
+       "It helps our clothes to",
+       "be neat and beautiful"
+      ],
+      "final_answer": "It helps our clothes to be neat and beautiful",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.8,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 44,
+      "read": [
+       "[crossed-out illegible answer]"
+      ],
+      "final_answer": "[illegible heavily crossed-out answer]",
+      "result": "not_yet",
+      "marks": 0,
+      "out_of": 1,
+      "right": false,
+      "teacher_right": true,
+      "confidence": 0.7,
+      "read_again_as": null,
+      "diagnosis": "The page shows the answer [illegible heavily crossed-out answer] but not how it was reached. Lo asks first.",
+      "idea_named": ""
+     },
+     {
+      "n": 45,
+      "read": [
+       "it gives us meat called pork"
+      ],
+      "final_answer": "it gives us meat called pork",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 46,
+      "read": [
+       "iron"
+      ],
+      "final_answer": "iron",
+      "result": "not_yet",
+      "marks": 0,
+      "out_of": 1,
+      "right": false,
+      "teacher_right": false,
+      "confidence": 0.85,
+      "read_again_as": null,
+      "diagnosis": "Only the answer iron is on the page, not how it was reached. Lo asks first.",
+      "idea_named": ""
+     },
+     {
+      "n": 47,
+      "read": [
+       "shading"
+      ],
+      "final_answer": "shading",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.85,
+      "read_again_as": "shadin",
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 48,
+      "read": [
+       "use of airtight container"
+      ],
+      "final_answer": "use of airtight container",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.85,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 49,
+      "read": [
+       "dry fat frying"
+      ],
+      "final_answer": "dry fat frying",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.75,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 50,
+      "read": [
+       "It is the act of keeping our body",
+       "clean and neat"
+      ],
+      "final_answer": "It is the act of keeping our body clean and neat",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.85,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     }
+    ],
+    "creative003": [
+     {
+      "n": 21,
+      "read": [
+       "Abu"
+      ],
+      "final_answer": "Abu",
+      "result": "part_way",
+      "marks": 0,
+      "out_of": 1,
+      "right": false,
+      "teacher_right": true,
+      "confidence": 0.4,
+      "read_again_as": null,
+      "diagnosis": "Only the answer Abu is on the page, not how it was reached. Lo asks first. (Three readings of the work disagreed: the teacher decides.)",
+      "idea_named": ""
+     },
+     {
+      "n": 22,
+      "read": [
+       "Mouth peice"
+      ],
+      "final_answer": "Mouth peice",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 23,
+      "read": [
+       "Makes the sound louder"
+      ],
+      "final_answer": "Makes the sound louder",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 24,
+      "read": [
+       "in step Kick"
+      ],
+      "final_answer": "in step Kick",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 25,
+      "read": [
+       "make the papier mache stick together"
+      ],
+      "final_answer": "make the papier mache stick together",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 26,
+      "read": [
+       "ta-te taa taa ta-te"
+      ],
+      "final_answer": "ta-te taa taa ta-te",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.85,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 27,
+      "read": [
+       "bamboo, hollow stick/reeds"
+      ],
+      "final_answer": "bamboo, hollow stick/reeds",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 28,
+      "read": [
+       "s, f, m, r, d"
+      ],
+      "final_answer": "s, f, m, r, d",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 29,
+      "read": [
+       "Blue + yellow"
+      ],
+      "final_answer": "Blue + yellow",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 30,
+      "read": [
+       "7 shaped quaver rest with dot"
+      ],
+      "final_answer": "[drawing of quaver rest]",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     }
+    ]
+   }
+  }
+ ]
+}

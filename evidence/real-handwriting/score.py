@@ -112,7 +112,8 @@ def main():
             held('', run['papers'])
         by_question('Written answers', w['runs'])
     # 3 Nov: both sets again on the tagged code v1.0-code (two readings must agree before Accept all)
-    for name, f in (('C on v1.0-code', 'condition-c-on-v1.0-code-3-runs.json'), ('Written on v1.0-code', 'written-answers-on-v1.0-code-3-runs.json')):
+    for name, f in (('C on v1.0-code', 'condition-c-on-v1.0-code-3-runs.json'), ('Written on v1.0-code', 'written-answers-on-v1.0-code-3-runs.json'),
+                    ('C on v1.0.1-code (live)', 'condition-c-on-v1.0.1-code-1-run.json'), ('Written on v1.0.1-code (live)', 'written-answers-on-v1.0.1-code-1-run.json')):
         path = os.path.join(HERE, 'results', f)
         if os.path.exists(path):
             t = json.load(open(path, encoding='utf-8'))

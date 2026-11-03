@@ -53,7 +53,8 @@ screen; section 2 walks through it frame by frame.
 
 **Submission facts.** Startups track, "Build for Your World". Built 26 Oct – 4 Nov 2026 (first commit 27 Oct, 8 hours
 after kickoff; `docs/built-during.md`). The headline numbers ran on the tag `v1.0-code`; the code on the production edge
-now is `v1.0.1-code` (two answer-comparison fixes and a longer open-weights timeout since; `harness/PROVENANCE.md`).
+now is `v1.0.1-code` (two answer-comparison fixes and a longer open-weights timeout since), and every real set was run
+once more on it (the Measured table; `harness/PROVENANCE.md`).
 Where each Meta model works:
 
 | Model | Its job | Where |
@@ -79,6 +80,7 @@ Where each Meta model works:
 |---|---|---|
 | A real Grade 5 student's three multiple-choice papers, against his own teacher's marks, on the tagged code `v1.0-code` (photos as taken, three of them sideways) | **7, 6 and 7 of his teacher's 10 wrong answers caught over three runs** (6 of the 10 in every run); **no wrong idea named in any run** (0 of 24 answers not accepted); 105, 104 and 104 of 109 agree, where marking everything right would agree on 99 | [`condition-c-on-v1.0-code-3-runs.json`](evidence/real-handwriting/results/condition-c-on-v1.0-code-3-runs.json), `python3 evidence/real-handwriting/score.py` |
 | The same student's **written answers** (42 questions, three more papers, no marking scheme), three runs on `v1.0-code` | **Every answer it did not accept was held for Lo to ask, with no wrong idea named: 18 of 18** (19 of 19 on the earlier code); 3 of his teacher's 4 wrong answers caught in every run; 39, 37 and 38 of 42 agree, where marking everything right would agree on 38 | [`written-answers-on-v1.0-code-3-runs.json`](evidence/real-handwriting/results/written-answers-on-v1.0-code-3-runs.json), the same script |
+| The same three sets once more on the code live now, `v1.0.1-code` (edge vb1104h), one run each | multiple choice 104 of 109, 7 of 10 caught; written answers 36 of 42, **2 of 4 caught** (one run varies); held-out ambiguous pages asked first 13 of 14; **no wrong idea named on any answer not accepted, in either real set** | [`condition-c-on-v1.0.1-code-1-run.json`](evidence/real-handwriting/results/condition-c-on-v1.0.1-code-1-run.json), [`written-answers-on-v1.0.1-code-1-run.json`](evidence/real-handwriting/results/written-answers-on-v1.0.1-code-1-run.json), [`v2-on-v1.0.1-code-1-run.json`](harness/heldout/results/v2-on-v1.0.1-code-1-run.json) |
 | A physics exam it had never seen: six live runs, then three on `v1.0-code` | **180 of 180** marking decisions right, then **90 of 90** on the tagged code (with and without a mark scheme) | [`evidence/unseen-physics/`](evidence/unseen-physics/README.md), `python3 -X utf8 evidence/unseen-physics/score.py` |
 | 53 held-out papers × 3 runs on `v1.0-code`: ink that cannot show the idea | Lo asks first **40 of 42**; a wrong idea named 2 of 42 (the harmful error) | [`v2-on-v1.0-code-3-runs.json`](harness/heldout/results/v2-on-v1.0-code-3-runs.json) |
 | … ink that shows the idea; right work; instructions written in the ink | named right **42 of 48** (3 named a different idea); mastered **39 of 39**; never obeyed **30 of 30** | the same file |

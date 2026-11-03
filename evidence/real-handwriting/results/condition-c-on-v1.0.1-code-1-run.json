@@ -1,0 +1,1870 @@
+{
+ "what": "Condition C again, on the tagged code v1.0.1-code (edge vb1104h, the answer comparison fixed): the three multiple-choice papers as photographed, one run, 3 Nov 2026",
+ "ran_on": "vb1104h (v1.0.1-code)",
+ "teacher": "as in three-papers-two-conditions.json (maths wrong 11 12 14 24 26 29; English 23 27; science 33 42; science 20 unclear, left out)",
+ "runs": [
+  {
+   "run": 1,
+   "seconds": {
+    "maths": 82,
+    "english": 102,
+    "science": 127
+   },
+   "papers": {
+    "english": [
+     {
+      "n": 1,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 2,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 3,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 4,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": "C",
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 5,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 6,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 7,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 8,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 9,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 10,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 11,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 12,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 13,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "result": "not_yet",
+      "marks": 0,
+      "out_of": 1,
+      "right": false,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "Only the answer A is on the page, not how it was reached. Lo asks first.",
+      "idea_named": ""
+     },
+     {
+      "n": 14,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 15,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 16,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 17,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 18,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.92,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 19,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.92,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 20,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.92,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 21,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 22,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 23,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "result": "not_yet",
+      "marks": 0,
+      "out_of": 1,
+      "right": false,
+      "teacher_right": false,
+      "confidence": 0.88,
+      "read_again_as": null,
+      "diagnosis": "Only the answer D is on the page, not how it was reached. Lo asks first.",
+      "idea_named": ""
+     },
+     {
+      "n": 24,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 25,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 26,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 27,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "result": "not_yet",
+      "marks": 0,
+      "out_of": 1,
+      "right": false,
+      "teacher_right": false,
+      "confidence": 0.88,
+      "read_again_as": null,
+      "diagnosis": "Only the answer D is on the page, not how it was reached. Lo asks first.",
+      "idea_named": ""
+     },
+     {
+      "n": 28,
+      "read": [
+       "he",
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 29,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 30,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     }
+    ],
+    "science": [
+     {
+      "n": 1,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.98,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 2,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.98,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 3,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.97,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 4,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.97,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 5,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.97,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 6,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.92,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 7,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.94,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 8,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.97,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 9,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.97,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 10,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.98,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 11,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.98,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 12,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.98,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 13,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.97,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 14,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.98,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 15,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.98,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 16,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.97,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 17,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.97,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 18,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.98,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 19,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.98,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 20,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "result": "not_yet",
+      "marks": 0,
+      "out_of": 1,
+      "right": false,
+      "teacher_right": null,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "Only the answer D is on the page, not how it was reached. Lo asks first.",
+      "idea_named": ""
+     },
+     {
+      "n": 21,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.92,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 22,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.92,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 23,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.93,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 24,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 25,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.94,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 26,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 27,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.92,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 28,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 29,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.92,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 30,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.92,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 31,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 32,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 33,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": false,
+      "confidence": 0.85,
+      "read_again_as": "D",
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 34,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 35,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 36,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 37,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 38,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 39,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 40,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 41,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 42,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": false,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 43,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 44,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 45,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 46,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 47,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 48,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 49,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 50,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     }
+    ],
+    "maths": [
+     {
+      "n": 1,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.98,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 2,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.98,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 3,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.98,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 4,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.98,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 5,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.98,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 6,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.98,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 7,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.98,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 8,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 9,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.97,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 10,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.97,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 11,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "result": "not_yet",
+      "marks": 0,
+      "out_of": 1,
+      "right": false,
+      "teacher_right": false,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "Only the answer A is on the page, not how it was reached. Lo asks first.",
+      "idea_named": ""
+     },
+     {
+      "n": 12,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D",
+      "result": "not_yet",
+      "marks": 0,
+      "out_of": 1,
+      "right": false,
+      "teacher_right": false,
+      "confidence": 0.75,
+      "read_again_as": null,
+      "diagnosis": "Only the answer D is on the page, not how it was reached. Lo asks first.",
+      "idea_named": ""
+     },
+     {
+      "n": 13,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 14,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "result": "not_yet",
+      "marks": 0,
+      "out_of": 1,
+      "right": false,
+      "teacher_right": false,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "Only the answer A is on the page, not how it was reached. Lo asks first.",
+      "idea_named": ""
+     },
+     {
+      "n": 15,
+      "read": [
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "not_yet",
+      "marks": 0,
+      "out_of": 1,
+      "right": false,
+      "teacher_right": true,
+      "confidence": 0.85,
+      "read_again_as": null,
+      "diagnosis": "Only the answer C is on the page, not how it was reached. Lo asks first.",
+      "idea_named": ""
+     },
+     {
+      "n": 16,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 17,
+      "read": [
+       "D"
+      ],
+      "final_answer": "D",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 18,
+      "read": [
+       "A"
+      ],
+      "final_answer": "A",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 19,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 20,
+      "read": [
+       "B"
+      ],
+      "final_answer": "B",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.85,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 21,
+      "read": [
+       "D",
+       "D"
+      ],
+      "final_answer": "D 80",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 22,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B x + 5",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 23,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C 3510cm3",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 24,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B 10:55pm",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": false,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 25,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 26,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C 361",
+      "result": "not_yet",
+      "marks": 0,
+      "out_of": 1,
+      "right": false,
+      "teacher_right": false,
+      "confidence": 0.85,
+      "read_again_as": null,
+      "diagnosis": "The page shows the answer C 361 but not how it was reached. Lo asks first.",
+      "idea_named": ""
+     },
+     {
+      "n": 27,
+      "read": [
+       "A",
+       "A"
+      ],
+      "final_answer": "A 30,000",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 28,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B 5/8",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.9,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     },
+     {
+      "n": 29,
+      "read": [
+       "C",
+       "C"
+      ],
+      "final_answer": "C 66",
+      "result": "not_yet",
+      "marks": 0,
+      "out_of": 1,
+      "right": false,
+      "teacher_right": false,
+      "confidence": 0.85,
+      "read_again_as": null,
+      "diagnosis": "The page shows the answer C 66 but not how it was reached. Lo asks first.",
+      "idea_named": ""
+     },
+     {
+      "n": 30,
+      "read": [
+       "B",
+       "B"
+      ],
+      "final_answer": "B 0.567",
+      "result": "mastered",
+      "marks": 1,
+      "out_of": 1,
+      "right": true,
+      "teacher_right": true,
+      "confidence": 0.95,
+      "read_again_as": null,
+      "diagnosis": "",
+      "idea_named": ""
+     }
+    ]
+   }
+  }
+ ]
+}

@@ -35,3 +35,11 @@ live as edge vb1104f): two readings must agree before "Accept all", and the held
 | `evidence/real-handwriting/results/written-answers-on-v1.0-code-3-runs.json` | the live edge vb1104f | three runs |
 | `harness/heldout/results/v2-on-v1.0-code-3-runs.json` | locally, `fingerprint_eval.escript` | its meta says `7475ba1`: a later commit (the film) made while it ran; `git diff 8d3b44a 7475ba1 -- witness` is empty |
 | `evidence/unseen-physics/v1.0-code-3-runs.json` | locally, `local_mark.escript` | with a scheme once, without twice (one is the marking the film shows) |
+
+## The code live now, `v1.0.1-code` (3 Nov)
+
+`v1.0.1-code` (`29c0ddc`), live as edge vb1104h: `v1.0-code` plus the two answer-comparison fixes (numbers must be the
+same numbers; the same letter with different words is not the same answer), ten minutes a reading for open weights, and
+the challenge push without a deprecated catch. One run each on it: `evidence/real-handwriting/results/condition-c-on-v1.0.1-code-1-run.json`
+and `written-answers-on-v1.0.1-code-1-run.json` (the live edge), `harness/heldout/results/v2-on-v1.0.1-code-1-run.json`
+(locally). The Muse Spark Open runs after 29c0ddc used its ten-minute limit (`harness/open/`).
