@@ -86,7 +86,7 @@ accepted, in any run**. Written answers: 39, 37, 38 of 42; 3 of 4 caught; all 18
 misread science Q33 was caught by the answers-only reading once (run 3: read as D, kept out of "Accept all"); in runs 1
 and 2 both readings read the same wrong letter.
 
-## On the code live now, `v1.0.1-code`
+## On `v1.0.1-code` (live 3–4 Nov)
 
 Three runs of both sets on the live edge vb1104h (run 1 on 3 Nov, runs 2 and 3 on 4 Nov):
 [`results/condition-c-on-v1.0.1-code-3-runs.json`](results/condition-c-on-v1.0.1-code-3-runs.json) and

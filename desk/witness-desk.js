@@ -283,7 +283,7 @@
     var papers = ss.map(function (s) {
       var st = s.status === 'marked' ? '<span class="wd-sub">' + num(s.marks) + ' / ' + num(s.out_of) + '</span>' :
         s.status === 'released' ? '<span class="wd-chip ok">Released</span>' :
-        s.status === 'failed' ? '<span class="wd-chip err">' + (s.unreadable ? 'Paper not in view: film again' : s.kept ? 'Not marked yet: mark again' : s.kind === 'photo' ? 'Photograph again' : 'Record again') + '</span>' : '<span class="wd-chip">' + (s.status === 'uploading' ? 'Uploading' : 'Marking') + '</span>';
+        s.status === 'failed' ? '<span class="wd-chip err">' + (s.unreadable ? (s.kind === 'photo' ? 'Paper not readable: photograph again' : 'Paper not in view: film again') : s.kept ? 'Not marked yet: mark again' : s.kind === 'photo' ? 'Photograph again' : 'Record again') + '</span>' : '<span class="wd-chip">' + (s.status === 'uploading' ? 'Uploading' : 'Marking') + '</span>';
       return '<div class="wd-row" data-paper="' + esc(s.id) + '"><span class="wd-grow">' + esc(s.student || 'Paper') + '</span>' + whoseChip(s) + st +
         (s.to_master ? '<span class="wd-chip warn">' + s.to_master + ' in Mastery Plan</span>' : '') +
         (s.turned_around ? '<span class="wd-chip ok">' + s.turned_around + ' turned around</span>' : '') + '</div>';

@@ -8,8 +8,8 @@
 >   it; Muse Voice Transcribe writes down the spoken answer; Muse Image draws the corrected step; SAM 3.1 follows the ink
 >   on a filmed desk; Muse Spark Open runs the same marking on open weights (the table under "Submission facts").
 > - **On a real Grade 5 learner, against his own teacher.** 6 or 7 of the teacher's 10 wrong multiple-choice answers
->   caught in every run, and **no wrong idea named** on an answer it did not accept, in any of the six runs on the code
->   live now and the tagged code. On his written answers its agreement with the teacher is about what marking
+>   caught in every run, and **no wrong idea named** on an answer it did not accept, in any of the six runs on the last two
+>   releases of the code. On his written answers its agreement with the teacher is about what marking
 >   everything right would give (38 of 42): there its value is that it never names a wrong idea, and asks first
 >   instead. Up to 4 of his teacher's 10 wrong answers are still marked right, so the teacher checks (the Measured
 >   table).
@@ -157,7 +157,7 @@ Where each Meta model works:
 |---|---|---|
 | A real Grade 5 student's three multiple-choice papers, against his own teacher's marks, on the tagged code `v1.0-code` (photos as taken, three of them sideways) | **7, 6 and 7 of his teacher's 10 wrong answers caught over three runs** (6 of the 10 in every run); **no wrong idea named in any run** (0 of 24 answers not accepted); 105, 104 and 104 of 109 agree, where marking everything right would agree on 99 | [`condition-c-on-v1.0-code-3-runs.json`](evidence/real-handwriting/results/condition-c-on-v1.0-code-3-runs.json), `python3 evidence/real-handwriting/score.py` |
 | The same student's **written answers** (42 questions, three more papers, no marking scheme), three runs on `v1.0-code` | **Every answer it did not accept was held for Lo to ask, with no wrong idea named: 18 of 18** (19 of 19 on the earlier code); 3 of his teacher's 4 wrong answers caught in every run; 39, 37 and 38 of 42 agree, where marking everything right would agree on 38 | [`written-answers-on-v1.0-code-3-runs.json`](evidence/real-handwriting/results/written-answers-on-v1.0-code-3-runs.json), the same script |
-| The same sets on the code live now, `v1.0.1-code` (edge vb1104h), three runs each (3 and 4 Nov) | multiple choice **104, 104 and 104 of 109** agree (all-right baseline 99; kappa 0.68–0.71), **7, 6 and 6 of 10 caught** (6 in every run); written answers **36, 37 and 38 of 42** (all-right baseline 38; kappa 0.32–0.55), **2, 2 and 3 of 4 caught**; **no wrong idea named on any answer not accepted, in any run of either set**. Held-out: asked first 39 of 42, a wrong idea named 3 of 42, named right 43 of 48. One written paper came back "could not be read" once; the same photos sent again were marked (recorded in the file) | [`condition-c-on-v1.0.1-code-3-runs.json`](evidence/real-handwriting/results/condition-c-on-v1.0.1-code-3-runs.json), [`written-answers-on-v1.0.1-code-3-runs.json`](evidence/real-handwriting/results/written-answers-on-v1.0.1-code-3-runs.json), [`v2-on-v1.0.1-code-3-runs.json`](harness/heldout/results/v2-on-v1.0.1-code-3-runs.json) |
+| The same sets on `v1.0.1-code` (edge vb1104h, live 3–4 Nov), three runs each (3 and 4 Nov) | multiple choice **104, 104 and 104 of 109** agree (all-right baseline 99; kappa 0.68–0.71), **7, 6 and 6 of 10 caught** (6 in every run); written answers **36, 37 and 38 of 42** (all-right baseline 38; kappa 0.32–0.55), **2, 2 and 3 of 4 caught**; **no wrong idea named on any answer not accepted, in any run of either set**. Held-out: asked first 39 of 42, a wrong idea named 3 of 42, named right 43 of 48. One written paper came back "could not be read" once; the same photos sent again were marked (recorded in the file) | [`condition-c-on-v1.0.1-code-3-runs.json`](evidence/real-handwriting/results/condition-c-on-v1.0.1-code-3-runs.json), [`written-answers-on-v1.0.1-code-3-runs.json`](evidence/real-handwriting/results/written-answers-on-v1.0.1-code-3-runs.json), [`v2-on-v1.0.1-code-3-runs.json`](harness/heldout/results/v2-on-v1.0.1-code-3-runs.json) |
 | Wrong answers accepted as right (the error a teacher must still catch), on `v1.0.1-code` | multiple choice: 3, 4 and 4 of the teacher's 10 marked right, always among the same four questions; 2 to 4 of them sure enough to join "Accept all". Written: 2, 2 and 1 of 4: question 41 in every run (sure enough for "Accept all"), and question 35 in two runs, where Muse Spark read his final option as "A. Wheat" instead of "Cow peas" and was not sure (0.65, 0.75), so it went to the teacher | the same files, `python3 evidence/real-handwriting/score.py` |
 | A physics exam it had never seen: six live runs, then three on `v1.0-code` | **180 of 180** marking decisions right, then **90 of 90** on the tagged code (with and without a mark scheme) | [`evidence/unseen-physics/`](evidence/unseen-physics/README.md), `python3 -X utf8 evidence/unseen-physics/score.py` |
 | 53 held-out papers × 3 runs on `v1.0-code`: ink that cannot show the idea | Lo asks first **40 of 42**; a wrong idea named 2 of 42 (the harmful error) | [`v2-on-v1.0-code-3-runs.json`](harness/heldout/results/v2-on-v1.0-code-3-runs.json) |
@@ -743,7 +743,7 @@ Scoring is strict: the name itself must carry a key, and an "ask" passes only wh
 was then changed twice, partly after seeing that run, so every later v2 run has seen v2: **v2 is now a second
 development set.** A prompt example that resembled one v2 item was replaced on 3 Nov. Both are shown, with 95% intervals:
 
-| v2: 53 papers × 3 runs | Blind first run, 31 Oct ([`v2-held-out-3-runs.json`](harness/heldout/results/v2-held-out-3-runs.json)) | 3 Nov, `0b7502c` ([`v2-on-shipped-code-3-runs.json`](harness/heldout/results/v2-on-shipped-code-3-runs.json)) | 3 Nov, the tagged code `v1.0-code` ([`v2-on-v1.0-code-3-runs.json`](harness/heldout/results/v2-on-v1.0-code-3-runs.json)) | 3–4 Nov, the live code `v1.0.1-code` ([`v2-on-v1.0.1-code-3-runs.json`](harness/heldout/results/v2-on-v1.0.1-code-3-runs.json)) |
+| v2: 53 papers × 3 runs | Blind first run, 31 Oct ([`v2-held-out-3-runs.json`](harness/heldout/results/v2-held-out-3-runs.json)) | 3 Nov, `0b7502c` ([`v2-on-shipped-code-3-runs.json`](harness/heldout/results/v2-on-shipped-code-3-runs.json)) | 3 Nov, the tagged code `v1.0-code` ([`v2-on-v1.0-code-3-runs.json`](harness/heldout/results/v2-on-v1.0-code-3-runs.json)) | 3–4 Nov, `v1.0.1-code` ([`v2-on-v1.0.1-code-3-runs.json`](harness/heldout/results/v2-on-v1.0.1-code-3-runs.json)) |
 |---|---|---|---|---|
 | Right work marked mastered | **39 of 39** | **39 of 39** (91–100%) | **39 of 39** (91–100%) | **39 of 39** (91–100%) |
 | Instructions in the ink, never marked mastered | **30 of 30** | **30 of 30** (89–100%) | **30 of 30** (89–100%) | **30 of 30** (89–100%) |
@@ -754,7 +754,7 @@ development set.** A prompt example that resembled one v2 item was replaced on 3
 | … asked first instead (cautious) | 3 of 48 | 3 of 48 | 3 of 48 | 5 of 48 |
 
 On the tagged code the harmful error fell by one and a different idea was named twice more on clear ink: within the
-run-to-run spread, and reported as it came. On the live code (the same marking prompt; only the comparison of the two readings changed)
+run-to-run spread, and reported as it came. On `v1.0.1-code` (the same marking prompt; only the comparison of the two readings changed)
 the harmful error is back at 3 of 42 and no different idea was named on clear ink: again within the spread. Its cost rose from $2.61 to $3.71 for the 159 markings, and the median time
 from 13 s to 22 s, with the answers-only second reading. The three runs mark the same 53 papers, so they show consistency, not 159 independent papers. The intervals are over
 the runs. Earlier v2 runs between these two are kept too (`v2-held-out-steps-rule-3-runs.json`,
@@ -1086,9 +1086,11 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
   - The check reads the lines Muse Spark read, not the pixels.
 - **Mastery is shown, not proven.** "Turned around" follows a level, a challenge answered with a reason, and the teacher's review. The re-check days later is the evidence that it lasted. One re-check is still one item.
 - **The self-check plays the level's outline.** The questions inside each lesson are written as the lesson opens, after the teacher has let it start; they are not checked one by one.
-- **Two fixes are in this repository but not yet on the live edge** (which runs `v1.0.1-code`): two readings no longer
+- **The code live now is `v1.0.2-code`** (edge vb1104i, 4 Nov): `v1.0.1-code` plus two fixes. Two readings no longer
   agree when only one says "not", or when their units differ ("5 cm", "5 m"); and an unreadable photographed paper is
-  asked to be photographed again, not "filmed again". Both are tested; they go live with the next edge release.
+  asked to be photographed again, not "filmed again". Both are tested (152 tests); the real sets and the held-out set
+  were run on `v1.0.1-code`, not yet on `v1.0.2-code`. The teacher's desk says "photograph again" too from the next
+  desktop release.
 - **Muse Spark Open has run on partner inference, with few runs:** 9 of 12 completed. Of the 3 that did not, 2 passed
   the old 5-minute limit per call on the long four-photo maths paper, and 1 reply was not a marking; the 3 runs since
   the limit went to 10 minutes all completed (`harness/open/`). It has not been switched on for the live edge.

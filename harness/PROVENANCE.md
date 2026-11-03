@@ -36,9 +36,9 @@ live as edge vb1104f): two readings must agree before "Accept all", and the held
 | `harness/heldout/results/v2-on-v1.0-code-3-runs.json` | locally, `fingerprint_eval.escript` | its meta says `7475ba1`: a later commit (the film) made while it ran; `git diff 8d3b44a 7475ba1 -- witness` is empty |
 | `evidence/unseen-physics/v1.0-code-3-runs.json` | locally, `local_mark.escript` | with a scheme once, without twice (one is the marking the film shows) |
 
-## The code live now, `v1.0.1-code` (3 Nov)
+## `v1.0.1-code` (3 Nov), live until 4 Nov
 
-`v1.0.1-code` (`29c0ddc`), live as edge vb1104h: `v1.0-code` plus the two answer-comparison fixes (numbers must be the
+`v1.0.1-code` (`29c0ddc`), live as edge vb1104h from 3 to 4 Nov: `v1.0-code` plus the two answer-comparison fixes (numbers must be the
 same numbers; the same letter with different words is not the same answer), ten minutes a reading for open weights, and
 the challenge push without a deprecated catch. One run each on it on 3 Nov (`*-on-v1.0.1-code-1-run.json`), then two more
 on 4 Nov; the three together are `evidence/real-handwriting/results/condition-c-on-v1.0.1-code-3-runs.json` and
@@ -47,3 +47,10 @@ on 4 Nov; the three together are `evidence/real-handwriting/results/condition-c-
 identical to `29c0ddc`, from beams compiled before `witness/src` was next edited, which is why that run's file says
 dirty). In written run 3 one paper came back "could not be read" (the product asked for it again, nothing marked);
 the same photos were sent again, and the failure is recorded in the file (`not_read_first_time`). The Muse Spark Open runs after 29c0ddc used its ten-minute limit (`harness/open/`).
+
+## The code live now, `v1.0.2-code` (4 Nov)
+
+`v1.0.2-code` (`93d5b69`), live as edge vb1104i: `v1.0.1-code` plus two fixes. Two readings no longer agree across
+"not" or across different units (`witness_mark:same_answer/2`), and an unreadable photographed paper is asked to be
+photographed again (`witness_api:view/2`). No result file in this repository ran on it yet; every number above names
+the code it ran on.

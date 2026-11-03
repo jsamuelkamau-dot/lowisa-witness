@@ -203,13 +203,13 @@ From the teacher's PDF to the re-check, on a fresh exam (README §5). Fixed the 
   English 29 of 30, science 46 of 49 (Muse Spark: 29 and 47); no wrong idea named. 3 of 9 runs failed: a reading past
   the 5-minute limit per call (twice) and one reply that was not a marking; the open model writes up to 12,000 tokens a
   reading, half of them reasoning. $0.90 for every completed call.
-- **Three runs on the live code `v1.0.1-code`** (4 Nov, 13-judge panel round 7: "one run is not enough"): multiple
+- **Three runs on `v1.0.1-code`** (then live) (4 Nov, 13-judge panel round 7: "one run is not enough"): multiple
   choice 104/104/104 of 109, 7/6/6 of 10 caught; written 36/37/38 of 42, 2/2/3 of 4 caught; no wrong idea named in any
   run of either set. The written drop from 3 of 4 is one question (science Q35) read as "A. Wheat" instead of "Cow
   peas" in two runs, at 0.65 and 0.75 sure, so it went to the teacher, not to "Accept all": reading variance, not the
   comparison change. Held-out: asked 39 of 42, wrong idea 3 of 42, named right 43 of 48 (0 a different idea).
 - **One photographed paper came back unreadable, then marked from the same photos** (written run 3): Muse Spark said
   the photos showed only questions 11 to 30. The product marked nothing, as it should, but told the teacher to have it
-  "filmed again"; a photographed paper is now asked to be photographed again (`witness_api:view/2`, not yet live).
+  "filmed again"; a photographed paper is now asked to be photographed again (`witness_api:view/2`, live from edge vb1104i, `v1.0.2-code`).
 - **Two readings that differ only by "not", or by units, no longer agree** (`witness_mark:same_answer/2`, round-7
-  panel): "does not float" and "float", "5 cm" and "5 m". Tested; not yet live.
+  panel): "does not float" and "float", "5 cm" and "5 m". Live from edge vb1104i (`v1.0.2-code`).
