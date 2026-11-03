@@ -160,6 +160,17 @@ an_unreadable_photo_is_photographed_again_test() ->
     ?assertMatch(#{error := <<"The paper couldn't be seen in this video", _/binary>>},
                  witness_api:view(<<"s2">>, #{status => <<"failed">>, unreadable => W, kind => <<"video">>})).
 
+%% the same for a photographed paper Meta could not mark (kept), or one that failed for another reason
+a_failed_photo_never_says_video_test() ->
+    ?assertMatch(#{kept := true, error := <<"The marking service couldn't be reached, so this paper isn't marked yet. The photos are kept", _/binary>>},
+                 witness_api:view(<<"s1">>, #{status => <<"failed">>, kept => true, kind => <<"photo">>})),
+    ?assertMatch(#{error := <<"This paper couldn't be marked. Photograph it again.">>},
+                 witness_api:view(<<"s1">>, #{status => <<"failed">>, kind => <<"photo">>})),
+    ?assertMatch(#{error := <<"The marking service couldn't be reached, so this paper isn't marked yet. The video is kept", _/binary>>},
+                 witness_api:view(<<"s2">>, #{status => <<"failed">>, kept => true})),
+    ?assertMatch(#{error := <<"This sitting couldn't be marked. Record it again.">>},
+                 witness_api:view(<<"s2">>, #{status => <<"failed">>})).
+
 %% the answer to "which way up": only the pages asked about, only real turns
 orientation_answer_test() ->
     Read = fun(Text) -> fun(_, _) -> {ok, Text, #{}} end end,

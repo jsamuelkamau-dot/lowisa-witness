@@ -459,6 +459,8 @@ route(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], B, Uid0, Host) ->
         {ok, #{status := S0} = Row0} when S0 =:= <<"failed">>; S0 =:= <<"marking">> ->
             case settle(Uid, Id, Row0, Host) of
                 #{kept := true} = Kept -> start_marking(Uid, Id, Kept, B, Host);
+                #{status := <<"failed">>, kept := false, kind := <<"photo">>} ->
+                    refuse(410, <<"too_old">>, <<"These photos are no longer kept. Photograph the paper again.">>);
                 #{status := <<"failed">>, kept := false} ->
                     refuse(410, <<"too_old">>, <<"This recording is no longer kept. Ask for it to be filmed again.">>);
                 #{status := S} -> {200, #{ok => true, id => Id, status => S}}
@@ -1829,9 +1831,14 @@ view(Id, #{status := <<"failed">>, unreadable := W, kind := <<"photo">>}) ->
 view(Id, #{status := <<"failed">>, unreadable := W}) ->
     #{ok => true, id => Id, status => <<"failed">>, unreadable => W,
       error => <<"The paper couldn't be seen in this video, so nothing was marked. Ask for it to be filmed again.">>};
+view(Id, #{status := <<"failed">>, kept := true, kind := <<"photo">>}) ->
+    #{ok => true, id => Id, status => <<"failed">>, kept => true,
+      error => <<"The marking service couldn't be reached, so this paper isn't marked yet. The photos are kept: mark it again, no need to photograph it again.">>};
 view(Id, #{status := <<"failed">>, kept := true}) ->
     #{ok => true, id => Id, status => <<"failed">>, kept => true,
       error => <<"The marking service couldn't be reached, so this paper isn't marked yet. The video is kept: mark it again, no need to film it again.">>};
+view(Id, #{status := <<"failed">>, kind := <<"photo">>}) ->
+    #{ok => true, id => Id, status => <<"failed">>, error => <<"This paper couldn't be marked. Photograph it again.">>};
 view(Id, #{status := <<"failed">>}) ->
     #{ok => true, id => Id, status => <<"failed">>, error => <<"This sitting couldn't be marked. Record it again.">>};
 view(Id, #{status := S}) -> #{ok => true, id => Id, status => S}.

@@ -6,6 +6,8 @@ our time zone (Adelaide, UTC+10:30); the first commit is 27 Oct at 10:36 AM ther
 history: it was rewritten once, on 2 Nov before the repository was made public, to take out three files that copied older LoWisa
 code; the commit dates were kept, and `harness/PROVENANCE.md` maps the old hashes to the new. The table grows as the work lands. Code built this week inside LoWisa's own files is named in `host/README.md`; it is not copied here, so LoWisa's older code stays private.
 
+**How to verify the dates.** Commit dates are written by our own machine, so they are not proof on their own. Two dates we do not control: GitHub created this repository on 27 Oct 2026 at 00:06 UTC (26 Oct, 8:06 PM ET, eight hours after kickoff; `gh api repos/jsamuelkamau-dot/lowisa-witness --jq .created_at`), and the GitHub Actions run history starts on 3 Nov, the first push.
+
 | Part | Where | Status |
 |---|---|---|
 | Day-1 probe: SAM 3.1 ink tracking and Muse Spark path marking on video | `harness/probes/` | done 27 Oct |
@@ -90,3 +92,5 @@ code; the commit dates were kept, and `harness/PROVENANCE.md` maps the old hashe
 | The README's results as one set of numbers on the latest code, earlier code in its own table; the teacher's work ("Accept all" against marks checked one by one), printed by `score.py`; every job each Meta model does, listed one by one (round-8 panel, 4 Nov) | `README.md`, `evidence/real-handwriting/score.py` (`teacher_work/1`) | done 4 Nov |
 | The film's end line again names where to get LoWisa (Google Play, the App Store and the desktop), spoken and on the end card; the narration 2% quicker so the film stays 2:58 (owner, 4 Nov) | `evidence/film/build/script11.json`, `shots11.py` (`end_card/4`) | done 4 Nov |
 | The film: Lo's "Let's ask ourselves" question (the cargo ship) straight after the first look, labelled LoWisa; the narration quicker again (1.11) so the film stays under 3:00 (2:59; owner, 4 Nov) | `evidence/film/build/edit11.py.txt` | done 4 Nov |
+| A photographed paper that could not be marked for another reason, or is no longer kept, is told about photos, never a video; tested, not yet live (4 Nov) | `witness/src/witness_api.erl` (`view/2`, `too_old`), `witness/test/witness_photo_tests.erl` | done 4 Nov, not live |
+| The box: not a chatbot, links to the sections, Muse Spark Open as tested and not switched on; physics as one paper, 30 of 30 in every run; the dates GitHub records; the LoWisa code the phone screens import | `README.md`, `phone/README.md`, `docs/built-during.md` | done 4 Nov |

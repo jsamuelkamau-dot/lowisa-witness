@@ -10,3 +10,10 @@ The From Exam to Mastery screens built this week for LoWisa's phone app (React N
 - `witness/mastery.ts`, `witness/metaRoute.ts`, `witness/net.ts`: opening a mastery level, the routes to the edge.
 - `android/WitnessCameraActivity.kt`: the camera for photographing a paper or filming a desk.
 - `__tests__/`: the screens' tests (they run inside LoWisa's phone project, whose test setup is not in this repository).
+
+**LoWisa code these screens import (existed before, not in this repository):** `ui/theme`, `ui/Page`, `ui/SoftInput`
+(styling and page frames), `state/storage` (local storage), `live/edge` and `community/net` (the connection to LoWisa's
+server), `community/video`, `voice/recorder` and `tutor/voice` (camera upload, recording and Lo's voice),
+`billing/credits` (LoWisa credits), `course/store`, `paths/custom/course` and `exam/print/ui` (opening a level, printed
+exams), and `career/documents`. The screens' tests also load parts of LoWisa's lesson player (`paths/`, `map/`, `game/`,
+`teaching/`) to open a mastery level.

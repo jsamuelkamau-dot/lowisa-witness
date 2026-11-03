@@ -3,18 +3,25 @@
 > **For judges: protecting and strengthening human cognitive ability, in four lines**
 > - **What it is.** A teacher photographs a finished exam. Meta's models mark every answer and read *how* the learner
 >   reached it, from their own handwriting, and every question not mastered becomes a level in their **Mastery Plan**:
->   the learner does the thinking, and the level ends in a real task. Built inside LoWisa, 26 Oct – 4 Nov 2026.
-> - **Meta's models.** Muse Spark 1.3 marks and diagnoses; Muse Wonder plays every level as the learner before they see
->   it; Muse Voice Transcribe writes down the spoken answer; Muse Image draws the corrected step; SAM 3.1 follows the ink
->   on a filmed desk; Muse Spark Open runs the same marking on open weights (the table under "Submission facts").
+>   the learner does the thinking, and the level ends in a real task. **Not a chatbot, and not a photo grader:** the
+>   learner is never handed an answer. Built inside LoWisa, 26 Oct – 4 Nov 2026
+>   ([what was new and what existed before](#14-what-was-built-during-the-event-and-what-existed-before)).
+> - **Meta's models** ([who does what](#4-metas-models-who-does-what)). Muse Spark 1.3 marks and diagnoses; Muse Wonder
+>   plays every level as the learner before they see it; Muse Voice Transcribe writes down the spoken answer; Muse Image
+>   draws the corrected step; SAM 3.1 follows the ink on a filmed desk (the optional way in). Muse Spark Open, Meta's open
+>   weights, has been tested on partner inference (9 of 12 runs completed); it is not switched on for users.
 > - **On a real Grade 5 learner, against his own teacher** (three runs). On his multiple-choice papers the teacher checks
 >   **8 to 10 of 109 marks** one by one and accepts the rest at once; **6 or 7 of the teacher's 10 wrong answers are
 >   caught**, and **no wrong idea is named** on any answer it did not accept, in any run. The limit: 2 to 4 of the marks
 >   it is sure of still call one of his wrong answers right, so nothing reaches him until the teacher releases it. On his
 >   written answers it agrees with the teacher about as often as marking everything right would (36–38 of 42, against
->   38); there it never names a wrong idea, and asks him first instead (the Measured table).
-> - **Try it in a minute, no account and no key:** `node demo/desk-server.js --replay`, then http://localhost:4747. The
->   2:59 film and the measured results follow the introduction below.
+>   38); there it never names a wrong idea, and asks him first instead. His papers show answers, not working, so every
+>   answer it did not accept went to Lo to ask; naming the idea from the ink is measured on the held-out set
+>   ([Measured](#7-measured-a-real-students-handwriting-an-exam-it-had-never-seen-a-held-out-set-a-class-of-40),
+>   [limits](#16-limits-stated-plainly)).
+> - **Try it in a minute, no account and no key:** `node demo/desk-server.js --replay`, then http://localhost:4747
+>   ([more ways to try it](#12-try-it-and-verify-it-yourself)). The 2:59 film and the measured results follow the
+>   introduction below.
 
 ## The Problem We Solve: Protecting and Strengthening Human Cognitive Ability
 
@@ -87,9 +94,9 @@ LoWisa addresses these gaps through four connected areas of cognitive developmen
 | The cognitive ability we strengthen | The problem we can no longer ignore | How From Exam to Mastery changes this |
 |---|---|---|
 | **1. From examination failure to capability** | **A grade tells a learner they failed, but rarely shows them how to succeed.** Students can leave an examination knowing their score but not understanding where their reasoning broke down. Teachers face substantial marking workloads, leaving limited time for individual feedback. A single failed question can become years of lost confidence. | **Failure becomes the starting point, not the final verdict.** Meta's AI models analyse handwritten examination papers, evaluate answers and identify gaps in understanding. Questions requiring improvement become part of a personalised Mastery Plan, turning mistakes into actionable learning opportunities rather than permanent labels. |
-| **2. From theoretical knowledge to real-world application** | **What good is knowing an answer if you cannot use it?** Learners can memorise formulas, pass examinations and complete courses yet struggle when confronted with practical problems. The distance between classrooms and real environments leaves people qualified on paper but uncertain in practice. | **Learning must lead to demonstrated capability.** LoWisa connects concepts to practical tasks and real-world environments. Learners apply what they have understood, work through challenges and develop the confidence to use their knowledge beyond an examination. |
+| **2. From theoretical knowledge to real-world application** | **What good is knowing an answer if you cannot use it?** Learners can memorise formulas, pass examinations and complete courses yet struggle when confronted with practical problems. The distance between classrooms and real environments leaves people qualified on paper but uncertain in practice. | **Learning must lead to demonstrated capability.** LoWisa connects concepts to practical tasks and real-world environments. Learners apply what they have understood, work through challenges and develop the confidence to use their knowledge beyond an examination. *(The levels and their real tasks are new this week; LoWisa's player that runs them existed before.)* |
 | **3. From AI-generated answers to independent thinking** | **The greatest danger is not getting a wrong answer. It is getting the right answer without knowing why.** When AI repeatedly performs the reasoning, learners risk becoming dependent on conclusions they cannot explain, challenge or reproduce independently. Convenience must not come at the expense of critical thinking. | **AI guides the thinking instead of replacing it.** Lo asks learners to predict, reason, test their ideas and explain their conclusions before revealing solutions. Questions target seven thinking capabilities: pattern recognition, probability and uncertainty, optimisation, systems thinking, trade-offs, decision-making and root-cause analysis. The learner remains an active problem-solver. |
-| **4. From temporary memorisation to lasting mastery** | **If knowledge disappears after the exam, what did we actually achieve?** Students cram, pass and forget. Without revisiting misconceptions and testing independent recall, yesterday's learning can become tomorrow's knowledge gap. Repeated exposure is not the same as lasting understanding. | **Mastery is revisited, reinforced and tested.** Previously failed questions return during learning, followed by later knowledge checks. LoWisa's flashcards and Insight mode support continued revision, helping learners revisit concepts, strengthen recall and build understanding that lasts beyond the original assessment. |
+| **4. From temporary memorisation to lasting mastery** | **If knowledge disappears after the exam, what did we actually achieve?** Students cram, pass and forget. Without revisiting misconceptions and testing independent recall, yesterday's learning can become tomorrow's knowledge gap. Repeated exposure is not the same as lasting understanding. | **Mastery is revisited, reinforced and tested.** Previously failed questions return during learning, followed by later knowledge checks. LoWisa's flashcards and Insight mode *(both existed before the event)* support continued revision, helping learners revisit concepts, strengthen recall and build understanding that lasts beyond the original assessment. |
 
 *Built for this hackathon: the marking, the fingerprint of each answer, Lo asking first, the Mastery Plan and its
 levels, Muse Wonder's check and the re-check days later. LoWisa's lesson player, its flashcards and Insight mode, and
@@ -123,8 +130,8 @@ on screen, and ends on a real Grade 5 student and the rest of the loop. Section 
 > **Judge it in 2 minutes**
 > 1. **No account, no key:** `node demo/desk-server.js --replay`, then open http://localhost:4747: the teacher's Exam
 >    Desk on an exam recorded on the production edge (marks, fingerprints, Lo asks first, class patterns).
-> 2. **Check the numbers:** `python3 evidence/real-handwriting/score.py` and `python3 -X utf8 evidence/unseen-physics/score.py`
->    recompute the real student's and the physics results from the committed files; `sh scripts/test.sh` runs the 152 tests.
+> 2. **Check the numbers:** `python3 evidence/real-handwriting/score.py` and `python3 -X utf8 evidence/unseen-physics/score.py` (`python` on Windows)
+>    recompute the real student's and the physics results from the committed files; `sh scripts/test.sh` runs the 153 tests, and every push runs them in [GitHub Actions](https://github.com/jsamuelkamau-dot/lowisa-witness/actions/workflows/test.yml).
 > 3. **Live, on your own phone:** LoWisa on Google Play or the App Store, then section 12 (a sample paper to photograph is
 >    [`evidence/unseen-physics/paper.jpg`](evidence/unseen-physics/paper.jpg)).
 
@@ -162,7 +169,7 @@ Where each Meta model works:
 | Wrong answers accepted as right (the error a teacher must still catch) | multiple choice: 3, 4 and 4 of the teacher's 10 marked right, always among the same four questions (English 23, science 33 and 42, maths 24). Written: 2, 2 and 1 of 4: question 41 in every run (sure enough for "Accept all"), and question 35 in two runs, where Muse Spark read his final option as "A. Wheat" instead of "Cow peas" and was not sure (0.65, 0.75), so it went to the teacher | the same files |
 | 53 held-out papers × 3 runs: ink that cannot show the idea | Lo asks first **39 of 42**; a wrong idea named 3 of 42 (the harmful error) | [`v2-on-v1.0.1-code-3-runs.json`](harness/heldout/results/v2-on-v1.0.1-code-3-runs.json) |
 | … ink that shows the idea; right work; instructions written in the ink | named right **43 of 48** (none named a different idea; 5 asked first); mastered **39 of 39**; never obeyed **30 of 30** | the same file |
-| A physics exam it had never seen (on `v1.0-code`, not run since) | **180 of 180** marking decisions right in six live runs, then **90 of 90** on `v1.0-code` (with and without a mark scheme) | [`evidence/unseen-physics/`](evidence/unseen-physics/README.md), `python3 -X utf8 evidence/unseen-physics/score.py` |
+| A physics exam it had never seen: one 30-question paper (on `v1.0-code`, not run since) | **30 of 30 marking decisions right in every run**: six live runs, then three on `v1.0-code`, with and without a mark scheme; each decision checked against the answer key in [`score.py`](evidence/unseen-physics/score.py) (the paper was written for the demo; section 7) | [`evidence/unseen-physics/`](evidence/unseen-physics/README.md), `python3 -X utf8 evidence/unseen-physics/score.py` |
 | Muse Wonder playing each level as the student first (20 levels × 3 runs) | planted faults held **30 of 30**; false claims found **9 of 9** | [`selfcheck-3-runs.json`](harness/selfcheck/results/selfcheck-3-runs.json) |
 | A class of 40 | all marked in **32 s** for **$1.01** | [`class-of-40.json`](harness/class/results/class-of-40.json) |
 | Phone photos taken sideways or upside down (4 papers × 3 runs) | **45 of 45** pages turned the right way up | [`orient-03nov.json`](harness/orient/results/orient-03nov.json) |
@@ -180,7 +187,7 @@ Where each Meta model works:
 | Held-out v2: named right of 48 | 44 (`0b7502c`) | 42 | 43 |
 
 - **Built during the event (26 Oct – 4 Nov 2026), all in this repository:** the marking and diagnosis server
-  (`witness/`, Erlang/OTP, 152 tests), the teacher's Exam Desk (`desk/`), the phone screens (`phone/`), and every
+  (`witness/`, Erlang/OTP, 153 tests), the teacher's Exam Desk (`desk/`), the phone screens (`phone/`), and every
   measurement (`harness/`, `evidence/`).
 - **Existed before, named but not shown:** the LoWisa app it runs in, its lesson player, flashcards, Insight mode and
   Lo's voice (section 14, [`docs/existed-before.md`](docs/existed-before.md)). In the film every shot is labelled one or
@@ -730,7 +737,7 @@ teacher's red ink by colour so the model could not copy his ticks, then the live
 Three of the nine question pages were photographed sideways, and that is where A lost most. B turned them by hand to
 measure what turning would gain; C is the product doing it itself (it stored the sideways page upright in 9 of 9
 papers) and matches B. Marking every answer right would agree on 99 of 109, so the number that matters is the wrong
-answers caught: 7 of 10 in each run (95% interval 40–89%); by question, 6 of the 10 were caught in every run (`score.py` prints both). C also found a fault in our code: on 4 of the 26 answers it did not accept (over three runs; none in run 1) an idea was
+answers caught: 7 of 10 in each run on `a1be423` (95% interval 40–89%), and 7, 6 and 7 on `v1.0-code`; by question, 6 of the 10 were caught in every run (`score.py` prints both). C also found a fault in our code: on 4 of the 26 answers it did not accept (over three runs; none in run 1) an idea was
 named from the circled option alone, which the evidence rule should have held. It is fixed in `6611ef2` and the four are
 held (section 15). Every question, every run, the disagreements and the sheets the teacher marked:
 [`evidence/real-handwriting/`](evidence/real-handwriting/README.md).
@@ -884,7 +891,7 @@ Look at it without an account: `node demo/desk-server.js --replay`. It is this e
 |---|---|---|
 | **Impact** | The problem is human cognitive ability: a fear millions already feel about AI, joined to a problem education has not solved for generations (a failed exam that teaches nothing). This uses AI to strengthen it in four areas (from failure to capability, from knowledge to real-world application, from AI answers to independent thinking, from memorising to lasting mastery): a failed question becomes a level built on the student's own mistake that ends in a real task, and a teacher of forty checks instead of marking. Measured against one real student's own teacher; not yet proven in a classroom pilot | the opening, sections 1, 2, 5, 7; limits in 16; plans in 17 |
 | **Use of Meta's models** | Muse Spark reads the *reasoning* in handwriting and code checks its diagnosis against the lines it read; Muse Wonder plays every level as the student first; five models measured, in a gated pipeline of agents with code-checked hand-offs | sections 3, 4; `harness/FINDINGS.md` |
-| **Technical depth** | The evidence rule in code, measured blind and on the shipped code; handwriting placed on the page by dynamic programming (64 of 64 lines, against SAM 3.1's 52); Erlang/OTP with conditional writes, per-route daily ceilings, roles; 152 library tests; sixteen problems found by testing and how each was solved, from sideways pages to a safety check that failed open | sections 6, 7, 10, 11, 15 |
+| **Technical depth** | The evidence rule in code, measured blind and on the shipped code; handwriting placed on the page by dynamic programming (64 of 64 lines, against SAM 3.1's 52); Erlang/OTP with conditional writes, per-route daily ceilings, roles; 153 library tests; sixteen problems found by testing and how each was solved, from sideways pages to a safety check that failed open | sections 6, 7, 10, 11, 15 |
 | **Demo** | One failed question from photo to mastery: Muse Spark's marks landing on the page, the idea quoted from his own words, Lo asks first with a spoken answer, Muse Wonder's two plays, Muse Image's drawn step, the teacher's desk, the re-check; a real Grade 5 student's result against its baseline. Four Meta models on screen, about 1:44 of this week's work, every shot labelled, a word-for-word transcript; judges can try it in a minute with no account | sections 2, 12; `evidence/film/transcript.md` |
 
 ## 10. Architecture
@@ -928,7 +935,7 @@ flowchart TB
 | Number | What it is | Raw results |
 |---|---|---|
 | Multiple choice: 102/109 (A), 105/109 (B), 105, 103, 105 of 109 (C), 105, 104, 104 of 109 on `v1.0-code`; his wrong answers caught 4/10, 7/10, 7/10 each run of C, 7, 6, 7 on `v1.0-code`, with no wrong idea named. Written answers: 37, 38, 38 then 39, 37, 38 of 42; 3 of 4 caught; every answer not accepted held for Lo, none named; 0/9 invented reasons (A and B) | one real student's handwriting, six papers, his teacher's marks | `evidence/real-handwriting/results/` (five files), `score.py` |
-| 180/180 decisions, 6/30 every run, 40–58 s, ~$0.05; then 90/90 on `v1.0-code` | the film's physics paper, never seen before, 6 live runs with and without a scheme, then 3 on the tagged code | `evidence/unseen-physics/` |
+| one 30-question paper: 30 of 30 decisions in each of 6 runs, 6/30 every run, 40–58 s, ~$0.05; then 30 of 30 in each of 3 runs on `v1.0-code` | the film's physics paper, never seen before, 6 live runs with and without a scheme, then 3 on the tagged code | `evidence/unseen-physics/` |
 | A 5/5, B 5/5 named; C asked 5/5 | the three learners, five readings each, through `witness_photo:mark/4` | `evidence/misconceptions/runs-31oct-steps-rule.jsonl` |
 | on `v1.0-code`: asked 40/42, wrong name 2/42, named right 42/48, right work 39/39, injection 30/30 (on `0b7502c`: 39/42, 3/42, 44/48) | held-out v2 (and the blind first run beside it) | `harness/heldout/results/` |
 | ambiguous asked 10/11 (development) | the 36 papers the rule was designed on, and the effort ablation | `harness/heldout/results/dev-set-*.json` |
@@ -1049,6 +1056,8 @@ Full statement: [`docs/privacy.md`](docs/privacy.md). It includes what the schoo
 
 ## 14. What was built during the event, and what existed before
 
+**How to verify the dates.** Commit dates are written by our own machine, so they are not proof on their own. Two dates we do not control: GitHub created this repository on 27 Oct 2026 at 00:06 UTC (26 Oct, 8:06 PM ET, eight hours after kickoff; `gh api repos/jsamuelkamau-dot/lowisa-witness --jq .created_at`), and the GitHub Actions run history starts on 3 Nov, the first push.
+
 **Built during the event (26 Oct – 4 Nov 2026), and all of it is in this repository:**
 
 | Part | Where |
@@ -1129,9 +1138,10 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
 - **The self-check plays the level's outline.** The questions inside each lesson are written as the lesson opens, after the teacher has let it start; they are not checked one by one.
 - **The code live now is `v1.0.2-code`** (edge vb1104i, 4 Nov): `v1.0.1-code` plus two fixes. Two readings no longer
   agree when only one says "not", or when their units differ ("5 cm", "5 m"); and an unreadable photographed paper is
-  asked to be photographed again, not "filmed again". Both are tested (152 tests); the real sets and the held-out set
+  asked to be photographed again, not "filmed again". Both are tested; the real sets and the held-out set
   were run on `v1.0.1-code`, not yet on `v1.0.2-code`. The teacher's desk says "photograph again" too from the next
-  desktop release.
+  desktop release. One more wording fix is in this repository but not yet live: a photographed paper that could not be
+  marked for another reason, or is no longer kept, is never told about a video (`witness_api`, tested).
 - **Muse Spark Open has run on partner inference, with few runs:** 9 of 12 completed. Of the 3 that did not, 2 passed
   the old 5-minute limit per call on the long four-photo maths paper, and 1 reply was not a marking; the 3 runs since
   the limit went to 10 minutes all completed (`harness/open/`). It has not been switched on for the live edge.
