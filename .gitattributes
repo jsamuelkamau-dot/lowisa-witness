@@ -1,2 +1,17 @@
 * text=auto eol=lf
+# Media and other binary files are stored byte for byte. Until 3 Nov 2026 only *.png was listed here, and git
+# stripped the CR from every CR LF byte pair in 16 committed images (evidence/MEDIA-REPAIR.md).
 *.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.mp4 binary
+*.mov binary
+*.wav binary
+*.mp3 binary
+*.m4a binary
+*.pcm binary
+*.pdf binary
+*.zip binary
+*.bundle binary

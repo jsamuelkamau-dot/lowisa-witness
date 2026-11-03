@@ -229,9 +229,9 @@ planted faults held 30/30, false claims found 9/9, clean levels passed 30/30.
 
 ### 3.7 Also built, also measured
 
-<img src="harness/probes/results-31oct/drawn-learner-a.webp" alt="Muse Image draws the corrected step on lined paper" width="420">
+<img src="harness/probes/results-03nov/drawn-learner-a.webp" alt="Muse Image draws the corrected step on lined paper" width="420">
 
-- **Muse Image draws the corrected step** on lined paper, with the changed line underlined ($0.015–0.021 a drawing).
+- **Muse Image draws the corrected step** on lined paper, with the changed line underlined ($0.015–0.021 a drawing; the three shown were redrawn on 3 Nov, see `evidence/MEDIA-REPAIR.md`).
 - **Witness, the optional way in.** For a homeschooled student, or one with no teacher nearby, the phone films the desk
   while the student writes. SAM 3.1 follows the ink, so every line has the second it was written, and the desk replays
   the moment the thinking went wrong. The video is deleted once it is marked. On 13 clips in 6 languages, 45 of 46
@@ -251,7 +251,7 @@ is best at.
 | **Muse Spark 1.3** | Reads the teacher's exam file. Marks every photographed paper for the path, not only the answer. Writes the Misconception Fingerprint. Reads the student's answer to Lo. Writes the mastery level. Drafts the challenge, judges the reason, recommends the badge. Writes the re-check. Reads Lo's spoken turns for safety. | `witness_photo`, `witness_mark`, `witness_fingerprint`, `witness_challenge`, `witness_recheck`, `witness_recommend`, `witness_guard` | one physics paper it had never seen: every marking decision right, 6 runs of 30; held-out v2 on the shipped code, 53 papers × 3 runs: right work 39/39, injection 30/30, ambiguous pages asked first 39/42, clear ideas named right 44/48 | `evidence/unseen-physics/`, `harness/heldout/` |
 | **Muse Wonder** | Plays each mastery level as the student who still holds the misconception and as one who has it right (in one reasoning pass), and holds a level that would not catch it or says a false thing. Groups the class by reasoning. Asks the examiner's questions. | `witness_check`, `witness_patterns`, `witness_examiner` | 20 levels × 3: planted faults held 30/30, the fault named 30/30; clean levels passed 30/30 | `harness/selfcheck/` |
 | **Muse Voice Transcribe** | The student's spoken answer to Lo; the teacher's spoken comment | `witness_meta:transcribe/2` | a 6.4 s spoken answer written down for $0.0003 | `harness/probes/results-31oct/transcript-31oct.json` |
-| **Muse Image** | Draws the corrected step on lined paper | `witness_draw` | the three learners' steps drawn, $0.015–0.021 each | `harness/probes/results-31oct/drawn-learner-*.webp` |
+| **Muse Image** | Draws the corrected step on lined paper | `witness_draw` | the three learners' steps drawn, $0.017–0.019 each (redrawn 3 Nov, `harness/probes/redraw_3nov.escript`) | `harness/probes/results-03nov/` |
 | **SAM 3.1** | Desk filming (the optional way in): follows the ink through a video, so each line has the second it was written | `witness_sam`, `witness_timeline` | on a photo it answers "word" (not "handwriting"); its word boxes, joined into lines, found 52 of 64 handwritten lines (mean overlap 0.75) | `harness/probes/`, `harness/bench/results/line_placement.json` |
 | Muse Spark Open | The same marking, on a photographed paper or a desk video, through any OpenAI-compatible endpoint | `witness_open`, `witness_photo` | **wired, not yet run**: no hosted endpoint for it in this account | – |
 
