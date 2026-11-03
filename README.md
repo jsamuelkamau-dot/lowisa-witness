@@ -131,7 +131,7 @@ on screen, and ends on a real Grade 5 student and the rest of the loop. Section 
 > 1. **No account, no key:** `node demo/desk-server.js --replay`, then open http://localhost:4747: the teacher's Exam
 >    Desk on an exam recorded on the production edge (marks, fingerprints, Lo asks first, class patterns).
 > 2. **Check the numbers:** `python3 evidence/real-handwriting/score.py` and `python3 -X utf8 evidence/unseen-physics/score.py` (`python` on Windows)
->    recompute the real student's and the physics results from the committed files; `sh scripts/test.sh` runs the 153 tests, and every push runs them in [GitHub Actions](https://github.com/jsamuelkamau-dot/lowisa-witness/actions/workflows/test.yml).
+>    recompute the real student's and the physics results from the committed files; `sh scripts/test.sh` runs the 155 tests, and every push runs them in [GitHub Actions](https://github.com/jsamuelkamau-dot/lowisa-witness/actions/workflows/test.yml).
 > 3. **Live, on your own phone:** LoWisa on Google Play or the App Store, then section 12 (a sample paper to photograph is
 >    [`evidence/unseen-physics/paper.jpg`](evidence/unseen-physics/paper.jpg)).
 
@@ -176,18 +176,18 @@ Where each Meta model works:
 
 **The same sets on earlier code** (kept for comparison; which commit each ran on is in [`harness/PROVENANCE.md`](harness/PROVENANCE.md)):
 
-| Set | `a1be423` (first 3 runs) | `v1.0-code` (3 runs, 3 Nov) | `v1.0.1-code` (above) |
+| Set | `e9fb96f` (first 3 runs) | `v1.0-code` (3 runs, 3 Nov) | `v1.0.1-code` (above) |
 |---|---|---|---|
 | Real student, multiple choice: agree of 109 | 105, 103, 105 | 105, 104, 104 | 104, 104, 104 |
 | … his teacher's 10 wrong answers caught | 7, 7, 7 | 7, 6, 7 | 7, 6, 6 |
-| … a wrong idea named on an answer not accepted | 0, 1, 3 (fixed in `6611ef2`) | 0, 0, 0 | 0, 0, 0 |
+| … a wrong idea named on an answer not accepted | 0, 1, 3 (fixed in `38dd640`) | 0, 0, 0 | 0, 0, 0 |
 | Real student, written: agree of 42 | 37, 38, 38 | 39, 37, 38 | 36, 37, 38 |
 | … his teacher's 4 wrong answers caught | 3, 3, 3 | 3, 3, 3 | 2, 2, 3 |
-| Held-out v2: Lo asks first of 42; wrong idea named | 39; 3 (`0b7502c`) | 40; 2 | 39; 3 |
-| Held-out v2: named right of 48 | 44 (`0b7502c`) | 42 | 43 |
+| Held-out v2: Lo asks first of 42; wrong idea named | 39; 3 (`066c9d1`) | 40; 2 | 39; 3 |
+| Held-out v2: named right of 48 | 44 (`066c9d1`) | 42 | 43 |
 
 - **Built during the event (26 Oct – 4 Nov 2026), all in this repository:** the marking and diagnosis server
-  (`witness/`, Erlang/OTP, 153 tests), the teacher's Exam Desk (`desk/`), the phone screens (`phone/`), and every
+  (`witness/`, Erlang/OTP, 155 tests), the teacher's Exam Desk (`desk/`), the phone screens (`phone/`), and every
   measurement (`harness/`, `evidence/`).
 - **Existed before, named but not shown:** the LoWisa app it runs in, its lesson player, flashcards, Insight mode and
   Lo's voice (section 14, [`docs/existed-before.md`](docs/existed-before.md)). In the film every shot is labelled one or
@@ -529,7 +529,7 @@ a spoken answer written down by Muse Voice Transcribe ([`voice-transcribe.png`](
 
 | Finding | Without it | With it | Evidence |
 |---|---|---|---|
-| The evidence rule in code, on 42 pages whose ink cannot show the idea (14 papers × 3 runs, on `0b7502c`) | Muse Spark proposed a named idea on **6 of 42** | a wrong idea named on **3 of 42**; the cost: 3 of 48 clear ideas asked instead of named | [`v2-on-shipped-code-3-runs.json`](harness/heldout/results/v2-on-shipped-code-3-runs.json) (`fingerprint.possible` is the proposal the code held) |
+| The evidence rule in code, on 42 pages whose ink cannot show the idea (14 papers × 3 runs, on `066c9d1`) | Muse Spark proposed a named idea on **6 of 42** | a wrong idea named on **3 of 42**; the cost: 3 of 48 clear ideas asked instead of named | [`v2-on-shipped-code-3-runs.json`](harness/heldout/results/v2-on-shipped-code-3-runs.json) (`fingerprint.possible` is the proposal the code held) |
 | Asking which **edge** is the top, not how many degrees to turn | 44 of 45 pages right (14 of 15 sideways) | **45 of 45** (15 of 15) | [`orient-03nov.json`](harness/orient/results/orient-03nov.json) |
 | A long paper in parts, read at once | 220–232 s for a 30-question, four-photo paper | **63–65 s**, the same agreement | [`parts-03nov.json`](harness/parts/results/parts-03nov.json) |
 | One prompt-cache key per paper, for every reading of it | every page sent again at full price | a second reading **99.8% cached** (one probe) | [`harness/probes/results-31oct/`](harness/probes/results-31oct/) |
@@ -726,7 +726,7 @@ publication, his name included (the written consent is available if required); w
 class and student number. We removed the
 teacher's red ink by colour so the model could not copy his ticks, then the live product's photo path marked each paper.
 
-| | A: as photographed | B: sideways pages turned upright by hand | C: 3 runs (`a1be423`) | C again on `v1.0-code`, 3 runs |
+| | A: as photographed | B: sideways pages turned upright by hand | C: 3 runs (`e9fb96f`) | C again on `v1.0-code`, 3 runs |
 |---|---|---|---|---|
 | Witness agrees with the teacher | 102 of 109 | 105 of 109 | 105, 103, 105 of 109 | **105, 104, 104 of 109** |
 | The teacher's wrong answers Witness also caught | 4 of 10 | 7 of 10 | 7 of 10 every run | **7, 6, 7 of 10** |
@@ -737,8 +737,8 @@ teacher's red ink by colour so the model could not copy his ticks, then the live
 Three of the nine question pages were photographed sideways, and that is where A lost most. B turned them by hand to
 measure what turning would gain; C is the product doing it itself (it stored the sideways page upright in 9 of 9
 papers) and matches B. Marking every answer right would agree on 99 of 109, so the number that matters is the wrong
-answers caught: 7 of 10 in each run on `a1be423` (95% interval 40–89%), and 7, 6 and 7 on `v1.0-code`; by question, 6 of the 10 were caught in every run (`score.py` prints both). C also found a fault in our code: on 4 of the 26 answers it did not accept (over three runs; none in run 1) an idea was
-named from the circled option alone, which the evidence rule should have held. It is fixed in `6611ef2` and the four are
+answers caught: 7 of 10 in each run on `e9fb96f` (95% interval 40–89%), and 7, 6 and 7 on `v1.0-code`; by question, 6 of the 10 were caught in every run (`score.py` prints both). C also found a fault in our code: on 4 of the 26 answers it did not accept (over three runs; none in run 1) an idea was
+named from the circled option alone, which the evidence rule should have held. It is fixed in `38dd640` and the four are
 held (section 15). Every question, every run, the disagreements and the sheets the teacher marked:
 [`evidence/real-handwriting/`](evidence/real-handwriting/README.md).
 
@@ -791,7 +791,7 @@ Scoring is strict: the name itself must carry a key, and an "ask" passes only wh
 was then changed twice, partly after seeing that run, so every later v2 run has seen v2: **v2 is now a second
 development set.** A prompt example that resembled one v2 item was replaced on 3 Nov. Both are shown, with 95% intervals:
 
-| v2: 53 papers × 3 runs | Blind first run, 31 Oct ([`v2-held-out-3-runs.json`](harness/heldout/results/v2-held-out-3-runs.json)) | 3 Nov, `0b7502c` ([`v2-on-shipped-code-3-runs.json`](harness/heldout/results/v2-on-shipped-code-3-runs.json)) | 3 Nov, the tagged code `v1.0-code` ([`v2-on-v1.0-code-3-runs.json`](harness/heldout/results/v2-on-v1.0-code-3-runs.json)) | 3–4 Nov, `v1.0.1-code` ([`v2-on-v1.0.1-code-3-runs.json`](harness/heldout/results/v2-on-v1.0.1-code-3-runs.json)) |
+| v2: 53 papers × 3 runs | Blind first run, 31 Oct ([`v2-held-out-3-runs.json`](harness/heldout/results/v2-held-out-3-runs.json)) | 3 Nov, `066c9d1` ([`v2-on-shipped-code-3-runs.json`](harness/heldout/results/v2-on-shipped-code-3-runs.json)) | 3 Nov, the tagged code `v1.0-code` ([`v2-on-v1.0-code-3-runs.json`](harness/heldout/results/v2-on-v1.0-code-3-runs.json)) | 3–4 Nov, `v1.0.1-code` ([`v2-on-v1.0.1-code-3-runs.json`](harness/heldout/results/v2-on-v1.0.1-code-3-runs.json)) |
 |---|---|---|---|---|
 | Right work marked mastered | **39 of 39** | **39 of 39** (91–100%) | **39 of 39** (91–100%) | **39 of 39** (91–100%) |
 | Instructions in the ink, never marked mastered | **30 of 30** | **30 of 30** (89–100%) | **30 of 30** (89–100%) | **30 of 30** (89–100%) |
@@ -891,7 +891,7 @@ Look at it without an account: `node demo/desk-server.js --replay`. It is this e
 |---|---|---|
 | **Impact** | The problem is human cognitive ability: a fear millions already feel about AI, joined to a problem education has not solved for generations (a failed exam that teaches nothing). This uses AI to strengthen it in four areas (from failure to capability, from knowledge to real-world application, from AI answers to independent thinking, from memorising to lasting mastery): a failed question becomes a level built on the student's own mistake that ends in a real task, and a teacher of forty checks instead of marking. Measured against one real student's own teacher; not yet proven in a classroom pilot | the opening, sections 1, 2, 5, 7; limits in 16; plans in 17 |
 | **Use of Meta's models** | Muse Spark reads the *reasoning* in handwriting and code checks its diagnosis against the lines it read; Muse Wonder plays every level as the student first; five models measured, in a gated pipeline of agents with code-checked hand-offs | sections 3, 4; `harness/FINDINGS.md` |
-| **Technical depth** | The evidence rule in code, measured blind and on the shipped code; handwriting placed on the page by dynamic programming (64 of 64 lines, against SAM 3.1's 52); Erlang/OTP with conditional writes, per-route daily ceilings, roles; 153 library tests; sixteen problems found by testing and how each was solved, from sideways pages to a safety check that failed open | sections 6, 7, 10, 11, 15 |
+| **Technical depth** | The evidence rule in code, measured blind and on the shipped code; handwriting placed on the page by dynamic programming (64 of 64 lines, against SAM 3.1's 52); Erlang/OTP with conditional writes, per-route daily ceilings, roles; 155 library tests; sixteen problems found by testing and how each was solved, from sideways pages to a safety check that failed open | sections 6, 7, 10, 11, 15 |
 | **Demo** | One failed question from photo to mastery: Muse Spark's marks landing on the page, the idea quoted from his own words, Lo asks first with a spoken answer, Muse Wonder's two plays, Muse Image's drawn step, the teacher's desk, the re-check; a real Grade 5 student's result against its baseline. Four Meta models on screen, about 1:44 of this week's work, every shot labelled, a word-for-word transcript; judges can try it in a minute with no account | sections 2, 12; `evidence/film/transcript.md` |
 
 ## 10. Architecture
@@ -937,7 +937,7 @@ flowchart TB
 | Multiple choice: 102/109 (A), 105/109 (B), 105, 103, 105 of 109 (C), 105, 104, 104 of 109 on `v1.0-code`; his wrong answers caught 4/10, 7/10, 7/10 each run of C, 7, 6, 7 on `v1.0-code`, with no wrong idea named. Written answers: 37, 38, 38 then 39, 37, 38 of 42; 3 of 4 caught; every answer not accepted held for Lo, none named; 0/9 invented reasons (A and B) | one real student's handwriting, six papers, his teacher's marks | `evidence/real-handwriting/results/` (five files), `score.py` |
 | one 30-question paper: 30 of 30 decisions in each of 6 runs, 6/30 every run, 40–58 s, ~$0.05; then 30 of 30 in each of 3 runs on `v1.0-code` | the film's physics paper, never seen before, 6 live runs with and without a scheme, then 3 on the tagged code | `evidence/unseen-physics/` |
 | A 5/5, B 5/5 named; C asked 5/5 | the three learners, five readings each, through `witness_photo:mark/4` | `evidence/misconceptions/runs-31oct-steps-rule.jsonl` |
-| on `v1.0-code`: asked 40/42, wrong name 2/42, named right 42/48, right work 39/39, injection 30/30 (on `0b7502c`: 39/42, 3/42, 44/48) | held-out v2 (and the blind first run beside it) | `harness/heldout/results/` |
+| on `v1.0-code`: asked 40/42, wrong name 2/42, named right 42/48, right work 39/39, injection 30/30 (on `066c9d1`: 39/42, 3/42, 44/48) | held-out v2 (and the blind first run beside it) | `harness/heldout/results/` |
 | ambiguous asked 10/11 (development) | the 36 papers the rule was designed on, and the effort ablation | `harness/heldout/results/dev-set-*.json` |
 | clean 30/30, faults held 30/30, named 30/30, false claims 9/9 | Muse Wonder's self-check, 20 levels × 3 runs | `harness/selfcheck/results/selfcheck-3-runs.json` |
 | false accepts 0/36, false rejects 0/24 | the reason judge, 20 reasons × 3 runs | `harness/reasons/results/reasons-applied-3-runs.json` |
@@ -1107,7 +1107,7 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
 
 | Problem | What we saw | What we did | Result |
 |---|---|---|---|
-| **A wrong idea named from too little ink** | With the demo answers taken out of the prompt, Learner C ("Half up, half down. Same price.") was still named "cancel" 5 of 5 times: the prompt alone does not make the model hold back | The evidence rule moved into code (`witness_mark:fingerprint/4`): quoted evidence must be in the ink, the final answer is no evidence, and a rival idea means Lo asks first | C asked **5 of 5**; on 53 held-out papers a wrong idea named in 2 of 42 ambiguous cases (`v1.0-code`; 3 of 42 on `0b7502c`) |
+| **A wrong idea named from too little ink** | With the demo answers taken out of the prompt, Learner C ("Half up, half down. Same price.") was still named "cancel" 5 of 5 times: the prompt alone does not make the model hold back | The evidence rule moved into code (`witness_mark:fingerprint/4`): quoted evidence must be in the ink, the final answer is no evidence, and a rival idea means Lo asks first | C asked **5 of 5**; on 53 held-out papers a wrong idea named in 2 of 42 ambiguous cases (`v1.0-code`; 3 of 42 on `066c9d1`) |
 | **Our own test sets leaked into the rule** | The prompt once quoted the three demo answers; later the rule's worded example mirrored a held-out item | Both taken out; the held-out set run again on the shipped code beside its blind first run, and now reported as a second development set | Section 7; every result file records its commit ([`harness/PROVENANCE.md`](harness/PROVENANCE.md)) |
 | **"Is it right?" missed wrong thinking** | At low effort with a plain prompt, a right answer reached by cancelling digits was called right | The marking asks about the method, at medium effort | The wrong thinking caught on every run |
 | **A self-check passed a false claim** | Muse Wonder passed a level whose shop "loses $25" by charging $100 for a $75 price | The self-check works out every number and every gain or loss claim | Planted false claims caught **9 of 9** |
@@ -1142,6 +1142,11 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
   were run on `v1.0.1-code`, not yet on `v1.0.2-code`. The teacher's desk says "photograph again" too from the next
   desktop release. One more wording fix is in this repository but not yet live: a photographed paper that could not be
   marked for another reason, or is no longer kept, is never told about a video (`witness_api`, tested).
+- **Security fixes from a review before going public, in this repository but not yet live:** a join code tried through
+  the video upload now counts against the same per-minute limit as joining, and a closed exam takes no new paper there;
+  the server's scope for a mastery level's calls comes after any system words the phone sends; a kept recording is
+  stored only as a known audio type; the re-check's judge has the same daily ceiling as every other judge call; the
+  fresh question is sent once; and the offline demo answers this computer only (`127.0.0.1`).
 - **Muse Spark Open has run on partner inference, with few runs:** 9 of 12 completed. Of the 3 that did not, 2 passed
   the old 5-minute limit per call on the long four-photo maths paper, and 1 reply was not a marking; the 3 runs since
   the limit went to 10 minutes all completed (`harness/open/`). It has not been switched on for the live edge.

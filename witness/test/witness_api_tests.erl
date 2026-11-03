@@ -445,9 +445,9 @@ design_door_passes_one_call_and_the_wall_test() ->
                              #{<<"role">> => <<"assistant">>, <<"content">> => <<"dropped">>}]},
     ?assertMatch({200, #{success := true, text := <<"{\"title\":\"Common factors\"}">>}}, r(<<"POST">>, [<<"design">>], B, <<"stud">>)),
     [{design, <<"teacher">>, Req}] = [E || E = {design, _, _} <- events()],
-    %% the server's scope first, then the level's own system and user messages (an assistant turn is dropped)
+    %% the level's own system words, then the server's scope (4 Nov: so they cannot widen it), then the user message; an assistant turn is dropped
     ?assertMatch(#{request_id := <<"mob-course-1-s">>, effort := <<"medium">>, max_tokens := 12000,
-                   messages := [#{role := <<"system">>}, #{role := <<"system">>, content := <<"Design.">>}, #{role := <<"user">>}]}, Req),
+                   messages := [#{role := <<"system">>, content := <<"Design.">>}, #{role := <<"system">>, content := <<"You are helping build", _/binary>>}, #{role := <<"user">>}]}, Req),
     ?assertMatch({400, _}, r(<<"POST">>, [<<"design">>], #{}, <<"stud">>)),
     %% an unknown effort or size falls back to the safe ones
     {200, _} = r(<<"POST">>, [<<"design">>], B#{<<"reasoningEffort">> => <<"max">>, <<"maxOutputTokens">> => 999999}, <<"stud">>),
@@ -1174,3 +1174,21 @@ a_model_door_has_a_daily_ceiling_test() ->
     ?assertMatch({429, #{code := <<"daily_limit">>}},
                  r(<<"POST">>, [<<"pile">>, <<"read">>], #{<<"mime">> => <<"image/jpeg">>, <<"file">> => base64:encode(<<"jpegbytes">>)}, <<"teacher">>)),
     ?assertMatch({200, _}, r(<<"POST">>, [<<"pile">>, <<"read">>], #{<<"mime">> => <<"image/jpeg">>, <<"file">> => base64:encode(<<"jpegbytes">>)}, <<"other">>)).
+
+%% 4 Nov (security review): a join code tried through the video upload is limited like POST join, a closed exam takes
+%% no new paper there either, and the fresh question is sent once
+a_code_cannot_be_guessed_through_the_video_upload_test() ->
+    setup(),
+    {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"T">>}, <<"teacher">>),
+    Misses = [element(1, r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => <<"ZZZZZ", (integer_to_binary(I rem 10))/binary>>}, <<"guesser">>))
+              || I <- lists:seq(1, 25)],
+    ?assert(lists:member(429, Misses)),
+    ?assertEqual([404], lists:usort([S || S <- Misses, S =/= 429])),
+    {200, _} = r(<<"POST">>, [<<"pile">>, P, <<"joining">>], #{<<"open">> => false}, <<"teacher">>),
+    ?assertMatch({409, #{code := <<"closed">>}}, r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code}, <<"stud">>)).
+
+a_fresh_question_is_sent_once_test() ->
+    Q = #{n => 1, mastery => #{asks => #{paper => true, fresh => <<"Why does a ship float?">>}}},
+    Q1 = witness_mastery:fresh_started(Q, <<"s1">>, 1),
+    ?assertMatch(#{mastery := #{fresh := #{status := <<"uploading">>}}}, Q1),
+    ?assertEqual({error, already_sent}, witness_mastery:fresh_started(Q1, <<"s2">>, 2)).

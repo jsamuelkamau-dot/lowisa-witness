@@ -372,15 +372,24 @@ route(<<"POST">>, [<<"sitting">>, <<"start">>], B, Uid0, Host) ->
     Mime = maps:get(<<"mime">>, B, <<"video/mp4">>),
     Size = maps:get(<<"size">>, B, 0),
     %% a join code puts the paper in the teacher's pile: the teacher owns the row, the student keeps a pointer
+    %% 4 Nov (security review): a code tried here counts against the same per-minute limit as POST join, so codes
+    %% cannot be guessed through this door; a closed exam takes no new paper, and every miss answers the same 404
     {Uid, Pile, Student} = case maps:get(<<"code">>, B, null) of
         C when is_binary(C) ->
-            case by_code(C, Host) of
-                {ok, Owner, PileId0, PR0} -> {Owner, {ok, PR0}, {Uid0, PileId0}};
-                none -> {Uid0, none, none}
+            case rate(Uid0, <<"join">>, Host) of
+                over -> {Uid0, slow, none};
+                ok ->
+                    case by_code(C, Host) of
+                        {ok, _, _, #{joining := closed}} -> {Uid0, closed, none};
+                        {ok, Owner, PileId0, PR0} -> {Owner, {ok, PR0}, {Uid0, PileId0}};
+                        none -> {Uid0, none, none}
+                    end
             end;
         _ -> {Uid0, case maps:get(<<"pile">>, B, null) of P when is_binary(P) -> Host:load(Uid0, {pile, P}); _ -> no_pile end, none}
     end,
     case {lists:member(Mime, ?MIMES), is_integer(Size) andalso Size > 0 andalso Size =< ?MAX_BYTES, Pile} of
+        {_, _, slow} -> refuse(429, <<"slow_down">>, <<"Too many tries. Wait a minute, then check the code with your teacher.">>);
+        {_, _, closed} -> refuse(409, <<"closed">>, <<"Your teacher has closed joining for this exam.">>);
         {false, _, _} -> refuse(400, <<"bad_type">>, <<"Record the sitting as an MP4 or MOV video.">>);
         {_, false, _} -> refuse(400, <<"bad_size">>, <<"That recording is too long to send. Keep a sitting under an hour.">>);
         {_, _, none} -> refuse(404, <<"no_pile">>, <<"That exam isn't here.">>);
@@ -693,7 +702,10 @@ route(<<"POST">>, [<<"design">>], B, Uid, Host) ->
                                 error => <<"This help is only for a mastery level your teacher's exam made for you.">>}};
         {_, _, {ok, Payer, Q, Topic}} ->
             Reply = case maps:get(<<"reply">>, B, null) of <<"text">> -> text; _ -> json end,
-            Req = #{request_id => clean(maps:get(<<"requestId">>, B, <<>>), 120), messages => [scope(Topic, Reply) | Msgs],
+            %% 4 Nov (security review): the client's own system words come first and the server's scope after them,
+            %% so a client cannot widen what a mastery level's calls are for
+            Sys = [M || #{role := <<"system">>} = M <- Msgs], Rest = [M || #{role := <<"user">>} = M <- Msgs],
+            Req = #{request_id => clean(maps:get(<<"requestId">>, B, <<>>), 120), messages => Sys ++ [scope(Topic, Reply) | Rest],
                     effort => case maps:get(<<"reasoningEffort">>, B, null) of E when E =:= <<"low">>; E =:= <<"medium">>; E =:= <<"high">> -> E; _ -> <<"low">> end,
                     max_tokens => case maps:get(<<"maxOutputTokens">>, B, null) of N when is_integer(N), N >= 1024, N =< 12000 -> N; _ -> 8000 end,
                     %% 29 Oct audit (the plan, 1b: a mastery level's calls go to Meta): Lo's live teaching turns are words, not JSON
@@ -997,9 +1009,11 @@ recheck_answer_step(Q, B, Owner, Host) ->
         {error, _} = E -> E;
         Q0 ->
             #{value := V, working := W, at := At} = maps:get(reply, maps:get(recheck, maps:get(mastery, Q0))),
-            Verdict = case Host:meta_key() of
-                undefined -> undefined;
-                Key -> case safely(fun() -> (recheck_judger(Host))(Key, Q0, {V, W}) end) of
+            %% 4 Nov (security review): the re-check's judge counts against the teacher's daily judge ceiling
+            Verdict = case {Host:meta_key(), daily(Owner, <<"judge">>, Host)} of
+                {undefined, _} -> undefined;
+                {_, over} -> undefined;
+                {Key, ok} -> case safely(fun() -> (recheck_judger(Host))(Key, Q0, {V, W}) end) of
                            {ok, Vd, Cost} -> Host:spend(Owner, <<"witness_recheck">>, Cost), Vd;
                            _ -> undefined
                        end
@@ -1016,7 +1030,9 @@ question_text(Q, Row, Owner, Host) ->
 %% The recording of a spoken answer, kept beside the paper for the teacher (its name in Into's `audio`).
 keep_audio(_Owner, _Sid, _Name, false, _B, _Host, Into) -> Into;
 keep_audio(Owner, Sid, Name, true, B, Host, Into) ->
-    Mime = case maps:get(<<"mime">>, B, <<>>) of M when is_binary(M), M =/= <<>> -> M; _ -> <<"audio/mp4">> end,
+    %% 4 Nov (security review): only an audio type the server knows is stored and later served; anything else is mp4
+    Known = [<<"audio/wav">>, <<"audio/x-wav">>, <<"audio/webm">>, <<"audio/ogg">>, <<"audio/mpeg">>, <<"audio/aac">>, <<"audio/mp4">>],
+    Mime = case maps:get(<<"mime">>, B, <<>>) of M when is_binary(M) -> case lists:member(M, Known) of true -> M; false -> <<"audio/mp4">> end; _ -> <<"audio/mp4">> end,
     File = <<Name/binary, ".", (audio_ext(Mime))/binary>>,
     case safely(fun() -> base64:decode(maps:get(<<"audio">>, B)) end) of
         Bytes when is_binary(Bytes), byte_size(Bytes) > 0 ->
@@ -1073,6 +1089,7 @@ mastery_words(bad_audio) -> <<"That recording couldn't be read. Try again.">>;
 mastery_words(bad_type) -> <<"Record it as an MP4 or MOV video, under an hour.">>;
 mastery_words(storage) -> <<"Couldn't get the upload ready. Try again in a moment.">>;
 mastery_words(not_asked) -> <<"Your teacher hasn't asked for that.">>;
+mastery_words(already_sent) -> <<"You've sent this fresh question already. Your teacher has it.">>;
 mastery_words(empty) -> <<"Write something first.">>;
 mastery_words(lessons_left) -> <<"Finish every lesson in your level first.">>;
 mastery_words(not_to_master) -> <<"This question was mastered already.">>;

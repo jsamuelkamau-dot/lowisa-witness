@@ -1,7 +1,7 @@
 # One real paper, every Meta call
 
 The real Grade 5 student's English paper (30 multiple-choice questions, four phone photos, one of them sideways; the
-name blurred, his teacher's ink removed) through the product's own code at commit `d221731`, on 3 Nov 2026. Every
+name blurred, his teacher's ink removed) through the product's own code at commit `6dc039b`, on 3 Nov 2026. Every
 call to Meta is written down: [`results/trace-english-03nov.json`](results/trace-english-03nov.json).
 
 ```

@@ -135,8 +135,8 @@ def main():
     two = json.load(open(os.path.join(HERE, 'results', 'three-papers-two-conditions.json')))
     for name, rows in two['conditions'].items():
         line(name, rows)
-    run_set('C_shipped_code (a1be423)', 'condition-c-shipped-code-3-runs.json')
-    run_set('Written answers (a1be423)', 'written-answers-3-runs.json')
+    run_set('C_shipped_code (e9fb96f)', 'condition-c-shipped-code-3-runs.json')
+    run_set('Written answers (e9fb96f)', 'written-answers-3-runs.json')
     # 3 Nov: both sets on the tagged code v1.0-code (two readings must agree before Accept all)
     run_set('C on v1.0-code', 'condition-c-on-v1.0-code-3-runs.json')
     run_set('Written on v1.0-code', 'written-answers-on-v1.0-code-3-runs.json')

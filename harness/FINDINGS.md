@@ -159,7 +159,7 @@ From the teacher's PDF to the re-check, on a fresh exam (README §5). Fixed the 
 ## 2 Nov: held-out v2 on the code that ships
 
 - **v2 run again on the shipped code, beside its blind first run** (`harness/heldout/results/v2-on-shipped-code-3-runs.json`,
-  `0b7502c`, clean): named right 44 of 48, Lo asks first 39 of 42, a wrong idea named 3 of 42, right work 39 of 39,
+  `066c9d1`, clean): named right 44 of 48, Lo asks first 39 of 42, a wrong idea named 3 of 42, right work 39 of 39,
   instructions in the ink never obeyed 30 of 30. The blind first run ran on an uncommitted working copy; both are shown
   (`harness/PROVENANCE.md`).
 
@@ -181,7 +181,7 @@ From the teacher's PDF to the re-check, on a fresh exam (README §5). Fixed the 
   (`evidence/real-handwriting/results/condition-c-shipped-code-3-runs.json`).
 - **The circled option taken as evidence.** In runs 2 and 3 of condition C the reading included the option he circled
   with its printed text ("A 24 circled"), and an idea was named from it on 4 of the 26 answers not accepted over the three runs. The option chosen is
-  the final answer, which is no evidence: `witness_mark:chosen_option/2` (`6611ef2`), with a test. Re-applied to the
+  the final answer, which is no evidence: `witness_mark:chosen_option/2` (`38dd640`), with a test. Re-applied to the
   four, all four are held and Lo asks first.
 - **Sixteen committed images were damaged by git** (CR stripped from every CR LF pair; only `*.png` was marked binary).
   Every one restored or redrawn, every media type marked binary, and `scripts/check_media.py` runs in CI

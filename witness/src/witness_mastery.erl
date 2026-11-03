@@ -126,8 +126,10 @@ verify(Q, Asks) ->
 %% The student films the fresh question the teacher set (only when the teacher asked for one and wrote it).
 fresh_started(Q, Sitting, At) ->
     M = m(Q),
-    case maps:get(asks, M, #{}) of
-        #{paper := true, fresh := F} when F =/= <<>> -> put_m(Q, M#{fresh => #{sitting => Sitting, status => <<"uploading">>, at => At}});
+    case {maps:get(asks, M, #{}), maps:get(fresh, M, undefined)} of
+        %% 4 Nov (security review): once it is on its way or marked, another start makes no new paper or upload link
+        {_, #{status := _}} -> {error, already_sent};
+        {#{paper := true, fresh := F}, _} when F =/= <<>> -> put_m(Q, M#{fresh => #{sitting => Sitting, status => <<"uploading">>, at => At}});
         _ -> {error, not_asked}
     end.
 

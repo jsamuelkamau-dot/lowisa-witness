@@ -2,7 +2,7 @@
  "what": "Condition C: the same three papers exactly as photographed (three question pages sideways, nothing turned by hand), answer sheets with the teacher's red ink removed, sent to the live product three times. The server turned the pages upright itself (witness_photo:orient) and marked each paper in parts at once.",
  "ran_on": {
   "edge": "vb1104c (live, 3 Nov 2026)",
-  "witness_src_commit": "a1be423 (witness/src as deployed in edge vb1104a to vb1104c; before 6611ef2, which holds a circled option as the final answer)",
+  "witness_src_commit": "e9fb96f (witness/src as deployed in edge vb1104a to vb1104c; before 38dd640, which holds a circled option as the final answer)",
   "engine": "muse-spark-1.3",
   "date": "2026-11-03"
  },

@@ -60,7 +60,8 @@ http.createServer((req, res) => {
   const route = (req.url || '').split('?')[0];
   if (route === '/' || route === '/index.html') { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); return res.end(PAGE); }
   if (req.url === '/witness-desk.js') { res.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8' }); return res.end(fs.readFileSync(DESK)); }
-  if (REPLAY && /^\/replay-asset\/[A-Za-z0-9._-]+$/.test(route)) {
+  // 4 Nov (security review): a replay file name is a plain name, never . or ..
+  if (REPLAY && /^\/replay-asset\/[A-Za-z0-9._-]+$/.test(route) && !/^\.+$/.test(route.slice('/replay-asset/'.length))) {
     const f = path.join(REPLAY, 'assets', route.slice('/replay-asset/'.length));
     if (!fs.existsSync(f)) { res.writeHead(404); return res.end(); }
     res.writeHead(200, { 'content-type': /\.png$/.test(f) ? 'image/png' : /\.webp$/.test(f) ? 'image/webp' : /\.m4a$/.test(f) ? 'audio/mp4' : 'image/jpeg' });
@@ -89,4 +90,4 @@ http.createServer((req, res) => {
       res.end(await r.text());
     } catch (e) { res.writeHead(502, { 'content-type': 'application/json' }); res.end('{"ok":false,"error":"The Witness host did not answer."}'); }
   });
-}).listen(PORT, () => console.log('Exam Desk demo on http://localhost:' + PORT + ' -> ' + (REPLAY ? 'the recording in evidence/replay/' : HOST)));
+}).listen(PORT, '127.0.0.1', () => console.log('Exam Desk demo on http://localhost:' + PORT + ' -> ' + (REPLAY ? 'the recording in evidence/replay/' : HOST)));

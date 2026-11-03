@@ -1,7 +1,7 @@
 {
  "what": "Daniel's physics page (30 questions, one photo) marked with no mark scheme, three times, through witness_photo:mark/4 locally (local_mark.escript), after the half-mark fix: full marks only for a mastered question.",
  "ran_on": {
-  "witness_src_commit": "6611ef2",
+  "witness_src_commit": "38dd640",
   "dirty": false,
   "engine": "muse-spark-1.3",
   "date": "2026-11-03"

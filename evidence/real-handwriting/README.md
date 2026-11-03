@@ -28,11 +28,11 @@ more papers) are a second test, below.
 3. **The live product marked it**: the photo path a teacher uses (one exam, one paper per subject, the question pages
    then the answer sheet), on the production edge, Muse Spark 1.3, all on 3 Nov 2026.
 4. **Three conditions.**
-   - **A, as photographed** (edge vb1103a, `witness/src` `0b7502c`, once). Three of the nine question pages were
+   - **A, as photographed** (edge vb1103a, `witness/src` `066c9d1`, once). Three of the nine question pages were
      photographed sideways.
    - **B, the three sideways pages turned upright by us, by hand**, nothing else changed (same code, once). This was the
      experiment: it showed what turning pages would gain, before the product could do it.
-   - **C, the code that ships, as photographed, three runs** (edges vb1104a–c, `witness/src` `a1be423`). Nothing was
+   - **C, the code that ships, as photographed, three runs** (edges vb1104a–c, `witness/src` `e9fb96f`). Nothing was
      turned by hand: the server asks Muse Spark which edge of each photo is the page's top, turns it, and marks the paper
      in parts at once. [`results/condition-c-shipped-code-3-runs.json`](results/condition-c-shipped-code-3-runs.json)
      records every answer, each run's time, and each page's shape as sent and as stored.
@@ -69,7 +69,7 @@ few), with one right answer marked wrong. By question, 6 of the 10 were caught i
 should be named and Lo should ask first. In run 1 it did, every time. In runs 2 and 3 the reading of a question page
 included the option he circled with its printed text ("A 24 circled"), the code took that as his own ink, and an idea
 was named from the choice alone on 4 of the 26 answers it did not accept, over the three runs (for example "LCM is the product of the numbers"). Commit
-`6611ef2` treats the option chosen, with its printed words, as the final answer, which is no evidence
+`38dd640` treats the option chosen, with its printed words, as the final answer, which is no evidence
 (`witness_mark:chosen_option/2`, with a test); re-applied to those four, all four are held and Lo asks first.
 
 **What turning pages upright gained.** In A, Witness read his letter correctly on maths Q11 but took the option's value
@@ -118,7 +118,7 @@ written answers or drawings and 12 circled options.
   laundry steps) and Q46 ("iron" for rickets) wrong; every other answer right. Each page total that is visible agrees
   (10 and 5 on the two creative-arts pages).
 - **Run the same way as condition C:** the ink removed by colour, the photos as taken, the live product (edge vb1104d,
-  `witness/src` `6611ef2`), three runs on 3 Nov 2026. A page from another student was sent by mistake in the same
+  `witness/src` `38dd640`), three runs on 3 Nov 2026. A page from another student was sent by mistake in the same
   runs; it was deleted from the product, and it is in no file here.
 - [`results/written-answers-3-runs.json`](results/written-answers-3-runs.json) records every answer as read, every
   mark, and every note to the teacher; `score.py` recomputes the numbers. Two excerpts, as marked and as sent:
