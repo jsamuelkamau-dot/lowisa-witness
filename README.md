@@ -3,7 +3,7 @@
 **AI that finds where a learner's thinking broke down, then makes them think again until they can explain it and use
 it in the real world. It never thinks for them.**
 
-**The 3-minute film:** [`evidence/film/exam-to-mastery.mp4`](evidence/film/exam-to-mastery.mp4) (2:59). Section 2 walks
+**The 3-minute film:** [`evidence/film/exam-to-mastery.mp4`](evidence/film/exam-to-mastery.mp4) (2:57). Section 2 walks
 through it frame by frame.
 
 - **The problem is cognitive ability.** AI that does students' thinking for them weakens it (section 1). And a red mark
@@ -596,7 +596,7 @@ Look at it without an account: `node demo/desk-server.js --replay`. It is this e
 | **Impact** | Strengthens thinking instead of replacing it: a failed question becomes a level built on the student's own mistake that ends in a real task, and a teacher of forty gets their evenings back. Not yet proven with real students | sections 1, 2, 5; limits in 16 |
 | **Use of Meta's models** | Muse Spark reads the *reasoning* in handwriting and code checks its diagnosis against the lines it read; Muse Wonder plays every level as the student first; five models measured, in a gated pipeline of agents with code-checked hand-offs | sections 3, 4; `harness/FINDINGS.md` |
 | **Technical depth** | The evidence rule in code, measured blind and on the shipped code; handwriting placed on the page by dynamic programming (64 of 64 lines, against SAM 3.1's 52); Erlang/OTP with conditional writes, per-route daily ceilings, roles; 147 library tests; sixteen problems found by testing and how each was solved, from sideways pages to a safety check that failed open | sections 6, 7, 10, 11, 15 |
-| **Demo** | One real failed question from photo to mastery, recorded on the production edge; Muse Wonder's check and "Lo asks first" on screen; every shot labelled new or existing; judges can try it live | sections 2, 12 |
+| **Demo** | One real failed question from photo to mastery, recorded on the production edge; Muse Wonder's check, "Lo asks first" and a real Grade 5 student's result on screen; every shot labelled, with a timecoded ledger; judges can try it live | sections 2, 12 |
 
 ## 10. Architecture
 
