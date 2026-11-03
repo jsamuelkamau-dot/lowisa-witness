@@ -167,4 +167,15 @@ a_sure_answer_read_differently_is_no_longer_sure_test() ->
     ?assert(lists:all(fun(Q) -> maps:get(confidence, Q) < 0.9 end, witness_mark:checked(Qs, <<"no json">>))),
     ?assert(witness_mark:same_answer(<<"(b) Airtight sack">>, <<"B">>)),
     ?assertNot(witness_mark:same_answer(<<"B">>, <<"D">>)),
-    ?assertNot(witness_mark:same_answer(<<"iron">>, <<"vitamin D">>)).
+    ?assertNot(witness_mark:same_answer(<<"iron">>, <<"vitamin D">>)),
+    %% numbers must be the same numbers (judges' panel: "2.4" and "24" agreed once every non-letter was set aside)
+    ?assert(witness_mark:same_answer(<<"4 x 400 metres">>, <<"4x400 metres">>)),
+    ?assert(witness_mark:same_answer(<<"10:55 pm">>, <<"B - 10:55pm">>)),
+    ?assertNot(witness_mark:same_answer(<<"2.4">>, <<"24">>)),
+    ?assertNot(witness_mark:same_answer(<<"-5">>, <<"5">>)),
+    ?assertNot(witness_mark:same_answer(<<"1/2">>, <<"12">>)),
+    ?assertNot(witness_mark:same_answer(<<"150 rabbits">>, <<"1500 rabbits">>)),
+    ?assert(witness_mark:same_answer(<<"150 rabbits">>, <<"150">>)),
+    %% a sentence that starts with "a" is not option A
+    ?assertNot(witness_mark:same_answer(<<"a dog">>, <<"a cat">>)),
+    ?assert(witness_mark:same_answer(<<"a secondary colour">>, <<"secondary colour">>)).

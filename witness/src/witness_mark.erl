@@ -532,22 +532,37 @@ checked(Qs, Text) ->
 
 cap(Q, Max) -> Q#{confidence => min(Max, num(maps:get(confidence, Q, 1.0)))}.
 
-%% the same final answer: the same option letter ("D Cow peas circled" and "D"), or the same letters and digits once
-%% case, spaces and punctuation are set aside, or one of them inside the other
+%% the same final answer: the same option letter ("D Cow peas circled" and "D"); with a number in either, the same
+%% numbers in the same order ("4 x 400 metres" and "4x400 metres"; never "2.4" and "24", "-5" and "5" or "150" and
+%% "1500"); otherwise the same letters once case, spaces and punctuation are set aside, or one inside the other
+%% (3 Nov, judges' panel: setting every non-letter aside made "2.4" and "24" agree, and "a dog" and "a cat" both read
+%% as option A)
 same_answer(A, B) ->
     case {option_letter(A), option_letter(B)} of
         {L, L} when L =/= none -> true;
         {L1, L2} when L1 =/= none, L2 =/= none -> false;
         _ ->
-            {NA, NB} = {plain(A), plain(B)},
-            NA =:= NB orelse (byte_size(NA) >= 3 andalso byte_size(NB) >= 3 andalso
-                              (binary:match(NA, NB) =/= nomatch orelse binary:match(NB, NA) =/= nomatch))
+            case {numbers_in(A), numbers_in(B)} of
+                {[], []} ->
+                    {NA, NB} = {plain(A), plain(B)},
+                    NA =:= NB orelse (byte_size(NA) >= 3 andalso byte_size(NB) >= 3 andalso
+                                      (binary:match(NA, NB) =/= nomatch orelse binary:match(NB, NA) =/= nomatch));
+                {Ns, Ns} -> true;
+                _ -> false
+            end
     end.
 
+%% a capital A to E, or a bracketed one, at the start: "D Cow peas", "(b) Airtight sack", "B." (never "a dog")
 option_letter(B) ->
-    case re:run(B, <<"^\\s*\\(?([A-Ea-e])(\\)|\\.|\\s|$)">>, [{capture, all_but_first, binary}]) of
-        {match, [L | _]} -> string:uppercase(L);
+    case re:run(B, <<"^\\s*\\(?([A-E])(\\)|\\.|\\s|$)|^\\s*\\(([a-e])\\)">>, [{capture, all_but_first, binary}]) of
+        {match, Groups} -> case [G || G <- Groups, byte_size(G) =:= 1] of [L | _] -> string:uppercase(L); [] -> none end;
         nomatch -> none
+    end.
+
+numbers_in(B) ->
+    case re:run(B, <<"-?\\d+(?:[.,/:]\\d+)*">>, [global, {capture, first, binary}]) of
+        {match, Ms} -> [N || [N] <- Ms];
+        nomatch -> []
     end.
 
 plain(B) -> iolist_to_binary(re:replace(string:lowercase(B), <<"[^a-z0-9]+">>, <<>>, [global, unicode])).
