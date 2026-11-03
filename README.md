@@ -55,6 +55,7 @@ through it frame by frame.
 | What was tested | Result | Raw results |
 |---|---|---|
 | A real Grade 5 student's three papers, against his own teacher's marks, on the code that ships (photos as taken, three of them sideways) | **105, 103 and 105 of 109** agree over three runs; 7 of his teacher's 10 wrong answers caught in every run; kappa 0.67–0.76 (marking every answer right would agree on 99) | [`condition-c-shipped-code-3-runs.json`](evidence/real-handwriting/results/condition-c-shipped-code-3-runs.json), `python3 evidence/real-handwriting/score.py` |
+| The same student's **written answers** (42 questions, three more papers, no marking scheme), three runs | **37, 38 and 38 of 42** agree; 3 of his teacher's 4 wrong answers caught in every run; **every answer not accepted was held for Lo to ask, with no wrong idea named (19 of 19)** | [`written-answers-3-runs.json`](evidence/real-handwriting/results/written-answers-3-runs.json), the same script |
 | A physics exam it had never seen, six live runs | **180 of 180** marking decisions right | [`evidence/unseen-physics/`](evidence/unseen-physics/README.md) |
 | 53 held-out papers × 3 runs: ink that cannot show the idea | Lo asks first **39 of 42**; a wrong idea named 3 of 42 (the harmful error) | [`v2-on-shipped-code-3-runs.json`](harness/heldout/results/v2-on-shipped-code-3-runs.json) |
 | … ink that shows the idea; right work; instructions written in the ink | named right **44 of 48**; mastered **39 of 39**; never obeyed **30 of 30** | the same file |
@@ -74,6 +75,9 @@ through it frame by frame.
   desk (section 4). Muse Spark Open is wired but has not been run.
 - **Try it in one minute:** `node demo/desk-server.js --replay`, with no account and no key; or live with your own phone
   (section 12).
+- **What comes next (section 17):** a Mastery Plan on every question a learner fails anywhere in LoWisa (Study Kit
+  practice, every test question in the phone and desktop apps, the desktop app's electronic exams), interactive
+  experiments the learner can change and investigate, and a pilot in schools.
 - **Names used here:** *Lo* is LoWisa's tutor. *Witness* is the code name of the marker (the `witness_*` modules) and of
   the optional desk-filming mode. Part of [LoWisa](https://lowisa.dev), for the Meta Global AI Developer Hackathon.
 
@@ -104,7 +108,8 @@ through it frame by frame.
 14. [What was built during the event, and what existed before](#14-what-was-built-during-the-event-and-what-existed-before)
 15. [Problems we hit, and how we solved them](#15-problems-we-hit-and-how-we-solved-them)
 16. [Limits, stated plainly](#16-limits-stated-plainly)
-17. [Sources](#17-sources)
+17. [Future plans: after the hackathon](#17-future-plans-after-the-hackathon)
+18. [Sources](#18-sources)
 
 **Short on time?** Read sections 1 to 3 (the problem, the demo, and the depth behind it), then sections 4 and 7 (Meta's models, and the numbers).
 **Want to try it?** Section 12: a recorded exam on the teacher's desk in one minute with no account, or live with your own phone.
@@ -414,7 +419,7 @@ The time that comes back is spent on the learners, on the work only a teacher sh
   explanation to read, and the "Turned around" decision (sections 3.6 and 13).
 
 **Not yet measured:** a teacher's own minutes per paper with real teachers. The desk already records them
-(`witness_measure`: the seconds each paper is open while reviewed); the pilot will report them (section 16).
+(`witness_measure`: the seconds each paper is open while reviewed); the pilot will report them (section 17.4).
 
 **What it costs**, measured on the production edge and priced at Meta's published rates:
 
@@ -482,11 +487,12 @@ Full write-up: [`docs/misconception-fingerprint.md`](docs/misconception-fingerpr
 
 ## 7. Measured: a real student's handwriting, an exam it had never seen, a held-out set, a class of 40
 
-### Real handwriting: one student's three papers, against his own teacher's marks
+### Real handwriting: one student's papers, against his own teacher's marks
 
 A real Grade 5 student's pencil answers on three end-of-term papers (maths, English, science: 110 multiple-choice
 questions, 109 scored), marked by his class teacher, who is not on our team. His parent consented to their use and
-publication, his name included; we blurred it anyway, with his school, class and student number. We removed the
+publication, his name included (the written consent is available if required); we blurred it anyway, with his school,
+class and student number. We removed the
 teacher's red ink by colour so the model could not copy his ticks, then the live product's photo path marked each paper.
 
 | | A: as photographed | B: sideways pages turned upright by hand | C: the code that ships, 3 runs |
@@ -502,8 +508,16 @@ papers) and matches B. Marking every answer right would agree on 99 of 109, so t
 answers caught: 7 of 10 (95% interval 40–89%). C also found a fault in our code: on 4 of 27 wrong answers an idea was
 named from the circled option alone, which the evidence rule should have held. It is fixed in `6611ef2` and the four are
 held (section 15). Every question, every run, the disagreements and the sheets the teacher marked:
-[`evidence/real-handwriting/`](evidence/real-handwriting/README.md). It is one student and multiple choice only, so it
-tests reading a child's handwriting and marking against a real teacher, not the written working the fingerprint reads.
+[`evidence/real-handwriting/`](evidence/real-handwriting/README.md).
+
+**His written answers.** Three more of his papers (creative arts twice, integrated science: 42 questions, 30 of them
+written answers or drawings) were marked the same way, three runs, with **no marking scheme given**: **37, 38 and 38 of
+42** agree with his teacher, and 3 of the teacher's 4 wrong answers were caught in every run. Marking everything right
+would also agree on 38, so the result that counts is a different one: **all 19 answers Witness did not accept, over the
+three runs, were held for Lo to ask, with no idea named and no label shown to him.** The disagreements are mostly over
+the answer key (the laundry steps he ordered as textbooks do, which his teacher marked wrong), and one is a reading
+error (an answer squeezed onto the printed lines). It is one student, so it tests reading a child's words and marking
+against a real teacher, not the long written working the fingerprint reads.
 
 ### An exam it had never seen: the film's physics paper
 
@@ -523,7 +537,7 @@ fixed and re-run the same day: a written explanation had been treated as a bare 
 given full marks. **So the marking result above is unseen, but for naming ideas this paper is now a development paper**:
 the rule was changed on it, and after the change question 24's idea was named in 6 of 6 runs (4 of 6 before). The levels
 for questions 23 and 24 were then built live, and their self-checks passed. One paper is one paper: more unseen
-subjects, marked by an outside teacher, are the next step (section 16).
+subjects, marked by an outside teacher, are the next step (section 17.4).
 
 ### Held out: 53 papers, first run blind, then run again on the shipped code
 
@@ -553,7 +567,7 @@ The three runs mark the same 53 papers, so they show consistency, not 159 indepe
 the runs. Earlier v2 runs between these two are kept too (`v2-held-out-steps-rule-3-runs.json`,
 `v2-held-out-explain-rule-3-runs.json`), and which commit each ran on is in [`harness/PROVENANCE.md`](harness/PROVENANCE.md).
 **What would settle it:** a v3 set nobody on the team has seen, in real handwriting from outside writers, labelled by
-an outside teacher and run once (section 16).
+an outside teacher and run once (section 17.4).
 
 The misses are read by hand in [`harness/heldout/README.md`](harness/heldout/README.md), with the hinted-scheme ablation
 and the effort ablation (on the development set, low effort was as accurate as medium, 28% cheaper and 40% faster).
@@ -634,7 +648,7 @@ Look at it without an account: `node demo/desk-server.js --replay`. It is this e
 
 | Criterion | In one line | The evidence |
 |---|---|---|
-| **Impact** | The problem is cognitive ability, and the fear that AI weakens it is everyone's. This uses AI to strengthen it in four areas (the exam, the real world, how we think, repetition): a failed question becomes a level built on the student's own mistake that ends in a real task, and a teacher of forty gets their evenings back. Measured against one real student's own teacher; not yet proven in a classroom pilot | the opening, sections 1, 2, 5, 7; limits in 16 |
+| **Impact** | The problem is cognitive ability, and the fear that AI weakens it is everyone's. This uses AI to strengthen it in four areas (the exam, the real world, how we think, repetition): a failed question becomes a level built on the student's own mistake that ends in a real task, and a teacher of forty gets their evenings back. Measured against one real student's own teacher; not yet proven in a classroom pilot | the opening, sections 1, 2, 5, 7; limits in 16; plans in 17 |
 | **Use of Meta's models** | Muse Spark reads the *reasoning* in handwriting and code checks its diagnosis against the lines it read; Muse Wonder plays every level as the student first; five models measured, in a gated pipeline of agents with code-checked hand-offs | sections 3, 4; `harness/FINDINGS.md` |
 | **Technical depth** | The evidence rule in code, measured blind and on the shipped code; handwriting placed on the page by dynamic programming (64 of 64 lines, against SAM 3.1's 52); Erlang/OTP with conditional writes, per-route daily ceilings, roles; 147 library tests; sixteen problems found by testing and how each was solved, from sideways pages to a safety check that failed open | sections 6, 7, 10, 11, 15 |
 | **Demo** | One real failed question from photo to mastery, recorded on the production edge; Muse Wonder's check, "Lo asks first" and a real Grade 5 student's result on screen; every shot labelled, with a timecoded ledger; judges can try it live | sections 2, 12 |
@@ -868,17 +882,11 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
 
 ## 16. Limits, stated plainly
 
-- **One real student's handwriting so far, and only multiple choice.**
-  - Apart from one Grade 5 student's three papers (section 7), every paper here is a sample: a handwriting font, or a paper written for the demo, on a simulated phone photo. Real written working and real classrooms are harder.
+- **One real student's handwriting so far: multiple choice and short written answers.**
+  - Apart from one Grade 5 student's papers (section 7), every paper here is a sample: a handwriting font, or a paper written for the demo, on a simulated phone photo. Real written working and real classrooms are harder.
   - **The evaluation sets are ours.** The items, labels and code come from the same team, and v2 has been seen since its blind first run (section 7). That student's papers are the first exception: his teacher's marks, not ours, are the key. The next measurement is a v3 set of written answers in real handwriting from many outside writers, labelled by an outside teacher, run once on frozen code.
   - The class of 40 measures speed and cost at class size; its 40 papers are built from 14 written answers (two to four per question), so it is not an accuracy test.
-  - **A real pilot follows the hackathon.** Ten days were not enough to run one properly: it needs consenting schools,
-    parents' consent for minors, real exams, and a re-test a week or more later. We plan to run it, in this order:
-    1. **Real written working first:** papers from many outside writers, labelled by an outside teacher, run once on frozen code (the v3 set). One real student's multiple-choice papers, against his own teacher, are done (section 7).
-    2. **Teachers' time:** the minutes a teacher spends per paper, against their own hand marking of the same class.
-    3. **Agreement:** the desk's marks and fingerprints against the teacher's own, question by question.
-    4. **Learning:** a fresh question on the same idea a week after "Turned around", for students who did and did not play their level.
-  - `witness_measure` already records agreement, the teacher's seconds per paper, turned-around questions and re-checks, so the pilot needs no new code to report them.
+  - **A real pilot follows the hackathon** (section 17.4): ten days were not enough to run one properly.
 - **The research in section 1 is evidence, not proof.** The MIT study is a preprint with 54 participants; the Gerlich and CHI studies are surveys; Butler's is one classroom experiment. Together they show a risk worth designing against and a direction that works, not a settled law. The 65% PISA figure is the OECD average as reported by ACER (source 6).
 - **The fingerprint's limits are measured, not solved** (section 7).
   - A wrong idea can still be named on an ambiguous page.
@@ -888,7 +896,78 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
 - **Muse Spark Open is wired but has not been run** on hosted open weights.
 - **The low-effort finding is from 36 papers.** The product stays at medium until it is measured on more.
 
-## 17. Sources
+## 17. Future plans: after the hackathon
+
+From Exam to Mastery was built in ten days for one path: a teacher photographs an exam, and every failed question
+becomes a level. The plans below take it further, onto features LoWisa already has, so most of the work is joining
+what exists rather than starting again.
+
+### 17.1 Already joined to LoWisa's existing features
+
+A mastery level is played by LoWisa's own lesson player, so it already comes with two features that strengthen
+cognitive ability (area 4, repetition): the **flashcards** made from the level's lessons, and **Insight mode**, which
+replays the student's lessons as an episode. Both existed before the event; the level they replay is new.
+
+### 17.2 Next: a Mastery Plan wherever a learner fails a question
+
+Today the Mastery Plan starts from a teacher's photographed exam. After the hackathon it goes wherever a learner is
+tested in LoWisa:
+
+1. **Study Kit practice.** Every question a learner fails while practising in Study Kit brings up a Mastery Plan, so
+   they can go into depth on whatever they are learning, even with no teacher. Muse Wonder's check still plays every
+   level as the student before they see it.
+2. **Every test question in the phone and desktop apps.** Wherever the apps ask a question, a failed one offers a
+   Mastery Plan as the way to go deeper.
+3. **The desktop app's electronic exams.** LoWisa's desktop app already lets a teacher set an exam that students sit in
+   the app (Study Kit, *Sit an exam with a code*, or from the Classroom). The answers are already typed, so no photo is
+   needed: every question failed will go into the student's Mastery Plan automatically, for the teacher to review as
+   they do now.
+
+### 17.3 Interactive experiments: change it, watch it, find out why
+
+**What exists now, in 2D.** The scenes inside a mastery level already let the learner act, not only watch: shapes that
+move through what happens, and controls (one to three sliders) that change a real quantity, worked out live with its
+graph, until the learner hits a target. In the film Lo hands Daniel the controls, and he pushes the log down until the
+water holds 200 kg (section 2). The scene player is LoWisa's and existed before; what each scene shows in a mastery
+level is written from the student's own mistake. **This is part of what we want: the learner changes one or two values
+along a path we wrote. It is not yet an open experiment.**
+
+**What comes next: a working laboratory for the question the learner failed.** Imagine a student fails a physics
+question about electrical resistance. Instead of only receiving an explanation, they get a working 3D laboratory, made
+for that question, where they can:
+
+- move the sliding contact along a resistance wire;
+- change resistance values, the voltage, or the way the circuit is connected;
+- watch how the current, the meters and the bulb respond, at once;
+- keep experimenting until they understand the physics underneath.
+
+The learner is free to test a hypothesis, make a mistake, investigate an outcome they did not expect, and discover the
+principle by exploring, not by following set steps. The aim is to extend what a mastery level already does (deep
+understanding, then real-world practice) with **open-ended experimentation**: not only how something works, but what
+happens when the conditions change, and why.
+
+**Why it was not built during the hackathon.** A laboratory a learner can trust must behave as the real apparatus
+would, every time. That needs engineering, validation of every reading against the physics, and testing well beyond
+ten days. It is a planned extension of what is built, not a replacement for it: we want learners to move from mastering
+known problems to investigating unfamiliar ones, testing possibilities, and finding solutions on their own.
+
+### 17.4 A pilot in schools
+
+A real pilot follows the hackathon. It needs consenting schools, parents' consent for minors, real exams, and a
+re-test a week or more later. We plan to run it in this order:
+
+1. **Real written working first:** papers from many outside writers, labelled by an outside teacher, run once on
+   frozen code (the v3 set). One real student's multiple-choice papers and short written answers, against his own
+   teacher, are done (section 7).
+2. **Teachers' time:** the minutes a teacher spends per paper, against their own hand marking of the same class.
+3. **Agreement:** the desk's marks and fingerprints against the teacher's own, question by question.
+4. **Learning:** a fresh question on the same idea a week after "Turned around", for students who did and did not
+   play their level.
+
+`witness_measure` already records agreement, the teacher's seconds per paper, turned-around questions and re-checks,
+so the pilot needs no new code to report them.
+
+## 18. Sources
 
 Every number in section 1 was checked against these. Where the original was reachable (the MIT paper, Hattie and
 Timperley, Kiray et al., TALIS 2024), the figure was read in the original.

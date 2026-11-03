@@ -186,3 +186,9 @@ From the teacher's PDF to the re-check, on a fresh exam (README §5). Fixed the 
 - **Sixteen committed images were damaged by git** (CR stripped from every CR LF pair; only `*.png` was marked binary).
   Every one restored or redrawn, every media type marked binary, and `scripts/check_media.py` runs in CI
   (`evidence/MEDIA-REPAIR.md`).
+- **The same student's written answers, three live runs, no marking scheme** (42 questions on three more papers,
+  creative arts and integrated science): 37, 38 and 38 of 42 agree with his teacher; 3 of 4 wrong answers caught every
+  run; all 19 answers not accepted were held for Lo to ask, no idea named
+  (`evidence/real-handwriting/results/written-answers-3-runs.json`). Two things found: an answer squeezed onto the
+  printed lines was read as crossed out once the ink was removed, and when two readings split, the note to the teacher
+  said "Two readings of the video disagreed" on a photographed paper. The wording is now "of the work" (with the tests).
