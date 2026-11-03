@@ -51,8 +51,8 @@ Recompute every number here with `python3 evidence/real-handwriting/score.py`.
 | Time per paper | 36–101 s | 53–70 s | 69–299 s (median about 100 s) |
 
 **What the numbers mean.** Marking every answer right would agree with the teacher on 99 of 109, so agreement alone
-flatters any marker; the useful number is the wrong answers caught, 7 of 10 (95% interval 40–89%, ten is few), with
-one right answer marked wrong. Kappa, which discounts agreement by chance, is 0.67–0.76 on the code that ships.
+flatters any marker; the useful number is the wrong answers caught, 7 of 10 in each run (95% interval 40–89%, ten is
+few), with one right answer marked wrong. By question, 6 of the 10 were caught in every run (`score.py` prints both). Kappa, which discounts agreement by chance, is 0.67–0.76 on the code that ships.
 
 **Every disagreement in C**, over the three runs:
 
@@ -68,7 +68,7 @@ one right answer marked wrong. Kappa, which discounts agreement by chance, is 0.
 **What C found that the code got wrong, and the fix.** For multiple choice the page shows only the letter, so no idea
 should be named and Lo should ask first. In run 1 it did, every time. In runs 2 and 3 the reading of a question page
 included the option he circled with its printed text ("A 24 circled"), the code took that as his own ink, and an idea
-was named from the choice alone on 4 of 27 wrong answers (for example "LCM is the product of the numbers"). Commit
+was named from the choice alone on 4 of the 26 answers it did not accept, over the three runs (for example "LCM is the product of the numbers"). Commit
 `6611ef2` treats the option chosen, with its printed words, as the final answer, which is no evidence
 (`witness_mark:chosen_option/2`, with a test); re-applied to those four, all four are held and Lo asks first.
 

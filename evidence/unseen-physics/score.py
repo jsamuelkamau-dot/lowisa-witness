@@ -1,5 +1,8 @@
 """Score the six live markings of Daniel Kwan's physics paper against a physics teacher's correct marking.
-python -X utf8 score.py  -> score.json + a table on stdout"""
+
+    python -X utf8 score.py           -> the committed results, re-checked against the key below (writes nothing)
+    python -X utf8 score.py mark      -> fresh run files mark_*.json (from run.py) -> mark_score.json + the table
+"""
 import json, os, re, glob, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -23,8 +26,27 @@ def norm(s):
     return re.sub(r'[^a-z0-9/x=.\-]', '', s)
 
 
+def committed():
+    """The committed live runs, each answer's marks re-checked against TRUTH (the files' own mark_ok is not trusted)."""
+    for name in ('live-6-runs-before-fix.json', '6-runs-after-fix.json'):
+        runs = json.load(open(os.path.join(HERE, name), encoding='utf-8'))
+        right = 0
+        for t, r in sorted(runs.items()):
+            ok = sum(((r['q'][str(n)]['marks'] or 0) >= 1) == bool(m) for n, (_, m) in TRUTH.items())
+            right += ok
+            print(f"{name:30} {t}  {r['total']}/{r['out_of']}  marking decisions right {ok}/30")
+        print(f"{name:30} all six runs: {right}/{30 * len(runs)} marking decisions right\n")
+    ns = json.load(open(os.path.join(HERE, 'no-scheme-after-half-mark-fix-3-runs.json'), encoding='utf-8'))
+    for r in ns['runs']:
+        print(f"no scheme, run {r['run']}: score {r['score']}, decisions right {r['decisions_right']}")
+
+
+if len(sys.argv) < 2:
+    committed()
+    sys.exit(0)
+
 runs = {}
-for f in sorted(glob.glob(os.path.join(HERE, (sys.argv[1] if len(sys.argv) > 1 else 'mark') + '_*.json'))):
+for f in sorted(glob.glob(os.path.join(HERE, sys.argv[1] + '_*.json'))):
     if f.endswith('_score.json'):
         continue
     j = json.load(open(f, encoding='utf-8'))
@@ -49,7 +71,7 @@ for f in sorted(glob.glob(os.path.join(HERE, (sys.argv[1] if len(sys.argv) > 1 e
     row['read_agree'] = sum(v['read_ok'] for v in row['q'].values())
     runs[tag] = row
 
-json.dump(runs, open(os.path.join(HERE, (sys.argv[1] if len(sys.argv) > 1 else 'mark') + '_score.json'), 'w', encoding='utf-8'), indent=1, ensure_ascii=False)
+json.dump(runs, open(os.path.join(HERE, sys.argv[1] + '_score.json'), 'w', encoding='utf-8'), indent=1, ensure_ascii=False)
 print('run  secs  score   marks-agree  reads-agree')
 for t, r in runs.items():
     print(f"{t}   {r['seconds']:5.1f}  {r['total']}/{r['out_of']}   {r['mark_agree']}/30        {r['read_agree']}/30")

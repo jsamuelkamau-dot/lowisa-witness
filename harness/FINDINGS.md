@@ -180,7 +180,7 @@ From the teacher's PDF to the re-check, on a fresh exam (README §5). Fixed the 
   caught every run; the sideways page stored upright in 9 of 9 papers
   (`evidence/real-handwriting/results/condition-c-shipped-code-3-runs.json`).
 - **The circled option taken as evidence.** In runs 2 and 3 of condition C the reading included the option he circled
-  with its printed text ("A 24 circled"), and an idea was named from it on 4 of 27 wrong answers. The option chosen is
+  with its printed text ("A 24 circled"), and an idea was named from it on 4 of the 26 answers not accepted over the three runs. The option chosen is
   the final answer, which is no evidence: `witness_mark:chosen_option/2` (`6611ef2`), with a test. Re-applied to the
   four, all four are held and Lo asks first.
 - **Sixteen committed images were damaged by git** (CR stripped from every CR LF pair; only `*.png` was marked binary).
