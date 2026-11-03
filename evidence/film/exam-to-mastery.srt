@@ -1,91 +1,91 @@
 1
-00:00:00,580 --> 00:00:09,299
-Our problem is cognitive ability. As we let AI do more of our thinking, a fear is growing: are we weakening our own minds, and our children's?
+00:00:00,580 --> 00:00:14,658
+Our problem is human cognitive ability. Millions of us are embracing AI, yet quietly wondering: are we becoming more capable, or slowly losing our ability to think for ourselves? And if we're worried about ourselves, shouldn't we be terrified for our children's future?
 
 2
-00:00:09,549 --> 00:00:14,847
+00:00:14,908 --> 00:00:21,125
 Remember an exam you failed? You remember the mark. But did anyone help you master what you got wrong?
 
 3
-00:00:15,097 --> 00:00:24,779
+00:00:21,375 --> 00:00:29,973
 What if the AI we fear could make us think better? This is From Exam to Mastery, built this week inside LoWisa, powered by Meta's models.
 
 4
-00:00:25,029 --> 00:00:29,148
+00:00:30,223 --> 00:00:34,314
 Instead of a teacher marking every paper like this, by hand,
 
 5
-00:00:29,298 --> 00:00:38,593
+00:00:34,464 --> 00:00:43,446
 one photo, and Meta's Muse Spark marks every answer, reading how each one was reached. Daniel is a sample student: his paper was written for this demo.
 
 6
-00:00:40,298 --> 00:00:51,410
-We also tested it on a real Grade 5 student, against his own teacher. It caught six or seven of the ten answers his teacher marked wrong, and every answer it wasn't sure of went to Lo to ask, never to a label.
-
-7
-00:00:51,760 --> 00:00:57,392
+00:00:45,464 --> 00:00:51,603
 Every question Daniel missed goes into his Mastery Plan. Let's follow one: question twenty-four.
 
-8
-00:00:57,642 --> 00:01:01,651
+7
+00:00:51,853 --> 00:00:55,995
 Why does a massive steel ship float, while a tiny metal nail sinks?
 
-9
-00:01:05,901 --> 00:01:12,281
+8
+00:00:58,745 --> 00:01:05,773
 Daniel wrote: heavy objects sink, light objects float. Muse Spark names that idea, because his own words show it.
 
-10
-00:01:12,631 --> 00:01:19,169
+9
+00:01:06,123 --> 00:01:12,134
 Where the page can't show the thinking, like the single word Joules, nothing is named. Lo asks first.
 
-11
-00:01:19,419 --> 00:01:25,783
-Here another sample learner answers out loud. Muse Voice Transcribe writes it down, and his own answer settles the idea.
-
-12
-00:01:26,083 --> 00:01:32,463
-Both halves are of $100. Half of 100 is 50, so it goes up 50 and then down 50..
-
-13
-00:01:35,413 --> 00:01:45,254
+10
+00:01:12,384 --> 00:01:22,929
 Before Daniel sees his level, Meta's Muse Wonder plays it twice: as Daniel, still sure heavy things sink, and as a student who has it right. It passes only if it catches his idea.
 
-14
-00:01:49,413 --> 00:01:53,375
+11
+00:01:25,384 --> 00:01:29,142
 Muse Image draws the corrected step, in ink, for him to see.
 
-15
-00:01:54,413 --> 00:02:02,829
+12
+00:01:30,384 --> 00:01:38,189
 Nothing reaches Daniel until his teacher says so. The teacher accepts the marks Muse Spark is sure of, checks the rest, and releases them.
 
-16
-00:02:03,179 --> 00:02:06,785
+13
+00:01:38,539 --> 00:01:41,195
 Now Lo teaches him, starting with a first look.
 
-17
-00:02:06,955 --> 00:02:18,755
-The log is lowered into water. As it goes down, it moves water aside. The water’s upward push grows until it exactly matches the log’s 200-kilogram weight.
+14
+00:01:41,365 --> 00:01:49,165
+A 200-kilogram log stays on top of water. A 5-gram coin drops to the bottom. So floating cannot mean simply light things float.
 
-18
-00:02:18,985 --> 00:02:22,407
-Then it's Daniel's turn. Lo hands him the controls.
-
-19
-00:02:25,488 --> 00:02:30,912
+15
+00:01:49,395 --> 00:01:54,357
 Two lessons later, the exam question comes back. This time, Daniel gets it right.
 
-20
-00:02:31,182 --> 00:02:34,782
+16
+00:01:54,627 --> 00:01:58,227
 Ship shape moves enough water to match its weight.
 
-21
-00:02:37,212 --> 00:02:44,870
-Days later, a fresh question on the same idea checks that it lasted. Only then does the teacher mark it: turned around.
-
-22
-00:02:45,320 --> 00:02:52,038
+17
+00:02:00,657 --> 00:02:06,540
 Daniel works through every question he failed, and comes out capable, with an understanding he can explain, and use.
 
+18
+00:02:06,890 --> 00:02:18,639
+We also tested it on a real Grade 5 student, against his own teacher. It caught six or seven of the ten answers his teacher marked wrong, and every answer it wasn't sure of went to Lo to ask, never to a label.
+
+19
+00:02:18,989 --> 00:02:27,920
+The same loop works on every paper. Here another sample learner answers out loud. Muse Voice Transcribe writes it down, and his own answer settles the idea.
+
+20
+00:02:28,220 --> 00:02:34,600
+Both halves are of $100. Half of 100 is 50, so it goes up 50 and then down 50..
+
+21
+00:02:36,750 --> 00:02:42,019
+And a level that would teach something false is held, and rewritten, before any student sees it.
+
+22
+00:02:42,469 --> 00:02:50,068
+Days later, a fresh question on the same idea checks that it lasted. Only then does the teacher mark it: turned around.
+
 23
-00:02:52,388 --> 00:02:57,584
+00:02:50,518 --> 00:02:55,966
 From Exam to Mastery. Built this week, inside LoWisa, on Meta's models.
