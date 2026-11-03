@@ -4,6 +4,8 @@
 *.mp4
 # the evidence clips are the submission's own (no learner data: sample papers and the app's own voice)
 !evidence/video/*.mp4
+# the demo film (sample student, the app's own screens, a synthetic narrator)
+!evidence/film/exam-to-mastery.mp4
 *.mov
 *.out
 probe-out/

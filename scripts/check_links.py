@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Check that every relative link and image in the repository's Markdown resolves, and every #anchor in README.md.
+"""Check that every relative link and image in the repository's Markdown points at a file git tracks, and every #anchor
+in the page resolves (a file only on this disk, or ignored, would be missing on GitHub).
 
     python3 scripts/check_links.py   (exit 1 if any is broken)
 """
-import glob
 import os
 import re
+import subprocess
 import sys
 
 
@@ -14,8 +15,11 @@ def anchor(title):
 
 
 def main():
-    pages = sorted(set(glob.glob('*.md') + glob.glob('**/*.md', recursive=True)))
-    pages = [p for p in pages if not p.startswith(('_build', 'node_modules'))]
+    tracked = set(subprocess.run(['git', 'ls-files'], capture_output=True, text=True, check=True).stdout.splitlines())
+    dirs = {os.path.dirname(f) for f in tracked}
+    while '' in dirs: dirs.discard('')
+    dirs |= {os.path.dirname(d) for d in list(dirs)}
+    pages = sorted(f for f in tracked if f.endswith('.md'))
     bad = []
     for md in pages:
         text = open(md, encoding='utf-8').read()
@@ -29,7 +33,8 @@ def main():
                 if url[1:] not in heads:
                     bad.append((md, url))
                 continue
-            if not os.path.exists(os.path.normpath(os.path.join(base, url.split('#')[0]))):
+            target = os.path.normpath(os.path.join(base, url.split('#')[0])).replace(os.sep, '/')
+            if target not in tracked and target.rstrip('/') not in dirs:
                 bad.append((md, url))
     for md, url in bad:
         print(f'BROKEN {md}: {url}')
