@@ -284,7 +284,7 @@ is in section 6).
 | | |
 |---|---|
 | ![The phone: Lo asks first, before anything is named](evidence/screens/phone-lo-asks-first.png) | ![The desk after the student answered](evidence/screens/desk-fingerprint-c-after-lo-asked.png) |
-| The third student wrote "Half up, half down. Same price." No calculation is visible, so **nothing is named and the student sees no label.** Lo asks one neutral question, out loud | His answer (typed, or spoken through Muse Voice Transcribe) settled it, and **not on the idea the model had guessed.** On held-out papers: ambiguous pages asked first 39 of 42. (The test phone's keyboard dropped a few characters of his typed answer here; the full sentence is in section 6 and in the replay) |
+| The third student wrote "Half up, half down. Same price." No calculation is visible, so **nothing is named and the student sees no label.** Lo asks one neutral question, out loud | His answer (typed, or spoken through Muse Voice Transcribe) settled it, and **not on the idea the model had guessed.** On held-out papers (on `v1.0-code`): ambiguous pages asked first 40 of 42. (The test phone's keyboard dropped a few characters of his typed answer here; the full sentence is in section 6 and in the replay) |
 
 Short recording: [`evidence/video/lo-asks-first.mp4`](evidence/video/lo-asks-first.mp4).
 
@@ -343,7 +343,7 @@ is best at.
 
 | Model | Its job here | Code | Measured | Evidence |
 |---|---|---|---|---|
-| **Muse Spark 1.3** | Reads the teacher's exam file. Marks every photographed paper for the path, not only the answer. Writes the Misconception Fingerprint. Reads the student's answer to Lo. Writes the mastery level. Drafts the challenge, judges the reason, recommends the badge. Writes the re-check. Reads Lo's spoken turns for safety. | `witness_photo`, `witness_mark`, `witness_fingerprint`, `witness_challenge`, `witness_recheck`, `witness_recommend`, `witness_guard` | one physics paper it had never seen: every marking decision right, 6 runs of 30; held-out v2 on the shipped code, 53 papers × 3 runs: right work 39/39, injection 30/30, ambiguous pages asked first 39/42, clear ideas named right 44/48 | `evidence/unseen-physics/`, `harness/heldout/` |
+| **Muse Spark 1.3** | Reads the teacher's exam file. Marks every photographed paper for the path, not only the answer. Writes the Misconception Fingerprint. Reads the student's answer to Lo. Writes the mastery level. Drafts the challenge, judges the reason, recommends the badge. Writes the re-check. Reads Lo's spoken turns for safety. | `witness_photo`, `witness_mark`, `witness_fingerprint`, `witness_challenge`, `witness_recheck`, `witness_recommend`, `witness_guard` | one physics paper it had never seen: every marking decision right in 6 runs of 30, then 3 more on `v1.0-code`; held-out v2 on `v1.0-code`, 53 papers × 3 runs: right work 39/39, injection 30/30, ambiguous pages asked first 40/42, clear ideas named right 42/48 | `evidence/unseen-physics/`, `harness/heldout/` |
 | **Muse Wonder** | Plays each mastery level as the student who still holds the misconception and as one who has it right (in one reasoning pass), and holds a level that would not catch it or says a false thing. Groups the class by reasoning. Asks the examiner's questions. | `witness_check`, `witness_patterns`, `witness_examiner` | 20 levels × 3: planted faults held 30/30, the fault named 30/30; clean levels passed 30/30 | `harness/selfcheck/` |
 | **Muse Voice Transcribe** | The student's spoken answer to Lo; the teacher's spoken comment | `witness_meta:transcribe/2` | a 6.4 s spoken answer written down for $0.0003 | `harness/probes/results-31oct/transcript-31oct.json` |
 | **Muse Image** | Draws the corrected step on lined paper | `witness_draw` | the three learners' steps drawn, $0.017–0.019 each (redrawn 3 Nov, `harness/probes/redraw_3nov.escript`) | `harness/probes/results-03nov/` |
@@ -404,7 +404,7 @@ a spoken answer written down by Muse Voice Transcribe ([`voice-transcribe.png`](
 
 | Finding | Without it | With it | Evidence |
 |---|---|---|---|
-| The evidence rule in code, on 42 pages whose ink cannot show the idea (14 papers × 3 runs) | Muse Spark proposed a named idea on **6 of 42** | a wrong idea named on **3 of 42**; the cost: 3 of 48 clear ideas asked instead of named | [`v2-on-shipped-code-3-runs.json`](harness/heldout/results/v2-on-shipped-code-3-runs.json) (`fingerprint.possible` is the proposal the code held) |
+| The evidence rule in code, on 42 pages whose ink cannot show the idea (14 papers × 3 runs, on `0b7502c`) | Muse Spark proposed a named idea on **6 of 42** | a wrong idea named on **3 of 42**; the cost: 3 of 48 clear ideas asked instead of named | [`v2-on-shipped-code-3-runs.json`](harness/heldout/results/v2-on-shipped-code-3-runs.json) (`fingerprint.possible` is the proposal the code held) |
 | Asking which **edge** is the top, not how many degrees to turn | 44 of 45 pages right (14 of 15 sideways) | **45 of 45** (15 of 15) | [`orient-03nov.json`](harness/orient/results/orient-03nov.json) |
 | A long paper in parts, read at once | 220–232 s for a 30-question, four-photo paper | **63–65 s**, the same agreement | [`parts-03nov.json`](harness/parts/results/parts-03nov.json) |
 | One prompt-cache key per paper, for every reading of it | every page sent again at full price | a second reading **99.8% cached** (one probe) | [`harness/probes/results-31oct/`](harness/probes/results-31oct/) |
@@ -469,7 +469,7 @@ The teacher checks instead of marking. The model's marking time on the productio
 
 | | Hand marking | From Exam to Mastery |
 |---|---|---|
-| One 30-question physics paper | the teacher reads and marks every answer | one photo; marked in 35–60 s, then the teacher reviews it |
+| One 30-question physics paper | the teacher reads and marks every answer | one photo; marked in 40–58 s (64–161 s with the second reading on `v1.0-code`), then the teacher reviews it |
 | A class of 40, two-page papers | the teacher marks all 40 by hand | all 40 marked at once in 32 s; the class patterns ready a minute after the last photo |
 | What the mark tells the student | the score | the reasoning behind each answer, and a level for every question not mastered |
 
@@ -735,7 +735,7 @@ Look at it without an account: `node demo/desk-server.js --replay`. It is this e
 |---|---|---|
 | **Impact** | The problem is cognitive ability, and the fear that AI weakens it is everyone's. This uses AI to strengthen it in four areas (the exam, the real world, how we think, repetition): a failed question becomes a level built on the student's own mistake that ends in a real task, and a teacher of forty gets their evenings back. Measured against one real student's own teacher; not yet proven in a classroom pilot | the opening, sections 1, 2, 5, 7; limits in 16; plans in 17 |
 | **Use of Meta's models** | Muse Spark reads the *reasoning* in handwriting and code checks its diagnosis against the lines it read; Muse Wonder plays every level as the student first; five models measured, in a gated pipeline of agents with code-checked hand-offs | sections 3, 4; `harness/FINDINGS.md` |
-| **Technical depth** | The evidence rule in code, measured blind and on the shipped code; handwriting placed on the page by dynamic programming (64 of 64 lines, against SAM 3.1's 52); Erlang/OTP with conditional writes, per-route daily ceilings, roles; 147 library tests; sixteen problems found by testing and how each was solved, from sideways pages to a safety check that failed open | sections 6, 7, 10, 11, 15 |
+| **Technical depth** | The evidence rule in code, measured blind and on the shipped code; handwriting placed on the page by dynamic programming (64 of 64 lines, against SAM 3.1's 52); Erlang/OTP with conditional writes, per-route daily ceilings, roles; 151 library tests; sixteen problems found by testing and how each was solved, from sideways pages to a safety check that failed open | sections 6, 7, 10, 11, 15 |
 | **Demo** | One failed question from photo to mastery: Muse Spark's marks landing on the page, the idea quoted from his own words, Lo asks first with a spoken answer, Muse Wonder's two plays, Muse Image's drawn step, the teacher's desk, the re-check; a real Grade 5 student's result against its baseline. Four Meta models on screen, about 1:42 of this week's work, every shot labelled, a word-for-word transcript; judges can try it in a minute with no account | sections 2, 12; `evidence/film/transcript.md` |
 
 ## 10. Architecture
@@ -817,7 +817,7 @@ Exam to Mastery is open to every LoWisa account; nothing needs a sign-up form.
    - **Sample papers:** the film's physics paper is [`evidence/unseen-physics/paper.jpg`](evidence/unseen-physics/paper.jpg);
      the name on it is **Daniel Kwan**, so join as Daniel Kwan to receive his Mastery Plan. Three maths papers are in
      `evidence/misconceptions/learner-*-page*.jpg` (two pages each).
-4. **Marking takes** about 15 s for a maths page, 35–60 s for the 30-question physics page, and about a minute and a half
+4. **Marking takes** about 15 s for a maths page, about a minute (64–161 s on 3 Nov, with the second reading) for the 30-question physics page, and about a minute and a half
    for a 30-question paper of four photos (69–299 s over nine live runs, median about 100 s; section 7). The desk shows
    each fingerprint. Release the marks, and the Mastery Plan reaches the phone.
 5. **On the phone:** answer Lo's question if it asks; start the level (2 to 8 minutes to build, including Muse Wonder's
@@ -949,7 +949,7 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
 
 | Problem | What we saw | What we did | Result |
 |---|---|---|---|
-| **A wrong idea named from too little ink** | With the demo answers taken out of the prompt, Learner C ("Half up, half down. Same price.") was still named "cancel" 5 of 5 times: the prompt alone does not make the model hold back | The evidence rule moved into code (`witness_mark:fingerprint/4`): quoted evidence must be in the ink, the final answer is no evidence, and a rival idea means Lo asks first | C asked **5 of 5**; on 53 held-out papers a wrong idea named in 3 of 42 ambiguous cases |
+| **A wrong idea named from too little ink** | With the demo answers taken out of the prompt, Learner C ("Half up, half down. Same price.") was still named "cancel" 5 of 5 times: the prompt alone does not make the model hold back | The evidence rule moved into code (`witness_mark:fingerprint/4`): quoted evidence must be in the ink, the final answer is no evidence, and a rival idea means Lo asks first | C asked **5 of 5**; on 53 held-out papers a wrong idea named in 2 of 42 ambiguous cases (`v1.0-code`; 3 of 42 on `0b7502c`) |
 | **Our own test sets leaked into the rule** | The prompt once quoted the three demo answers; later the rule's worded example mirrored a held-out item | Both taken out; the held-out set run again on the shipped code beside its blind first run, and now reported as a second development set | Section 7; every result file records its commit ([`harness/PROVENANCE.md`](harness/PROVENANCE.md)) |
 | **"Is it right?" missed wrong thinking** | At low effort with a plain prompt, a right answer reached by cancelling digits was called right | The marking asks about the method, at medium effort | The wrong thinking caught on every run |
 | **A self-check passed a false claim** | Muse Wonder passed a level whose shop "loses $25" by charging $100 for a $75 price | The self-check works out every number and every gain or loss claim | Planted false claims caught **9 of 9** |
