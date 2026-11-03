@@ -1,7 +1,10 @@
 # How the film is built
 
 The final cut, [`../exam-to-mastery.mp4`](../exam-to-mastery.mp4), is drawn frame by frame in Python from the
-product's own results and screens: nothing in it is mocked up.
+product's own results and screens, drawn from committed files. Four things in it are not the product's output, and
+each is labelled on screen: Daniel's paper marked by hand (a prop, labelled sample paper), the before-and-after card
+(a summary we wrote), the film's title and end cards, and the spoken answer (another sample learner, a synthetic
+voice; Muse Voice Transcribe's writing-down of it is real).
 
 - `script11.json`: every narrator line (what is shown on screen, and what is spoken).
 - `murf11.py`: the narration, one mp3 a line, in Murf's Gordon (`MURF_VOICE=en-US-gordon`, key in `MURF_API_KEY`).
@@ -18,5 +21,5 @@ They run on the build machine: the earlier cuts' drawing engine, the phone recor
 fonts are not in this repository, so the paths in them are that machine's.
 
 ```bash
-VOICE=gordon VO_TEMPO=1.02 python build11.py
+VOICE=gordon VO_TEMPO=1.04 python build11.py
 ```

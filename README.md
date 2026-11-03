@@ -7,12 +7,12 @@
 > - **Meta's models.** Muse Spark 1.3 marks and diagnoses; Muse Wonder plays every level as the learner before they see
 >   it; Muse Voice Transcribe writes down the spoken answer; Muse Image draws the corrected step; SAM 3.1 follows the ink
 >   on a filmed desk; Muse Spark Open runs the same marking on open weights (the table under "Submission facts").
-> - **On a real Grade 5 learner, against his own teacher.** 6 or 7 of the teacher's 10 wrong multiple-choice answers
->   caught in every run, and **no wrong idea named** on an answer it did not accept, in any of the six runs on the last two
->   releases of the code. On his written answers its agreement with the teacher is about what marking
->   everything right would give (38 of 42): there its value is that it never names a wrong idea, and asks first
->   instead. Up to 4 of his teacher's 10 wrong answers are still marked right, so the teacher checks (the Measured
->   table).
+> - **On a real Grade 5 learner, against his own teacher** (three runs). On his multiple-choice papers the teacher checks
+>   **8 to 10 of 109 marks** one by one and accepts the rest at once; **6 or 7 of the teacher's 10 wrong answers are
+>   caught**, and **no wrong idea is named** on any answer it did not accept, in any run. The limit: 2 to 4 of the marks
+>   it is sure of still call one of his wrong answers right, so nothing reaches him until the teacher releases it. On his
+>   written answers it agrees with the teacher about as often as marking everything right would (36–38 of 42, against
+>   38); there it never names a wrong idea, and asks him first instead (the Measured table).
 > - **Try it in a minute, no account and no key:** `node demo/desk-server.js --replay`, then http://localhost:4747. The
 >   2:58 film and the measured results follow the introduction below.
 
@@ -117,7 +117,7 @@ areas above look like when they run, on a real exam, today.
 
 **The 3-minute film:** [`evidence/film/exam-to-mastery.mp4`](evidence/film/exam-to-mastery.mp4) (2:58; every word with
 its time and on-screen label: [`transcript.md`](evidence/film/transcript.md)). Its first 30 seconds are a short version
-of the problem above; then it follows one student's failed question to mastery (0:30–2:07), with four of Meta's models
+of the problem above; then it follows one student's failed question to mastery (0:30–2:05), with four of Meta's models
 on screen, and ends on a real Grade 5 student and the rest of the loop. Section 2 walks through it frame by frame.
 
 > **Judge it in 2 minutes**
@@ -129,9 +129,9 @@ on screen, and ends on a real Grade 5 student and the rest of the loop. Section 
 >    [`evidence/unseen-physics/paper.jpg`](evidence/unseen-physics/paper.jpg)).
 
 **Submission facts.** Startups track, "Build for Your World". Built 26 Oct – 4 Nov 2026 (first commit 27 Oct, 8 hours
-after kickoff; `docs/built-during.md`). The headline numbers ran on the tag `v1.0-code`; the code on the production edge
-now is `v1.0.1-code` (two answer-comparison fixes and a longer open-weights timeout since), and every real set was run
-three more times on it (the Measured table; `harness/PROVENANCE.md`).
+after kickoff; `docs/built-during.md`). The headline numbers ran on the tag `v1.0.1-code`, three runs of every real set; earlier
+code's runs are kept in their own table. The production edge now runs `v1.0.2-code`, which changes only when two
+readings count as the same answer and one message's wording; the sets have not been run on it yet (`harness/PROVENANCE.md`).
 Where each Meta model works:
 
 | Model | Its job | Where |
@@ -151,20 +151,33 @@ Where each Meta model works:
   Muse Wonder plays every level as the student before they see it, and nothing reaches a student until the teacher
   lets it.
 
-**Measured.** Every number below is recomputed from the file beside it.
+**Measured.** Every number below is recomputed from the file beside it. One set of numbers: the latest code
+(`v1.0.1-code`, three runs, 3–4 Nov) wherever it was run; earlier code follows in its own table.
 
 | What was tested | Result | Raw results |
 |---|---|---|
-| A real Grade 5 student's three multiple-choice papers, against his own teacher's marks, on the tagged code `v1.0-code` (photos as taken, three of them sideways) | **7, 6 and 7 of his teacher's 10 wrong answers caught over three runs** (6 of the 10 in every run); **no wrong idea named in any run** (0 of 24 answers not accepted); 105, 104 and 104 of 109 agree, where marking everything right would agree on 99 | [`condition-c-on-v1.0-code-3-runs.json`](evidence/real-handwriting/results/condition-c-on-v1.0-code-3-runs.json), `python3 evidence/real-handwriting/score.py` |
-| The same student's **written answers** (42 questions, three more papers, no marking scheme), three runs on `v1.0-code` | **Every answer it did not accept was held for Lo to ask, with no wrong idea named: 18 of 18** (19 of 19 on the earlier code); 3 of his teacher's 4 wrong answers caught in every run; 39, 37 and 38 of 42 agree, where marking everything right would agree on 38 | [`written-answers-on-v1.0-code-3-runs.json`](evidence/real-handwriting/results/written-answers-on-v1.0-code-3-runs.json), the same script |
-| The same sets on `v1.0.1-code` (edge vb1104h, live 3–4 Nov), three runs each (3 and 4 Nov) | multiple choice **104, 104 and 104 of 109** agree (all-right baseline 99; kappa 0.68–0.71), **7, 6 and 6 of 10 caught** (6 in every run); written answers **36, 37 and 38 of 42** (all-right baseline 38; kappa 0.32–0.55), **2, 2 and 3 of 4 caught**; **no wrong idea named on any answer not accepted, in any run of either set**. Held-out: asked first 39 of 42, a wrong idea named 3 of 42, named right 43 of 48. One written paper came back "could not be read" once; the same photos sent again were marked (recorded in the file) | [`condition-c-on-v1.0.1-code-3-runs.json`](evidence/real-handwriting/results/condition-c-on-v1.0.1-code-3-runs.json), [`written-answers-on-v1.0.1-code-3-runs.json`](evidence/real-handwriting/results/written-answers-on-v1.0.1-code-3-runs.json), [`v2-on-v1.0.1-code-3-runs.json`](harness/heldout/results/v2-on-v1.0.1-code-3-runs.json) |
-| Wrong answers accepted as right (the error a teacher must still catch), on `v1.0.1-code` | multiple choice: 3, 4 and 4 of the teacher's 10 marked right, always among the same four questions; 2 to 4 of them sure enough to join "Accept all". Written: 2, 2 and 1 of 4: question 41 in every run (sure enough for "Accept all"), and question 35 in two runs, where Muse Spark read his final option as "A. Wheat" instead of "Cow peas" and was not sure (0.65, 0.75), so it went to the teacher | the same files, `python3 evidence/real-handwriting/score.py` |
-| A physics exam it had never seen: six live runs, then three on `v1.0-code` | **180 of 180** marking decisions right, then **90 of 90** on the tagged code (with and without a mark scheme) | [`evidence/unseen-physics/`](evidence/unseen-physics/README.md), `python3 -X utf8 evidence/unseen-physics/score.py` |
-| 53 held-out papers × 3 runs on `v1.0-code`: ink that cannot show the idea | Lo asks first **40 of 42**; a wrong idea named 2 of 42 (the harmful error) | [`v2-on-v1.0-code-3-runs.json`](harness/heldout/results/v2-on-v1.0-code-3-runs.json) |
-| … ink that shows the idea; right work; instructions written in the ink | named right **42 of 48** (3 named a different idea); mastered **39 of 39**; never obeyed **30 of 30** | the same file |
+| A real Grade 5 student's three multiple-choice papers, against his own teacher's marks (photos as taken, three of them sideways) | **6 or 7 of his teacher's 10 wrong answers caught** (7, 6, 6; 6 of the 10 in every run); **no wrong idea named** on any of the 23 answers it did not accept; 104, 104 and 104 of 109 agree, where marking everything right would agree on 99 (kappa 0.68–0.71) | [`condition-c-on-v1.0.1-code-3-runs.json`](evidence/real-handwriting/results/condition-c-on-v1.0.1-code-3-runs.json), `python3 evidence/real-handwriting/score.py` |
+| The same student's **written answers** (42 questions, three more papers, no marking scheme) | **every one of the 17 answers it did not accept was held for Lo to ask, with no wrong idea named**; 2, 2 and 3 of his teacher's 4 wrong answers caught; 36, 37 and 38 of 42 agree, where marking everything right would agree on 38 (kappa 0.32–0.55). One paper came back "could not be read" once; the same photos sent again were marked (recorded in the file) | [`written-answers-on-v1.0.1-code-3-runs.json`](evidence/real-handwriting/results/written-answers-on-v1.0.1-code-3-runs.json), the same script |
+| **The teacher's work** on those papers: marks sure enough for "Accept all" (0.9 or more), and the rest checked one by one | multiple choice: **the teacher checks 8, 8 and 10 of 109**; of the 101, 101 and 99 in "Accept all", 3, 4 and 2 disagree with the teacher (2, 4 and 2 call one of his wrong answers right). Written: the teacher checks 15 to 18 of 42; of the 24 to 27 in "Accept all", 1 or 2 disagree. Nothing reaches the student until the teacher releases the paper | the same files and script |
+| Wrong answers accepted as right (the error a teacher must still catch) | multiple choice: 3, 4 and 4 of the teacher's 10 marked right, always among the same four questions (English 23, science 33 and 42, maths 24). Written: 2, 2 and 1 of 4: question 41 in every run (sure enough for "Accept all"), and question 35 in two runs, where Muse Spark read his final option as "A. Wheat" instead of "Cow peas" and was not sure (0.65, 0.75), so it went to the teacher | the same files |
+| 53 held-out papers × 3 runs: ink that cannot show the idea | Lo asks first **39 of 42**; a wrong idea named 3 of 42 (the harmful error) | [`v2-on-v1.0.1-code-3-runs.json`](harness/heldout/results/v2-on-v1.0.1-code-3-runs.json) |
+| … ink that shows the idea; right work; instructions written in the ink | named right **43 of 48** (none named a different idea; 5 asked first); mastered **39 of 39**; never obeyed **30 of 30** | the same file |
+| A physics exam it had never seen (on `v1.0-code`, not run since) | **180 of 180** marking decisions right in six live runs, then **90 of 90** on `v1.0-code` (with and without a mark scheme) | [`evidence/unseen-physics/`](evidence/unseen-physics/README.md), `python3 -X utf8 evidence/unseen-physics/score.py` |
 | Muse Wonder playing each level as the student first (20 levels × 3 runs) | planted faults held **30 of 30**; false claims found **9 of 9** | [`selfcheck-3-runs.json`](harness/selfcheck/results/selfcheck-3-runs.json) |
 | A class of 40 | all marked in **32 s** for **$1.01** | [`class-of-40.json`](harness/class/results/class-of-40.json) |
 | Phone photos taken sideways or upside down (4 papers × 3 runs) | **45 of 45** pages turned the right way up | [`orient-03nov.json`](harness/orient/results/orient-03nov.json) |
+
+**The same sets on earlier code** (kept for comparison; which commit each ran on is in [`harness/PROVENANCE.md`](harness/PROVENANCE.md)):
+
+| Set | `a1be423` (first 3 runs) | `v1.0-code` (3 runs, 3 Nov) | `v1.0.1-code` (above) |
+|---|---|---|---|
+| Real student, multiple choice: agree of 109 | 105, 103, 105 | 105, 104, 104 | 104, 104, 104 |
+| … his teacher's 10 wrong answers caught | 7, 7, 7 | 7, 6, 7 | 7, 6, 6 |
+| … a wrong idea named on an answer not accepted | 0, 1, 3 (fixed in `6611ef2`) | 0, 0, 0 | 0, 0, 0 |
+| Real student, written: agree of 42 | 37, 38, 38 | 39, 37, 38 | 36, 37, 38 |
+| … his teacher's 4 wrong answers caught | 3, 3, 3 | 3, 3, 3 | 2, 2, 3 |
+| Held-out v2: Lo asks first of 42; wrong idea named | 39; 3 (`0b7502c`) | 40; 2 | 39; 3 |
+| Held-out v2: named right of 48 | 44 (`0b7502c`) | 42 | 43 |
 
 - **Built during the event (26 Oct – 4 Nov 2026), all in this repository:** the marking and diagnosis server
   (`witness/`, Erlang/OTP, 152 tests), the teacher's Exam Desk (`desk/`), the phone screens (`phone/`), and every
@@ -358,15 +371,15 @@ own words comes from the teacher's challenge (section 3.6).
 |---|---|---|---|
 | 0:00–0:30 | The problem (human cognitive ability); his paper marked by hand; the name and the four Meta models | sample paper; the film's cards | The cards are the film's own; the paper is a prop made for the demo |
 | 0:30–0:45 | "Instead of a teacher marking every paper like this, by hand", then Muse Spark's marks landing on his photographed paper | sample paper; built this week · Muse Spark's returned marks, drawn on the photo | **New.** Each mark is the result Muse Spark returned for that question |
-| 0:45–1:12 | His Mastery Plan; question 24, with a moment to think; the desk's fingerprint, with his own words as evidence; Lo asks first on "Joules" | built this week | **New** |
-| 1:12–1:38 | Muse Wonder's two plays; Muse Image's drawn step; the teacher's desk | built this week | **New** |
-| 1:38–2:01 | Lo teaching the level: the first look (the log floats, the coin sinks), question 24 again | LoWisa · a level written this week | The player and Lo's voice are LoWisa's; the level, written from his answer by Muse Spark and checked by Muse Wonder, is new |
-| 2:01–2:07 | Before and after | sample paper | A summary card written by us |
-| 2:07–2:19 | A real Grade 5 student's sheet, as his teacher marked it and as it was sent; then one question caught (Q11, Lo asks first) and one honest miss (Q24, marked right where his teacher marked it wrong) | built this week | **New:** section 7 |
-| 2:19–2:52 | A spoken answer written down by Muse Voice Transcribe, then the desk naming the idea from his own words; Muse Wonder holding a test level with a false claim; the re-check days later, and "Turned around" | built this week · another sample learner; a test level | **New**. The spoken answer is another sample learner's, read by a synthetic voice |
-| 2:52–2:58 | The end card: the six Meta models, each checked by another and by code, and the replay command | | |
+| 0:45–1:11 | His Mastery Plan; question 24, with a moment to think; the desk's fingerprint, with his own words as evidence; Lo asks first on "Joules" | built this week | **New** |
+| 1:11–1:37 | Muse Wonder's two plays; Muse Image's drawn step; the teacher's desk | built this week | **New** |
+| 1:37–1:59 | Lo teaching the level: the first look (the log floats, the coin sinks), question 24 again | LoWisa · a level written this week | The player and Lo's voice are LoWisa's; the level, written from his answer by Muse Spark and checked by Muse Wonder, is new |
+| 1:59–2:05 | Before and after | sample paper | A summary card written by us |
+| 2:05–2:17 | A real Grade 5 student's sheet, as his teacher marked it and as it was sent; then one question caught (Q11, Lo asks first) and one honest miss (Q24, marked right where his teacher marked it wrong) | built this week | **New:** section 7 |
+| 2:17–2:50 | A spoken answer written down by Muse Voice Transcribe, then the desk naming the idea from his own words; Muse Wonder holding a test level with a false claim; the re-check days later, and "Turned around" | built this week · another sample learner; a test level | **New**. The spoken answer is another sample learner's, read by a synthetic voice |
+| 2:50–2:58 | The end card: the six Meta models, each checked by another and by code, the replay command, and where to get LoWisa (Google Play, the App Store and the desktop) | | |
 
-In all, about 1:49 shows work built this week and 22 s shows LoWisa's player playing a level written this week; the
+In all, about 1:48 shows work built this week and 22 s shows LoWisa's player playing a level written this week; the
 rest are the opening cards, the sample paper, before and after, and the end. Four of Meta's models are on screen (Muse
 Spark, Muse Wonder, Muse Voice Transcribe, Muse Image); SAM 3.1 works in the optional desk-filming path (section 4).
 
@@ -520,8 +533,8 @@ a spoken answer written down by Muse Voice Transcribe ([`voice-transcribe.png`](
 **Beyond a basic integration**
 - **Meta's models check each other, with code between them.** Muse Spark reads and diagnoses; code checks every quote
   against the lines read from the page; Muse Wonder plays the level as the student before the student sees it; Muse
-  Spark judges the student's reason and recommends; the teacher decides. Sixteen distinct jobs across five models,
-  each with its own measured result (the table above).
+  Spark judges the student's reason and recommends; the teacher decides. Twenty-one jobs across six models, listed
+  one by one below.
 - **A reasoning model used as a simulated learner.** Muse Wonder plays every level twice in one reasoning pass, as the
   student who still holds the wrong idea and as one who has it right, and audits every number and claim the level
   makes. Nothing reaches a student until that check passes or the teacher has looked.
@@ -530,6 +543,34 @@ a spoken answer written down by Muse Voice Transcribe ([`voice-transcribe.png`](
 - **Built for a class, priced per call:** forty papers marked at once in 32 s for $1.01; every call metered at Meta's
   published prices, every JSON reply parsed and checked before it is used, the prompt cache shared across the readings of one paper, and
   a daily ceiling on every route.
+
+**Every job a Meta model does here, one by one**
+
+| # | Model | The job | Code | Measured on its own |
+|---|---|---|---|---|
+| 1 | Muse Spark 1.3 | Says which edge of each phone photo is the page's top | `witness_photo:orient/3` | 45 of 45 pages ([`orient-03nov.json`](harness/orient/results/orient-03nov.json)) |
+| 2 | Muse Spark 1.3 | Reads the exam's questions and mark scheme from the teacher's own file | `witness_read` | — |
+| 3 | Muse Spark 1.3 | Marks every answer and reads the steps that led to it | `witness_photo:mark/4` | physics 90 of 90 decisions; the real student (section 7) |
+| 4 | Muse Spark 1.3 | Reads the answers alone a second time, before anything joins "Accept all" | `witness_mark:checked/2` | caught a misread letter in 1 of 3 runs (section 7) |
+| 5 | Muse Spark 1.3 | Writes the Misconception Fingerprint from the student's own ink | `witness_fingerprint` | held-out: named right 43 of 48 |
+| 6 | Muse Spark 1.3 | Reads the student's answer to Lo with the page, and names the idea or not | `witness_fingerprint:answer/4` | section 3.2 |
+| 7 | Muse Spark 1.3 | Designs the mastery level from the fingerprint | the host's design call (`witness_host`) | checked by job 15 |
+| 8 | Muse Spark 1.3 | Writes the corrected step for Muse Image to draw | `witness_draw` | — |
+| 9 | Muse Spark 1.3 | Drafts the teacher's new challenge | `witness_challenge` | — |
+| 10 | Muse Spark 1.3 | Judges the student's reason in the challenge | `witness_challenge` | — |
+| 11 | Muse Spark 1.3 | Recommends "Turned around" to the teacher | `witness_recommend` | — |
+| 12 | Muse Spark 1.3 | Writes the re-check days later | `witness_recheck` | — |
+| 13 | Muse Spark 1.3 | Reads each of Lo's live turns for safety before a student hears it | `witness_guard` | — |
+| 14 | Muse Spark 1.3 | Judges the student's answer to an examiner's question | `witness_examiner:judge_run/4` | — |
+| 15 | Muse Wonder | Plays each level as both students and checks every claim in it | `witness_check` | planted faults held 30 of 30, false claims 9 of 9 |
+| 16 | Muse Wonder | Groups the class by reasoning | `witness_patterns` | — |
+| 17 | Muse Wonder | Picks the steps to ask about, and asks the examiner's questions | `witness_examiner:run/3` | — |
+| 18 | Muse Voice Transcribe | Writes down the student's spoken answer, and the teacher's spoken comment | `witness_meta:transcribe/2` | a 6.4 s answer for $0.0003 |
+| 19 | Muse Image | Draws the corrected step on lined paper | `witness_draw` | $0.017–0.019 a drawing |
+| 20 | SAM 3.1 | Follows the ink through a desk video (the optional way in) | `witness_sam`, `witness_timeline` | 52 of 64 lines, on rendered clips |
+| 21 | Muse Spark Open | Job 3, with its fingerprint, on Meta's open weights through partner inference | `witness_open` | 9 of 12 runs completed ([`harness/open/`](harness/open/README.md)) |
+
+A dash means the job runs in the product but has no measurement of its own; its result shows in a later step.
 
 **Meta across LoWisa, beyond this project**
 

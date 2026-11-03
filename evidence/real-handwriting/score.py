@@ -11,6 +11,10 @@ would get by marking every answer right). Science question 20 is left out: the t
 Where a file records it, each run also prints what happened to the answers Witness did not accept: how many had a wrong
 idea named to the student, and how many were held for Lo to ask first. Each set then prints the same counts by QUESTION
 over its runs (a question counted once, not once per run), with 95% intervals over questions.
+
+The teacher's work: for the latest code, each run also prints how many marks Muse Spark was sure of (confidence 0.9
+or more: the desk's "Accept all"), how many of those disagree with the teacher, and how many the teacher checks one by
+one. The latest code prints first; earlier code follows, labelled.
 """
 import json
 import math
@@ -71,6 +75,21 @@ def held(name, rows_by_subject):
     print(f'{"":44} not accepted {len(out)}: a wrong idea named {len(named)}, held for Lo to ask {len(asks)}')
 
 
+ACCEPT_ALL = 0.9  # witness_mark ?ACCEPT_ALL: marks at or above it join "Accept all" on the desk
+
+
+def teacher_work(rows_by_subject):
+    rows = [r for s in rows_by_subject for r in scored(rows_by_subject[s])]
+    if not rows or 'confidence' not in rows[0]:
+        return
+    sure = [r for r in rows if (r.get('confidence') or 0) >= ACCEPT_ALL]
+    wrong_right = sum(r['right'] and not r['teacher_right'] for r in sure)
+    right_wrong = sum((not r['right']) and r['teacher_right'] for r in sure)
+    print(f'{"":44} "Accept all" {len(sure)}/{len(rows)} (disagree with the teacher {wrong_right + right_wrong}: '
+          f'{wrong_right} marked right that the teacher marked wrong, {right_wrong} the other way); '
+          f'the teacher checks {len(rows) - len(sure)} one by one')
+
+
 def by_question(name, runs):
     """One row per question over all runs of a set."""
     qs = {}
@@ -93,34 +112,34 @@ def by_question(name, runs):
               f'(95% CI {wilson(len(named), len(out))})')
 
 
+def run_set(name, f, work=False):
+    path = os.path.join(HERE, 'results', f)
+    if not os.path.exists(path):
+        return
+    t = json.load(open(path, encoding='utf-8'))
+    for run in t['runs']:
+        line(f'{name} run {run["run"]}', run['papers'])
+        held('', run['papers'])
+        if work:
+            teacher_work(run['papers'])
+    by_question(name, t['runs'])
+
+
 def main():
+    # The latest results: both sets on v1.0.1-code, three runs each (3-4 Nov). The edge now runs v1.0.2-code, which
+    # changes only when two readings count as the same answer; these sets have not been run on it yet.
+    print('== Latest: v1.0.1-code ==')
+    run_set('C on v1.0.1-code', 'condition-c-on-v1.0.1-code-3-runs.json', work=True)
+    run_set('Written on v1.0.1-code', 'written-answers-on-v1.0.1-code-3-runs.json', work=True)
+    print('== Earlier code ==')
     two = json.load(open(os.path.join(HERE, 'results', 'three-papers-two-conditions.json')))
     for name, rows in two['conditions'].items():
         line(name, rows)
-    c_path = os.path.join(HERE, 'results', 'condition-c-shipped-code-3-runs.json')
-    if os.path.exists(c_path):
-        c = json.load(open(c_path, encoding='utf-8'))
-        for run in c['runs']:
-            line(f'C_shipped_code run {run["run"]}', run['papers'])
-            held('', run['papers'])
-        by_question('C_shipped_code', c['runs'])
-    w_path = os.path.join(HERE, 'results', 'written-answers-3-runs.json')
-    if os.path.exists(w_path):
-        w = json.load(open(w_path, encoding='utf-8'))
-        for run in w['runs']:
-            line(f'Written answers run {run["run"]}', run['papers'])
-            held('', run['papers'])
-        by_question('Written answers', w['runs'])
-    # 3 Nov: both sets again on the tagged code v1.0-code (two readings must agree before Accept all)
-    for name, f in (('C on v1.0-code', 'condition-c-on-v1.0-code-3-runs.json'), ('Written on v1.0-code', 'written-answers-on-v1.0-code-3-runs.json'),
-                    ('C on v1.0.1-code (live)', 'condition-c-on-v1.0.1-code-3-runs.json'), ('Written on v1.0.1-code (live)', 'written-answers-on-v1.0.1-code-3-runs.json')):
-        path = os.path.join(HERE, 'results', f)
-        if os.path.exists(path):
-            t = json.load(open(path, encoding='utf-8'))
-            for run in t['runs']:
-                line(f'{name} run {run["run"]}', run['papers'])
-                held('', run['papers'])
-            by_question(name, t['runs'])
+    run_set('C_shipped_code (a1be423)', 'condition-c-shipped-code-3-runs.json')
+    run_set('Written answers (a1be423)', 'written-answers-3-runs.json')
+    # 3 Nov: both sets on the tagged code v1.0-code (two readings must agree before Accept all)
+    run_set('C on v1.0-code', 'condition-c-on-v1.0-code-3-runs.json')
+    run_set('Written on v1.0-code', 'written-answers-on-v1.0-code-3-runs.json')
 
 
 if __name__ == '__main__':

@@ -289,6 +289,7 @@ def end_card(K, C, E, lt):
         f5 = K.font(K.F_SEMI, 24); s = 'no account, no key'
         d.text((1430 - d.textlength(s, font=f5), 678), s, font=f5, fill=GOLD + (int(255 * k),))
     f4 = K.font(K.F_SEMI, 30)
-    for i, s in enumerate(['Built 26 Oct – 4 Nov for the Meta Global AI Developer Hackathon', 'Daniel is a sample student; his paper was made for the demo  ·  lowisa.dev']):
-        d.text(((K.W - d.textlength(s, font=f4)) / 2, 820 + 50 * i), s, font=f4, fill='#8EA3BA')
+    # owner 4 Nov: where to get it, back on the end card (and in the line Gordon says)
+    for i, s in enumerate(['LoWisa on Google Play, the App Store and the desktop  ·  lowisa.dev', 'Built 26 Oct – 4 Nov for the Meta Global AI Developer Hackathon', 'Daniel is a sample student; his paper was made for the demo']):
+        d.text(((K.W - d.textlength(s, font=f4)) / 2, 800 + 48 * i), s, font=f4, fill='#E6EEF7' if i == 0 else '#8EA3BA')
     return im
