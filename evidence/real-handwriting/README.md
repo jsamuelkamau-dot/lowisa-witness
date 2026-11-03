@@ -90,7 +90,7 @@ written answers or drawings and 12 circled options.
   (10 and 5 on the two creative-arts pages).
 - **Run the same way as condition C:** the ink removed by colour, the photos as taken, the live product (edge vb1104d,
   `witness/src` `6611ef2`), three runs on 3 Nov 2026. A page from another student was sent by mistake in the same
-  runs; it was removed, and it is in no file here.
+  runs; it was deleted from the product, and it is in no file here.
 - [`results/written-answers-3-runs.json`](results/written-answers-3-runs.json) records every answer as read, every
   mark, and every note to the teacher; `score.py` recomputes the numbers. Two excerpts, as marked and as sent:
   [`sheets/written-creative-arts-q28-30.jpg`](sheets/written-creative-arts-q28-30.jpg),

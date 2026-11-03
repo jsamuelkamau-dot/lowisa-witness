@@ -70,3 +70,5 @@ history. The table grows as the work lands. Code built this week inside LoWisa's
 | Condition C: the real student's papers on the code that ships, three runs; a scorer that recomputes every number | `evidence/real-handwriting/results/condition-c-shipped-code-3-runs.json`, `evidence/real-handwriting/score.py` | done 3 Nov |
 | Sixteen damaged images restored; every media type stored as binary; media and link checks in CI | `evidence/MEDIA-REPAIR.md`, `scripts/check_media.py`, `scripts/check_links.py`, `.gitattributes` | done 3 Nov |
 | The film, cut 10: the problem first, a real student's result, every shot labelled, the exam codes blurred | `evidence/film/exam-to-mastery.mp4`, README section 2 | done 3 Nov |
+| The same student's written answers: 42 questions on three more papers, no marking scheme, three runs on the live product | `evidence/real-handwriting/results/written-answers-3-runs.json`, `evidence/real-handwriting/score.py` | done 3 Nov |
+| When two readings split, the teacher's note says "of the work", not "of the video" (found by the written-answer runs) | `witness/src/witness_mark.erl`, `witness/test/witness_mark_tests.erl` | done 3 Nov |
