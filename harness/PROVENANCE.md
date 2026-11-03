@@ -16,4 +16,10 @@ To check one: `git diff --stat 5712d5b b529f24` shows what changed between two r
 shows the rule a run used.
 
 A run marked `"dirty": true` ran with uncommitted changes in `witness/src`. Those runs are reported as development
-runs, never as the headline (see `harness/heldout/README.md`).
+runs, never as the headline (see `harness/heldout/README.md`), with one exception, named here:
+
+| Result file | Recorded | What it means |
+|---|---|---|
+| `harness/heldout/results/v2-held-out-3-runs.json`, v2's **blind first run** (31 Oct) | `ab0e88a`, dirty | It ran on the working copy before the evidence rule's next change was committed, so its exact code is not in the history. It is shown as the blind result *beside* the clean run on the code that ships (`v2-on-shipped-code-3-runs.json`, `0b7502c`, clean), which is the headline. |
+| `evidence/unseen-physics/hard-ask-papers-5-runs-old-rule.json` (31 Oct) | `fatal: not a git repository`, dirty | It ran from a copy of the old rule outside this repository, to compare it with the new rule; the commit could not be read there. It is a development run. |
+| `harness/probes/results-31oct/`, `harness/probes/results-03nov/` | `run_at` only | Live probes of Meta's API; no marking code is measured. |

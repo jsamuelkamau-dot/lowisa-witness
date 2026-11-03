@@ -1501,7 +1501,7 @@ mark_video(Uid, Id, Key, Fps, Sitting, Row, Host) ->
 %% with the paper either way, so a paper Meta could not mark is marked again without taking the photos again.
 mark_photo(Uid, Id, Key, Sitting, Row, Host) ->
     {Turned, TurnCost, Count} = upright(Uid, Id, Key, Row, Host),
-    %% 4 Nov: the quick look's count of the paper's questions, so a long paper is marked in parts at once
+    %% 3 Nov: the quick look's count of the paper's questions, so a long paper is marked in parts at once
     Counted = case Count of N when is_integer(N), N > 0 -> Sitting#{question_count => N}; _ -> Sitting end,
     Outcome = again(Host, fun() ->
         case pages(Uid, Id, Row, Host) of

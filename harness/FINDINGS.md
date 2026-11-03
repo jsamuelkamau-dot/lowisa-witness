@@ -124,7 +124,7 @@ Then every evaluation was run again on the committed code.
   Five readings each: A named 5 of 5 (the changes cancel), B 5 of 5 (50% taken as a fixed $50), C asked 5 of 5
   (`evidence/misconceptions/runs-31oct-steps-rule.jsonl`; the readings before the rule are kept beside it).
 - **Held-out v2** (53 papers written after the rule froze, three runs): ambiguous asked 40 of 42, a wrong idea named
-  2 of 42, clear named right 43 of 48, right work 39 of 39, injection 30 of 30 (`harness/heldout/README.md`).
+  2 of 42 (that run; on the code that ships it is 3 of 42, README section 7), clear named right 43 of 48, right work 39 of 39, injection 30 of 30 (`harness/heldout/README.md`).
 - **My first "clean" self-check levels leaked worked answers**, so the check passed them for the wrong reason. The
   levels were rewritten (the first version is kept as `levels-first.json`). Now clean passed 30 of 30, faults held
   30 of 30 and named 30 of 30, planted false claims 9 of 9.

@@ -94,7 +94,7 @@ mark(Key, Pages, Sitting, Opts) ->
     Price = maps:get(price, Opts, {tokens, ?SPARK}),
     case content(Pages, Fetch) of
         {ok, Images} ->
-            %% 4 Nov (a real 30-question paper took 4.5 minutes on the live edge: one reading wrote 11,650 tokens, 108 s,
+            %% 3 Nov (a real 30-question paper took 4.5 minutes on the live edge: one reading wrote 11,650 tokens, 108 s,
             %% and an unsure question read the whole paper again after it): a long paper is marked in parts of about ten
             %% questions at once, each part seeing every page; an unsure question is read again within its own part
             Parts = pmap(fun(Range) -> read_part(Key, Images, Sitting, Read, Price, Range) end, parts(Sitting, length(Pages))),
@@ -117,7 +117,7 @@ mark(Key, Pages, Sitting, Opts) ->
 %% (its listed questions, or the count the quick look made of the photographed pages) in parts of about ?PART; the last
 %% part runs to the end of the paper, so a count that came out short still has every question marked. A one-page paper
 %% stays one reading: the film's 30-question physics page took 34-58 s whole, and in parts it was no faster at twice
-%% the cost (4 Nov); four pages of 30 questions took 108 s whole and 69 s in three parts.
+%% the cost (3 Nov); four pages of 30 questions took 108 s whole and 69 s in three parts.
 -define(PART, 10).
 -define(PART_FROM, 12).
 parts(_Sitting, Pages) when Pages < 2 -> [all];
@@ -195,7 +195,7 @@ orient(Key, Pages, Opts) ->
                     "the numbered questions on the whole paper. Answer with JSON only: "
                     "{\"pages\": [{\"n\": 1, \"top\": \"top\"}], \"questions\": 30}">>,
             case Read(Key, [#{type => input_text, text => Ask} | Images]) of
-                %% 4 Nov: the count lets a long paper be marked in parts at once (mark/4)
+                %% 3 Nov: the count lets a long paper be marked in parts at once (mark/4)
                 {ok, Text, Usage} -> {ok, turns(Text, [N || #{n := N} <- Pages]), witness_meta:cost({tokens, ?SPARK}, Usage), count(Text)};
                 E -> E
             end;

@@ -17,7 +17,7 @@
 %%%-------------------------------------------------------------------
 -module(witness_mark).
 -export([fit/2, unsure/1, reconcile/2, decide/4, split/1, prompt/1, parse/1, needs_level/1, results/0, capabilities/0,
-         fingerprint_rule/0, fingerprint_json/0, fingerprint/4, norm/1, in_ink/3, quote_in_ink/3, calculation/1, numbers/1,
+         fingerprint_rule/0, fingerprint_json/0, fingerprint/4, norm/1, in_ink/3, quote_in_ink/3, chosen_option/2, calculation/1, numbers/1,
          skill_rule/0]).
 
 %% 27 Oct, emulator: a video of no paper at all (the camera pointed at a picture) was marked "to master" on every
@@ -170,7 +170,21 @@ in_ink(E, Lines, _) ->
 quote_in_ink(Raw, Lines, Final) ->
     Bare = case reasoned(Final) of true -> <<>>; false -> norm(Final) end,
     Parts = [norm(P) || P <- re:split(str(Raw), <<"\\s*(?:;|\\n|\\|| / (?=[A-Za-z]))\\s*">>, [unicode, {return, binary}, trim]), norm(P) =/= <<>>],
-    Parts =/= [] andalso lists:all(fun(P) -> in_ink(P, Lines, Bare) end, Parts).
+    not chosen_option(Raw, Final) andalso Parts =/= [] andalso lists:all(fun(P) -> in_ink(P, Lines, Bare) end, Parts).
+
+%% 3 Nov (a real Grade 5 student's multiple-choice papers, live): the reading of a question page includes the option the
+%% student circled with its printed text ("A 24 circled", "D W Y X Z circled"), and that was taken as their own ink, so
+%% "LCM is the product of the numbers" was named from the choice alone in 4 of 27 wrong answers over three runs. The
+%% option chosen, with its printed words, is the final answer: no evidence of how it was reached.
+chosen_option(Raw, Final) ->
+    case re:run(str(Final), <<"^\\s*\\(?([A-Ea-e])\\)?(?:[\\s.:)]|$)">>, [{capture, [1], binary}]) of
+        {match, [L]} ->
+            Rest = re:replace(string:lowercase(str(Raw)), <<"\\b(?:circled|circle|ticked|tick|chosen|chose|selected|marked|underlined|shaded|option|answer)\\b">>,
+                              <<" ">>, [global, unicode, {return, binary}]),
+            lists:member(string:lowercase(L), string:lexemes(Rest, " \t\n,;:()[]."))
+                andalso not calculation(Rest) andalso words(Rest) < 5;
+        nomatch -> false
+    end.
 
 reasoned(Final) -> calculation(Final) orelse words(Final) >= 5.
 
@@ -421,7 +435,7 @@ fit(Qs, Sitting) ->
          {_, M} -> Q#{marks => 0, out_of => M}
      end) || Q <- Qs].
 
-%% 4 Nov (the physics paper on the parts code, no scheme): "part way" came back with 1 of 1 on one-mark questions (half a
+%% 3 Nov (the physics paper on the parts code, no scheme): "part way" came back with 1 of 1 on one-mark questions (half a
 %% mark rounded up). Full marks belong to a mastered question only; anything else keeps at least one mark short.
 short_of_full(#{result := R, marks := K, out_of := O} = Q) when R =/= <<"mastered">>, is_number(K), is_number(O), O > 0, K >= O ->
     Q#{marks => max(0, O - 1)};

@@ -139,6 +139,26 @@ a_numeric_answer_with_no_calculation_on_the_page_is_asked_test() ->
     ?assertEqual(3, witness_mark:numbers(<<"+50% - 50% = 0%">>)),
     ?assertEqual(2, witness_mark:numbers(<<"0.25 is bigger than 0.3">>)).
 
+%% 3 Nov (a real Grade 5 student's papers, live): the circled option with its printed text is the final answer, not
+%% the working behind it, so naming an idea from it is held and Lo asks first; working on the page still counts
+the_option_circled_is_the_final_answer_not_evidence_test() ->
+    Choice = fun(Steps, Final, Ev) ->
+        J = #{<<"questions">> => [#{<<"n">> => 11, <<"final_answer">> => Final, <<"result">> => <<"not_yet">>, <<"marks">> => 0, <<"out_of">> => 1,
+                                    <<"steps">> => [#{<<"wrote">> => S} || S <- Steps], <<"diagnosis">> => <<"d">>, <<"confidence">> => 0.9,
+                                    <<"fingerprint">> => #{<<"reasoning">> => <<"r">>, <<"evidence">> => Ev, <<"misconception">> => <<"LCM is the product of the numbers">>,
+                                                           <<"intervention">> => <<"i">>, <<"ask">> => <<>>}}]},
+        {ok, #{questions := [Q]}} = witness_mark:parse(iolist_to_binary(json:encode(J))),
+        maps:get(fingerprint, Q)
+    end,
+    ?assertMatch(#{misconception := <<>>, evidence := []}, Choice([<<"A 24 circled">>, <<"A">>], <<"A">>, [<<"A 24 circled">>])),
+    ?assertMatch(#{misconception := <<>>, evidence := []}, Choice([<<"D W Y X Z circled">>, <<"D">>], <<"D">>, [<<"D W Y X Z circled">>])),
+    ?assertMatch(#{misconception := <<>>, evidence := []}, Choice([<<"(A) 1300768 ticked">>], <<"A">>, [<<"(A) 1300768 ticked">>])),
+    %% the student's own working beside the choice is still theirs
+    ?assertMatch(#{misconception := <<"LCM is the product of the numbers">>, evidence := [<<"4 x 6 = 24">>]},
+                 Choice([<<"4 x 6 = 24">>, <<"A 24 circled">>], <<"A">>, [<<"4 x 6 = 24">>])),
+    ?assertNot(witness_mark:chosen_option(<<"a) 3 x 4 = 12">>, <<"A">>)),
+    ?assertNot(witness_mark:chosen_option(<<"A 24 circled">>, <<"24">>)).
+
 %% 31 Oct (judges' panel, an offline probe): a quote that a read line is only PART of kept the model's invented ending
 %% as "their own writing"; now a quote must be in a line read from the page, give or take a reading's small slips
 an_invented_ending_on_a_real_line_is_not_evidence_test() ->
