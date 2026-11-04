@@ -233,7 +233,7 @@ Where each Meta model works:
 - **What comes next (section 17):** a Mastery Plan on every question a learner fails anywhere in LoWisa (Study Kit
   practice, every test question in the phone and desktop apps, the desktop app's electronic exams), interactive
   experiments the learner can change and investigate, and a pilot in schools. It also lists the fixes that needed an
-  app release (shipped; the App Store's 1.10.5 is in Apple's review), the measurements still to run, and where to send us feedback: ten days were
+  app release (shipped on Google Play and the App Store), the measurements still to run, and where to send us feedback: ten days were
   not enough for everything, and we will keep improving.
 - **Names used here:** *Lo* is LoWisa's tutor. *Witness* is the code name of the marker (the `witness_*` modules) and of
   the optional desk-filming mode. Part of [LoWisa](https://lowisa.dev), for the Meta Global AI Developer Hackathon.
@@ -1006,8 +1006,8 @@ and `mark_my_paper` marked the 30-question physics paper live in 92 s for about 
 node demo/desk-server.js --replay        # then open http://localhost:4747
 ```
 
-**Live, with your own phone (works today: LoWisa 1.10.5 on Google Play, 1.10.4 on the App Store, where 1.10.5 is in
-Apple's review; desktop 0.9.34 on Windows, macOS and Linux; checked against both stores and the desktop download feed
+**Live, with your own phone (works today: LoWisa 1.10.5 on Google Play and the App Store
+(Apple released it 4 Nov, 21:37 UTC); desktop 0.9.34 on Windows, macOS and Linux; checked against both stores and the desktop download feed
 on 5 Nov).** During judging, From
 Exam to Mastery is open to every LoWisa account; nothing needs a sign-up form.
 1. Install **LoWisa** on a phone and the **LoWisa desktop app** from [lowisa.dev](https://lowisa.dev). Link them once:
@@ -1247,7 +1247,7 @@ against every trick ([first run](harness/heldout/results/planted-3-runs.json),
 - A desk video is deleted as soon as it is marked.
 - **Faces in a desk video (desk filming is the optional way in; photographing the paper, the main way, films no one).**
   On Android, a face or a person the camera caught beside the page is covered on the phone before the video leaves
-  it. **It now fails closed** (LoWisa 1.10.5: Google Play since 4 Nov; the App Store once Apple approves it, see
+  it. **It now fails closed** (LoWisa 1.10.5: Google Play and the App Store since 4 Nov, see
   [Future plans](#17-future-plans-after-the-hackathon)): a video whose
   look for faces failed is never sent, and a phone that cannot cover faces (iPhone today) does not offer desk filming;
   that student's paper is photographed instead. An older app (1.10.4) still offers filming, but
@@ -1370,7 +1370,7 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
   gave the same kind of outline, one level of three lessons on the student's idea, and a tampered "write my history
   essay" was refused every time: [`harness/design-layout/`](harness/design-layout/README.md)); plain-code rules before the model guard; $25 a day across all accounts, reserved before each call and never passed since vb1104n; and
   every row and file scheduled for deletion at 180 days (rows written before the release were given their date too). The marking
-  code did not change. The phone's face-covering fix shipped in 1.10.5 (Google Play 4 Nov; the App Store: in Apple's review; 17.1).
+  code did not change. The phone's face-covering fix shipped in 1.10.5 (Google Play and the App Store, 4 Nov; 17.1).
 - **After the fourth independent audit, live since edge vb1104p (4 Nov):** phone apps before 1.10.5 can no longer send a
   desk video (they photograph instead); each money hold is settled by its own id, failures
   counted at their whole hold; a level's own calls never write the exam answer (48 of 48 attacks held); one click
@@ -1381,7 +1381,7 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
   and a look that cannot cover the whole video refuses it. A separate holding area for uploads is not built (17.2a).
 - **After the final follow-up audit, live since edge vb1104r (4 Nov):** the server looks for faces in every desk video
   itself (SAM 3.1) and deletes a video with one unmarked, keeping nothing from it; the app's statement no longer decides
-  (section 13). Phone 1.10.5 is on Google Play and in Apple's review; desktop 0.9.34 is released (17.1).
+  (section 13). Phone 1.10.5 is on Google Play and the App Store; desktop 0.9.34 is released (17.1).
 - **Muse Spark Open has run on partner inference, with few runs:** 9 of 12 completed. Of the 3 that did not, 2 passed
   the old 5-minute limit per call on the long four-photo maths paper, and 1 reply was not a marking; the 3 runs since
   the limit went to 10 minutes all completed (`harness/open/`). It has not been switched on for the live edge.
@@ -1395,21 +1395,20 @@ mastering it.** The plans below take it there, onto features LoWisa already has,
 exists rather than starting again.
 
 **Ten days were not enough to do everything we want, and we say so plainly.** The fixes that needed an app release
-have shipped, except on the App Store, where phone 1.10.5 is in Apple's review (17.1); some measurements are still to
+have shipped (17.1); some measurements are still to
 run (17.2). We are committed to
 continuous improvement, and we would value the judges' feedback on anything we have missed (17.7): whatever it is, we
 will fix it as part of that work.
 
-### 17.1 Fixes that needed an app release: shipped (App Store in review)
+### 17.1 Fixes that needed an app release: shipped
 
 These were done and tested in this repository, and needed a new app release to reach users, because a store app
 cannot change until then. As of 5 Nov: **phone 1.10.5 is on Google Play** (published 4 Nov; Android phones on 1.10.4
-are offered the update), **in Apple's review for the App Store** (submitted 4 Nov; iPhones stay on 1.10.4 until Apple
-approves it), and **desktop 0.9.34 is released** on Windows, macOS and Linux (4 Nov).
+are offered the update), **on the App Store** (Apple released it 4 Nov, 21:37 UTC), and **desktop 0.9.34 is released** on Windows, macOS and Linux (4 Nov).
 
 | Fix | Where it is now | Reaches users |
 |---|---|---|
-| **The app sends a desk video only after its face look ran.** A video is sent only when the phone's face look answers, explicitly, that it ran to the end (`faces: "checked"`); a failed look, an empty or unclear answer, or a phone with no look at all (iPhone today) sends nothing, and the student is asked to have the paper photographed instead. A phone that cannot cover faces no longer offers desk filming. On a long video (over 25 minutes), a face that stays in view is now covered all the way through (the cover grows with the gap between looks). Found by three independent audits on 4 Nov ([what was checked in the app's build](evidence/app-validation/phone-and-desk-2026-11-04.md)) | `phone/witness/safeVideo.ts` (the rule, tested on its own in this repository's CI), `WitnessScreen.tsx` (`smaller`, `canCoverFaces`); the Android face look in LoWisa's app; tested (`phone/__tests__/`). A safeguard with a photograph fallback, not a guarantee: the look runs on the phone, so a modified app could skip it; **since edge vb1104r the server looks for faces itself** and deletes a video with one unmarked (section 13) | **LoWisa 1.10.5: on Google Play since 4 Nov** (its store build was checked on a device against the live server first, [live checks 7](evidence/live-checks/README.md)); **App Store: in Apple's review** (submitted 4 Nov; the iPhone build was checked on Xcode 27.1's simulator: no desk-filming card, photograph the paper) |
+| **The app sends a desk video only after its face look ran.** A video is sent only when the phone's face look answers, explicitly, that it ran to the end (`faces: "checked"`); a failed look, an empty or unclear answer, or a phone with no look at all (iPhone today) sends nothing, and the student is asked to have the paper photographed instead. A phone that cannot cover faces no longer offers desk filming. On a long video (over 25 minutes), a face that stays in view is now covered all the way through (the cover grows with the gap between looks). Found by three independent audits on 4 Nov ([what was checked in the app's build](evidence/app-validation/phone-and-desk-2026-11-04.md)) | `phone/witness/safeVideo.ts` (the rule, tested on its own in this repository's CI), `WitnessScreen.tsx` (`smaller`, `canCoverFaces`); the Android face look in LoWisa's app; tested (`phone/__tests__/`). A safeguard with a photograph fallback, not a guarantee: the look runs on the phone, so a modified app could skip it; **since edge vb1104r the server looks for faces itself** and deletes a video with one unmarked (section 13) | **LoWisa 1.10.5: on Google Play since 4 Nov** (its store build was checked on a device against the live server first, [live checks 7](evidence/live-checks/README.md)); **App Store: released 4 Nov, 21:37 UTC** (the iPhone build was checked on Xcode 27.1's simulator first: no desk-filming card, photograph the paper) |
 | **The Exam Desk's one-click button says what the server now enforces.** It takes only the marks called right and 0.95 sure or more (the server's line), says "sure is not proof", and counts what was left to check; an unreadable photographed paper is to be photographed again, not filmed again; a video deleted for a face says so; the desk says whether the marks were judged against the teacher's mark scheme or the model's own key. The desk's six-second clips also play now (the desktop app's content rules had blocked them) | `desk/witness-desk.js` (`acceptAt`, `countNot`, `judgedAgainst`), synced into the desktop app. Since edge vb1105a the server sends a no-scheme exam a line no mark reaches, so this desk shows no one-click row there | **LoWisa desktop 0.9.34, released 4 Nov** |
 
 **What protects students on any app version (live today):**

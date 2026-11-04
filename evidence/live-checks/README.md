@@ -96,7 +96,7 @@ Not forced on a device: a face look that fails on the phone (it then sends nothi
 The test exam was closed to joining afterwards.
 
 That build went to Google Play as 1.10.5 the same day (published 4 Nov). On iPhone, 1.10.5 was checked on Xcode
-27.1's simulator (the exam page offers "Photograph the papers" and no desk filming) and is in Apple's review.
+27.1's simulator (the exam page offers "Photograph the papers" and no desk filming) and Apple released it on the App Store the same day (21:37 UTC).
 
 ## 8. After edge vb1105a went live (21:30 UTC on 4 Nov, 5 Nov in Adelaide): the approved scheme and the stricter face look
 

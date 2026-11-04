@@ -62,9 +62,8 @@ change, in LoWisa's project: the phone's Witness tests 80 of 80, `tsc --noEmit` 
   the live server before it was sent: a desk video with a face was covered on the phone and marked; the same video sent
   raw by a script was refused by the server's own face look ([live checks 7](../live-checks/README.md)). Android phones
   on 1.10.4 are offered the update.
-- **Phone 1.10.5 in Apple's review for the App Store** (submitted 4 Nov). The iPhone build was checked on Xcode 27.1's
-  simulator: the exam page offers "Photograph the papers" and no desk filming. iPhones stay on 1.10.4 until Apple
-  approves it.
+- **Phone 1.10.5 on the App Store** (submitted 4 Nov, released by Apple 4 Nov, 21:37 UTC). The iPhone build was
+  checked on Xcode 27.1's simulator first: the exam page offers "Photograph the papers" and no desk filming.
 - **Desktop 0.9.34 released** (4 Nov, Windows, macOS and Linux), with the desk's one-click line, its wording, the
   face chip and the line saying what the marks were judged against.
 - **The server no longer relies on `faces: "checked"` alone:** since edge vb1104r it looks for faces in every desk
