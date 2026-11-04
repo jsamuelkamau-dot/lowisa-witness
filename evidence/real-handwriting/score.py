@@ -12,8 +12,9 @@ Where a file records it, each run also prints what happened to the answers Witne
 idea named to the student, and how many were held for Lo to ask first. Each set then prints the same counts by QUESTION
 over its runs (a question counted once, not once per run), with 95% intervals over questions.
 
-The teacher's work: for the latest code, each run also prints how many marks Muse Spark was sure of (confidence 0.9
-or more: the desk's "Accept all"), how many of those disagree with the teacher, and how many the teacher checks one by
+The teacher's work: for the latest code, each run also prints, for each one-click line (0.90 until 4 Nov, 0.95 since),
+how many marks one click accepts (called right and at least that sure), how many of those call a wrong answer right,
+and how many the teacher checks one by
 one. The latest code prints first; earlier code follows, labelled.
 """
 import json
@@ -75,19 +76,20 @@ def held(name, rows_by_subject):
     print(f'{"":44} not accepted {len(out)}: a wrong idea named {len(named)}, held for Lo to ask {len(asks)}')
 
 
-ACCEPT_ALL = 0.9  # witness_mark ?ACCEPT_ALL: marks at or above it join "Accept all" on the desk
+# 4 Nov (third audit): one click takes only marks Muse Spark called right ("mastered") at or above the line, as the
+# desk and the server do (witness_api:one_click/1); the line was 0.90 until 4 Nov and is 0.95 since. Both are printed.
+ACCEPT_LINES = (0.90, 0.95)
 
 
 def teacher_work(rows_by_subject):
     rows = [r for s in rows_by_subject for r in scored(rows_by_subject[s])]
     if not rows or 'confidence' not in rows[0]:
         return
-    sure = [r for r in rows if (r.get('confidence') or 0) >= ACCEPT_ALL]
-    wrong_right = sum(r['right'] and not r['teacher_right'] for r in sure)
-    right_wrong = sum((not r['right']) and r['teacher_right'] for r in sure)
-    print(f'{"":44} "Accept all" {len(sure)}/{len(rows)} (disagree with the teacher {wrong_right + right_wrong}: '
-          f'{wrong_right} marked right that the teacher marked wrong, {right_wrong} the other way); '
-          f'the teacher checks {len(rows) - len(sure)} one by one')
+    for line in ACCEPT_LINES:
+        sure = [r for r in rows if r.get('result') == 'mastered' and (r.get('confidence') or 0) >= line]
+        wrong_right = sum(r['right'] and not r['teacher_right'] for r in sure)
+        print(f'{"":44} one click at {line:.2f}: {len(sure)}/{len(rows)} accepted, {wrong_right} of them call a wrong answer '
+              f'right; the teacher checks {len(rows) - len(sure)} one by one')
 
 
 def by_question(name, runs):

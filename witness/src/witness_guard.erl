@@ -76,9 +76,23 @@ ask(Key, Text) ->
     {<<"self-harm">>, <<"\\b(kill (yourself|urself)|kys|suicide method|cut yourself|end your life|hang yourself)\\b">>},
     {<<"keep it secret">>, <<"\\b(don'?t tell (your )?(parents|mum|mom|dad|teacher)|our (little )?secret|keep this between us)\\b">>}]).
 
+%% 4 Nov (third audit: "test curriculum cases"): an online-safety lesson names exactly what grooming looks like ("never
+%% send a photo of yourself", "if an adult says 'don't tell your parents'"). For the two rules about contact and
+%% secrecy, a sentence that warns against it does not count; the same words said to the student still do.
+-define(WARNS, [<<"contact outside the app">>, <<"keep it secret">>]).
+-define(WARNING, <<"\\bnever\\b|\\bif (an? )?(adult|someone|anyone|stranger|person|people)\\b[^.!?]*\\b(says?|asks?|tells?)\\b|"
+                   "warning sign|red flag|trusted adult|without (a|your) parent|report (it|them)">>).
+
 screen(Text) ->
     T = iolist_to_binary(Text),
-    first([Why || {Why, Re} <- ?RULES, re:run(T, Re, [caseless, unicode]) =/= nomatch]).
+    first([Why || {Why, Re} <- ?RULES, caught(Why, Re, T)]).
+
+caught(Why, Re, T) ->
+    case lists:member(Why, ?WARNS) of
+        false -> re:run(T, Re, [caseless, unicode]) =/= nomatch;
+        true -> lists:any(fun(S) -> re:run(S, Re, [caseless, unicode]) =/= nomatch andalso re:run(S, ?WARNING, [caseless, unicode]) =:= nomatch end,
+                          re:split(T, <<"(?<=[.!?\\n])\\s+">>, [unicode]))
+    end.
 
 first([Why | _]) -> {unsafe, Why};
 first([]) -> ok.

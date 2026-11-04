@@ -39,3 +39,19 @@ test('the look is asked about the file itself', async () => {
   await safeVideo(big, async (uri: string) => { asked = uri; return {faces: 'checked', same: true}; });
   assert.equal(asked, big.uri);
 });
+
+// 4 Nov (third audit: "a passing test of safeVideo.ts doesn't show the app always invokes it, or that no other upload
+// path bypasses it"): every place the phone screen sends a video gets the file from smaller() (which applies safeVideo)
+// and stops when it is null. A new upload path that skips it fails here.
+test('every video upload in the phone screen goes through the face rule first', async () => {
+  const fs = await import('node:fs');
+  const src = fs.readFileSync(new URL('../witness/WitnessScreen.tsx', import.meta.url), 'utf8').split(/\r?\n/);
+  const uploads = src.map((l, i) => ({l, i})).filter(({l}) => /\bawait (sendClip|sendParts)\(/.test(l));
+  assert.ok(uploads.length >= 2, 'found the upload calls');
+  for (const {i} of uploads) {
+    const before = src.slice(Math.max(0, i - 45), i).join('\n');
+    assert.match(before, /=\s*await smaller\(/, 'line ' + (i + 1) + ': no smaller() before the upload');
+    assert.match(before, /if \(!file\)/, 'line ' + (i + 1) + ': no stop when smaller() gives nothing');
+  }
+  assert.match(src.join('\n'), /safeVideo\(file, n\.smallVideo\.bind\(n\)\)/, 'smaller() applies safeVideo');
+});

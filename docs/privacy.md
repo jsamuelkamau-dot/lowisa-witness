@@ -31,12 +31,17 @@ Every student-written text inside a prompt is wrapped as data, and every prompt 
 
 ## Deleting
 
-**Nothing is kept for good: 180 days at most** (4 Nov 2026, live on the edge from vb1104m). Every Witness row carries
+**Nothing is kept for good: scheduled for deletion at 180 days** (4 Nov 2026, live on the edge from vb1104m). Every Witness row carries
 its own deletion time, which the database acts on by itself (the learner table's time-to-live): a paper, a student's
 pointer to it and a self-check 180 days after they were made; an exam, its codes and its counters 180 days after they
 last changed. The pages, recordings, stills and drawn steps under `witness/` in storage go 180 days after they were
-made, by the bucket's own rule. Both hold for an account no one opens again. The database deletes within a few days of
-the time, not to the minute.
+made, by the bucket's own rule. Both hold for an account no one opens again.
+
+**Exactly when (third audit: "'180 days at most' is stronger than the guarantee").** Both stores delete by themselves,
+but not to the second: the database removes an expired row within a few days of its time, and storage acts on its
+rule once a day. So the guarantee is: scheduled at 180 days, physically removed within a few days after. From the next
+edge deploy (in this repository), a row past its deletion second is treated as gone for every read from that second,
+so nothing is ever shown or used after 180 days, even while the store has not yet removed it.
 
 **Checked on production, 4 Nov 2026 04:30 UTC** (second audit: "production verification needed"):
 - the learner table's time-to-live: `ENABLED`, on the attribute `ttl`;
@@ -56,10 +61,12 @@ A paper deleted while it is being marked stays deleted (`witness_api:done/8` wri
 - **Every route that calls a model has a ceiling a day for one account.** A whole class fits under it; a script does not.
 - **Each mastery level's design calls have a ceiling.** Those calls are only for the caller's own released level, and they carry the server's own first instruction to stay on that level's idea.
 - **Lo's live turns are read for safety before they reach a student** (`witness_guard`).
-- **A day's model spending has a dollar ceiling across all accounts, $25, never passed** (4 Nov; reservations live from
-  edge vb1104n): each call reserves the most a call of its kind costs before it starts, in the same write that checks
-  the ceiling, and the reservation becomes its real cost when it finishes. The call ceilings above count calls; this
-  one counts money.
+- **A day's model spending has a budget across all accounts, $25** (4 Nov; reservations live from edge vb1104n): each
+  call holds the most a call of its kind costs before it starts, in the same write that checks the budget, and the hold
+  becomes its real cost when it finishes. The call ceilings above count calls; this one counts money. **From the next
+  edge deploy (third audit):** holds are admitted only to $22.50, so the day passes $25 only if the calls running at
+  once cost $2.50 more than they held (each hold is above the largest real cost of its kind; every overrun is logged);
+  a hold not settled in 30 minutes expires; at most 500 calls hold money at once.
 - **Plain-code rules before any model** (4 Nov, live from edge vb1104m): a link, an email address, a phone number, a
   contact app or a meeting, and a short list of adult and self-harm words stop a reply before it reaches a student,
   in Lo's live turns and in a level's own text, with no model involved (`witness_guard:screen/1`).

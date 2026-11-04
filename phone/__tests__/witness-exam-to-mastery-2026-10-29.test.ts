@@ -52,7 +52,7 @@ describe('the papers one phone photographed', () => {
   const t = (extra: Partial<Taken>): Taken => ({id: 'x', status: 'marked', pages: 2, got: [1, 2], title: 'Maths', created_ms: 1, student: 'Amani Wanjiru',
     read: {name: 'Amani Wanjiru'}, name_match: 'read', ...extra});
   it('lists only the papers sent for this exam, by its code, when two exams share a title', () => {
-    const mine = t({id: 'a', title: 'Maths', code: 'DEMOJN'}), other = t({id: 'b', title: 'Maths', code: 'VVRAWN'});
+    const mine = t({id: 'a', title: 'Maths', code: 'DEMOJN'}), other = t({id: 'b', title: 'Maths', code: 'TESTJN'});
     expect(takenFor([mine, other], 'demojn', 'Maths').map(p => p.id)).toEqual(['a']);
     expect(takenFor([t({id: 'old', title: 'Maths'})], 'DEMOJN', 'Maths').map(p => p.id)).toEqual(['old']);   // an older server
   });

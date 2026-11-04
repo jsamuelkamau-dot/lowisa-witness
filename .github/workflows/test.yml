@@ -5,6 +5,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # every commit, for the history scan below
       - uses: erlef/setup-beam@v1
         with:
           otp-version: '27'
@@ -15,7 +17,14 @@ jobs:
         with:
           node-version: '24'
       - run: node --test phone/__tests__/safe-video.node.test.ts
-      - run: python3 scripts/secret_scan.py
+      # 4 Nov (third audit): every blob in every commit, and every picture, video and recording's metadata
+      - run: python3 scripts/secret_scan.py --history
+      # 4 Nov (third audit: "prove the judging path"): the recorded Exam Desk starts and answers as the README says
+      - run: |
+          node demo/desk-server.js --replay & sleep 2
+          curl -fsS http://localhost:4747/ > /dev/null
+          curl -fsS http://localhost:4747/api/witness/piles | grep -q '"ok":true'
+          test "$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: evil.example:4747' http://127.0.0.1:4747/)" = 403
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
       - run: python3 scripts/check_media.py
       - run: python3 scripts/check_links.py

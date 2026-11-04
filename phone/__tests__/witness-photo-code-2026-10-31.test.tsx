@@ -23,7 +23,7 @@ describe('photographing the papers', () => {
   beforeEach(() => {
     jest.spyOn(witness, 'taken').mockResolvedValue({ok: true, value: {papers: [
       {id: 'a', status: 'marked', pages: 2, got: [1, 2], title: 'Maths', code: 'DEMOJN', photo_code: 'DEMOPH', created_ms: 1, student: 'Leo Martins', read: {}, name_match: 'read'},
-      {id: 'b', status: 'marked', pages: 2, got: [1, 2], title: 'Maths', code: 'VVRAWN', photo_code: 'K2K2K2', created_ms: 1, student: 'Priya Nair', read: {}, name_match: 'read'},
+      {id: 'b', status: 'marked', pages: 2, got: [1, 2], title: 'Maths', code: 'TESTJN', photo_code: 'K2K2K2', created_ms: 1, student: 'Priya Nair', read: {}, name_match: 'read'},
     ]}} as never);
   });
   afterEach(() => jest.restoreAllMocks());

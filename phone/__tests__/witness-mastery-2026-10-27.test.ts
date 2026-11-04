@@ -48,7 +48,7 @@ describe('Witness mastery levels', () => {
   it('counts the teacher word: a question they marked not yet is to master', () => {
     expect(toMaster(paper).map(q => q.n)).toEqual([3, 4]);
     expect(Object.values(RESULT_WORDS).join(' ').toLowerCase()).not.toContain('fail');
-    expect(typedCode(' g43-teh0 ')).toBe('G43TEH');
+    expect(typedCode(' t3s-tab0 ')).toBe('T3STAB');
   });
 
   it('reads each lesson for the self-check', () => {

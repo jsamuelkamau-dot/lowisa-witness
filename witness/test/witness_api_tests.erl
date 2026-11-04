@@ -1286,28 +1286,98 @@ everything_is_deleted_by_the_store_after_180_days_test() ->
     ?assert(abs(witness_api:expires_s({code, <<"ABC123">>}, #{pile => <<"p">>}) - (Now + 180 * Day)) < 5),
     ?assert(abs(witness_api:expires_s({sitting, <<"s">>}, #{status => <<"uploading">>}) - (Now + 180 * Day)) < 5).
 
-%% 4 Nov (second audit: "not a strict maximum"): a call starts only if the most a call of its kind costs still fits under
-%% the day's ceiling, reserved in the same write that checks it; when it finishes, the reservation becomes its real cost
+%% 4 Nov (second and third audits): a call starts only if its hold fits under the day's ceiling less the $2.50 kept for
+%% overruns, held in the same write that checks it; when it finishes, the hold is released and its real cost kept
 a_call_starts_only_if_its_reservation_fits_test() ->
     setup(),
     Read = fun(U) -> r(<<"POST">>, [<<"pile">>, <<"read">>], #{<<"mime">> => <<"image/jpeg">>, <<"file">> => base64:encode(<<"jpegbytes">>)}, U) end,
     Slot = integer_to_binary(erlang:system_time(millisecond) div 86400000),
-    Usd = fun() -> {ok, #{n := N}} = load(<<"witness:all-accounts">>, {mark_cache, <<"usd:all-accounts">>}), N end,
-    %% $0.20 left: a read reserves $0.25, so it does not start, and nothing is reserved
-    ok = save(<<"witness:all-accounts">>, {mark_cache, <<"usd:all-accounts">>}, #{minute => Slot, n => 24800000, sitting => <<>>}),
+    Day = fun() -> {ok, R} = load(<<"witness:all-accounts">>, {mark_cache, <<"usd:all-accounts">>}), R end,
+    Set = fun(N, Holds) -> ok = save(<<"witness:all-accounts">>, {mark_cache, <<"usd:all-accounts">>}, #{minute => Slot, n => N, holds => Holds, sitting => <<>>}) end,
+    %% $0.10 left under $22.50: a read holds $0.25, so it does not start, and nothing is held
+    Set(22400000, []),
     ?assertMatch({429, #{code := <<"daily_limit">>}}, Read(<<"teacher">>)),
-    ?assertEqual(24800000, Usd()),
+    ?assertMatch(#{n := 22400000, holds := []}, Day()),
     ?assertNot(lists:keymember(read, 1, events())),
-    %% $0.50 left: it starts, and afterwards the day holds its real cost ($0.003), not the reservation
-    ok = save(<<"witness:all-accounts">>, {mark_cache, <<"usd:all-accounts">>}, #{minute => Slot, n => 24500000, sitting => <<>>}),
+    %% $0.50 left: it starts; afterwards the day keeps its real cost ($0.003) and no hold
+    Set(22000000, []),
     {200, _} = Read(<<"teacher">>),
-    ?assertEqual(24500000 + 3000, Usd()),
-    %% two reservations that together do not fit: the second does not start
-    ok = save(<<"witness:all-accounts">>, {mark_cache, <<"usd:all-accounts">>}, #{minute => Slot, n => 24600000, sitting => <<>>}),
-    ok = witness_api_reserve_probe(<<"read">>),
-    ?assertMatch({429, _}, Read(<<"other">>)).
+    ?assertMatch(#{n := 22003000, holds := []}, Day()),
+    %% a call still running holds its money: a second that would not fit beside it does not start
+    Now = erlang:system_time(millisecond),
+    Set(22100000, [{<<"read">>, Now, 250000}]),
+    ?assertMatch({429, _}, Read(<<"other">>)),
+    %% a hold older than 30 minutes (a call that failed) has expired, and no longer stops anyone
+    Set(22100000, [{<<"read">>, Now - 31 * 60000, 250000}]),
+    ?assertMatch({200, _}, Read(<<"other">>)),
+    ?assertMatch(#{n := 22103000, holds := []}, Day()).
 
-%% a reservation taken as a call that is still running would hold it (the read's own, made through the route above)
-witness_api_reserve_probe(Kind) ->
-    {ok, #{n := N} = R} = load(<<"witness:all-accounts">>, {mark_cache, <<"usd:all-accounts">>}),
-    ok = save(<<"witness:all-accounts">>, {mark_cache, <<"usd:all-accounts">>}, R#{n => N + (case Kind of <<"read">> -> 250000 end)}).
+%% 4 Nov (third audit): at most 500 calls hold money at once, however little each holds
+no_more_than_500_calls_hold_money_at_once_test() ->
+    setup(),
+    Slot = integer_to_binary(erlang:system_time(millisecond) div 86400000),
+    Now = erlang:system_time(millisecond),
+    ok = save(<<"witness:all-accounts">>, {mark_cache, <<"usd:all-accounts">>},
+              #{minute => Slot, n => 0, holds => [{<<"guard">>, Now, 1} || _ <- lists:seq(1, 500)], sitting => <<>>}),
+    ?assertMatch({429, _}, r(<<"POST">>, [<<"pile">>, <<"read">>], #{<<"mime">> => <<"image/jpeg">>, <<"file">> => base64:encode(<<"jpegbytes">>)}, <<"teacher">>)).
+
+%% 4 Nov (third audit: "test concurrent operations immediately below the threshold"): 40 reads at once with room for
+%% exactly 4 holds; the holds never pass the line, and exactly 4 start
+concurrent_calls_below_the_line_never_pass_it_test() ->
+    setup(),
+    Slot = integer_to_binary(erlang:system_time(millisecond) div 86400000),
+    ok = save(<<"witness:all-accounts">>, {mark_cache, <<"usd:all-accounts">>}, #{minute => Slot, n => 21500000, holds => [], sitting => <<>>}),
+    Me = self(),
+    [spawn(fun() -> Me ! {held, witness_api_reserve(<<"read">>)} end) || _ <- lists:seq(1, 40)],
+    Got = [receive {held, X} -> X after 10000 -> timeout end || _ <- lists:seq(1, 40)],
+    ?assertEqual(4, length([ok || ok <- Got])),
+    {ok, #{n := N, holds := Holds}} = load(<<"witness:all-accounts">>, {mark_cache, <<"usd:all-accounts">>}),
+    ?assert(N + lists:sum([X || {_, _, X} <- Holds]) =< 22500000).
+
+%% 4 Nov (third audit): a call that costs more than its hold is logged and still counted in full
+an_overrun_is_counted_in_full_test() ->
+    setup(),
+    ok = witness_api_reserve(<<"guard">>),
+    ok = witness_api_spend(<<"witness_guard">>, 0.05, <<"guard">>),
+    {ok, #{n := N, holds := H}} = load(<<"witness:all-accounts">>, {mark_cache, <<"usd:all-accounts">>}),
+    ?assertEqual({50000, []}, {N, H}).
+
+witness_api_reserve(Kind) -> witness_api:reserve_for_test(Kind, ?MODULE).
+witness_api_spend(Feature, Cost, Kind) -> witness_api:spend_for_test(Feature, Cost, Kind, ?MODULE).
+
+%% 4 Nov (third audit: "a confidence threshold is not proof of correctness"): one click accepts only a mark called right
+%% at 0.95 or more; a mark 0.90 to 0.95 sure, or one not called right, stays for the teacher to check, whatever the desk
+%% sends; the desk is told the line
+one_click_accepts_only_marks_at_the_line_test() ->
+    setup(),
+    {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Class">>, <<"preview">> => false}, <<"teacher">>),
+    persistent_term:put(witness_api_result, #{questions => [q(1, <<"mastered">>, 0.97), q(2, <<"mastered">>, 0.92), q(3, <<"not_yet">>, 0.99)],
+                                             pauses => [], lines => [], cost_usd => 0.0}),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"s1">>}, <<"s1">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"s1">>),
+    {200, #{done := 1, results := Res}} = r(<<"POST">>, [<<"pile">>, P, <<"bulk">>], #{<<"action">> => <<"accept">>,
+                                            <<"items">> => [#{<<"sitting">> => S, <<"n">> => N} || N <- [1, 2, 3]]}, <<"teacher">>),
+    ?assertEqual([<<"ok">>, <<"check_one_by_one">>, <<"check_one_by_one">>], [R || #{result := R} <- Res]),
+    {200, #{pile := #{accept_at := 0.95}}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>).
+
+%% 4 Nov (third audit: "school subjects legitimately discuss sensitive topics; test curriculum cases, not only attacks"):
+%% lessons in biology, health, online safety, history and psychology pass the plain-code screen; what grooming and
+%% contact look like, said TO a student, is still caught
+the_screen_lets_the_curriculum_through_test() ->
+    Lessons = [<<"In sexual reproduction, a sperm cell joins an egg cell to make a zygote.">>,
+               <<"During puberty the body changes: hormones such as oestrogen and testosterone rise.">>,
+               <<"Online safety: never send a photo of yourself to someone you only know online.">>,
+               <<"If an adult says 'don't tell your parents', that is a warning sign: tell a trusted adult at once.">>,
+               <<"Never meet up with someone you met online without a parent.">>,
+               <<"Drugs education: alcohol slows the nervous system, which is why drink driving kills.">>,
+               <<"The Holocaust killed six million Jewish people; historians study how propaganda made it possible.">>,
+               <<"Depression is a common illness; if you feel low for weeks, talk to a doctor or a school counsellor.">>,
+               <<"Some people self-harm when they are in distress; if you are worried, speak to a trusted adult.">>,
+               <<"A predator in a food chain hunts its prey.">>,
+               <<"The naked eye can see Venus at dusk.">>],
+    Harmful = [<<"Send me a photo of yourself and don't tell your parents.">>,
+               <<"Let's keep this between us. Message me on Snapchat.">>,
+               <<"What's your home address? We could meet up after school.">>,
+               <<"Here is a link: https://bit.ly/free-answers">>],
+    ?assertEqual([], [T || T <- Lessons, witness_guard:screen(T) =/= ok]),
+    ?assertEqual([], [T || T <- Harmful, witness_guard:screen(T) =:= ok]).

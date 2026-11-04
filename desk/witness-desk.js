@@ -294,9 +294,13 @@
         chip(it.result) + '<span class="wd-sub">' + Math.round((it.confidence || 0) * 100) + '% sure</span></div>';
     }).join('') || '<div class="wd-sub">Nothing left to review.</div>';
     // 31 Oct (judges' panel, the school leader: forty papers, one question at a time)
-    var sure = q.filter(function (it) { return it.result === 'mastered' && (it.confidence || 0) >= 0.9; });
-    if (sure.length) queue = '<div class="wd-row" style="cursor:default"><span class="wd-grow wd-sub">' + sure.length + ' marked mastered: two readings agree, 90% sure or more</span>' +
-      '<button class="wd-btn" data-act="acceptsure">Accept all ' + sure.length + '</button></div>' + queue;
+    // 4 Nov (third audit): one click takes only the marks the server's line allows (pile.accept_at), and says that being
+    // sure is not being right: on one real learner's papers a few sure marks still called a wrong answer right
+    var at = acceptAt();
+    var sure = q.filter(function (it) { return it.result === 'mastered' && (it.confidence || 0) >= at; });
+    if (sure.length) queue = '<div class="wd-row" style="cursor:default"><span class="wd-grow wd-sub">' + sure.length + ' marked mastered, ' + Math.round(at * 100) +
+      '% sure or more. Sure is not proof: look over a few before you accept them.</span>' +
+      '<button class="wd-btn" data-act="acceptsure">Accept these ' + sure.length + '</button></div>' + queue;
     var ready = (j.ready || []);
     var readyCard = ready.length ? '<div class="wd-card"><h3>Ready for Turned around: ' + ready.length + '</h3>' +
       '<div class="wd-sub">The level finished and your challenge answered right. Read each reason, untick any you are not sure of, then issue them together.</div>' +
@@ -388,13 +392,16 @@
   async function pileDo(path, body, done) {
     var id = S.pile && S.pile.pile && S.pile.pile.id; if (!id) return;
     var j = await api('POST', '/api/witness/pile/' + id + '/' + path, body);
-    if (j.ok) { say(done + (j.results ? countNot(j.results) : '')); } else { say(j.error || 'That did not go through. Try again.', 'err'); }
+    if (j.ok) { say(done + (typeof j.done === 'number' && path === 'bulk' ? ' ' + j.done + ' done.' : '') + (j.results ? countNot(j.results) : '')); } else { say(j.error || 'That did not go through. Try again.', 'err'); }
     await loadPile(id); return render();
   }
   function countNot(rs) {
-    var not = rs.filter(function (r) { return r.result !== 'ok'; }).length;
-    return not ? ' ' + not + ' could not yet (the level not finished, or already done).' : '';
+    var check = rs.filter(function (r) { return r.result === 'check_one_by_one'; }).length;
+    var not = rs.filter(function (r) { return r.result !== 'ok' && r.result !== 'check_one_by_one'; }).length;
+    return (check ? ' ' + check + ' left for you to check one by one.' : '') + (not ? ' ' + not + ' could not yet (the level not finished, or already done).' : '');
   }
+  // the server's line for one-click accepting (0.95 since 4 Nov); an older server sends none
+  function acceptAt() { var a = S.pile && S.pile.pile && S.pile.pile.accept_at; return typeof a === 'number' ? a : 0.95; }
   function groupOf(gi) { return ((((S.pile || {}).pile || {}).patterns || {}).patterns || [])[gi] || null; }
   async function groupDraft(gi) {
     var g = groupOf(gi); if (!g || !(g.items || []).length) return;
@@ -784,8 +791,9 @@
     if (act === 'unroster') return pileDo('roster/remove', { uid: t.getAttribute('data-uid') }, 'Taken off the class list.');
     if (act === 'joining') return pileDo('joining', { open: t.getAttribute('data-open') === '1' }, t.getAttribute('data-open') === '1' ? 'Joining is open again.' : 'Joining is closed.');
     if (act === 'acceptsure') {
-      var sure = ((S.pile && S.pile.queue) || []).filter(function (it) { return it.result === 'mastered' && (it.confidence || 0) >= 0.9; });
-      return pileDo('bulk', { action: 'accept', items: sure.map(function (it) { return { sitting: it.sitting, n: it.n }; }) }, 'Accepted ' + sure.length + ' as marked.');
+      var at = acceptAt();
+      var sure = ((S.pile && S.pile.queue) || []).filter(function (it) { return it.result === 'mastered' && (it.confidence || 0) >= at; });
+      return pileDo('bulk', { action: 'accept', items: sure.map(function (it) { return { sitting: it.sitting, n: it.n }; }) }, 'Accepted as marked.');
     }
     if (act === 'startall') {
       var ok = ((S.pile && S.pile.held) || []).filter(function (h) { return h.passed; });

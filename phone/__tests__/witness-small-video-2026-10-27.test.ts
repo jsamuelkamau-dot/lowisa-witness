@@ -94,8 +94,8 @@ describe('Witness sends a small desk video', () => {
     mods.LoWisaDocuments = {lastClip};
     await expect(keptRecording(storage, now)).resolves.toBeNull();
     expect(lastClip).not.toHaveBeenCalled();
-    storage.setItem(PENDING_KEY, JSON.stringify({code: 'GSNZP2', title: 'Fractions check', level: 'Year 7', name: 'Tom', at: now - 60_000}));
-    await expect(keptRecording(storage, now)).resolves.toEqual({pending: expect.objectContaining({code: 'GSNZP2', name: 'Tom'}), clip: big});
+    storage.setItem(PENDING_KEY, JSON.stringify({code: 'TESTPN', title: 'Fractions check', level: 'Year 7', name: 'Tom', at: now - 60_000}));
+    await expect(keptRecording(storage, now)).resolves.toEqual({pending: expect.objectContaining({code: 'TESTPN', name: 'Tom'}), clip: big});
     expect(lastClip).toHaveBeenCalledWith(now - 62_000);
     expect(readPending(storage, now + 7 * 3600 * 1000)).toBeNull();
     lastClip.mockResolvedValue(null);
