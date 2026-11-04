@@ -98,6 +98,21 @@ The test exam was closed to joining afterwards.
 That build went to Google Play as 1.10.5 the same day (published 4 Nov). On iPhone, 1.10.5 was checked on Xcode
 27.1's simulator (the exam page offers "Photograph the papers" and no desk filming) and is in Apple's review.
 
+## 8. After edge vb1105a went live (21:30 UTC on 4 Nov, 5 Nov in Adelaide): the approved scheme and the stricter face look
+
+The last review: one click on marks judged against a key nobody checked, and a face look that could miss a brief face
+or pass a video it had not read to the end. Checked on production as the probe account
+([`after-vb1105a.json`](after-vb1105a.json)); both test exams deleted afterwards.
+
+| Check | Result |
+|---|---|
+| The desk's "start from your own paper" with the unseen physics paper (no scheme on it) | 30 questions read; **a drafted scheme came back in the scheme box under the "check every line" line** |
+| The exam created with that box as the desk sends it (the teacher's approval) | the line removed, `scheme_drafted: true`, judged against the mark scheme, one-click line 0.95 |
+| An exam created with no scheme | judged against the model's key, one-click line 1.01: **no mark reaches it, so the desk shows no one-click row** |
+| A desk video with a face in view for a quarter of a second | **refused**: "A face could be seen in this video, so it was deleted without being marked..." |
+| The first 60% of a valid desk video (cut off) | **refused as unsure**: "This video could not be fully checked for faces, so it was deleted without being marked..." |
+| A face-free video (a writing hand, no exam paper in it) | **passed the face look and went to marking**, which said the paper could not be seen (it is not this exam's paper): the clear path runs end to end at five frames a second |
+
 ## Not checked live
 
 - A level built end to end on a phone (the probe has no phone): the level's design calls were checked against the

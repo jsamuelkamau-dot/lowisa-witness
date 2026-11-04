@@ -1,7 +1,7 @@
 #!/usr/bin/env escript
 %%! -pa _build/default/lib/witness/ebin
 %% face_look_e2e.escript <out.json> <clip>...: the server's own face look (witness_face:look/2, the code the edge runs:
-%% ffmpeg's two-frames-a-second copy, sent to Meta, SAM 3.1 "face", the copy deleted after) on each clip. ffmpeg must be
+%% ffmpeg's five-frames-a-second copy (two until 5 Nov), sent to Meta, SAM 3.1 "face", the copy deleted after) on each clip. ffmpeg must be
 %% on the PATH. Key from $MODEL_API_KEY, never printed. Also checks that Meta deletes an uploaded file when asked.
 main([Out | Clips]) ->
     {ok, _} = application:ensure_all_started([inets, ssl]),
@@ -20,4 +20,5 @@ main([Out | Clips]) ->
 
 row(C, {clear, Cost}, Ms) -> #{clip => list_to_binary(filename:basename(C)), look => clear, cost_usd => Cost, ms => Ms};
 row(C, {face, Cost, N}, Ms) -> #{clip => list_to_binary(filename:basename(C)), look => face, cost_usd => Cost, boxes => N, ms => Ms};
+row(C, {error, face_unsure}, Ms) -> #{clip => list_to_binary(filename:basename(C)), look => unsure, ms => Ms};
 row(C, E, Ms) -> #{clip => list_to_binary(filename:basename(C)), look => error, error => iolist_to_binary(io_lib:format("~0p", [E])), ms => Ms}.

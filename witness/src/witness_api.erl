@@ -78,6 +78,9 @@
 %% A marking Meta could not answer is tried again after these waits; then its clip is kept this long to mark again.
 -define(RETRY_WAITS, [5000, 30000]).
 -define(KEEP_MS, 86400000).
+%% 5 Nov: the server face look's frames a second (witness_face:fps/0, checked equal in the tests); a cached marking
+%% whose look sampled fewer is not reused
+-define(FACE_FPS, 5).
 %% Longer than every try and wait together (three marking calls of up to 5 minutes each, SAM's wait after them).
 -define(STUCK_MS, 2700000).
 %% A video over one part goes up in parts of this size (S3's least is 5 MB), when the phone asks for parts.
@@ -126,7 +129,7 @@ route(<<"GET">>, [<<"pile">>, Id], _B, Uid, Host) ->
             Gone = [S || {S, {ok, R}} <- All, lapsed(R)],
             Gone =:= [] orelse upd(Uid, {pile, Id}, fun({ok, X}) -> X#{sittings => maps:get(sittings, X, []) -- Gone}; (none) -> stop end, Host),
             Ss = [{S, settle(Uid, S, R, Host)} || {S, {ok, R}} <- All, not lists:member(S, Gone)],
-            {200, #{ok => true, pile => maps:without([sittings], P#{id => Id, accept_at => accept_at(), judged_against => key_of(P)}),
+            {200, #{ok => true, pile => maps:without([sittings], P#{id => Id, accept_at => accept_at_for(P), judged_against => key_of(P)}),
                     sittings => [summary(S, R) || {S, R} <- Ss], queue => queue(Ss), ready => ready(Ss), held => held(Ss)}}
     end;
 %% 30 Oct (judges' panel: nothing could be deleted). The teacher deletes a paper, or a whole exam: its rows, the
@@ -1486,6 +1489,7 @@ mine_view(Id, #{owner := O}, Host) ->
             V2 = case R of #{status := <<"failed">>, unreadable := _} -> V#{unseen => true};
                            %% 4 Nov: the server's face look saw a face, so the video was deleted unmarked
                            #{status := <<"failed">>, face_seen := true} -> V#{face_seen => true};
+                           #{status := <<"failed">>, face_unsure := true} -> V#{face_unsure => true};
                            _ -> V end,
             case maps:get(examiner, R, undefined) of undefined -> V2; Ex -> V2#{examiner => examiner_view(Ex, student)} end;
         none -> none
@@ -1572,7 +1576,9 @@ mark_video(Uid, Id, Key, Fps, Sitting, Row, Host) ->
     Cached = case Cache of none -> none; _ -> Host:load(Uid, Cache) end,
     {Outcome, UrlR} = case Cached of
         %% a marking made before the server's face look existed is not reused: the video is looked at first
-        {ok, #{result := #{face_look := clear} = Res0}} -> {{ok, Res0#{cost_usd => 0.0, cached => true}}, Host:get_url(Uid, Id)};
+        %% 5 Nov: nor one whose look sampled fewer frames a second than the look now does
+        {ok, #{result := #{face_look := clear, face_fps := LookFps} = Res0}} when is_number(LookFps), LookFps >= ?FACE_FPS ->
+            {{ok, Res0#{cost_usd => 0.0, cached => true}}, Host:get_url(Uid, Id)};
         _ -> attempt(Uid, Id, Key, Fps, Sitting, Host, retry_waits(Host))
     end,
     case {Cache, Cached, Outcome} of
@@ -1841,12 +1847,16 @@ attempt(Uid, Id, Key, Fps, Sitting, Host, Waits) ->
                                  end
                         end,
                         case Marked of
-                            {ok, R1} -> {ok, R1#{cost_usd => maps:get(cost_usd, R1, 0.0) + LookCost, face_look => clear}};
+                            {ok, R1} -> {ok, R1#{cost_usd => maps:get(cost_usd, R1, 0.0) + LookCost, face_look => clear, face_fps => witness_face:fps()}};
                             E1 -> E1
                         end;
                     {face, _LookCost, Boxes} ->
                         report(Host, <<"witness.face_seen">>, {Id, Boxes}),
                         {error, face_seen};
+                    %% 5 Nov: the look could not cover the whole video (witness_face): deleted unmarked, photographed instead
+                    {error, face_unsure} ->
+                        report(Host, <<"witness.face_unsure">>, Id),
+                        {error, face_unsure};
                     {error, _} = LookErr -> LookErr
                 end;
             E -> E
@@ -1912,7 +1922,7 @@ done(Uid, Id, Key, Sitting, Row, Outcome, Stills, Host) ->
         {error, Why} ->
             failed(maps:get(hold, Row, none), Host),
             %% a video that does not show the work is not marked (witness_mark ?UNSEEN_PAPER): it says what it saw
-            Seen = case Why of {unreadable, W} when is_binary(W) -> #{unreadable => W}; face_seen -> #{face_seen => true}; _ -> #{} end,
+            Seen = case Why of {unreadable, W} when is_binary(W) -> #{unreadable => W}; face_seen -> #{face_seen => true}; face_unsure -> #{face_unsure => true}; _ -> #{} end,
             case upd(Uid, {sitting, Id}, fun({ok, Now}) -> maps:merge((maps:remove(hold, Now))#{status => <<"failed">>, reason => iolist_to_binary(io_lib:format("~0p", [Why])), marked_ms => now_ms()}, Seen);
                                             (none) -> stop end, Host) of
                 stop -> ok;
@@ -1941,6 +1951,10 @@ view(Id, #{status := S, result := R} = Row) when S =:= <<"marked">>; S =:= <<"re
 view(Id, #{status := <<"failed">>, face_seen := true}) ->
     #{ok => true, id => Id, status => <<"failed">>, face_seen => true,
       error => <<"A face could be seen in this video, so it was deleted without being marked and nothing from it was kept. Photograph the finished paper instead.">>};
+%% 5 Nov: the face look could not cover the whole video, so it was deleted unmarked
+view(Id, #{status := <<"failed">>, face_unsure := true}) ->
+    #{ok => true, id => Id, status => <<"failed">>, face_unsure => true,
+      error => <<"This video could not be fully checked for faces, so it was deleted without being marked and nothing from it was kept. Photograph the finished paper instead.">>};
 %% a photographed paper is photographed again, not filmed (4 Nov: a photo sitting was told "in this video")
 view(Id, #{status := <<"failed">>, unreadable := W, kind := <<"photo">>}) ->
     #{ok => true, id => Id, status => <<"failed">>, unreadable => W,
@@ -1965,7 +1979,7 @@ summary(Id, Row) ->
     Qs = case Row of #{result := #{questions := L}} -> L; _ -> [] end,
     Marks = lists:sum([num(maps:get(teacher_marks, Q, maps:get(marks, Q, 0))) || Q <- Qs]),
     OutOf = lists:sum([num(maps:get(out_of, Q, 0)) || Q <- Qs]),
-    Seen = case Row of #{unreadable := W} -> #{unreadable => W}; #{kept := true} -> #{kept => true}; #{face_seen := true} -> #{face_seen => true}; _ -> #{} end,
+    Seen = case Row of #{unreadable := W} -> #{unreadable => W}; #{kept := true} -> #{kept => true}; #{face_seen := true} -> #{face_seen => true}; #{face_unsure := true} -> #{face_unsure => true}; _ -> #{} end,
     Read = case Row of #{result := #{student := St}} -> St; _ -> #{} end,
     Seen#{id => Id, student => maps:get(student, Row, <<>>), status => maps:get(status, Row), kind => maps:get(kind, Row, <<"video">>),
       read => Read, name_match => maps:get(name_match, Row, null), linked => maps:is_key(student_uid, Row),
@@ -2015,7 +2029,9 @@ sitting_of(B) ->
     Qs = [#{n => N, text => clean(maps:get(<<"text">>, Q, <<>>), 600), marks => marks(maps:get(<<"marks">>, Q, 1))}
           || Q <- lists:sublist(list(maps:get(<<"questions">>, B, [])), 60), is_map(Q),
              N <- [maps:get(<<"n">>, Q, 0)], is_integer(N)],
-    #{questions => Qs, scheme => clean(maps:get(<<"scheme">>, B, <<>>), 8000),
+    %% 5 Nov: a scheme Muse Spark drafted (witness_read) loses its "check this" line; the exam records it was drafted
+    {Scheme, Drafted} = witness_read:undraft(clean(maps:get(<<"scheme">>, B, <<>>), 8400)),
+    #{questions => Qs, scheme => string:slice(Scheme, 0, 8000), scheme_drafted => Drafted,
       level => case clean(maps:get(<<"level">>, B, <<>>), 60) of <<>> -> <<"any level">>; L -> L end,
       kind => case maps:get(<<"kind">>, B, <<"paper">>) of <<"practical">> -> <<"practical">>; _ -> <<"paper">> end,
       engine => case maps:get(<<"engine">>, B, <<"meta">>) of <<"open">> -> <<"open">>; _ -> <<"meta">> end}.
@@ -2088,14 +2104,20 @@ bulk_one(Uid, S, N, Step, Host) ->
 %% one click accepts them, and below it the teacher looks at each
 -define(ACCEPT_AT, 0.95).
 accept_at() -> ?ACCEPT_AT.
+%% what the desk is told the line is: above any confidence on an exam without a scheme, so the desk (0.9.34 and before)
+%% shows no one-click row there; the bulk route refuses those marks anyway (one_click/2)
+accept_at_for(Pile) -> case key_of(Pile) of <<"mark_scheme">> -> ?ACCEPT_AT; _ -> 1.01 end.
 %% 4 Nov (fourth audit, finding D: "model confidence is not a calibrated probability; flag conflicting readings,
 %% overwritten answers, ambiguous handwriting and questionable answer-key matches for review even above 0.95"): a mark
 %% with any of these risks is never accepted in one click, however sure the model was.
 %% 4 Nov (owner: "both options; if a marking scheme is not available it falls to the next"): with the teacher's mark
 %% scheme the marks are judged against it; without one, the same rule applies and the desk is told the marks were
 %% judged against the model's own key (key_of/1). The policy: docs/marking-policy.md.
+%% 5 Nov (owner, after the last review: "a model can be 99% sure and still wrong"; where no scheme is available the AI
+%% drafts one and the teacher approves it): one click only on an exam with a mark scheme, the teacher's own or a draft
+%% the teacher checked when creating the exam. Without one, every mark is checked one by one.
 one_click(Q, Pile) ->
-    maps:get(result, Q, <<>>) =:= <<"mastered">> andalso is_number(maps:get(confidence, Q, 0))
+    key_of(Pile) =:= <<"mark_scheme">> andalso maps:get(result, Q, <<>>) =:= <<"mastered">> andalso is_number(maps:get(confidence, Q, 0))
         andalso maps:get(confidence, Q, 0) >= ?ACCEPT_AT andalso risks(Q, Pile) =:= [].
 
 %% what the exam's marks were judged against: the teacher's mark scheme, or (none given) the model's own key

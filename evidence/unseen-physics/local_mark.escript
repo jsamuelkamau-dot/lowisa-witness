@@ -1,6 +1,6 @@
 #!/usr/bin/env escript
 %%! -pa C:/lw-witness/_build/default/lib/witness/ebin
-%% local_mark.escript <tag> <with_scheme: yes|no> : Daniel's physics paper marked by Muse Spark through the product's own
+%% local_mark.escript <tag> <with_scheme: yes|no|scheme file> : Daniel's physics paper marked by Muse Spark through the product's own
 %% code (witness_photo:mark/4) as it is NOW in C:\lw-witness, before any ship. MODEL_API_KEY is read, never printed.
 main([Tag, WithScheme]) ->
     {ok, _} = application:ensure_all_started([inets, ssl]),
@@ -8,7 +8,7 @@ main([Tag, WithScheme]) ->
     Here = "C:/lw-witness-scratch/film5/test",
     {ok, QJ} = file:read_file(Here ++ "/qs.json"),
     Qs = [#{n => N, text => T, marks => M} || #{<<"n">> := N, <<"text">> := T, <<"marks">> := M} <- json:decode(QJ)],
-    Scheme = case WithScheme of "yes" -> {ok, S} = file:read_file(Here ++ "/scheme.txt"), S; _ -> <<>> end,
+    Scheme = case WithScheme of "yes" -> {ok, S} = file:read_file(Here ++ "/scheme.txt"), S; "no" -> <<>>; F -> {ok, S} = file:read_file(F), S end,
     Sitting = #{level => <<"Form 3 (about 15 years old)">>, scheme => Scheme, questions => Qs},
     T0 = erlang:monotonic_time(millisecond),
     R = witness_photo:mark(Key, [#{n => 1, url => <<"C:/lw-witness-scratch/film5/out/paper_blank_fixed.jpg">>}], Sitting,

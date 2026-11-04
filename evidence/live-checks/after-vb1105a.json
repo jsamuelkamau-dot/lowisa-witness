@@ -1,0 +1,42 @@
+{
+ "read": {
+  "status": 200,
+  "questions": 30,
+  "drafted": true,
+  "starts_with_draft_line": true,
+  "scheme_chars": 2253
+ },
+ "drafted_exam": {
+  "create": 201,
+  "scheme_drafted": true,
+  "line_removed": true,
+  "judged_against": "mark_scheme",
+  "accept_at": 0.95
+ },
+ "no_scheme_exam": {
+  "judged_against": "model_key",
+  "accept_at": 1.01
+ },
+ "quarter_second_face": {
+  "status": "failed",
+  "face_seen": true,
+  "face_unsure": false,
+  "error": "A face could be seen in this video, so it was deleted without being marked and nothing from it was kept. Photograph the finished paper instead."
+ },
+ "cut_off_video": {
+  "status": "failed",
+  "face_seen": false,
+  "face_unsure": true,
+  "error": "This video could not be fully checked for faces, so it was deleted without being marked and nothing from it was kept. Photograph the finished paper instead."
+ },
+ "no_face_hand": {
+  "status": "failed",
+  "face_seen": false,
+  "face_unsure": false,
+  "error": "The paper couldn't be seen in this video, so nothing was marked. Ask for it to be filmed again."
+ },
+ "deleted": [
+  200,
+  200
+ ]
+}

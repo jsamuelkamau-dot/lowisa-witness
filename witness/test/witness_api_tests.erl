@@ -66,7 +66,8 @@ face_looker() ->
             face -> {face, 0.01, 2};
             {busy, N} when N > 0 -> persistent_term:put(witness_api_face, {busy, N - 1}), {error, {503, <<"busy">>}};
             {busy, 0} -> {clear, 0.0};
-            broken -> {error, {ffmpeg, 1, <<"bad">>}}
+            broken -> {error, {ffmpeg, 1, <<"bad">>}};
+            unsure -> {error, face_unsure}
         end
     end.
 
@@ -194,7 +195,7 @@ refusals_test() ->
 
 sitting_of_cleans_input_test() ->
     S = witness_api:sitting_of(#{<<"questions">> => [#{<<"n">> => 1, <<"marks">> => 999}, #{<<"n">> => <<"x">>}, 7], <<"scheme">> => 5}),
-    ?assertEqual(#{questions => [#{n => 1, text => <<>>, marks => 1}], scheme => <<>>, level => <<"any level">>, kind => <<"paper">>, engine => <<"meta">>}, S),
+    ?assertEqual(#{questions => [#{n => 1, text => <<>>, marks => 1}], scheme => <<>>, scheme_drafted => false, level => <<"any level">>, kind => <<"paper">>, engine => <<"meta">>}, S),
     ?assertMatch(#{kind := <<"practical">>}, witness_api:sitting_of(#{<<"kind">> => <<"practical">>})),
     ?assertMatch(#{kind := <<"paper">>}, witness_api:sitting_of(#{<<"kind">> => <<"anything">>})).
 
@@ -1490,12 +1491,14 @@ a_confident_mark_with_a_risk_is_never_one_click_test() ->
                   {<<"check_one_by_one">>, [<<"unclear_writing">>]}],
                  Ask(<<"Q1-6: 1/4">>, [Sure(1), Struck, (Sure(3))#{read_thrice => true}, (Sure(4))#{read_again_as => <<"1/2">>},
                                        (Sure(5))#{final_answer => <<"">>}, (Sure(6))#{final_answer => <<"1/[illegible]">>}])),
-    %% no mark scheme: the same rule (owner, 4 Nov: it falls to the next), and the desk is told what the marks were
-    %% judged against; a risk still holds a mark back
-    ?assertEqual([{<<"ok">>, []}, {<<"check_one_by_one">>, [<<"crossed_out">>]}], Ask(<<"">>, [Sure(1), Struck])),
+    %% no mark scheme: since 5 Nov (owner: the AI drafts a scheme, the teacher approves it) nothing is one click; every
+    %% mark is checked one by one, and the desk is told a line no mark reaches, so it shows no one-click row
+    ?assertEqual([{<<"check_one_by_one">>, []}, {<<"check_one_by_one">>, [<<"crossed_out">>]}], Ask(<<"">>, [Sure(1), Struck])),
     {201, #{id := P0}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"No scheme">>}, <<"teacher">>),
     {201, #{id := P1}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Scheme">>, <<"scheme">> => <<"Q1: 4">>}, <<"teacher">>),
     ?assertMatch({200, #{pile := #{judged_against := <<"model_key">>}}}, r(<<"GET">>, [<<"pile">>, P0], #{}, <<"teacher">>)),
+    ?assertMatch({200, #{pile := #{accept_at := 1.01}}}, r(<<"GET">>, [<<"pile">>, P0], #{}, <<"teacher">>)),
+    ?assertMatch({200, #{pile := #{accept_at := 0.95}}}, r(<<"GET">>, [<<"pile">>, P1], #{}, <<"teacher">>)),
     ?assertMatch({200, #{pile := #{judged_against := <<"mark_scheme">>}}}, r(<<"GET">>, [<<"pile">>, P1], #{}, <<"teacher">>)).
 
 %% 4 Nov (final audit: "the server still relies on the client's declaration"): the server looks for faces in every desk
@@ -1555,7 +1558,12 @@ a_cached_marking_from_before_the_face_look_is_not_reused_test() ->
     ?assertMatch({200, #{status := <<"failed">>, face_seen := true}}, r(<<"GET">>, [<<"sitting">>, S], #{}, <<"u1">>)),
     %% one made after a look is reused as before (the same key: so the row above was found and passed over)
     {201, #{id := S2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10}, <<"u1">>),
-    ok = save(<<"u1">>, Old, #{result => #{questions => [#{n => 1, result => <<"mastered">>}], pauses => [], lines => [], cost_usd => 0.08, face_look => clear}, at => 1, sitting => <<"x">>}),
+    %% 5 Nov: one whose look sampled two frames a second, before the look took five, is not reused either
+    {201, #{id := S3}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10}, <<"u1">>),
+    ok = save(<<"u1">>, Old, #{result => #{questions => [#{n => 1, result => <<"mastered">>}], pauses => [], lines => [], cost_usd => 0.08, face_look => clear, face_fps => 2}, at => 1, sitting => <<"x">>}),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S3, <<"mark">>], #{}, <<"u1">>),
+    ?assertMatch({200, #{status := <<"failed">>, face_seen := true}}, r(<<"GET">>, [<<"sitting">>, S3], #{}, <<"u1">>)),
+    ok = save(<<"u1">>, Old, #{result => #{questions => [#{n => 1, result => <<"mastered">>}], pauses => [], lines => [], cost_usd => 0.08, face_look => clear, face_fps => 5}, at => 1, sitting => <<"x">>}),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S2, <<"mark">>], #{}, <<"u1">>),
     ?assertMatch({200, #{status := <<"marked">>}}, r(<<"GET">>, [<<"sitting">>, S2], #{}, <<"u1">>)).
 
@@ -1578,10 +1586,47 @@ the_judges_tools_count_accept_all_by_the_servers_rule_test() ->
                  ?assertEqual(nomatch, binary:match(B, <<"confidence, Q, 0) >= 0.9">>))
              end || T <- Tools]
     end,
-    %% and the rule itself: mastered, at the line, no risk
+    %% and the rule itself: a mark scheme, mastered, at the line, no risk
     Q = #{result => <<"mastered">>, confidence => 0.96, final_answer => <<"1/4">>, steps => []},
-    ?assert(witness_api:one_click(Q, #{})),
-    ?assertNot(witness_api:one_click(Q#{confidence => 0.93}, #{})),
-    ?assertNot(witness_api:one_click(Q#{read_thrice => true}, #{})),
+    Exam = #{scheme => <<"Q1: 1/4">>},
+    ?assert(witness_api:one_click(Q, Exam)),
+    ?assertNot(witness_api:one_click(Q, #{})),
+    ?assertNot(witness_api:one_click(Q#{confidence => 0.93}, Exam)),
+    ?assertNot(witness_api:one_click(Q#{read_thrice => true}, Exam)),
     ?assertEqual(0.95, witness_api:accept_at()).
 
+
+%% 5 Nov (owner): the exam made from a drafted scheme the teacher checked is marked against it and records that it was
+%% drafted; the check-this line is not part of the scheme; one click is open there, and closed on an exam with none
+an_exam_from_a_checked_draft_scheme_is_marked_against_it_test() ->
+    setup(),
+    Draft = <<(witness_read:draft_line())/binary, "\nQ1: 1/4, 1 mark">>,
+    {201, #{id := P}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Drafted">>, <<"scheme">> => Draft}, <<"teacher">>),
+    {200, #{pile := Pile}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>),
+    ?assertMatch(#{scheme := <<"Q1: 1/4, 1 mark">>, scheme_drafted := true, judged_against := <<"mark_scheme">>, accept_at := 0.95}, Pile),
+    Q = #{result => <<"mastered">>, confidence => 0.99, final_answer => <<"1/4">>, steps => []},
+    ?assert(witness_api:one_click(Q, Pile)),
+    ?assertNot(witness_api:one_click(Q, #{scheme => <<>>})).
+
+%% 5 Nov (owner, after the last review: "refuse uncertain results"): a face look that could not cover the whole video
+%% deletes it unmarked, nothing kept, and the teacher is told to have the paper photographed
+a_face_look_that_cannot_cover_the_video_deletes_it_unmarked_test() ->
+    setup(), persistent_term:put(witness_api_face, unsure),
+    {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Class">>}, <<"teacher">>),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => Code, <<"student">> => <<"s1">>}, <<"stud">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"stud">>),
+    ?assertEqual([], [E || E = {marked, _, _, _} <- events()]),
+    ?assert(lists:any(fun({drop, _, Id}) -> Id =:= S; (_) -> false end, events())),
+    {200, V} = r(<<"GET">>, [<<"sitting">>, S], #{}, <<"teacher">>),
+    ?assertMatch(#{status := <<"failed">>, face_unsure := true}, V),
+    ?assertNotEqual(nomatch, binary:match(maps:get(error, V), <<"Photograph the finished paper">>)),
+    ?assertMatch({200, #{sittings := [#{face_unsure := true}]}}, r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>)),
+    ?assertMatch({200, #{papers := [#{status := <<"failed">>, face_unsure := true}]}}, r(<<"GET">>, [<<"mine">>], #{}, <<"stud">>)).
+
+%% the look covers every sampled frame or it is unsure; five frames a second, the same number the cache asks for
+the_face_look_covers_every_sampled_frame_test() ->
+    ?assertEqual(5, witness_face:fps()),
+    ?assert(witness_face:covered(150, 150)),
+    ?assertNot(witness_face:covered(149, 150)),
+    ?assertNot(witness_face:covered(0, 0)),
+    ?assertNot(witness_face:covered(undefined, 10)).

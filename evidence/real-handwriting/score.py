@@ -100,6 +100,10 @@ def teacher_work(rows_by_subject):
     wrong_right = sum(r['right'] and not r['teacher_right'] for r in sure)
     print(f'{"":44} at 0.95 with the risk checks (no mark scheme: judged against the model\'s key): {len(sure)}/{len(rows)} '
           f'accepted, {wrong_right} call a wrong answer right')
+    # 5 Nov (owner; edge vb1105a): one click only on an exam with a mark scheme the teacher approved (their own, or Muse
+    # Spark's draft they checked). These papers had none, so the teacher checks every mark: nothing wrong is accepted.
+    print(f'{"":44} since 5 Nov, no mark scheme so no one click: 0/{len(rows)} accepted, 0 call a wrong answer right; '
+          f'the teacher checks all {len(rows)}')
 
 
 def by_question(name, runs):

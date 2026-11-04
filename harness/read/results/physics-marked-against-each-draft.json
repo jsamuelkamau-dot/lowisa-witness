@@ -1,0 +1,570 @@
+{
+ "paper": "evidence/unseen-physics/paper.jpg",
+ "code": "library as committed with this file (witness_photo:mark/4 via evidence/unseen-physics/local_mark.escript)",
+ "runs": [
+  {
+   "tag": "D1",
+   "scheme": "draft run 1",
+   "marking_seconds": 116.782,
+   "cost_usd": 0.061938,
+   "questions": [
+    {
+     "n": 1,
+     "result": "not_yet",
+     "confidence": 0.95,
+     "final_answer": "Joules"
+    },
+    {
+     "n": 2,
+     "result": "not_yet",
+     "confidence": 0.95,
+     "final_answer": "Magnetic force"
+    },
+    {
+     "n": 3,
+     "result": "mastered",
+     "confidence": 1,
+     "final_answer": "60 ÷ 4 = 15 m/s"
+    },
+    {
+     "n": 4,
+     "result": "not_yet",
+     "confidence": 0.95,
+     "final_answer": "Gravity"
+    },
+    {
+     "n": 5,
+     "result": "part_way",
+     "confidence": 0.9,
+     "final_answer": "Moving in a straight line"
+    },
+    {
+     "n": 6,
+     "result": "not_yet",
+     "confidence": 0.95,
+     "final_answer": "a = 20 ÷ 5 = 2"
+    },
+    {
+     "n": 7,
+     "result": "part_way",
+     "confidence": 0.9,
+     "final_answer": "Energy cannot be created."
+    },
+    {
+     "n": 8,
+     "result": "not_yet",
+     "confidence": 0.95,
+     "final_answer": "Nuclear"
+    },
+    {
+     "n": 9,
+     "result": "not_yet",
+     "confidence": 0.95,
+     "final_answer": "Ampere"
+    },
+    {
+     "n": 10,
+     "result": "not_yet",
+     "confidence": 0.9,
+     "final_answer": "It gets smaller."
+    },
+    {
+     "n": 11,
+     "result": "not_yet",
+     "confidence": 0.92,
+     "final_answer": "It attracts all metals."
+    },
+    {
+     "n": 12,
+     "result": "not_yet",
+     "confidence": 0.9,
+     "final_answer": "Heat it up."
+    },
+    {
+     "n": 13,
+     "result": "not_yet",
+     "confidence": 0.95,
+     "final_answer": "Conduction"
+    },
+    {
+     "n": 14,
+     "result": "not_yet",
+     "confidence": 0.95,
+     "final_answer": "Melting"
+    },
+    {
+     "n": 15,
+     "result": "not_yet",
+     "confidence": 0.93,
+     "final_answer": "Angle of incidence is bigger than angle of reflection."
+    },
+    {
+     "n": 16,
+     "result": "not_yet",
+     "confidence": 0.95,
+     "final_answer": "Transverse wave"
+    },
+    {
+     "n": 17,
+     "result": "mastered",
+     "confidence": 1,
+     "final_answer": "20 Hz - 20 000 Hz"
+    },
+    {
+     "n": 18,
+     "result": "not_yet",
+     "confidence": 0.95,
+     "final_answer": "It can travel in a vacuum."
+    },
+    {
+     "n": 19,
+     "result": "mastered",
+     "confidence": 1,
+     "final_answer": "ρ = 200 ÷ 50 = 4 g/cm³"
+    },
+    {
+     "n": 20,
+     "result": "not_yet",
+     "confidence": 0.95,
+     "final_answer": "P = F x A"
+    },
+    {
+     "n": 21,
+     "result": "not_yet",
+     "confidence": 0.93,
+     "final_answer": "P = 100 x 0.5 = 50 Pa"
+    },
+    {
+     "n": 22,
+     "result": "not_yet",
+     "confidence": 0.9,
+     "final_answer": "N/m"
+    },
+    {
+     "n": 23,
+     "result": "not_yet",
+     "confidence": 0.9,
+     "final_answer": "There is less oxygen higher up."
+    },
+    {
+     "n": 24,
+     "result": "not_yet",
+     "confidence": 0.92,
+     "final_answer": "The ship floats because it is very light and the nail sinks because it is heavier. Heavy objects sink and light objects float."
+    },
+    {
+     "n": 25,
+     "result": "not_yet",
+     "confidence": 0.95,
+     "final_answer": "kg"
+    },
+    {
+     "n": 26,
+     "result": "part_way",
+     "confidence": 0.95,
+     "final_answer": "W = 10 x 10 = 100 kg"
+    },
+    {
+     "n": 27,
+     "result": "not_yet",
+     "confidence": 0.9,
+     "final_answer": "The fastest speed at the start."
+    },
+    {
+     "n": 28,
+     "result": "mastered",
+     "confidence": 0.95,
+     "final_answer": "To cook food."
+    },
+    {
+     "n": 29,
+     "result": "mastered",
+     "confidence": 0.9,
+     "final_answer": "300 000 km/s"
+    },
+    {
+     "n": 30,
+     "result": "mastered",
+     "confidence": 1,
+     "final_answer": "Telescope"
+    }
+   ]
+  },
+  {
+   "tag": "D2",
+   "scheme": "draft run 2",
+   "marking_seconds": 128.847,
+   "cost_usd": 0.06243475,
+   "questions": [
+    {
+     "n": 1,
+     "result": "not_yet",
+     "confidence": 0.98,
+     "final_answer": "Joules"
+    },
+    {
+     "n": 2,
+     "result": "not_yet",
+     "confidence": 0.97,
+     "final_answer": "Magnetic force"
+    },
+    {
+     "n": 3,
+     "result": "mastered",
+     "confidence": 0.99,
+     "final_answer": "60 ÷ 4 = 15 m/s"
+    },
+    {
+     "n": 4,
+     "result": "not_yet",
+     "confidence": 0.98,
+     "final_answer": "Gravity"
+    },
+    {
+     "n": 5,
+     "result": "part_way",
+     "confidence": 0.95,
+     "final_answer": "Moving in a straight line"
+    },
+    {
+     "n": 6,
+     "result": "part_way",
+     "confidence": 0.98,
+     "final_answer": "a = 20 ÷ 5 = 2"
+    },
+    {
+     "n": 7,
+     "result": "part_way",
+     "confidence": 0.96,
+     "final_answer": "Energy cannot be created."
+    },
+    {
+     "n": 8,
+     "result": "not_yet",
+     "confidence": 0.98,
+     "final_answer": "Nuclear"
+    },
+    {
+     "n": 9,
+     "result": "not_yet",
+     "confidence": 0.98,
+     "final_answer": "Ampere"
+    },
+    {
+     "n": 10,
+     "result": "not_yet",
+     "confidence": 0.95,
+     "final_answer": "It gets smaller."
+    },
+    {
+     "n": 11,
+     "result": "not_yet",
+     "confidence": 0.97,
+     "final_answer": "It attracts all metals."
+    },
+    {
+     "n": 12,
+     "result": "not_yet",
+     "confidence": 0.97,
+     "final_answer": "Heat it up."
+    },
+    {
+     "n": 13,
+     "result": "not_yet",
+     "confidence": 0.98,
+     "final_answer": "Conduction"
+    },
+    {
+     "n": 14,
+     "result": "not_yet",
+     "confidence": 0.98,
+     "final_answer": "Melting"
+    },
+    {
+     "n": 15,
+     "result": "not_yet",
+     "confidence": 0.97,
+     "final_answer": "Angle of incidence is bigger than angle of reflection."
+    },
+    {
+     "n": 16,
+     "result": "not_yet",
+     "confidence": 0.98,
+     "final_answer": "Transverse wave"
+    },
+    {
+     "n": 17,
+     "result": "mastered",
+     "confidence": 0.99,
+     "final_answer": "20 Hz - 20 000 Hz"
+    },
+    {
+     "n": 18,
+     "result": "not_yet",
+     "confidence": 0.97,
+     "final_answer": "It can travel in a vacuum."
+    },
+    {
+     "n": 19,
+     "result": "mastered",
+     "confidence": 0.99,
+     "final_answer": "ρ = 200 ÷ 50 = 4 g/cm³"
+    },
+    {
+     "n": 20,
+     "result": "not_yet",
+     "confidence": 0.98,
+     "final_answer": "P = F × A"
+    },
+    {
+     "n": 21,
+     "result": "not_yet",
+     "confidence": 0.98,
+     "final_answer": "P = 100 × 0.5 = 50 Pa"
+    },
+    {
+     "n": 22,
+     "result": "part_way",
+     "confidence": 0.93,
+     "final_answer": "N/m"
+    },
+    {
+     "n": 23,
+     "result": "not_yet",
+     "confidence": 0.96,
+     "final_answer": "There is less oxygen higher up."
+    },
+    {
+     "n": 24,
+     "result": "not_yet",
+     "confidence": 0.97,
+     "final_answer": "The ship floats because it is very light and the nail sinks because it is heavier. Heavy objects sink and light objects float."
+    },
+    {
+     "n": 25,
+     "result": "not_yet",
+     "confidence": 0.98,
+     "final_answer": "kg"
+    },
+    {
+     "n": 26,
+     "result": "part_way",
+     "confidence": 0.97,
+     "final_answer": "W = 10 × 10 = 100 kg"
+    },
+    {
+     "n": 27,
+     "result": "not_yet",
+     "confidence": 0.96,
+     "final_answer": "The fastest speed at the start."
+    },
+    {
+     "n": 28,
+     "result": "mastered",
+     "confidence": 0.98,
+     "final_answer": "To cook food."
+    },
+    {
+     "n": 29,
+     "result": "mastered",
+     "confidence": 0.98,
+     "final_answer": "300 000 km/s"
+    },
+    {
+     "n": 30,
+     "result": "mastered",
+     "confidence": 0.99,
+     "final_answer": "Telescope"
+    }
+   ]
+  },
+  {
+   "tag": "D3",
+   "scheme": "draft run 3",
+   "marking_seconds": 116.588,
+   "cost_usd": 0.06432675,
+   "questions": [
+    {
+     "n": 1,
+     "result": "not_yet",
+     "confidence": 0.95,
+     "final_answer": "Joules"
+    },
+    {
+     "n": 2,
+     "result": "not_yet",
+     "confidence": 0.95,
+     "final_answer": "Magnetic force"
+    },
+    {
+     "n": 3,
+     "result": "mastered",
+     "confidence": 0.99,
+     "final_answer": "60 ÷ 4 = 15 m/s"
+    },
+    {
+     "n": 4,
+     "result": "not_yet",
+     "confidence": 0.95,
+     "final_answer": "Gravity"
+    },
+    {
+     "n": 5,
+     "result": "part_way",
+     "confidence": 0.9,
+     "final_answer": "Moving in a straight line"
+    },
+    {
+     "n": 6,
+     "result": "not_yet",
+     "confidence": 0.95,
+     "final_answer": "a = 20 ÷ 5 = 2"
+    },
+    {
+     "n": 7,
+     "result": "part_way",
+     "confidence": 0.92,
+     "final_answer": "Energy cannot be created."
+    },
+    {
+     "n": 8,
+     "result": "not_yet",
+     "confidence": 0.95,
+     "final_answer": "Nuclear"
+    },
+    {
+     "n": 9,
+     "result": "not_yet",
+     "confidence": 0.95,
+     "final_answer": "Ampere"
+    },
+    {
+     "n": 10,
+     "result": "not_yet",
+     "confidence": 0.92,
+     "final_answer": "It gets smaller."
+    },
+    {
+     "n": 11,
+     "result": "not_yet",
+     "confidence": 0.93,
+     "final_answer": "It attracts all metals."
+    },
+    {
+     "n": 12,
+     "result": "not_yet",
+     "confidence": 0.93,
+     "final_answer": "Heat it up."
+    },
+    {
+     "n": 13,
+     "result": "not_yet",
+     "confidence": 0.94,
+     "final_answer": "Conduction"
+    },
+    {
+     "n": 14,
+     "result": "not_yet",
+     "confidence": 0.94,
+     "final_answer": "Melting"
+    },
+    {
+     "n": 15,
+     "result": "not_yet",
+     "confidence": 0.93,
+     "final_answer": "Angle of incidence is bigger than angle of reflection."
+    },
+    {
+     "n": 16,
+     "result": "not_yet",
+     "confidence": 0.94,
+     "final_answer": "Transverse wave"
+    },
+    {
+     "n": 17,
+     "result": "mastered",
+     "confidence": 0.99,
+     "final_answer": "20 Hz - 20 000 Hz"
+    },
+    {
+     "n": 18,
+     "result": "not_yet",
+     "confidence": 0.94,
+     "final_answer": "It can travel in a vacuum."
+    },
+    {
+     "n": 19,
+     "result": "mastered",
+     "confidence": 0.99,
+     "final_answer": "ρ = 200 ÷ 50 = 4 g/cm³"
+    },
+    {
+     "n": 20,
+     "result": "not_yet",
+     "confidence": 0.96,
+     "final_answer": "P = F x A"
+    },
+    {
+     "n": 21,
+     "result": "not_yet",
+     "confidence": 0.95,
+     "final_answer": "P = 100 x 0.5 = 50 Pa"
+    },
+    {
+     "n": 22,
+     "result": "not_yet",
+     "confidence": 0.9,
+     "final_answer": "N/m"
+    },
+    {
+     "n": 23,
+     "result": "not_yet",
+     "confidence": 0.92,
+     "final_answer": "There is less oxygen higher up."
+    },
+    {
+     "n": 24,
+     "result": "not_yet",
+     "confidence": 0.94,
+     "final_answer": "The ship floats because it is very light and the nail sinks because it is heavier. Heavy objects sink and light objects float."
+    },
+    {
+     "n": 25,
+     "result": "not_yet",
+     "confidence": 0.94,
+     "final_answer": "kg"
+    },
+    {
+     "n": 26,
+     "result": "part_way",
+     "confidence": 0.96,
+     "final_answer": "W = 10 x 10 = 100 kg"
+    },
+    {
+     "n": 27,
+     "result": "not_yet",
+     "confidence": 0.93,
+     "final_answer": "The fastest speed at the start."
+    },
+    {
+     "n": 28,
+     "result": "mastered",
+     "confidence": 0.97,
+     "final_answer": "To cook food."
+    },
+    {
+     "n": 29,
+     "result": "mastered",
+     "confidence": 0.98,
+     "final_answer": "300 000 km/s"
+    },
+    {
+     "n": 30,
+     "result": "mastered",
+     "confidence": 0.99,
+     "final_answer": "Telescope"
+    }
+   ]
+  }
+ ]
+}

@@ -23,8 +23,9 @@ chatbot: the learner is never handed an answer.
 - **An online-safety lesson is taught**, not blocked. A false stop the run found ("they might say 'don't tell your
   parents'") was fixed the same day.
 - **An unreadable photo is never marked**: both came back "photograph it again", with nothing marked.
-- **One click accepts only marks at least 0.95 sure**, the server's money holds settle, and expired rows read as gone.
-  What one click takes, with and without a mark scheme: [`docs/marking-policy.md`](docs/marking-policy.md).
+- **One click accepts only marks at least 0.95 sure, and only on an exam with a mark scheme the teacher approved**
+  (since edge vb1105a: where the paper has none, Muse Spark drafts one for the teacher to check before the exam is
+  made), the server's money holds settle, and expired rows read as gone. What one click takes: [`docs/marking-policy.md`](docs/marking-policy.md).
 - **20 of 20 of Lo's turns fired together on one teacher's wallet were paid** (after two fixes the live checks found).
 
 Details are in [`evidence/live-checks/`](evidence/live-checks/README.md).
@@ -34,7 +35,7 @@ Details are in [`evidence/live-checks/`](evidence/live-checks/README.md).
 | What | Version |
 |---|---|
 | Code the measurements ran on | tag `v1.0.1-code` (three runs of every real set); earlier runs in [`harness/PROVENANCE.md`](harness/PROVENANCE.md) |
-| Production server (Witness library) | `v1.0.2-code` plus the audit fixes in README section 13, edge vb1104r (live 4 Nov; each edge release is listed there) |
+| Production server (Witness library) | `v1.0.2-code` plus the audit fixes in README section 13, edge vb1105a (live 5 Nov, 21:30 UTC on 4 Nov: the approved mark scheme and the stricter face look; each edge release is listed there) |
 | Phone apps in the stores | **Google Play: LoWisa 1.10.5** (published 4 Nov), with the phone fixes in README 17.1; Android phones on 1.10.4 are offered the update. **App Store: LoWisa 1.10.4**; 1.10.5 is in Apple's review (submitted 4 Nov) |
 | Desktop app | **LoWisa desktop 0.9.34** (released 4 Nov, Windows, macOS and Linux), with the desk's fixes in README 17.1 |
 | This repository's history | Republished fresh on 4 Nov 2026 with every commit kept (same files and dates); the hashes in these files are the original repository's, mapped in [`DEVELOPMENT-PROVENANCE.md`](DEVELOPMENT-PROVENANCE.md) |
@@ -44,8 +45,10 @@ Details are in [`evidence/live-checks/`](evidence/live-checks/README.md).
 - **Proven here**: the marking, the diagnosis, asking before naming an idea, resistance to misleading work, levels
   built and checked, and the safety rules above.
 - **Marking is not perfect, so the teacher decides.** On the real learner's multiple-choice papers, 0 to 2 of the
-  marks one click accepted at 0.95 still called a wrong answer right (no mark scheme was given). Nothing reaches a
-  student until the teacher releases it, and the desk says whether the teacher's scheme or the model's own key was used.
+  marks one click accepted at 0.95 still called a wrong answer right (no mark scheme was given). **Since 5 Nov one
+  click needs a scheme the teacher approved**, so on those papers the teacher checks every mark; on the unseen physics
+  paper, marked against Muse Spark's drafted scheme, 30 of 30 decisions were right and nothing wrong was accepted in one
+  click. An approved scheme removes a wrong key, not a misread. Nothing reaches a student until the teacher releases it.
 - **Measured, with limits**: on real handwriting, one learner so far. On his written answers, agreement is no better
   than marking everything right (36–38 of 42 against 38). The held-out set is simulated handwriting that we wrote and
   have re-run.
@@ -57,7 +60,8 @@ Details are in [`evidence/live-checks/`](evidence/live-checks/README.md).
   Apple approves it) covers faces on Android and says so; on iPhone it offers no desk filming. Since edge vb1104r the server no longer relies on that statement: it looks for faces in every desk
   video itself (SAM 3.1) and deletes a video with one unmarked, keeping nothing from it (8 of 8 face clips refused,
   8 of 8 face-free clips cleared, [`harness/face/`](harness/face/README.md)). A modified app's video still reaches the
-  private store before the look deletes it, and a face shown for under half a second can be missed. The main way in,
+  private store before the look deletes it, and a face shown for under a fifth of a second can still be missed (the look takes five frames a second since edge
+  vb1105a, and a look that cannot cover the whole video refuses it). The main way in,
   photographing the finished paper, films no one.
 
 Every limit is in README section 16. **Licence:** [PolyForm Strict 1.0.0](LICENSE), with

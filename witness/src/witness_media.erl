@@ -188,12 +188,13 @@ frames(Url, Fps, Max) when is_number(Fps), Fps > 0, is_integer(Max), Max > 0 ->
     end.
 
 %% sample(Url, Fps, W) -> {ok, Mp4}: the whole clip at Fps frames a second, W pixels wide, silent: what the server's
-%% face look reads (witness_face, 4 Nov). An hour of desk at two frames a second is 7,200 frames; it is given longer
+%% face look reads (witness_face, 4 Nov; five frames a second and -xerror since 5 Nov: a video ffmpeg cannot read to the
+%% end gives no copy, so the look is unsure). An hour of desk at five frames a second is 18,000 frames; it is given longer
 %% than one still, since ffmpeg reads the whole video.
 sample(Url, Fps, W) when is_number(Fps), Fps > 0, is_integer(W), W > 0 ->
     Out = tmp(".mp4"),
     try
-        case run(["-v", "error", "-y", "-i", str(Url), "-an", "-vf", "fps=" ++ integer_to_list(round(Fps)) ++ ",scale=" ++ integer_to_list(W) ++ ":-2",
+        case run(["-v", "error", "-xerror", "-y", "-i", str(Url), "-an", "-vf", "fps=" ++ integer_to_list(round(Fps)) ++ ",scale=" ++ integer_to_list(W) ++ ":-2",
                   "-c:v", "libx264", "-preset", "veryfast", "-crf", "28", "-pix_fmt", "yuv420p", "-movflags", "+faststart", Out], ?SAMPLE_TIMEOUT_MS) of
             ok -> case file:read_file(Out) of {ok, B} when byte_size(B) > 0 -> {ok, B}; {ok, _} -> {error, empty}; E -> E end;
             E -> E

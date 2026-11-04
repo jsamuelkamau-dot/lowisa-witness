@@ -6,12 +6,23 @@
 %%% through the Files API as input_file) and fills the new exam: its name, level, questions with their marks, and the
 %%% scheme in the teacher's own words. The teacher checks it before the exam is made.
 %%%
+%%% 5 Nov (owner: "where no scheme is available, AI generates the scheme, reviewed and approved by the teacher"): when
+%%% the material holds no mark scheme, Muse Spark drafts one from the questions (the right answer, the steps that earn
+%%% each mark, other right answers to accept). It comes back in the scheme box under DRAFT_LINE, for the teacher to
+%%% check and correct; creating the exam with it is the teacher's approval (witness_api strips the line and records
+%%% scheme_drafted). A draft never reaches marking unseen: the exam does not exist until the teacher creates it.
+%%%
 %%%   prompt() -> binary
-%%%   parse(ModelText) -> {ok, #{title, level, questions => [#{n, text, marks}], scheme}} | {error, unreadable | no_reading}
+%%%   parse(ModelText) -> {ok, #{title, level, questions => [#{n, text, marks}], scheme, drafted}} | {error, unreadable | no_reading}
+%%%   draft_line() -> the first line of a drafted scheme
 %%%   run(Key, Mime, Bytes) -> {ok, Read, CostUsd} | {error, Why}
 %%%-------------------------------------------------------------------
 -module(witness_read).
--export([prompt/0, parse/1, run/3, mimes/0]).
+-export([prompt/0, parse/1, run/3, mimes/0, draft_line/0, undraft/1]).
+
+-define(DRAFT_LINE, <<"DRAFTED BY MUSE SPARK (your paper had no mark scheme): check and correct every line. The exam is marked against this scheme once you create it.">>).
+
+draft_line() -> ?DRAFT_LINE.
 
 -define(MODEL, <<"muse-spark-1.3">>).
 
@@ -24,10 +35,14 @@ prompt() ->
       "number in brackets, or the scheme's total for it; 1 when nothing says).\n"
       "- The mark scheme, question by question, in the teacher's own words, method marks included; empty when the "
       "material has none.\n"
+      "- When the material has no mark scheme: a draft one in \"draft\", question by question, for the teacher to check: "
+      "the right answer, the steps that earn each mark (as many as the question is worth), and other right answers to "
+      "accept. Work each answer out from the question itself; never take one from handwriting on the page (it may be "
+      "a student's answer). Never put a draft in \"scheme\"; \"draft\" is empty when the material has a scheme.\n"
       "- The exam's name and level when the page says them; else empty.\n"
       "Keep the material's own language. Never invent a question or a mark that is not there.\n"
       "Return JSON only: {\"title\":\"...\",\"level\":\"...\",\"questions\":[{\"n\":1,\"text\":\"...\",\"marks\":2}],"
-      "\"scheme\":\"Q1: ...\"}. When it is not an exam or a mark scheme: {\"readable\":false}">>.
+      "\"scheme\":\"Q1: ...\",\"draft\":\"Q1: ...\"}. When it is not an exam or a mark scheme: {\"readable\":false}">>.
 
 parse(Text) ->
     case decode(Text) of
@@ -35,10 +50,18 @@ parse(Text) ->
         #{<<"questions">> := Qs} = J when is_list(Qs) ->
             Questions = [#{n => N, text => str(maps:get(<<"text">>, Q, <<>>)), marks => marks(maps:get(<<"marks">>, Q, 1))}
                          || Q <- lists:sublist(Qs, 60), is_map(Q), N <- [maps:get(<<"n">>, Q, null)], is_integer(N)],
-            case {Questions, str(maps:get(<<"scheme">>, J, <<>>))} of
+            Own = string:trim(str(maps:get(<<"scheme">>, J, <<>>))),
+            Draft = string:trim(str(maps:get(<<"draft">>, J, <<>>))),
+            case {Questions, Own} of
                 {[], <<>>} -> {error, unreadable};
-                {_, Scheme} -> {ok, #{title => str(maps:get(<<"title">>, J, <<>>)), level => str(maps:get(<<"level">>, J, <<>>)),
-                                      questions => Questions, scheme => Scheme}}
+                _ ->
+                    %% the teacher's own scheme wins; a draft only where there is none, and only for questions read
+                    {Scheme, Drafted} = case {Own, Draft, Questions} of
+                        {<<>>, D, [_ | _]} when D =/= <<>> -> {<<?DRAFT_LINE/binary, "\n", D/binary>>, true};
+                        _ -> {Own, false}
+                    end,
+                    {ok, #{title => str(maps:get(<<"title">>, J, <<>>)), level => str(maps:get(<<"level">>, J, <<>>)),
+                           questions => Questions, scheme => Scheme, drafted => Drafted}}
             end;
         _ -> {error, no_reading}
     end.
@@ -79,3 +102,12 @@ decode(Text) ->
 
 str(B) when is_binary(B) -> B;
 str(_) -> <<>>.
+
+%% undraft(Scheme) -> {SchemeWithoutTheDraftLine, WasDrafted}: the line the teacher was asked to check under is not part
+%% of the scheme the exam is marked against
+undraft(Scheme) when is_binary(Scheme) ->
+    case string:prefix(string:trim(Scheme, leading), ?DRAFT_LINE) of
+        nomatch -> {Scheme, false};
+        Rest -> {string:trim(Rest), true}
+    end;
+undraft(S) -> {S, false}.

@@ -19,7 +19,10 @@
 >   from 0.90 to 0.95 (edge vb1104o): the teacher checks 27 to 51, and 0 to 2 one-click marks are wrong. Every one of
 >   those was judged with **no mark scheme**, against the model's own key. Since edge vb1104p, a mark whose readings
 >   disagreed, with a struck-out answer or unreadable writing is checked by the teacher however sure, and the desk is
->   told whether the marks were judged against the teacher's mark scheme or, with none given, the model's own key
+>   told whether the marks were judged against the teacher's mark scheme or, with none given, the model's own key.
+>   **Since edge vb1105a (5 Nov), one click needs a mark scheme the teacher approved**: their own, or one Muse Spark
+>   drafts from the paper for them to check before the exam is made. With no scheme, every mark is checked one by one,
+>   so on his papers none of his wrong answers is accepted in one click
 >   ([marking policy](docs/marking-policy.md)).
 >   Nothing reaches him until the teacher releases it. On his
 >   written answers it agrees with the teacher about as often as marking everything right would (36–38 of 42, against
@@ -159,7 +162,7 @@ on screen, and ends on a real Grade 5 student and the rest of the loop. Section 
 > 1. **No account, no key:** `node demo/desk-server.js --replay`, then open http://localhost:4747: the teacher's Exam
 >    Desk on an exam recorded on the production edge (marks, fingerprints, Lo asks first, class patterns).
 > 2. **Check the numbers:** `python3 evidence/real-handwriting/score.py` and `python3 -X utf8 evidence/unseen-physics/score.py` (`python` on Windows)
->    recompute the real student's and the physics results from the committed files; `sh scripts/test.sh` runs the 178 tests, and every push runs them in [GitHub Actions](https://github.com/jsamuelkamau-dot/lowisa-witness/actions/workflows/test.yml).
+>    recompute the real student's and the physics results from the committed files; `sh scripts/test.sh` runs the 182 tests, and every push runs them in [GitHub Actions](https://github.com/jsamuelkamau-dot/lowisa-witness/actions/workflows/test.yml).
 > 3. **Live, on your own phone:** LoWisa on Google Play or the App Store, then section 12 (a sample paper to photograph is
 >    [`evidence/unseen-physics/paper.jpg`](evidence/unseen-physics/paper.jpg)).
 
@@ -193,7 +196,7 @@ Where each Meta model works:
 |---|---|---|
 | A real Grade 5 student's three multiple-choice papers, against his own teacher's marks (photos as taken, three of them sideways) | **6 or 7 of his teacher's 10 wrong answers caught** (7, 6, 6; 6 of the 10 in every run); **no wrong idea named** on any of the 23 answers it did not accept; 104, 104 and 104 of 109 agree, where marking everything right would agree on 99 (kappa 0.68–0.71) | [`condition-c-on-v1.0.1-code-3-runs.json`](evidence/real-handwriting/results/condition-c-on-v1.0.1-code-3-runs.json), `python3 evidence/real-handwriting/score.py` |
 | The same student's **written answers** (42 questions, three more papers, no marking scheme) | **every one of the 17 answers it did not accept was held for Lo to ask, with no wrong idea named**; 2, 2 and 3 of his teacher's 4 wrong answers caught; 36, 37 and 38 of 42 agree, where marking everything right would agree on 38 (kappa 0.32–0.55). One paper came back "could not be read" once; the same photos sent again were marked (recorded in the file) | [`written-answers-on-v1.0.1-code-3-runs.json`](evidence/real-handwriting/results/written-answers-on-v1.0.1-code-3-runs.json), the same script |
-| **The teacher's work** on those papers: one click accepts the marks called right and at least as sure as the line; the rest are checked one by one. Corrected 4 Nov: the earlier figures here (8 to 10 checked) counted sure marks of every result, but one click only ever takes marks called right | at the 0.90 line (until 4 Nov, edge vb1104o): multiple choice, **the teacher checks 11, 11 and 14 of 109**, and of the 98, 98 and 95 accepted in one click, 2, 4 and 2 call one of his wrong answers right; written, 17, 17 and 18 of 42 checked, 1 wrong in one click. At **0.95** (third audit; live since edge vb1104o, 4 Nov): multiple choice, 38, 27 and 51 checked, and 0, 2 and 1 wrong in one click; written, 31, 27 and 32 checked, none wrong. Nothing reaches the student until the teacher releases the paper | `python3 evidence/real-handwriting/score.py` |
+| **The teacher's work** on those papers: one click accepts the marks called right and at least as sure as the line; the rest are checked one by one. Corrected 4 Nov: the earlier figures here (8 to 10 checked) counted sure marks of every result, but one click only ever takes marks called right | at the 0.90 line (until 4 Nov, edge vb1104o): multiple choice, **the teacher checks 11, 11 and 14 of 109**, and of the 98, 98 and 95 accepted in one click, 2, 4 and 2 call one of his wrong answers right; written, 17, 17 and 18 of 42 checked, 1 wrong in one click. At **0.95** (third audit; live since edge vb1104o, 4 Nov): multiple choice, 38, 27 and 51 checked, and 0, 2 and 1 wrong in one click; written, 31, 27 and 32 checked, none wrong. **Since 5 Nov (edge vb1105a), one click needs a mark scheme the teacher approved; these papers had none, so the teacher checks all 109 and all 42, and none of his wrong answers is accepted in one click.** With a scheme (his teacher's, or Muse Spark's draft the teacher checks), one click returns: section 13. Nothing reaches the student until the teacher releases the paper | `python3 evidence/real-handwriting/score.py` |
 | Wrong answers accepted as right (the error a teacher must still catch) | multiple choice: 3, 4 and 4 of the teacher's 10 marked right, always among the same four questions (English 23, science 33 and 42, maths 24). Written: 2, 2 and 1 of 4: question 41 in every run (sure enough for "Accept all"), and question 35 in two runs, where Muse Spark read his final option as "A. Wheat" instead of "Cow peas" and was not sure (0.65, 0.75), so it went to the teacher | the same files |
 | 53 held-out papers × 3 runs: ink that cannot show the idea | Lo asks first **39 of 42**; a wrong idea named 3 of 42 (the harmful error) | [`v2-on-v1.0.1-code-3-runs.json`](harness/heldout/results/v2-on-v1.0.1-code-3-runs.json) |
 | … ink that shows the idea; right work; instructions written in the ink | named right **43 of 48** (none named a different idea; 5 asked first); mastered **39 of 39**; never obeyed **30 of 30** | the same file |
@@ -215,7 +218,7 @@ Where each Meta model works:
 | Held-out v2: named right of 48 | 44 (`066c9d1`) | 42 | 43 |
 
 - **Built during the event (26 Oct – 4 Nov 2026), all in this repository:** the marking and diagnosis server
-  (`witness/`, Erlang/OTP, 178 tests), the teacher's Exam Desk (`desk/`), the phone screens (`phone/`), and every
+  (`witness/`, Erlang/OTP, 182 tests), the teacher's Exam Desk (`desk/`), the phone screens (`phone/`), and every
   measurement (`harness/`, `evidence/`).
 - **Existed before, named but not shown:** the LoWisa app it runs in, its lesson player, flashcards, Insight mode and
   Lo's voice (section 14, [`docs/existed-before.md`](docs/existed-before.md)). In the film every shot is labelled one or
@@ -926,7 +929,7 @@ Look at it without an account: `node demo/desk-server.js --replay`. It is this e
 |---|---|---|
 | **Impact** | The problem is human cognitive ability: a fear millions already feel about AI, joined to a problem education has not solved for generations (a failed exam that teaches nothing). It is designed to use AI to strengthen it in four areas (from failure to capability, from knowledge to real-world application, from AI answers to independent thinking, from memorising to lasting mastery): a failed question becomes a level built on the student's own mistake that ends in a real task, and a teacher of forty checks instead of marking. Measured against one real student's own teacher; not yet proven in a classroom pilot | the opening, sections 1, 2, 5, 7; limits in 16; plans in 17 |
 | **Use of Meta's models** | Muse Spark reads the *reasoning* in handwriting and code checks its diagnosis against the lines it read; Muse Wonder plays every level as the student first; five models measured, in a gated pipeline of agents with code-checked hand-offs | sections 3, 4; `harness/FINDINGS.md` |
-| **Technical depth** | The evidence rule in code, measured blind and on the shipped code; handwriting placed on the page by dynamic programming (64 of 64 lines, against SAM 3.1's 52); Erlang/OTP with conditional writes, per-route daily ceilings, roles; 178 library tests; sixteen problems found by testing and how each was solved, from sideways pages to a safety check that failed open | sections 6, 7, 10, 11, 15 |
+| **Technical depth** | The evidence rule in code, measured blind and on the shipped code; handwriting placed on the page by dynamic programming (64 of 64 lines, against SAM 3.1's 52); Erlang/OTP with conditional writes, per-route daily ceilings, roles; 182 library tests; sixteen problems found by testing and how each was solved, from sideways pages to a safety check that failed open | sections 6, 7, 10, 11, 15 |
 | **Demo** | One failed question from photo to mastery: Muse Spark's marks landing on the page, the idea quoted from his own words, Lo asks first with a spoken answer, Muse Wonder's two plays, Muse Image's drawn step, the teacher's desk, the re-check; a real Grade 5 student's result against its baseline. Four Meta models on screen, about 1:44 of this week's work, every shot labelled, a word-for-word transcript; judges can try it in a minute with no account | sections 2, 12; `evidence/film/transcript.md` |
 
 ## 10. Architecture
@@ -1107,7 +1110,8 @@ day's ceiling reached) is replaced by a safe line, never sent.
   that costs more than its hold is logged and counted in full. A hold not settled in 30 minutes (a call that failed)
   expires, so failures cannot use up a teacher's day, and at most 500 calls hold money at once. Tested with 40 calls at
   once against room for 4: exactly 4 started (`witness/test/witness_api_tests.erl`).
-- **One click takes only marks 0.95 sure or more, and only marks called right**, whatever list the desk sends; every
+- **One click takes only marks 0.95 sure or more, and only marks called right**, and since edge vb1105a only on an
+  exam with a mark scheme the teacher approved (next block), whatever list the desk sends; every
   other mark stays to be checked one by one (section 7 has the cost: more checks, fewer wrong marks). The desk says
   "sure is not proof" beside the button (desktop 0.9.34, 4 Nov).
 - **A tampered app, eight kinds of attack.** Lo's live turns now also refuse to hand over the exam question's own
@@ -1124,6 +1128,30 @@ day's ceiling reached) is replaced by a safe line, never sent.
   picture ever committed looked at; metadata checked in every commit; the learner's name in no commit; four test
   exams whose join codes were visible in old screenshots or tests were closed to joining (live, 4 Nov). CI now scans
   every commit, not only today's files.
+
+**Added after the last review, 5 Nov (edge vb1105a; no phone or desktop release needed):**
+- **Where the paper has no mark scheme, Muse Spark drafts one and the teacher approves it** (owner's design). The model
+  no longer marks a class against a key nobody checked. Creating an exam from a photo or PDF of the paper, the desk's
+  existing "Your mark scheme" box is filled with Muse Spark's draft (the right answer, the steps that earn each mark,
+  other answers to accept) under a line asking the teacher to check every line; creating the exam is the approval, the
+  line comes off, and every paper is marked against that one scheme (it cannot change afterwards). **One click needs a
+  scheme**: on an exam with none, every mark is checked one by one, and the desk shows no one-click row. Live, from
+  the unseen physics paper alone (a student's written paper): three drafts, **each with the right answer to all 30
+  questions**, none copying any of the student's 24 wrong answers; the paper marked against each draft:
+  **30 of 30 decisions right in all three**, one click 5, 6 and 6 marks, **none wrong**, as against the real scheme
+  ([`harness/read/`](harness/read/README.md), [marking policy](docs/marking-policy.md)). Marking is still not
+  perfect: an approved scheme removes a wrong key, not a misread; the risk checks and the teacher's release remain.
+  Checked on production after the release: [live checks 8](evidence/live-checks/README.md).
+- **The server's face look: five frames a second, and an incomplete look refuses the video.** A face in view for a
+  quarter and for a tenth of a second were both caught (10 of 10 face clips, 8 of 8 face-free clips cleared). A video
+  ffmpeg cannot read to its end, or that SAM did not look at frame by frame in full, is deleted unmarked and the paper
+  photographed; before, a cut-off video was read only as far as it went and passed as looked at
+  ([`harness/face/`](harness/face/README.md)). Tested (`an_exam_from_a_checked_draft_scheme_is_marked_against_it_test`,
+  `a_paper_without_a_scheme_gets_a_draft_for_the_teacher_to_check_test`,
+  `a_face_look_that_cannot_cover_the_video_deletes_it_unmarked_test`, `the_face_look_covers_every_sampled_frame_test`).
+- **Not done: a separate holding area for uploads.** A video still lands in the private store before the look; an
+  upload that is never marked is not deleted sooner than the 180 days every file has, unless the teacher deletes the paper. Changing where uploads land
+  was not safe to test in the time left; it is in the future plans (17.2a).
 
 **Added after the final follow-up audit of 4 Nov (edge vb1104r):**
 - **The server looks for faces itself (the one trust-boundary point left).** Every desk video, before anything reads
@@ -1345,6 +1373,9 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
   counted at their whole hold; a level's own calls never write the exam answer (48 of 48 attacks held); one click
   needs no risk flag as well as 0.95, and says whether the teacher's mark scheme or the model's own key was used. Still not done: the server holding the app's level-building
   instructions (17.2a), and an unfamiliar exam marked live against a real teacher's own marks (17.2).
+- **After the last review, live since edge vb1105a (5 Nov):** one click only with a mark scheme the teacher approved
+  (where the paper has none, Muse Spark drafts one for the teacher to check); the face look at five frames a second,
+  and a look that cannot cover the whole video refuses it. A separate holding area for uploads is not built (17.2a).
 - **After the final follow-up audit, live since edge vb1104r (4 Nov):** the server looks for faces in every desk video
   itself (SAM 3.1) and deletes a video with one unmarked, keeping nothing from it; the app's statement no longer decides
   (section 13). Phone 1.10.5 is on Google Play and in Apple's review; desktop 0.9.34 is released (17.1).
@@ -1422,8 +1453,14 @@ audit's server fixes (section 13), live from edge vb1104m.
   desktop release.
 - **Done after the final audit (edge vb1104r): a face check on the server, not only on the phone.** The server looks
   for faces in every desk video itself (SAM 3.1) before anything reads it, and a video with a face is deleted unmarked
-  with nothing kept (section 13). Still next: the look runs after the upload, so the phone's own cover stays the first
-  step.
+  with nothing kept (section 13); since edge vb1105a at five frames a second, and a look that cannot cover the whole
+  video refuses it. Still next: the look runs after the upload, so the phone's own cover stays the first step; and a
+  separate holding area for uploads, deleted within a day unless the look clears them (not built: changing where
+  uploads land could not be tested safely in the time left).
+- **Done after the last review (edge vb1105a): a scheme for every exam that has one click.** Where the paper has no
+  mark scheme, Muse Spark drafts one and the teacher approves it; one click needs a scheme (section 13). Next: a desk
+  view that shows the drafted scheme beside the paper question by question, and a scheme the teacher can correct after
+  the exam is made, with every paper marked again against the new version.
 - **Done after the fourth audit (edge vb1104p):** each hold settled by its own id, failures and late calls counted
   (section 13); one click by risk as well as confidence (section 13). Next for both: the desk showing the teacher why a
   mark was held back (the server already says); not built yet (desktop 0.9.34 says what the marks were judged against,

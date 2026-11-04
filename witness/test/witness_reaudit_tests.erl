@@ -45,7 +45,7 @@ recommendation_reads_every_piece_of_evidence_test() ->
 the_exam_is_read_as_the_teacher_wrote_it_test() ->
     T = <<"```json\n{\"title\":\"Algebra quiz\",\"level\":\"Year 8\",\"questions\":[{\"n\":1,\"text\":\"Expand 3(x + 4)\",\"marks\":2},"
           "{\"n\":\"two\",\"text\":\"x\"},{\"n\":2,\"text\":\"Solve 5x - 2 = 18\",\"marks\":0}],\"scheme\":\"Q1: 1 mark each term\"}\n```">>,
-    ?assertEqual({ok, #{title => <<"Algebra quiz">>, level => <<"Year 8">>, scheme => <<"Q1: 1 mark each term">>,
+    ?assertEqual({ok, #{title => <<"Algebra quiz">>, level => <<"Year 8">>, scheme => <<"Q1: 1 mark each term">>, drafted => false,
                         questions => [#{n => 1, text => <<"Expand 3(x + 4)">>, marks => 2}, #{n => 2, text => <<"Solve 5x - 2 = 18">>, marks => 1}]}},
                  witness_read:parse(T)),
     ?assertEqual({error, unreadable}, witness_read:parse(<<"{\"readable\":false}">>)),
@@ -72,3 +72,19 @@ ffmpeg_reads_each_input_by_its_own_protocol_only_test() ->
                  witness_media:fenced(["-v", "error", "-i", "https://bucket/clip.mp4", "out.jpg"])),
     ?assertEqual(["-y", "-protocol_whitelist", "file,crypto", "-i", "/tmp/witness-1.m4a", "out.wav"],
                  witness_media:fenced(["-y", "-i", "/tmp/witness-1.m4a", "out.wav"])).
+
+%% 5 Nov (owner: "where no scheme is available, AI generates the scheme, reviewed and approved by the teacher"): a paper
+%% with no scheme comes back with a drafted one under a line asking the teacher to check it; the teacher's own scheme
+%% always wins, and the draft is never put in the scheme field by the model's say-so alone
+a_paper_without_a_scheme_gets_a_draft_for_the_teacher_to_check_test() ->
+    Paper = <<"{\"questions\":[{\"n\":1,\"text\":\"Expand 3(x + 4)\",\"marks\":2}],\"scheme\":\"\",\"draft\":\"Q1: 3x + 12; 1 mark each term\"}">>,
+    {ok, #{scheme := S, drafted := true}} = witness_read:parse(Paper),
+    ?assertEqual(<<(witness_read:draft_line())/binary, "\nQ1: 3x + 12; 1 mark each term">>, S),
+    Both = <<"{\"questions\":[{\"n\":1,\"text\":\"Expand 3(x + 4)\",\"marks\":2}],\"scheme\":\"Q1: teacher's\",\"draft\":\"Q1: model's\"}">>,
+    ?assertMatch({ok, #{scheme := <<"Q1: teacher's">>, drafted := false}}, witness_read:parse(Both)),
+    %% a draft with no question read is not an exam
+    ?assertEqual({error, unreadable}, witness_read:parse(<<"{\"questions\":[],\"scheme\":\"\",\"draft\":\"Q1: x\"}">>)),
+    ?assertNotEqual(nomatch, binary:match(witness_read:prompt(), <<"\"draft\"">>)),
+    %% the line comes off when the exam is created; anything the teacher wrote stays
+    ?assertEqual({<<"Q1: 3x + 12">>, true}, witness_read:undraft(<<(witness_read:draft_line())/binary, "\n Q1: 3x + 12">>)),
+    ?assertEqual({<<"Q1: mine">>, false}, witness_read:undraft(<<"Q1: mine">>)).
