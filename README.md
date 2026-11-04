@@ -1078,11 +1078,12 @@ day's ceiling reached) is replaced by a safe line, never sent.
 - **Plain-code rules run before any model.** A link, an email address, a phone number, a contact app or a meeting, and
   a short list of adult and self-harm words stop a reply with no model involved, in Lo's live turns and in a level's
   own text. The model guard still reads everything else; one model checking another is not the only line.
-- **A dollar ceiling a day across all accounts ($25).** The call ceilings count calls; this one counts money. Live now:
-  it stops new calls once the day reaches it, so calls already running can end the day a little over. **In this
-  repository, for the next edge deploy (second audit, 4 Nov):** before a call starts, the most a call of its kind costs
-  is reserved in the same write that checks the ceiling, and traded for the real cost when it finishes, so the day
-  never passes the ceiling. One server switch turns the whole feature off at once.
+- **A dollar ceiling a day across all accounts ($25), never passed** (second audit, live from edge vb1104n, 4 Nov
+  05:12 UTC). The call ceilings count calls; this one counts money. Before a call starts, the most a call of its kind
+  costs is reserved in the same write that checks the ceiling, and traded for the real cost when it finishes (checked
+  live: one exam read left the day at its real $0.0062, not the $0.25 it reserved). A call that fails keeps its
+  reservation until the day ends, so the ceiling can be reached a little early, never passed. One server switch turns
+  the whole feature off at once.
 - **Kept 180 days at most** (see Deleting, below).
 
 **The student is never sent a guess:** not the model's possible idea, not its rivals, not its confidence. While Lo is
@@ -1231,7 +1232,7 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
 - **After the independent audit, live since edge vb1104m (4 Nov):** the server's scope is now the only system message
   (the phone's level instructions go as the app's user message; the same level-builder request, four runs each way,
   gave the same kind of outline, one level of three lessons on the student's idea, and a tampered "write my history
-  essay" was refused every time: [`harness/design-layout/`](harness/design-layout/README.md)); plain-code rules before the model guard; a hard $25 a day across all accounts; and
+  essay" was refused every time: [`harness/design-layout/`](harness/design-layout/README.md)); plain-code rules before the model guard; $25 a day across all accounts, reserved before each call and never passed since vb1104n; and
   every row and file kept 180 days at most (rows written before the release were given their date too). The marking
   code did not change. The phone's face-covering fix waits for the next phone release (17.1).
 - **Muse Spark Open has run on partner inference, with few runs:** 9 of 12 completed. Of the 3 that did not, 2 passed

@@ -56,11 +56,10 @@ A paper deleted while it is being marked stays deleted (`witness_api:done/8` wri
 - **Every route that calls a model has a ceiling a day for one account.** A whole class fits under it; a script does not.
 - **Each mastery level's design calls have a ceiling.** Those calls are only for the caller's own released level, and they carry the server's own first instruction to stay on that level's idea.
 - **Lo's live turns are read for safety before they reach a student** (`witness_guard`).
-- **A day's model spending has a dollar ceiling across all accounts, $25** (4 Nov, live from edge vb1104m): what every
-  call cost is added up, and once the day reaches it no new call starts until the next day; calls already running can
-  end the day a little over. The call ceilings above count calls; this one counts money. **Next edge deploy (in this
-  repository):** each call reserves the most a call of its kind costs before it starts, in the same write that checks
-  the ceiling, so the day never passes it.
+- **A day's model spending has a dollar ceiling across all accounts, $25, never passed** (4 Nov; reservations live from
+  edge vb1104n): each call reserves the most a call of its kind costs before it starts, in the same write that checks
+  the ceiling, and the reservation becomes its real cost when it finishes. The call ceilings above count calls; this
+  one counts money.
 - **Plain-code rules before any model** (4 Nov, live from edge vb1104m): a link, an email address, a phone number, a
   contact app or a meeting, and a short list of adult and self-harm words stop a reply before it reaches a student,
   in Lo's live turns and in a level's own text, with no model involved (`witness_guard:screen/1`).
