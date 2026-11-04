@@ -6,10 +6,10 @@ LoWisa's (it existed before the event) and is not published; this records what r
 
 ## The build checked
 
-- **Phone app:** LoWisa's React Native project as it will next be released (the Witness screens in this repository
-  synced into it, plus the native face look in its Android module). The stores carry 1.10.4 (Google Play 1.10.4,
-  version code 11005; the App Store 1.10.4), which does **not** yet have the changes below.
-- **Desktop app:** the Exam Desk as a part of LoWisa's desktop app source, after desktop 0.9.33.
+- **Phone app:** LoWisa's React Native project as it was next released, 1.10.5 (the Witness screens in this repository
+  synced into it, plus the native face look in its Android module). The stores then carried 1.10.4 (Google Play 1.10.4,
+  version code 11005; the App Store 1.10.4), which did **not** yet have the changes below (on 4 Nov; 1.10.5 has them, see "Since then" at the end).
+- **Desktop app:** the Exam Desk as a part of LoWisa's desktop app source, after desktop 0.9.33 (released as desktop 0.9.34).
 
 ## What passed
 
@@ -51,7 +51,21 @@ stops saying it. The store apps never say it, so they are refused ("Filming need
 paper is photographed. The server cannot see faces: this stops the old apps; it is not proof about a video. After this
 change, in LoWisa's project: the phone's Witness tests 80 of 80, `tsc --noEmit` 0 errors.
 
-## Still to do before these reach users
+## Still to do before these reach users (as written on 4 Nov; done since, see below)
 
 - The next phone release, with this build run on a device (Android) by its release checklist, and the stores' review.
 - The next desktop release, for the desk's one-click line and its wording.
+
+## Since then (status on 5 Nov)
+
+- **Phone 1.10.5 on Google Play** (published 4 Nov). Its store build was run on a device (an Android emulator) against
+  the live server before it was sent: a desk video with a face was covered on the phone and marked; the same video sent
+  raw by a script was refused by the server's own face look ([live checks 7](../live-checks/README.md)). Android phones
+  on 1.10.4 are offered the update.
+- **Phone 1.10.5 in Apple's review for the App Store** (submitted 4 Nov). The iPhone build was checked on Xcode 27.1's
+  simulator: the exam page offers "Photograph the papers" and no desk filming. iPhones stay on 1.10.4 until Apple
+  approves it.
+- **Desktop 0.9.34 released** (4 Nov, Windows, macOS and Linux), with the desk's one-click line, its wording, the
+  face chip and the line saying what the marks were judged against.
+- **The server no longer relies on `faces: "checked"` alone:** since edge vb1104r it looks for faces in every desk
+  video itself ([`harness/face/`](../../harness/face/README.md)).

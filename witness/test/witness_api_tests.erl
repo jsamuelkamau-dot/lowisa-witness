@@ -547,7 +547,7 @@ after_release_the_teacher_chooses_and_issues_the_badge_test() ->
         M(<<"teacher">>, 3, <<"verify">>, #{<<"lo">> => true, <<"teacher">> => true, <<"paper">> => true, <<"fresh">> => <<"Simplify 12/48">>}),
     ?assertMatch({403, _}, M(<<"teacher">>, 3, <<"fresh">>, Clip)),
     ?assertMatch({400, #{code := <<"bad_type">>}}, M(<<"stud">>, 3, <<"fresh">>, Clip#{<<"mime">> => <<"image/png">>})),
-    %% 4 Nov (fourth audit, finding A): an app that does not say its face look ran (the store apps today) is refused
+    %% 4 Nov (fourth audit, finding A): an app that does not say its face look ran (apps before 1.10.5) is refused
     ?assertMatch({400, #{code := <<"update_app">>}}, M(<<"stud">>, 3, <<"fresh">>, maps:remove(<<"faces">>, Clip))),
     ?assertMatch({400, #{code := <<"update_app">>}}, M(<<"stud">>, 3, <<"fresh">>, Clip#{<<"faces">> => <<"skipped">>})),
     {200, #{fresh := #{id := F, put := _}, mastery := #{fresh := #{status := <<"uploading">>}}}} = M(<<"stud">>, 3, <<"fresh">>, Clip),
@@ -1455,7 +1455,7 @@ the_screen_lets_the_curriculum_through_test() ->
     ?assertEqual([], [T || T <- Lessons, witness_guard:screen(T) =/= ok]),
     ?assertEqual([], [T || T <- Harmful, witness_guard:screen(T) =:= ok]).
 
-%% 4 Nov (fourth independent audit, finding A): the phone apps in the stores film without the fail-closed face rule. A
+%% 4 Nov (fourth independent audit, finding A): the phone apps then in the stores (1.10.4) film without the fail-closed face rule. A
 %% desk video is taken only from an app that says its face look ran to the end; photographing the paper is unaffected.
 video_needs_the_face_look_test() ->
     setup(),
@@ -1499,7 +1499,7 @@ a_confident_mark_with_a_risk_is_never_one_click_test() ->
     ?assertMatch({200, #{pile := #{judged_against := <<"mark_scheme">>}}}, r(<<"GET">>, [<<"pile">>, P1], #{}, <<"teacher">>)).
 
 %% 4 Nov (final audit: "the server still relies on the client's declaration"): the server looks for faces in every desk
-%% video itself, before anything reads it. faces: "checked" still keeps the old store apps out; it no longer decides.
+%% video itself, before anything reads it. faces: "checked" still keeps apps before 1.10.5 out; it no longer decides.
 the_server_looks_for_faces_itself_test() ->
     setup(), persistent_term:put({witness_api_on, stills}, true), persistent_term:put({witness_api_on, clips}, true),
     {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10}, <<"u1">>),

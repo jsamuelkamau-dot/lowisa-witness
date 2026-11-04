@@ -229,8 +229,8 @@ Where each Meta model works:
   (section 12).
 - **What comes next (section 17):** a Mastery Plan on every question a learner fails anywhere in LoWisa (Study Kit
   practice, every test question in the phone and desktop apps, the desktop app's electronic exams), interactive
-  experiments the learner can change and investigate, and a pilot in schools. It also lists what is fixed in the code
-  but arrives with the next app release, the measurements still to run, and where to send us feedback: ten days were
+  experiments the learner can change and investigate, and a pilot in schools. It also lists the fixes that needed an
+  app release (shipped; the App Store's 1.10.5 is in Apple's review), the measurements still to run, and where to send us feedback: ten days were
   not enough for everything, and we will keep improving.
 - **Names used here:** *Lo* is LoWisa's tutor. *Witness* is the code name of the marker (the `witness_*` modules) and of
   the optional desk-filming mode. Part of [LoWisa](https://lowisa.dev), for the Meta Global AI Developer Hackathon.
@@ -926,7 +926,7 @@ Look at it without an account: `node demo/desk-server.js --replay`. It is this e
 |---|---|---|
 | **Impact** | The problem is human cognitive ability: a fear millions already feel about AI, joined to a problem education has not solved for generations (a failed exam that teaches nothing). It is designed to use AI to strengthen it in four areas (from failure to capability, from knowledge to real-world application, from AI answers to independent thinking, from memorising to lasting mastery): a failed question becomes a level built on the student's own mistake that ends in a real task, and a teacher of forty checks instead of marking. Measured against one real student's own teacher; not yet proven in a classroom pilot | the opening, sections 1, 2, 5, 7; limits in 16; plans in 17 |
 | **Use of Meta's models** | Muse Spark reads the *reasoning* in handwriting and code checks its diagnosis against the lines it read; Muse Wonder plays every level as the student first; five models measured, in a gated pipeline of agents with code-checked hand-offs | sections 3, 4; `harness/FINDINGS.md` |
-| **Technical depth** | The evidence rule in code, measured blind and on the shipped code; handwriting placed on the page by dynamic programming (64 of 64 lines, against SAM 3.1's 52); Erlang/OTP with conditional writes, per-route daily ceilings, roles; 158 library tests; sixteen problems found by testing and how each was solved, from sideways pages to a safety check that failed open | sections 6, 7, 10, 11, 15 |
+| **Technical depth** | The evidence rule in code, measured blind and on the shipped code; handwriting placed on the page by dynamic programming (64 of 64 lines, against SAM 3.1's 52); Erlang/OTP with conditional writes, per-route daily ceilings, roles; 178 library tests; sixteen problems found by testing and how each was solved, from sideways pages to a safety check that failed open | sections 6, 7, 10, 11, 15 |
 | **Demo** | One failed question from photo to mastery: Muse Spark's marks landing on the page, the idea quoted from his own words, Lo asks first with a spoken answer, Muse Wonder's two plays, Muse Image's drawn step, the teacher's desk, the re-check; a real Grade 5 student's result against its baseline. Four Meta models on screen, about 1:44 of this week's work, every shot labelled, a word-for-word transcript; judges can try it in a minute with no account | sections 2, 12; `evidence/film/transcript.md` |
 
 ## 10. Architecture
@@ -1003,8 +1003,9 @@ and `mark_my_paper` marked the 30-question physics paper live in 92 s for about 
 node demo/desk-server.js --replay        # then open http://localhost:4747
 ```
 
-**Live, with your own phone (works today: LoWisa 1.10.4 on Google Play and the App Store; checked against both stores
-and the desktop download feed on 4 Nov: phone 1.10.4 on both, desktop 0.9.33 on Windows, macOS and Linux).** During judging, From
+**Live, with your own phone (works today: LoWisa 1.10.5 on Google Play, 1.10.4 on the App Store, where 1.10.5 is in
+Apple's review; desktop 0.9.34 on Windows, macOS and Linux; checked against both stores and the desktop download feed
+on 5 Nov).** During judging, From
 Exam to Mastery is open to every LoWisa account; nothing needs a sign-up form.
 1. Install **LoWisa** on a phone and the **LoWisa desktop app** from [lowisa.dev](https://lowisa.dev). Link them once:
    on the desktop, click **Link your phone** in the status bar; on the phone, Profile → **Link a computer** → **Scan**.
@@ -1108,7 +1109,7 @@ day's ceiling reached) is replaced by a safe line, never sent.
   once against room for 4: exactly 4 started (`witness/test/witness_api_tests.erl`).
 - **One click takes only marks 0.95 sure or more, and only marks called right**, whatever list the desk sends; every
   other mark stays to be checked one by one (section 7 has the cost: more checks, fewer wrong marks). The desk says
-  "sure is not proof" beside the button (from the next desktop release).
+  "sure is not proof" beside the button (desktop 0.9.34, 4 Nov).
 - **A tampered app, eight kinds of attack.** Lo's live turns now also refuse to hand over the exam question's own
   answer. Sent as a modified app would send them, in both reply modes, three runs each: 46 of 48 held (essays, other
   homework, the server's instructions, a role-play, adult content, dangerous instructions, contact details: every
@@ -1148,12 +1149,13 @@ day's ceiling reached) is replaced by a safe line, never sent.
   code (never the token or the message), so a credential Google refuses is visible.
 
 **Added after the fourth independent audit and the live checks of 4 Nov (edge vb1104p):**
-- **Desk video only from an app whose face look ran (finding A).** The phone apps in the stores (1.10.4) predate the
-  fail-closed face rule. So the server now takes a desk video, or a filmed fresh question, only from an app that says its
-  face look ran to the end (`faces: "checked"`). The store apps never say it, so their students are told to photograph
-  the finished paper instead. The next phone release says it, and only after its look ran. **This is the app's own
+- **Desk video only from an app whose face look ran (finding A).** The phone apps before 1.10.5 (1.10.4, still on the App
+  Store while Apple reviews 1.10.5) predate the fail-closed face rule. So the server now takes a desk video, or a filmed
+  fresh question, only from an app that says its face look ran to the end (`faces: "checked"`). Those apps never say it,
+  so their students are told to photograph the finished paper instead. 1.10.5 (Google Play since 4 Nov) says it, and
+  only after its look ran. **This is the app's own
   statement, not proof**: the server cannot see faces, and a modified app could send the statement without running the
-  look. It switches the store apps off; it does not make an unsafe upload impossible. What does not depend on the app:
+  look. It switches the older apps off; it does not make an unsafe upload impossible. What does not depend on the app:
   the main way in (photographing the finished paper) films no one, and a desk video is deleted once marked
   ([privacy](docs/privacy.md); whether a school offers desk filming at all is listed there as its decision before a
   pilot). Tested (`video_needs_the_face_look_test`). **Since edge vb1104r the server also looks for faces itself**
@@ -1214,12 +1216,13 @@ against every trick ([first run](harness/heldout/results/planted-3-runs.json),
 - A desk video is deleted as soon as it is marked.
 - **Faces in a desk video (desk filming is the optional way in; photographing the paper, the main way, films no one).**
   On Android, a face or a person the camera caught beside the page is covered on the phone before the video leaves
-  it. **It now fails closed** (4 Nov, in this repository; reaches students with the next phone release, see
+  it. **It now fails closed** (LoWisa 1.10.5: Google Play since 4 Nov; the App Store once Apple approves it, see
   [Future plans](#17-future-plans-after-the-hackathon)): a video whose
   look for faces failed is never sent, and a phone that cannot cover faces (iPhone today) does not offer desk filming;
-  that student's paper is photographed instead. Until that release, the app in the stores still offers filming, but
+  that student's paper is photographed instead. An older app (1.10.4) still offers filming, but
   **since edge vb1104p the server takes no desk video from it** (it cannot say its face look ran), so its students
-  photograph the paper instead.
+  photograph the paper instead. **Since edge vb1104r the server also looks for faces in every desk video itself** and
+  deletes one with a face unmarked, keeping nothing from it (section 13).
 
 Full statement: [`docs/privacy.md`](docs/privacy.md). It includes what the school must decide before a pilot with minors.
 
@@ -1322,8 +1325,8 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
 - **The code live now is `v1.0.2-code`** (edge vb1104i, 4 Nov): `v1.0.1-code` plus two fixes. Two readings no longer
   agree when only one says "not", or when their units differ ("5 cm", "5 m"); and an unreadable photographed paper is
   asked to be photographed again, not "filmed again". Both are tested; the real sets and the held-out set
-  were run on `v1.0.1-code`, not yet on `v1.0.2-code` (17.2). The teacher's desk says "photograph again" too from the
-  next desktop release (17.1; corrected 4 Nov: it was not in desktop 0.9.33). Since edge vb1104j (4 Nov) a photographed paper that could not be marked for another reason, or is
+  were run on `v1.0.1-code`, not yet on `v1.0.2-code` (17.2). The teacher's desk says "photograph again" too since
+  desktop 0.9.34 (4 Nov; it was not in desktop 0.9.33). Since edge vb1104j (4 Nov) a photographed paper that could not be marked for another reason, or is
   no longer kept, is never told about a video either.
 - **Security fixes from a review before going public, live since edge vb1104k (4 Nov):** a join code tried through
   the video upload now counts against the same per-minute limit as joining, and a closed exam takes no new paper there;
@@ -1336,12 +1339,15 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
   gave the same kind of outline, one level of three lessons on the student's idea, and a tampered "write my history
   essay" was refused every time: [`harness/design-layout/`](harness/design-layout/README.md)); plain-code rules before the model guard; $25 a day across all accounts, reserved before each call and never passed since vb1104n; and
   every row and file scheduled for deletion at 180 days (rows written before the release were given their date too). The marking
-  code did not change. The phone's face-covering fix waits for the next phone release (17.1).
-- **After the fourth independent audit, live since edge vb1104p (4 Nov):** the store phone apps can no longer send a
-  desk video (they photograph instead) until the next phone release; each money hold is settled by its own id, failures
+  code did not change. The phone's face-covering fix shipped in 1.10.5 (Google Play 4 Nov; the App Store: in Apple's review; 17.1).
+- **After the fourth independent audit, live since edge vb1104p (4 Nov):** phone apps before 1.10.5 can no longer send a
+  desk video (they photograph instead); each money hold is settled by its own id, failures
   counted at their whole hold; a level's own calls never write the exam answer (48 of 48 attacks held); one click
   needs no risk flag as well as 0.95, and says whether the teacher's mark scheme or the model's own key was used. Still not done: the server holding the app's level-building
   instructions (17.2a), and an unfamiliar exam marked live against a real teacher's own marks (17.2).
+- **After the final follow-up audit, live since edge vb1104r (4 Nov):** the server looks for faces in every desk video
+  itself (SAM 3.1) and deletes a video with one unmarked, keeping nothing from it; the app's statement no longer decides
+  (section 13). Phone 1.10.5 is on Google Play and in Apple's review; desktop 0.9.34 is released (17.1).
 - **Muse Spark Open has run on partner inference, with few runs:** 9 of 12 completed. Of the 3 that did not, 2 passed
   the old 5-minute limit per call on the long four-photo maths paper, and 1 reply was not a marking; the 3 runs since
   the limit went to 10 minutes all completed (`harness/open/`). It has not been switched on for the live edge.
@@ -1354,22 +1360,25 @@ The goal is bigger: **wherever a learner gets something wrong in LoWisa, that mo
 mastering it.** The plans below take it there, onto features LoWisa already has, so most of the work is joining what
 exists rather than starting again.
 
-**Ten days were not enough to do everything we want, and we say so plainly.** Some fixes are finished in the code but
-reach users only with the next app release (17.1); some measurements are still to run (17.2). We are committed to
+**Ten days were not enough to do everything we want, and we say so plainly.** The fixes that needed an app release
+have shipped, except on the App Store, where phone 1.10.5 is in Apple's review (17.1); some measurements are still to
+run (17.2). We are committed to
 continuous improvement, and we would value the judges' feedback on anything we have missed (17.7): whatever it is, we
 will fix it as part of that work.
 
-### 17.1 Fixed in the code, arriving with the next release
+### 17.1 Fixes that needed an app release: shipped (App Store in review)
 
-These are done and tested in this repository. They reach users only when the app they live in is next released,
-because a store app cannot change until then.
+These were done and tested in this repository, and needed a new app release to reach users, because a store app
+cannot change until then. As of 5 Nov: **phone 1.10.5 is on Google Play** (published 4 Nov; Android phones on 1.10.4
+are offered the update), **in Apple's review for the App Store** (submitted 4 Nov; iPhones stay on 1.10.4 until Apple
+approves it), and **desktop 0.9.34 is released** on Windows, macOS and Linux (4 Nov).
 
 | Fix | Where it is now | Reaches users |
 |---|---|---|
-| **The app sends a desk video only after its face look ran.** A video is sent only when the phone's face look answers, explicitly, that it ran to the end (`faces: "checked"`); a failed look, an empty or unclear answer, or a phone with no look at all (iPhone today) sends nothing, and the student is asked to have the paper photographed instead. A phone that cannot cover faces no longer offers desk filming. On a long video (over 25 minutes), a face that stays in view is now covered all the way through (the cover grows with the gap between looks). Found by three independent audits on 4 Nov ([what was checked in the app's build](evidence/app-validation/phone-and-desk-2026-11-04.md)) | `phone/witness/safeVideo.ts` (the rule, tested on its own in this repository's CI), `WitnessScreen.tsx` (`smaller`, `canCoverFaces`); the Android face look in LoWisa's app; tested (`phone/__tests__/`). A safeguard with a photograph fallback, not a guarantee: the look runs on the phone, so a modified app could skip it; **since edge vb1104r the server looks for faces itself** and deletes a video with one unmarked (section 13) | LoWisa 1.10.5: sent to Google Play on 4 Nov (in review; its store build was checked on a device against the live server, [live checks 7](evidence/live-checks/README.md)); the App Store next |
-| **The Exam Desk's one-click button says what the server now enforces.** It takes only the marks called right and 0.95 sure or more (the server's line), says "sure is not proof", and counts what was left to check; an unreadable photographed paper is to be photographed again, not filmed again | `desk/witness-desk.js` (`acceptAt`, `countNot`), synced into the desktop app | the next LoWisa desktop release |
+| **The app sends a desk video only after its face look ran.** A video is sent only when the phone's face look answers, explicitly, that it ran to the end (`faces: "checked"`); a failed look, an empty or unclear answer, or a phone with no look at all (iPhone today) sends nothing, and the student is asked to have the paper photographed instead. A phone that cannot cover faces no longer offers desk filming. On a long video (over 25 minutes), a face that stays in view is now covered all the way through (the cover grows with the gap between looks). Found by three independent audits on 4 Nov ([what was checked in the app's build](evidence/app-validation/phone-and-desk-2026-11-04.md)) | `phone/witness/safeVideo.ts` (the rule, tested on its own in this repository's CI), `WitnessScreen.tsx` (`smaller`, `canCoverFaces`); the Android face look in LoWisa's app; tested (`phone/__tests__/`). A safeguard with a photograph fallback, not a guarantee: the look runs on the phone, so a modified app could skip it; **since edge vb1104r the server looks for faces itself** and deletes a video with one unmarked (section 13) | **LoWisa 1.10.5: on Google Play since 4 Nov** (its store build was checked on a device against the live server first, [live checks 7](evidence/live-checks/README.md)); **App Store: in Apple's review** (submitted 4 Nov; the iPhone build was checked on Xcode 27.1's simulator: no desk-filming card, photograph the paper) |
+| **The Exam Desk's one-click button says what the server now enforces.** It takes only the marks called right and 0.95 sure or more (the server's line), says "sure is not proof", and counts what was left to check; an unreadable photographed paper is to be photographed again, not filmed again; a video deleted for a face says so; the desk says whether the marks were judged against the teacher's mark scheme or the model's own key. The desk's six-second clips also play now (the desktop app's content rules had blocked them) | `desk/witness-desk.js` (`acceptAt`, `countNot`, `judgedAgainst`), synced into the desktop app | **LoWisa desktop 0.9.34, released 4 Nov** |
 
-**What already protects students until then (live today):**
+**What protects students on any app version (live today):**
 - **The main way in films no one.** The teacher photographs the finished paper; desk filming is the optional way.
 - **On Android, faces are covered on the phone** before a desk video leaves it, including any part of a person beside
   the page; the writing hand and the ink stay seen.
@@ -1378,13 +1387,13 @@ because a store app cannot change until then.
   were made, even for an account no one opens again (live from edge vb1104m).
 - **The teacher can delete** a paper or a whole exam at any time, and everything kept with it goes too.
 
-- **The server takes no desk video from the store apps** (since edge vb1104p): they cannot say their face look ran, so
-  their students photograph the finished paper instead.
+- **The server takes no desk video from apps before 1.10.5** (since edge vb1104p): they cannot say their face look ran,
+  so their students photograph the finished paper instead.
 - **The server looks for faces in every desk video itself** (since edge vb1104r): a video with a face is deleted
   unmarked and nothing from it is kept, whatever the app said ([`harness/face/`](harness/face/README.md)).
 
-What the release adds is desk filming back, with the last step: a video whose faces could not be covered is never
-sent at all, on any phone.
+What 1.10.5 adds is desk filming back, with the last step: a video whose faces could not be covered is never sent at
+all, on any phone.
 
 Everything on the server is already live; it changes without an app release. On 4 Nov that was the independent
 audit's server fixes (section 13), live from edge vb1104m.
@@ -1416,8 +1425,9 @@ audit's server fixes (section 13), live from edge vb1104m.
   with nothing kept (section 13). Still next: the look runs after the upload, so the phone's own cover stays the first
   step.
 - **Done after the fourth audit (edge vb1104p):** each hold settled by its own id, failures and late calls counted
-  (section 13); one click by risk as well as confidence (section 13). Next for both: the desk shows the teacher why a
-  mark was held back (the server already says), from the next desktop release.
+  (section 13); one click by risk as well as confidence (section 13). Next for both: the desk showing the teacher why a
+  mark was held back (the server already says); not built yet (desktop 0.9.34 says what the marks were judged against,
+  not each mark's reason).
 
 ### 17.3 Already joined to LoWisa's existing features
 

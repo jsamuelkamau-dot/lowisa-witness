@@ -35,8 +35,8 @@ Details are in [`evidence/live-checks/`](evidence/live-checks/README.md).
 |---|---|
 | Code the measurements ran on | tag `v1.0.1-code` (three runs of every real set); earlier runs in [`harness/PROVENANCE.md`](harness/PROVENANCE.md) |
 | Production server (Witness library) | `v1.0.2-code` plus the audit fixes in README section 13, edge vb1104r (live 4 Nov; each edge release is listed there) |
-| Phone apps in the stores | LoWisa 1.10.4 (Google Play and the App Store); 1.10.5, with the phone fixes in README 17.1, was sent to Google Play on 4 Nov (in review) |
-| Desktop app | LoWisa desktop 0.9.33; the desk's wording fixes arrive with the next desktop release |
+| Phone apps in the stores | **Google Play: LoWisa 1.10.5** (published 4 Nov), with the phone fixes in README 17.1; Android phones on 1.10.4 are offered the update. **App Store: LoWisa 1.10.4**; 1.10.5 is in Apple's review (submitted 4 Nov) |
+| Desktop app | **LoWisa desktop 0.9.34** (released 4 Nov, Windows, macOS and Linux), with the desk's fixes in README 17.1 |
 | This repository's history | Republished fresh on 4 Nov 2026 with every commit kept (same files and dates); the hashes in these files are the original repository's, mapped in [`DEVELOPMENT-PROVENANCE.md`](DEVELOPMENT-PROVENANCE.md) |
 
 ## What is proven, and what is not yet
@@ -52,9 +52,9 @@ Details are in [`evidence/live-checks/`](evidence/live-checks/README.md).
 - **Not yet shown**: that the product strengthens learning lastingly, across many learners. That needs a controlled
   study, whose design is written down before it runs: [`docs/STUDY-PLAN.md`](docs/STUDY-PLAN.md). One completed level
   or one re-check is evidence of a step, not of lasting mastery.
-- **Desk video is checked twice, not made impossible.** The store apps cannot apply the fail-closed face rule, so the
-  server refuses their desk videos and those papers are photographed. From the next phone release, the app covers
-  faces and says so. Since edge vb1104r the server no longer relies on that statement: it looks for faces in every desk
+- **Desk video is checked twice, not made impossible.** Apps before 1.10.5 cannot apply the fail-closed face rule, so
+  the server refuses their desk videos and those papers are photographed. 1.10.5 (Google Play now; the App Store once
+  Apple approves it) covers faces on Android and says so; on iPhone it offers no desk filming. Since edge vb1104r the server no longer relies on that statement: it looks for faces in every desk
   video itself (SAM 3.1) and deletes a video with one unmarked, keeping nothing from it (8 of 8 face clips refused,
   8 of 8 face-free clips cleared, [`harness/face/`](harness/face/README.md)). A modified app's video still reaches the
   private store before the look deletes it, and a face shown for under half a second can be missed. The main way in,

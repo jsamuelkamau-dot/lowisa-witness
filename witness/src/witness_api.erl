@@ -387,9 +387,9 @@ route(<<"POST">>, [<<"sitting">>, Id, <<"student">>], B, Uid, Host) ->
     end;
 %% 4 Nov (fourth independent audit, finding A: "the released phone apps do not yet contain the privacy fixes; until
 %% then disable desk filming on affected versions"). A video is taken only from an app that says its face look ran to
-%% the end (`faces: "checked"`, sent since the face rule in safeVideo.ts). The apps in the stores today never say it, so
-%% they are refused here and photograph the finished paper instead. The server cannot see faces: this stops the old
-%% apps, it is not proof about a video; the look itself runs on the phone.
+%% the end (`faces: "checked"`, sent since the face rule in safeVideo.ts). Apps before 1.10.5 (the store apps on 4 Nov) never say it, so
+%% they are refused here and photograph the finished paper instead. The statement is the app's word: it stops the old
+%% apps, it is not proof about a video. Since vb1104r the server looks for faces itself (witness_face), first.
 route(<<"POST">>, [<<"sitting">>, <<"start">>], B, _Uid0, _Host) when not is_map_key(<<"faces">>, B) orelse map_get(<<"faces">>, B) =/= <<"checked">> ->
     refuse(426, <<"update_app">>, mastery_words(update_app));
 route(<<"POST">>, [<<"sitting">>, <<"start">>], B, Uid0, Host) ->

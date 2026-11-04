@@ -95,6 +95,9 @@ phone release (1.10.5, the store build, on an Android emulator):
 Not forced on a device: a face look that fails on the phone (it then sends nothing); that is covered by the phone's tests.
 The test exam was closed to joining afterwards.
 
+That build went to Google Play as 1.10.5 the same day (published 4 Nov). On iPhone, 1.10.5 was checked on Xcode
+27.1's simulator (the exam page offers "Photograph the papers" and no desk filming) and is in Apple's review.
+
 ## Not checked live
 
 - A level built end to end on a phone (the probe has no phone): the level's design calls were checked against the
