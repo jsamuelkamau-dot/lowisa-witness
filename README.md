@@ -1233,8 +1233,16 @@ because a store app cannot change until then.
 |---|---|---|
 | **A desk video never leaves the phone with a face uncovered.** If the phone's look for faces fails, the video is not sent, and the student is asked to have the paper photographed instead. A phone that cannot cover faces yet (iPhone) no longer offers desk filming. Found by an independent audit on 4 Nov | `phone/witness/WitnessScreen.tsx` (`smaller`, `canCoverFaces`); the Android face look in LoWisa's app; tested (`phone/__tests__/`) | the next LoWisa phone release, Android and iPhone |
 
-Until then, the main way in films no one: the teacher photographs the finished paper. Desk filming is the optional way,
-and the app in the stores still offers it as before.
+**What already protects students until then (live today):**
+- **The main way in films no one.** The teacher photographs the finished paper; desk filming is the optional way.
+- **On Android, faces are covered on the phone** before a desk video leaves it, including any part of a person beside
+  the page; the writing hand and the ink stay seen.
+- **A desk video is deleted as soon as it is marked.** Only short clips and stills at the moments that matter are kept.
+- **Nothing is kept for good:** pages, recordings, clips and stills are deleted by the store itself 180 days after they
+  were made, even for an account no one opens again (live from edge vb1104m).
+- **The teacher can delete** a paper or a whole exam at any time, and everything kept with it goes too.
+
+What the release adds is the last step: a video whose faces could not be covered is never sent at all, on any phone.
 
 Everything on the server is already live; it changes without an app release. On 4 Nov that was the independent
 audit's server fixes (section 13), live from edge vb1104m.
