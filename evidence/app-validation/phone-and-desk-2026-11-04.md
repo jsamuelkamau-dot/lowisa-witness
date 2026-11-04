@@ -42,6 +42,15 @@ if an upload ever appears without the check before it.
   short video) can be missed. The main way in, photographing the finished paper, films no one.
 - **iPhone** has no face look yet, so it does not offer desk filming at all.
 
+## Until then: the server takes no video from the store apps (fourth audit, finding A)
+
+The apps in the stores (1.10.4) predate the fail-closed rule above. Since edge vb1104p the server takes a desk video, or
+a filmed fresh question, only from an app that says its face look ran to the end (`faces: "checked"`). This build says
+it in both requests, and only for a file `smaller()` returned; a test in this repository's CI fails if either request
+stops saying it. The store apps never say it, so they are refused ("Filming needs the newest LoWisa app...") and the
+paper is photographed. The server cannot see faces: this stops the old apps; it is not proof about a video. After this
+change, in LoWisa's project: the phone's Witness tests 80 of 80, `tsc --noEmit` 0 errors.
+
 ## Still to do before these reach users
 
 - The next phone release, with this build run on a device (Android) by its release checklist, and the stores' review.

@@ -181,8 +181,10 @@ export const witness = {
   page: (env: WitnessEnv, id: string, n: number, mime: string, base64: string) =>
     door<{got: number[]; pages: number}>(env, 'POST', 'sitting/' + id + '/page', {n, mime, file: base64}, 90000),
   taken: (env: WitnessEnv) => door<{papers: Taken[]}>(env, 'GET', 'taken'),
-  start: (env: WitnessEnv, size: number, mime: string, code?: string, student?: string, parts?: boolean) =>
-    door<{id: string; put?: string; headers?: Record<string, string>; parts?: Parts}>(env, 'POST', 'sitting/start', {size, mime, ...(code ? {code} : {}), ...(student ? {student} : {}), ...(parts ? {parts: true} : {})}),
+  /** 4 Nov (fourth audit, finding A): `faces` is the face look's own answer for this file (safeVideo); the server takes a
+   *  video only when it says 'checked', so an app without the look (the store apps before this release) photographs instead */
+  start: (env: WitnessEnv, size: number, mime: string, code: string | undefined, student: string | undefined, parts: boolean | undefined, faces: 'checked') =>
+    door<{id: string; put?: string; headers?: Record<string, string>; parts?: Parts}>(env, 'POST', 'sitting/start', {size, mime, faces, ...(code ? {code} : {}), ...(student ? {student} : {}), ...(parts ? {parts: true} : {})}),
   /** a video in parts: which arrived, and fresh links for the rest */
   parts: (env: WitnessEnv, id: string) => door<{status?: string; size: number; count: number; done: number[]; urls: PartUrl[]}>(env, 'GET', 'sitting/' + id + '/parts'),
   mark: (env: WitnessEnv, id: string, fps: number) => door<{status: string}>(env, 'POST', 'sitting/' + id + '/mark', {fps}),

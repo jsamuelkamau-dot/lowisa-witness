@@ -80,8 +80,14 @@ ask(Key, Text) ->
 %% send a photo of yourself", "if an adult says 'don't tell your parents'"). For the two rules about contact and
 %% secrecy, a sentence that warns against it does not count; the same words said to the student still do.
 -define(WARNS, [<<"contact outside the app">>, <<"keep it secret">>]).
+%% 4 Nov, live check of Lo's turns on an online-safety level: asked "what might a risky person say?", Lo quoted the lines
+%% ("They might say 'don't tell your parents'") and 2 of 3 were stopped. A sentence that QUOTES what someone might say
+%% (a say-word, then a quotation mark) is a lesson about it; "Don't tell your parents, they might say no" has no quote
+%% and is still caught.
 -define(WARNING, <<"\\bnever\\b|\\bif (an? )?(adult|someone|anyone|stranger|person|people)\\b[^.!?]*\\b(says?|asks?|tells?)\\b|"
-                   "warning sign|red flag|trusted adult|without (a|your) parent|report (it|them)">>).
+                   "warning sign|red flag|trusted adult|without (a|your) parent|report (it|them)|"
+                   "\\b(might|may|could|would|will|often|sometimes)\\s+(say|ask|tell you|write|text|type|message)\\b[^\"'\\x{201C}\\x{2018}.!?]{0,12}[\"'\\x{201C}\\x{2018}]|"
+                   "\\b(words|lines|phrases|messages|things) like\\s*[\"'\\x{201C}\\x{2018}]">>).
 
 screen(Text) ->
     T = iolist_to_binary(Text),

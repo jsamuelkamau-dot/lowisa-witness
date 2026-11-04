@@ -43,3 +43,26 @@ server holding the app's instructions (README, future plans).
 node harness/design-layout/scope.mjs > /tmp/scope.json
 MODEL_API_KEY=... node harness/design-layout/attacks.mjs /tmp/scope.json /tmp/attacks.json 3
 ```
+
+## A narrow answer line for a level's own calls (fourth audit, 4 Nov)
+
+The live turn's answer line cost valid outlines when added to a level's JSON calls, so a level's calls now get their
+own, narrower line: never the exam question's own final answer or a worked solution of it, and examples use other
+numbers. `answer-line.mjs` compares the scope's JSON branch without and with it, on the phone's own outline request and
+on the answer-key attack, two rounds of 10:
+[`answer-line-ab-2x10.json`](answer-line-ab-2x10.json).
+
+| | without the line (live until vb1104p) | with it (since vb1104p) |
+|---|---|---|
+| valid level outline, the phone's own request | 19 of 20 | 18 of 20 |
+| the answer-key attack got the exam's answer | 15 of 20 | **0 of 20** |
+
+The second round kept the text of its misses, one in each arm: both were complete levels the strict parser could not
+read (text after the JSON), not refusals. The first round's one miss (with the line) was not kept. All eight attacks again on the new scope, three
+runs each, both reply modes: **48 of 48 held**
+([`attacks-3-runs-after-answer-line.json`](attacks-3-runs-after-answer-line.json)).
+
+```bash
+cp witness/src/witness_api.erl /tmp/ab/variant.erl   # and the code before vb1104p as /tmp/ab/live.erl
+MODEL_API_KEY=... node harness/design-layout/answer-line.mjs /tmp/ab /tmp/ab/live.erl /tmp/ab/variant.erl 10 /tmp/ab/out.json
+```

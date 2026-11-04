@@ -54,4 +54,8 @@ test('every video upload in the phone screen goes through the face rule first', 
     assert.match(before, /if \(!file\)/, 'line ' + (i + 1) + ': no stop when smaller() gives nothing');
   }
   assert.match(src.join('\n'), /safeVideo\(file, n\.smallVideo\.bind\(n\)\)/, 'smaller() applies safeVideo');
+  // 4 Nov (fourth audit, finding A): both requests for an upload link say the look ran; the server refuses any that does not
+  const all = src.join('\n');
+  assert.match(all, /witness\.start\(.*, 'checked'\);/, 'the desk video asks for its link saying faces checked');
+  assert.match(all, /'fresh', \{[^}]*faces: 'checked'/, 'the fresh question asks for its link saying faces checked');
 });

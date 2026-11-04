@@ -1,0 +1,23 @@
+{
+ "run_at": "2026-11-04",
+ "edge": "vb1104o",
+ "path": "the photo path a teacher uses: POST pile, sitting/start kind photo, one page, mark",
+ "results": [
+  {
+   "photo": "blank",
+   "sent": "a blank white page",
+   "status": "failed",
+   "unreadable": "The photo shows only blank white with no paper or writing visible.",
+   "told": "The paper couldn't be read in these photos, so nothing was marked. Photograph it again.",
+   "questions_marked": 0
+  },
+  {
+   "photo": "blurred",
+   "sent": "three answers in black, blurred until unreadable (Gaussian radius 18)",
+   "status": "failed",
+   "unreadable": "The photo is completely white and shows no readable paper or writing.",
+   "told": "The paper couldn't be read in these photos, so nothing was marked. Photograph it again.",
+   "questions_marked": 0
+  }
+ ]
+}

@@ -305,7 +305,7 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
     }
     if (!id) {
       setStage({kind: 'sending', title, line: 'Getting the upload ready…'});
-      const started = await witness.start(env, total, mime, stage.code, name.trim(), canSendParts());
+      const started = await witness.start(env, total, mime, stage.code, name.trim(), canSendParts(), 'checked'); // file came from smaller(): the look said checked
       if (!started.ok) { again(started.error, file); return; }
       id = started.value.id;
       if (started.value.parts) { urls = started.value.parts.urls; partSize = started.value.parts.size; }
@@ -596,7 +596,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
     if (!file) { setFilming(''); setSaid(UNCOVERED_WORDS); return; }
     const mime = doorMime(file.mime, file.name)!;
     setFilming('Getting the upload ready…');
-    const r = await witness.mastery(env, paper.id, q.n, 'fresh', {mime, size: Math.round(file.size)});
+    const r = await witness.mastery(env, paper.id, q.n, 'fresh', {mime, size: Math.round(file.size), faces: 'checked'}); // file came from smaller()
     if (!r.ok || !r.value.fresh) { setFilming(''); setSaid(r.ok ? 'Try again in a moment.' : r.error); return; }
     setM(r.value.mastery);
     setFilming('Sending your answer…');

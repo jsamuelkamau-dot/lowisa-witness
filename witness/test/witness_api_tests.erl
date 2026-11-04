@@ -141,7 +141,7 @@ r(M, P, B, Uid) -> witness_api:route(M, P, B, Uid, ?MODULE).
 
 start_mark_view_test() ->
     setup(),
-    {201, #{id := Id, put := Put}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"mime">> => <<"video/mp4">>, <<"size">> => 1000}, <<"u1">>),
+    {201, #{id := Id, put := Put}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"mime">> => <<"video/mp4">>, <<"faces">> => <<"checked">>, <<"size">> => 1000}, <<"u1">>),
     ?assertEqual(<<"https://store.example.com/", Id/binary>>, Put),
     ?assertMatch({200, #{status := <<"uploading">>}}, r(<<"GET">>, [<<"sitting">>, Id], #{}, <<"u1">>)),
     Body = #{<<"fps">> => 24, <<"level">> => <<"Year 7">>, <<"questions">> => [#{<<"n">> => 1, <<"text">> => <<" Simplify 16/64 ">>, <<"marks">> => 2}]},
@@ -157,13 +157,13 @@ start_mark_view_test() ->
 
 another_account_sees_nothing_test() ->
     setup(),
-    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10}, <<"u1">>),
+    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10}, <<"u1">>),
     ?assertMatch({404, _}, r(<<"GET">>, [<<"sitting">>, Id], #{}, <<"u2">>)),
     ?assertMatch({404, _}, r(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], #{}, <<"u2">>)).
 
 failure_drops_the_clip_and_says_little_test() ->
     setup(), persistent_term:put(witness_api_fail, true),
-    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10}, <<"u1">>),
+    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10}, <<"u1">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], #{}, <<"u1">>),
     {200, V} = r(<<"GET">>, [<<"sitting">>, Id], #{}, <<"u1">>),
     ?assertMatch(#{status := <<"failed">>, error := _}, V),
@@ -174,9 +174,9 @@ failure_drops_the_clip_and_says_little_test() ->
 
 refusals_test() ->
     setup(),
-    ?assertMatch({400, #{code := <<"bad_type">>}}, r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"mime">> => <<"image/png">>, <<"size">> => 10}, <<"u1">>)),
-    ?assertMatch({400, #{code := <<"bad_size">>}}, r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 0}, <<"u1">>)),
-    ?assertMatch({400, #{code := <<"bad_size">>}}, r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 600 * 1024 * 1024}, <<"u1">>)),
+    ?assertMatch({400, #{code := <<"bad_type">>}}, r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"mime">> => <<"image/png">>, <<"faces">> => <<"checked">>, <<"size">> => 10}, <<"u1">>)),
+    ?assertMatch({400, #{code := <<"bad_size">>}}, r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 0}, <<"u1">>)),
+    ?assertMatch({400, #{code := <<"bad_size">>}}, r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 600 * 1024 * 1024}, <<"u1">>)),
     ?assertMatch({404, _}, r(<<"GET">>, [<<"nope">>], #{}, <<"u1">>)).
 
 sitting_of_cleans_input_test() ->
@@ -186,7 +186,7 @@ sitting_of_cleans_input_test() ->
     ?assertMatch(#{kind := <<"paper">>}, witness_api:sitting_of(#{<<"kind">> => <<"anything">>})).
 
 q(N, Res, Conf) -> #{n => N, result => Res, confidence => Conf, marks => case Res of <<"mastered">> -> 2; _ -> 0 end, out_of => 2,
-                    diagnosis => <<"d">>, moment_s => 3, steps => []}.
+                    diagnosis => <<"d">>, moment_s => 3, steps => [], final_answer => <<"1/4">>}.
 
 pile_queue_review_release_test() ->
     setup(),
@@ -196,7 +196,7 @@ pile_queue_review_release_test() ->
     ?assertMatch({400, #{code := <<"no_title">>}}, r(<<"POST">>, [<<"pile">>], #{}, <<"t1">>)),
     Mark = fun(Student, Qs) ->
         persistent_term:put(witness_api_result, #{questions => Qs, pauses => [], lines => [], cost_usd => 0.08}),
-        {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"pile">> => P, <<"student">> => Student}, <<"t1">>),
+        {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"pile">> => P, <<"student">> => Student}, <<"t1">>),
         {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"t1">>),
         S
     end,
@@ -230,11 +230,11 @@ pile_queue_review_release_test() ->
     %% another teacher sees none of it
     ?assertMatch({404, _}, r(<<"GET">>, [<<"pile">>, P], #{}, <<"t2">>)),
     ?assertMatch({200, #{piles := []}}, r(<<"GET">>, [<<"piles">>], #{}, <<"t2">>)),
-    ?assertMatch({404, #{code := <<"no_pile">>}}, r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"pile">> => P}, <<"t2">>)).
+    ?assertMatch({404, #{code := <<"no_pile">>}}, r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"pile">> => P}, <<"t2">>)).
 
 review_before_marking_is_refused_test() ->
     setup(),
-    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10}, <<"u1">>),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10}, <<"u1">>),
     ?assertMatch({409, #{code := <<"not_marked">>}}, r(<<"POST">>, [<<"sitting">>, S, <<"review">>], #{<<"n">> => 1}, <<"u1">>)).
 
 join_code_puts_the_students_paper_in_the_teachers_pile_test() ->
@@ -246,7 +246,7 @@ join_code_puts_the_students_paper_in_the_teachers_pile_test() ->
     ?assertMatch({200, #{pile := #{title := <<"Fractions quiz">>, level := <<"Year 7">>}}},
                  r(<<"POST">>, [<<"join">>], #{<<"code">> => <<" ", (string:lowercase(Code))/binary, " ">>}, <<"stud">>)),
     ?assertMatch({404, #{code := <<"no_code">>}}, r(<<"POST">>, [<<"join">>], #{<<"code">> => <<"ZZZZZZ">>}, <<"stud">>)),
-    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amara">>}, <<"stud">>),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amara">>}, <<"stud">>),
     %% the clip is signed under the teacher, the paper is in the teacher's pile
     ?assert(lists:member({put, <<"teacher">>, S, <<"video/mp4">>, 10}, events())),
     {200, #{sittings := [#{id := S, student := <<"Amara">>}]}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>),
@@ -287,7 +287,7 @@ released_paper(Result) ->
     {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions">>,
         <<"questions">> => [#{<<"n">> => 3, <<"text">> => <<"Simplify 16/64">>, <<"marks">> => 2}]}, <<"teacher">>),
     persistent_term:put(witness_api_result, Result),
-    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amara">>}, <<"stud">>),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amara">>}, <<"stud">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"stud">>),
     {200, _} = r(<<"POST">>, [<<"pile">>, P, <<"release">>], #{}, <<"teacher">>),
     {P, S}.
@@ -386,7 +386,7 @@ the_same_video_is_marked_once_test() ->
     setup(), persistent_term:put({witness_api_on, cache}, true),
     {201, #{id := P}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions">>}, <<"teacher">>),
     Mark = fun(Who) ->
-        {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"pile">> => P, <<"student">> => Who}, <<"teacher">>),
+        {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"pile">> => P, <<"student">> => Who}, <<"teacher">>),
         {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"teacher">>), S end,
     S1 = Mark(<<"A">>), S2 = Mark(<<"B">>),
     ?assertEqual(1, length([E || E = {marked, _, _, _} <- events()])),
@@ -411,7 +411,7 @@ a_levels_design_calls_are_paid_by_the_exams_teacher_test() ->
     %% a teacher out of credits: the student is told it is the teacher's, not shown their own credit wall
     {201, #{code := Code2}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Broke class">>}, <<"broke">>),
     persistent_term:put(witness_api_result, #{questions => [q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
-    {201, #{id := S2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code2, <<"student">> => <<"Amara">>}, <<"stud">>),
+    {201, #{id := S2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => Code2, <<"student">> => <<"Amara">>}, <<"stud">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S2, <<"mark">>], #{}, <<"stud">>),
     {200, _} = r(<<"POST">>, [<<"pile">>, maps:get(pile, element(2, load(<<"broke">>, {sitting, S2}))), <<"release">>], #{}, <<"broke">>),
     ?assertMatch({409, #{code := <<"teacher_credits">>}}, r(<<"POST">>, [<<"design">>], B#{<<"for">> => #{<<"sitting">> => S2, <<"n">> => 3}}, <<"stud">>)).
@@ -421,7 +421,7 @@ a_teacher_sitting_their_own_exam_plays_both_sides_test() ->
     setup(),
     {201, #{code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions">>, <<"preview">> => false}, <<"teacher">>),
     persistent_term:put(witness_api_result, #{questions => [q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
-    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Me">>}, <<"teacher">>),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Me">>}, <<"teacher">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"teacher">>),
     {200, _} = r(<<"POST">>, [<<"pile">>, maps:get(pile, element(2, load(<<"teacher">>, {sitting, S}))), <<"release">>], #{}, <<"teacher">>),
     M = fun(Action, Body) -> r(<<"POST">>, [<<"mastery">>, S, <<"3">>, Action], Body, <<"teacher">>) end,
@@ -463,7 +463,7 @@ design_door_passes_one_call_and_the_wall_test() ->
     ?assertMatch([{guarded, _}], [E || E = {guarded, _} <- events()]),
     %% a teacher who sits their own exam pays from their own wallet, and meets the host's own wall
     {201, #{code := C2}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Own">>}, <<"broke">>),
-    {201, #{id := S2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => C2, <<"student">> => <<"Me">>}, <<"broke">>),
+    {201, #{id := S2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => C2, <<"student">> => <<"Me">>}, <<"broke">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S2, <<"mark">>], #{}, <<"broke">>),
     {200, _} = r(<<"POST">>, [<<"pile">>, maps:get(pile, element(2, load(<<"broke">>, {sitting, S2}))), <<"release">>], #{}, <<"broke">>),
     ?assertMatch({402, #{code := <<"credits_exhausted">>}}, r(<<"POST">>, [<<"design">>], B#{<<"for">> => #{<<"sitting">> => S2, <<"n">> => 3}}, <<"broke">>)).
@@ -498,7 +498,7 @@ after_release_the_teacher_chooses_and_issues_the_badge_test() ->
     setup(),
     {201, #{code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions">>, <<"preview">> => false}, <<"teacher">>),
     persistent_term:put(witness_api_result, #{questions => [q(1, <<"mastered">>, 0.9), q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
-    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amara">>}, <<"stud">>),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amara">>}, <<"stud">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"stud">>),
     M = fun(Who, N, Action, Body) -> r(<<"POST">>, [<<"mastery">>, S, integer_to_binary(N), Action], Body, Who) end,
     %% nothing before release; nobody else at all
@@ -528,12 +528,15 @@ after_release_the_teacher_chooses_and_issues_the_badge_test() ->
     [{judged, 3, _}] = [E || E = {judged, _, _} <- events()],
     {200, _} = M(<<"stud">>, 3, <<"explain">>, #{<<"to">> => <<"teacher">>, <<"text">> => <<"I know now.">>}),
     %% a fresh question on paper, watched again: only once the teacher set one; its marking comes back onto question 3
-    Clip = #{<<"mime">> => <<"video/mp4">>, <<"size">> => 10},
+    Clip = #{<<"mime">> => <<"video/mp4">>, <<"size">> => 10, <<"faces">> => <<"checked">>},
     ?assertMatch({400, #{code := <<"not_asked">>}}, M(<<"stud">>, 3, <<"fresh">>, Clip)),
     {200, #{mastery := #{asks := #{paper := true, fresh := <<"Simplify 12/48">>}}}} =
         M(<<"teacher">>, 3, <<"verify">>, #{<<"lo">> => true, <<"teacher">> => true, <<"paper">> => true, <<"fresh">> => <<"Simplify 12/48">>}),
     ?assertMatch({403, _}, M(<<"teacher">>, 3, <<"fresh">>, Clip)),
     ?assertMatch({400, #{code := <<"bad_type">>}}, M(<<"stud">>, 3, <<"fresh">>, Clip#{<<"mime">> => <<"image/png">>})),
+    %% 4 Nov (fourth audit, finding A): an app that does not say its face look ran (the store apps today) is refused
+    ?assertMatch({400, #{code := <<"update_app">>}}, M(<<"stud">>, 3, <<"fresh">>, maps:remove(<<"faces">>, Clip))),
+    ?assertMatch({400, #{code := <<"update_app">>}}, M(<<"stud">>, 3, <<"fresh">>, Clip#{<<"faces">> => <<"skipped">>})),
     {200, #{fresh := #{id := F, put := _}, mastery := #{fresh := #{status := <<"uploading">>}}}} = M(<<"stud">>, 3, <<"fresh">>, Clip),
     {202, _} = r(<<"POST">>, [<<"sitting">>, F, <<"mark">>], #{}, <<"stud">>),
     {200, #{result := #{questions := [_, QF]}}} = r(<<"GET">>, [<<"sitting">>, S], #{}, <<"teacher">>),
@@ -568,7 +571,7 @@ examiner_proof_draw_voice_measure_test() ->
         pauses => [], lines => [], cost_usd => 0.08}),
     {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions">>, <<"level">> => <<"Year 7">>,
         <<"questions">> => [#{<<"n">> => 1, <<"text">> => <<"3/4 ÷ 1/2"/utf8>>}, #{<<"n">> => 3, <<"text">> => <<"Simplify 16/64">>}]}, <<"teacher">>),
-    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amara">>}, <<"stud">>),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amara">>}, <<"stud">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"stud">>),
     %% a still at each moment: where the thinking went wrong (35 s), else the question's last step (9 s)
     ?assertEqual([9, 35], lists:sort([T || {still, _, T} <- events()])),
@@ -631,7 +634,7 @@ practical_mode_marks_the_procedure_test() ->
     setup(),
     {201, #{id := P}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Heating water">>, <<"kind">> => <<"practical">>, <<"level">> => <<"Grade 8 science">>,
         <<"questions">> => [#{<<"n">> => 1, <<"text">> => <<"Measure 100 ml of water">>, <<"marks">> => 2}, #{<<"n">> => 2, <<"text">> => <<"Read the thermometer at eye level">>}]}, <<"teacher">>),
-    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"pile">> => P}, <<"teacher">>),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"pile">> => P}, <<"teacher">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"teacher">>),
     [{marked, _, _, Sitting}] = [E || E = {marked, _, _, _} <- events()],
     ?assertMatch(#{kind := <<"practical">>, questions := [#{n := 1, text := <<"Measure 100 ml of water">>}, _]}, Sitting),
@@ -644,12 +647,12 @@ open_weights_engine_test() ->
     setup(),
     {201, #{id := P}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Open">>, <<"engine">> => <<"open">>}, <<"teacher">>),
     %% no open endpoint on this host: Muse Spark marks it, and the result says so
-    {201, #{id := S1}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"pile">> => P}, <<"teacher">>),
+    {201, #{id := S1}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"pile">> => P}, <<"teacher">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S1, <<"mark">>], #{}, <<"teacher">>),
     ?assertMatch({200, #{result := #{engine := <<"muse-spark-1.3">>}}}, r(<<"GET">>, [<<"sitting">>, S1], #{}, <<"teacher">>)),
     %% with one, Spark Open marks it from the same signed link
     persistent_term:put({witness_api_on, open}, true),
-    {201, #{id := S2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"pile">> => P}, <<"teacher">>),
+    {201, #{id := S2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"pile">> => P}, <<"teacher">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S2, <<"mark">>], #{}, <<"teacher">>),
     [{open_marked, <<"muse-spark-open">>, Url, <<"open">>}] = [E || E = {open_marked, _, _, _} <- events()],
     ?assertEqual(<<"https://store.example.com/", S2/binary, "?signed">>, Url),
@@ -660,8 +663,8 @@ open_weights_engine_test() ->
 an_upload_whose_link_ran_out_leaves_the_exam_test() ->
     setup(),
     {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions check">>}, <<"teacher">>),
-    {201, #{id := Lost}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Tom">>}, <<"stud">>),
-    {201, #{id := Sent}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Tom">>}, <<"stud">>),
+    {201, #{id := Lost}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Tom">>}, <<"stud">>),
+    {201, #{id := Sent}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Tom">>}, <<"stud">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, Sent, <<"mark">>], #{}, <<"stud">>),
     %% a fresh upload still shows: its link is good for fifteen minutes
     {200, #{sittings := [_, _]}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>),
@@ -677,7 +680,7 @@ an_upload_whose_link_ran_out_leaves_the_exam_test() ->
 a_video_without_the_paper_is_not_marked_test() ->
     setup(), persistent_term:put(witness_api_fail, {unreadable, <<"A picture of a house; no paper.">>}),
     {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions check">>}, <<"teacher">>),
-    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amina">>}, <<"stud">>),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amina">>}, <<"stud">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"stud">>),
     ?assertMatch({200, #{status := <<"failed">>, unreadable := <<"A picture of a house; no paper.">>, error := <<"The paper couldn't be seen", _/binary>>}},
                  r(<<"GET">>, [<<"sitting">>, S], #{}, <<"teacher">>)),
@@ -692,7 +695,7 @@ a_video_without_the_paper_is_not_marked_test() ->
 %% so the student had to sit the exam again
 a_moment_of_meta_busy_is_tried_again_test() ->
     setup(), persistent_term:put(witness_api_fail, {busy, 2}),
-    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10}, <<"u1">>),
+    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10}, <<"u1">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], #{}, <<"u1">>),
     ?assertMatch({200, #{status := <<"marked">>}}, r(<<"GET">>, [<<"sitting">>, Id], #{}, <<"u1">>)),
     ?assertEqual(3, length([1 || {marked, _, _, _} <- events()])),
@@ -702,7 +705,7 @@ a_moment_of_meta_busy_is_tried_again_test() ->
 meta_busy_every_time_keeps_the_clip_to_mark_again_test() ->
     setup(), persistent_term:put(witness_api_fail, {busy, always}),
     {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions check">>}, <<"teacher">>),
-    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amina">>}, <<"stud">>),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amina">>}, <<"stud">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"stud">>),
     ?assertEqual(3, length([1 || {marked, _, _, _} <- events()])),
     ?assertEqual([], [E || E = {drop, _, _} <- events()]),
@@ -723,7 +726,7 @@ meta_busy_every_time_keeps_the_clip_to_mark_again_test() ->
 a_kept_clip_is_not_kept_past_a_day_test() ->
     setup(), persistent_term:put(witness_api_fail, {busy, always}),
     {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"T">>}, <<"teacher">>),
-    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code}, <<"stud">>),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => Code}, <<"stud">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"stud">>),
     {ok, Row} = load(<<"teacher">>, {sitting, S}),
     save(<<"teacher">>, {sitting, S}, Row#{marked_ms => maps:get(marked_ms, Row) - 86400001}),
@@ -736,7 +739,7 @@ a_kept_clip_is_not_kept_past_a_day_test() ->
 
 a_marking_that_never_came_back_can_be_marked_again_test() ->
     setup(),
-    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10}, <<"u1">>),
+    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10}, <<"u1">>),
     {ok, Row} = load(<<"u1">>, {sitting, Id}),
     save(<<"u1">>, {sitting, Id}, Row#{status => <<"marking">>, started_ms => erlang:system_time(millisecond) - 60000}),
     %% still inside its time: left alone
@@ -749,7 +752,7 @@ a_marking_that_never_came_back_can_be_marked_again_test() ->
 %% failed the sitting and deleted the video. It is read again now.
 a_reply_without_its_marking_is_read_again_test() ->
     setup(), persistent_term:put(witness_api_fail, {nomark, 1}),
-    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10}, <<"u1">>),
+    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10}, <<"u1">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], #{}, <<"u1">>),
     ?assertEqual(2, length([1 || {marked, _, _, _} <- events()])),
     ?assertMatch({200, #{status := <<"marked">>}}, r(<<"GET">>, [<<"sitting">>, Id], #{}, <<"u1">>)),
@@ -757,7 +760,7 @@ a_reply_without_its_marking_is_read_again_test() ->
 
 a_failure_that_is_not_meta_busy_is_not_tried_again_test() ->
     setup(), persistent_term:put(witness_api_fail, true),
-    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10}, <<"u1">>),
+    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10}, <<"u1">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], #{}, <<"u1">>),
     ?assertEqual(1, length([1 || {marked, _, _, _} <- events()])),
     ?assertMatch({200, #{status := <<"failed">>} = V} when not is_map_key(kept, V), r(<<"GET">>, [<<"sitting">>, Id], #{}, <<"u1">>)),
@@ -766,12 +769,12 @@ a_failure_that_is_not_meta_busy_is_not_tried_again_test() ->
 %% the examiner (Muse Wonder) is written off the request: Meta busy once is tried again, not left without questions
 the_examiner_is_tried_again_when_meta_is_busy_test() ->
     setup(), persistent_term:put({witness_api_on, examiner}, true), persistent_term:put(witness_api_exbusy, 1),
-    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10}, <<"u1">>),
+    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10}, <<"u1">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], #{}, <<"u1">>),
     ?assertEqual(1, length([1 || examiner_busy <- events()])),
     ?assertMatch({200, #{examiner := #{status := <<"ready">>, asks := [_, _]}}}, r(<<"GET">>, [<<"sitting">>, Id], #{}, <<"u1">>)),
     persistent_term:put(witness_api_exbusy, 5),
-    {201, #{id := Id2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10}, <<"u1">>),
+    {201, #{id := Id2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10}, <<"u1">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, Id2, <<"mark">>], #{}, <<"u1">>),
     %% busy every time: the marking stands, the examiner says it failed (three tries, not five)
     ?assertEqual(4, length([1 || examiner_busy <- events()])),
@@ -798,9 +801,9 @@ the_teacher_lets_all_held_levels_start_at_once_test() ->
     setup(),
     {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Physics">>, <<"preview">> => true}, <<"teacher">>),
     persistent_term:put(witness_api_result, #{questions => [q(3, <<"right_answer_wrong_thinking">>, 0.9), q(4, <<"not_yet">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
-    {201, #{id := S1}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amara">>}, <<"stud">>),
+    {201, #{id := S1}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amara">>}, <<"stud">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S1, <<"mark">>], #{}, <<"stud">>),
-    {201, #{id := S2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Kofi">>}, <<"stud2">>),
+    {201, #{id := S2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Kofi">>}, <<"stud2">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S2, <<"mark">>], #{}, <<"stud2">>),
     {200, _} = r(<<"POST">>, [<<"pile">>, P, <<"release">>], #{}, <<"teacher">>),
     {200, #{mastery := #{status := <<"held">>}}} = build_level(S1, 3, <<"stud">>, true, [<<"A">>]),
@@ -825,7 +828,7 @@ the_teacher_can_look_at_each_level_first_test() ->
     {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions">>, <<"preview">> => true}, <<"teacher">>),
     ?assertMatch({200, #{pile := #{preview := true}}}, r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>)),
     persistent_term:put(witness_api_result, #{questions => [q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
-    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amara">>}, <<"stud">>),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amara">>}, <<"stud">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"stud">>),
     {200, _} = r(<<"POST">>, [<<"pile">>, P, <<"release">>], #{}, <<"teacher">>),
     M = fun(Who, Action, Body) -> r(<<"POST">>, [<<"mastery">>, S, <<"3">>, Action], Body, Who) end,
@@ -843,7 +846,7 @@ the_teacher_can_look_at_each_level_first_test() ->
     {201, #{id := Pdef}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Default">>}, <<"teacher">>),
     ?assertMatch({200, #{pile := #{preview := true}}}, r(<<"GET">>, [<<"pile">>, Pdef], #{}, <<"teacher">>)),
     {201, #{code := Code2}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Other">>, <<"preview">> => false}, <<"teacher">>),
-    {201, #{id := S2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code2}, <<"stud">>),
+    {201, #{id := S2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => Code2}, <<"stud">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S2, <<"mark">>], #{}, <<"stud">>),
     {200, _} = r(<<"POST">>, [<<"pile">>, maps:get(pile, element(2, load(<<"teacher">>, {sitting, S2}))), <<"release">>], #{}, <<"teacher">>),
     ?assertMatch({200, #{mastery := #{status := <<"held">>}}},
@@ -882,7 +885,7 @@ the_students_own_step_is_cut_from_the_page_test() ->
     persistent_term:put(witness_api_result, #{questions => [#{n => 3, result => <<"right_answer_wrong_thinking">>, moment_s => 35, confidence => 0.9,
         marks => 0, out_of => 2, steps => [#{t => 33, wrote => <<"16/64">>, box => Box, line => 7}, #{t => 38, wrote => <<"= 1/4">>}]}], pauses => [],
         lines => [#{id => 7, start_s => 36.0, end_s => 41.0, box => Box}], cost_usd => 0.0}),
-    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10}, <<"u1">>),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10}, <<"u1">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"u1">>),
     %% cut once SAM saw the line stop growing (41 s), not at Spark's step time: the ink is there
     ?assertMatch([{cropped, _, 42.0, Box}], [E || E = {cropped, _, _, _} <- events()]),
@@ -895,7 +898,7 @@ a_built_level_gets_a_picture_of_its_world_test() ->
     setup(), persistent_term:put({witness_api_on, world}, true),
     {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions">>}, <<"teacher">>),
     persistent_term:put(witness_api_result, #{questions => [q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
-    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code}, <<"stud">>),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => Code}, <<"stud">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"stud">>),
     {200, _} = r(<<"POST">>, [<<"pile">>, P, <<"release">>], #{}, <<"teacher">>),
     Level = #{<<"title">> => <<"Cancel Factors Right">>, <<"lessons">> => [#{<<"title">> => <<"The sports shop sale">>, <<"beats">> => [<<"Boots at 16/64 off">>]}]},
@@ -915,11 +918,11 @@ a_long_video_goes_up_in_parts_and_resumes_test() ->
     setup(),
     Size = 3 * 8388608 + 1000,
     %% an old phone (no parts asked) still gets one link
-    ?assertMatch({201, #{put := _}}, r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => Size}, <<"u1">>)),
+    ?assertMatch({201, #{put := _}}, r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => Size}, <<"u1">>)),
     %% one part's worth goes up whole
-    ?assertMatch({201, #{put := _}}, r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 1000, <<"parts">> => true}, <<"u1">>)),
+    ?assertMatch({201, #{put := _}}, r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 1000, <<"parts">> => true}, <<"u1">>)),
     {201, #{id := Id, parts := #{size := 8388608, count := 4, urls := Urls}} = Started} =
-        r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => Size, <<"parts">> => true}, <<"u1">>),
+        r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => Size, <<"parts">> => true}, <<"u1">>),
     ?assertNot(maps:is_key(put, Started)),
     ?assertEqual([1, 2, 3, 4], [N || #{n := N} <- Urls]),
     %% the connection drops after two parts: nothing is marked, and the phone learns what is missing
@@ -933,7 +936,7 @@ a_long_video_goes_up_in_parts_and_resumes_test() ->
     ?assert(lists:member({parts_finish, Id, <<"up-", Id/binary>>, [1, 2, 3, 4]}, events())),
     ?assertMatch({200, #{status := <<"marked">>}}, r(<<"GET">>, [<<"sitting">>, Id], #{}, <<"u1">>)),
     %% a video in parts is not dropped as a lapsed upload after 20 minutes
-    {201, #{id := Id2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => Size, <<"parts">> => true}, <<"u1">>),
+    {201, #{id := Id2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => Size, <<"parts">> => true}, <<"u1">>),
     {ok, Row} = load(<<"u1">>, {sitting, Id2}),
     save(<<"u1">>, {sitting, Id2}, Row#{created_ms => maps:get(created_ms, Row) - 1300000}),
     ?assertMatch({200, #{status := <<"uploading">>}}, r(<<"GET">>, [<<"sitting">>, Id2], #{}, <<"u1">>)).
@@ -1070,7 +1073,7 @@ deleting_a_paper_one_account_sat_takes_its_pointer_test() ->
     setup(),
     {201, #{code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Self">>}, <<"teacher">>),
     persistent_term:put(witness_api_result, #{questions => [q(3, <<"not_yet">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
-    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code}, <<"teacher">>),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => Code}, <<"teacher">>),
     {ok, Row} = load(<<"teacher">>, {sitting, S}),
     ok = save(<<"teacher">>, {sitting, S}, Row#{student_uid => <<"teacher">>}),
     ok = save(<<"teacher">>, {mine, S}, #{owner => <<"teacher">>}),
@@ -1109,9 +1112,9 @@ the_badge_starts_a_recheck_a_week_later_test() ->
 %% one teacher action on many questions: a challenge to a group, the badge after one review, accepting confident marks
 the_teacher_acts_on_a_whole_group_at_once_test() ->
     setup(),
-    {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Class">>, <<"preview">> => false}, <<"teacher">>),
+    {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Class">>, <<"preview">> => false, <<"scheme">> => <<"Q1: 1/4. Q3: 3/8.">>}, <<"teacher">>),
     persistent_term:put(witness_api_result, #{questions => [q(1, <<"mastered">>, 0.95), q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
-    Ss = [begin {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => W}, W),
+    Ss = [begin {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => Code, <<"student">> => W}, W),
                 {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, W), S end || W <- [<<"s1">>, <<"s2">>, <<"s3">>]],
     {200, #{done := 3}} = r(<<"POST">>, [<<"pile">>, P, <<"bulk">>], #{<<"action">> => <<"accept">>, <<"items">> => [#{<<"sitting">> => S, <<"n">> => 1} || S <- Ss]}, <<"teacher">>),
     {200, #{queue := Q}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>),
@@ -1138,7 +1141,7 @@ the_teacher_acts_on_a_whole_group_at_once_test() ->
 a_paper_deleted_while_marking_stays_deleted_test() ->
     setup(),
     {201, #{id := P}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Q">>}, <<"teacher">>),
-    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"pile">> => P}, <<"teacher">>),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"pile">> => P}, <<"teacher">>),
     persistent_term:put(witness_api_during, fun() -> {200, _} = r(<<"POST">>, [<<"sitting">>, S, <<"delete">>], #{}, <<"teacher">>) end),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"teacher">>),
     persistent_term:erase(witness_api_during),
@@ -1185,12 +1188,12 @@ a_model_door_has_a_daily_ceiling_test() ->
 a_code_cannot_be_guessed_through_the_video_upload_test() ->
     setup(),
     {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"T">>}, <<"teacher">>),
-    Misses = [element(1, r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => <<"ZZZZZ", (integer_to_binary(I rem 10))/binary>>}, <<"guesser">>))
+    Misses = [element(1, r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => <<"ZZZZZ", (integer_to_binary(I rem 10))/binary>>}, <<"guesser">>))
               || I <- lists:seq(1, 25)],
     ?assert(lists:member(429, Misses)),
     ?assertEqual([404], lists:usort([S || S <- Misses, S =/= 429])),
     {200, _} = r(<<"POST">>, [<<"pile">>, P, <<"joining">>], #{<<"open">> => false}, <<"teacher">>),
-    ?assertMatch({409, #{code := <<"closed">>}}, r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code}, <<"stud">>)).
+    ?assertMatch({409, #{code := <<"closed">>}}, r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => Code}, <<"stud">>)).
 
 a_fresh_question_is_sent_once_test() ->
     Q = #{n => 1, mastery => #{asks => #{paper => true, fresh => <<"Why does a ship float?">>}}},
@@ -1330,17 +1333,66 @@ concurrent_calls_below_the_line_never_pass_it_test() ->
     Me = self(),
     [spawn(fun() -> Me ! {held, witness_api_reserve(<<"read">>)} end) || _ <- lists:seq(1, 40)],
     Got = [receive {held, X} -> X after 10000 -> timeout end || _ <- lists:seq(1, 40)],
-    ?assertEqual(4, length([ok || ok <- Got])),
+    ?assertEqual(4, length([H || {ok, H} <- Got])),
     {ok, #{n := N, holds := Holds}} = load(<<"witness:all-accounts">>, {mark_cache, <<"usd:all-accounts">>}),
-    ?assert(N + lists:sum([X || {_, _, X} <- Holds]) =< 22500000).
+    ?assert(N + lists:sum([element(3, X) || X <- Holds]) =< 22500000).
 
 %% 4 Nov (third audit): a call that costs more than its hold is logged and still counted in full
 an_overrun_is_counted_in_full_test() ->
     setup(),
-    ok = witness_api_reserve(<<"guard">>),
-    ok = witness_api_spend(<<"witness_guard">>, 0.05, <<"guard">>),
+    {ok, G} = witness_api_reserve(<<"guard">>),
+    ok = witness_api_spend(<<"witness_guard">>, 0.05, G),
     {ok, #{n := N, holds := H}} = load(<<"witness:all-accounts">>, {mark_cache, <<"usd:all-accounts">>}),
     ?assertEqual({50000, []}, {N, H}).
+
+%% 4 Nov (fourth audit, finding B: "settle the exact reservation of the completed request; reconcile failed, timed-out
+%% and late-completing requests; test with concurrent calls and injected failures")
+each_call_settles_its_own_hold_test() ->
+    setup(),
+    Day = fun() -> {ok, R} = load(<<"witness:all-accounts">>, {mark_cache, <<"usd:all-accounts">>}), R end,
+    Ids = fun() -> [element(4, H) || H <- maps:get(holds, Day())] end,
+    %% two calls of one kind; the second finishes first: its own hold goes, the first one's stays
+    {ok, {hold, _, A} = HA} = witness_api_reserve(<<"read">>),
+    {ok, HB} = witness_api_reserve(<<"read">>),
+    ok = witness_api_spend(<<"witness_read">>, 0.01, HB),
+    ?assertEqual([A], Ids()),
+    ?assertEqual(10000, maps:get(n, Day())),
+    %% the same call settled twice by mistake never takes the other call's hold
+    ok = witness_api_spend(<<"witness_read">>, 0.0, HB),
+    ?assertEqual([A], Ids()),
+    %% a call that failed after the model was asked: counted at its whole hold ($0.25), not at nothing
+    ok = witness_api:failed_for_test(HA, ?MODULE),
+    ?assertEqual({[], 260000}, {Ids(), maps:get(n, Day())}),
+    %% a hold given back before any model was asked: nothing counted
+    {ok, HC} = witness_api_reserve(<<"draw">>),
+    ok = witness_api:release_for_test(HC, ?MODULE),
+    ?assertEqual({[], 260000}, {Ids(), maps:get(n, Day())}),
+    %% a call that ends after its hold expired (30 minutes) is still counted in full, and logged
+    {ok, {hold, _, D} = HD} = witness_api_reserve(<<"check">>),
+    #{holds := Hs} = R0 = Day(),
+    ok = save(<<"witness:all-accounts">>, {mark_cache, <<"usd:all-accounts">>},
+              R0#{holds => [case H of {K, _, X, D} -> {K, erlang:system_time(millisecond) - 31 * 60000, X, D}; _ -> H end || H <- Hs]}),
+    ok = witness_api_spend(<<"witness_check">>, 0.02, HD),
+    ?assertEqual({[], 280000}, {Ids(), maps:get(n, Day())}),
+    %% a hold from before ids (a paper marking across the deploy) is still settled, oldest of its kind
+    Now = erlang:system_time(millisecond),
+    ok = save(<<"witness:all-accounts">>, {mark_cache, <<"usd:all-accounts">>}, (Day())#{holds => [{<<"paper">>, Now, 1250000}]}),
+    ok = witness_api_spend(<<"witness_sitting">>, 0.5, <<"paper">>),
+    ?assertMatch(#{n := 780000, holds := []}, Day()).
+
+%% 20 calls of one kind at once, finishing in random order, two of them failing: every hold settled exactly once
+concurrent_settles_are_exact_test() ->
+    setup(),
+    Me = self(),
+    [spawn(fun() ->
+         {ok, H} = witness_api_reserve(<<"judge">>),
+         timer:sleep(rand:uniform(30)),
+         ok = case I rem 10 of 0 -> witness_api:failed_for_test(H, ?MODULE); _ -> witness_api_spend(<<"witness_judge">>, 0.001, H) end,
+         Me ! done
+     end) || I <- lists:seq(1, 20)],
+    [receive done -> ok after 10000 -> error(timeout) end || _ <- lists:seq(1, 20)],
+    {ok, #{n := N, holds := Holds}} = load(<<"witness:all-accounts">>, {mark_cache, <<"usd:all-accounts">>}),
+    ?assertEqual({[], 18 * 1000 + 2 * 100000}, {Holds, N}).
 
 witness_api_reserve(Kind) -> witness_api:reserve_for_test(Kind, ?MODULE).
 witness_api_spend(Feature, Cost, Kind) -> witness_api:spend_for_test(Feature, Cost, Kind, ?MODULE).
@@ -1350,10 +1402,10 @@ witness_api_spend(Feature, Cost, Kind) -> witness_api:spend_for_test(Feature, Co
 %% sends; the desk is told the line
 one_click_accepts_only_marks_at_the_line_test() ->
     setup(),
-    {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Class">>, <<"preview">> => false}, <<"teacher">>),
+    {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Class">>, <<"preview">> => false, <<"scheme">> => <<"Q1: 1/4. Q2: 1/2. Q3: 3/4.">>}, <<"teacher">>),
     persistent_term:put(witness_api_result, #{questions => [q(1, <<"mastered">>, 0.97), q(2, <<"mastered">>, 0.92), q(3, <<"not_yet">>, 0.99)],
                                              pauses => [], lines => [], cost_usd => 0.0}),
-    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"size">> => 10, <<"code">> => Code, <<"student">> => <<"s1">>}, <<"s1">>),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => Code, <<"student">> => <<"s1">>}, <<"s1">>),
     {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"s1">>),
     {200, #{done := 1, results := Res}} = r(<<"POST">>, [<<"pile">>, P, <<"bulk">>], #{<<"action">> => <<"accept">>,
                                             <<"items">> => [#{<<"sitting">> => S, <<"n">> => N} || N <- [1, 2, 3]]}, <<"teacher">>),
@@ -1374,10 +1426,55 @@ the_screen_lets_the_curriculum_through_test() ->
                <<"Depression is a common illness; if you feel low for weeks, talk to a doctor or a school counsellor.">>,
                <<"Some people self-harm when they are in distress; if you are worried, speak to a trusted adult.">>,
                <<"A predator in a food chain hunts its prey.">>,
-               <<"The naked eye can see Venus at dusk.">>],
+               <<"The naked eye can see Venus at dusk.">>,
+               %% 4 Nov, live: Lo quoting a groomer's lines, two of three stopped before this
+               <<"They might say \"We're the same age\" or \"Don't tell your parents.\"">>,
+               <<"A risky person may ask you to 'send a photo of yourself' or say 'this is our little secret'.">>,
+               <<"Watch for lines like \"keep this between us\" in a game chat."/utf8>>,
+               <<"They could message \x{201C}don't tell your mum\x{201D} to make it feel special."/utf8>>],
     Harmful = [<<"Send me a photo of yourself and don't tell your parents.">>,
                <<"Let's keep this between us. Message me on Snapchat.">>,
                <<"What's your home address? We could meet up after school.">>,
-               <<"Here is a link: https://bit.ly/free-answers">>],
+               <<"Here is a link: https://bit.ly/free-answers">>,
+               %% a say-word with no quotation is not a lesson about the words: still caught
+               <<"Don't tell your parents, they might say no.">>,
+               <<"Keep this between us, people would say we are too close.">>],
     ?assertEqual([], [T || T <- Lessons, witness_guard:screen(T) =/= ok]),
     ?assertEqual([], [T || T <- Harmful, witness_guard:screen(T) =:= ok]).
+
+%% 4 Nov (fourth independent audit, finding A): the phone apps in the stores film without the fail-closed face rule. A
+%% desk video is taken only from an app that says its face look ran to the end; photographing the paper is unaffected.
+video_needs_the_face_look_test() ->
+    setup(),
+    {201, #{code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions quiz">>, <<"level">> => <<"Year 7">>}, <<"teacher">>),
+    Body = #{<<"size">> => 10, <<"mime">> => <<"video/mp4">>, <<"code">> => Code, <<"student">> => <<"s1">>},
+    [?assertMatch({426, #{code := <<"update_app">>}}, r(<<"POST">>, [<<"sitting">>, <<"start">>], B, <<"s1">>))
+     || B <- [Body, Body#{<<"faces">> => <<"failed">>}, Body#{<<"faces">> => true}, Body#{<<"faces">> => null}]],
+    ?assertMatch({201, #{id := _, put := _}}, r(<<"POST">>, [<<"sitting">>, <<"start">>], Body#{<<"faces">> => <<"checked">>}, <<"s1">>)),
+    ok.
+
+%% 4 Nov (fourth audit, finding D): a mark 0.99 sure is still held back for the teacher when the readings disagreed, the
+%% student struck something out, the answer could not be read, or the exam has no mark scheme; the desk is told why
+a_confident_mark_with_a_risk_is_never_one_click_test() ->
+    setup(),
+    Ask = fun(Scheme, Qs) ->
+              {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Class">>, <<"preview">> => false, <<"scheme">> => Scheme}, <<"teacher">>),
+              persistent_term:put(witness_api_result, #{questions => Qs, pauses => [], lines => [], cost_usd => 0.0}),
+              {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => Code, <<"student">> => <<"s1">>}, <<"s1">>),
+              {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"s1">>),
+              {200, #{results := Res}} = r(<<"POST">>, [<<"pile">>, P, <<"bulk">>], #{<<"action">> => <<"accept">>,
+                                                   <<"items">> => [#{<<"sitting">> => S, <<"n">> => maps:get(n, Q)} || Q <- Qs]}, <<"teacher">>),
+              [{R, maps:get(risks, X, [])} || #{result := R} = X <- Res]
+          end,
+    Sure = fun(N) -> q(N, <<"mastered">>, 0.99) end,
+    Struck = (Sure(2))#{steps => [#{t => 1, wrote => <<"1/3">>, crossed_out => true}, #{t => 2, wrote => <<"1/4">>, crossed_out => false}]},
+    ?assertEqual([{<<"ok">>, []},
+                  {<<"check_one_by_one">>, [<<"crossed_out">>]},
+                  {<<"check_one_by_one">>, [<<"readings_disagreed">>]},
+                  {<<"check_one_by_one">>, [<<"readings_disagreed">>]},
+                  {<<"check_one_by_one">>, [<<"unclear_writing">>]},
+                  {<<"check_one_by_one">>, [<<"unclear_writing">>]}],
+                 Ask(<<"Q1-6: 1/4">>, [Sure(1), Struck, (Sure(3))#{read_thrice => true}, (Sure(4))#{read_again_as => <<"1/2">>},
+                                       (Sure(5))#{final_answer => <<"">>}, (Sure(6))#{final_answer => <<"1/[illegible]">>}])),
+    %% no mark scheme: nothing is accepted in one click, however sure
+    ?assertEqual([{<<"check_one_by_one">>, [<<"no_mark_scheme">>]}], Ask(<<"">>, [Sure(1)])).

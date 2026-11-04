@@ -1,6 +1,8 @@
 # From Exam to Mastery
 
 > **For judges: protecting and strengthening human cognitive ability, in brief**
+> - **One page for judges:** [`JUDGES.md`](JUDGES.md): the three proofs, the exact versions, what was checked live on
+>   the production server, and what is not proven yet.
 > - **What it is.** A teacher photographs a finished exam. Meta's models mark every answer and read *how* the learner
 >   reached it, from their own handwriting, and every question not mastered becomes a level in their **Mastery Plan**:
 >   the learner does the thinking, and the level ends in a real task. **Not a chatbot, and not a photo grader:** the
@@ -13,9 +15,12 @@
 > - **On a real Grade 5 learner, against his own teacher** (three runs). On his multiple-choice papers the teacher checks
 >   **11 to 14 of 109 marks** one by one and accepts the rest in one click; **6 or 7 of the teacher's 10 wrong answers
 >   are caught**, and **no wrong idea is named** on any answer it did not accept, in any run. The limit: 2 to 4 of the
->   marks accepted in one click still call one of his wrong answers right; sure is not proof. So the one-click line rises
->   from 0.90 to 0.95 (live since 4 Nov, edge vb1104o): the teacher checks 27 to 51, and 0 to 2 one-click
->   marks are wrong. Nothing reaches him until the teacher releases it. On his
+>   marks accepted in one click still call one of his wrong answers right; sure is not proof. So the one-click line rose
+>   from 0.90 to 0.95 (edge vb1104o): the teacher checks 27 to 51, and 0 to 2 one-click marks are wrong. Every one of
+>   those was judged with **no mark scheme**, against the model's own key; so since edge vb1104p a paper with no mark
+>   scheme gets no one-click at all, and a mark whose readings disagreed, with a struck-out answer or unreadable writing
+>   is checked by the teacher however sure (on his papers, which had no scheme, the teacher checks all 109).
+>   Nothing reaches him until the teacher releases it. On his
 >   written answers it agrees with the teacher about as often as marking everything right would (36–38 of 42, against
 >   38); there it never names a wrong idea, and asks him first instead. His papers show answers, not working, so every
 >   answer it did not accept went to Lo to ask; naming the idea from the ink is measured on the held-out set, whose
@@ -28,8 +33,11 @@
 >   mislead it with planted working [never gets the planted idea named](harness/heldout/items_planted.py), 30 of 30.
 >   (3) [Mark your own exam live](#12-try-it-and-verify-it-yourself) with your own Meta key, no LoWisa account.
 > - **What is proven, and what is not yet.** Proven here: the marking, the diagnosis, the asking first, resistance to
->   misleading work, and levels built and checked from them. Built to develop independent capability; that it does so
->   lastingly is not proven yet and is what the classroom pilot will measure ([future plans](#17-future-plans-after-the-hackathon)).
+>   misleading work, and levels built and checked from them. Checked live on the production server: Lo's live turns
+>   never handed over the exam answer (18 of 18, a tampered app included), an online-safety lesson was taught, and an
+>   unreadable photo was never marked ([live checks](evidence/live-checks/README.md)). Built to develop independent
+>   capability; that it does so lastingly is not proven yet. The controlled study that will test it is written down
+>   before it runs ([`docs/STUDY-PLAN.md`](docs/STUDY-PLAN.md)).
 > - **What this repository holds.** The complete new work, which runs from here on its own: the tests, the recorded
 >   Exam Desk, and live marking of any exam. The full phone-and-desktop flow also uses LoWisa's existing apps (from
 >   the stores and [lowisa.dev](https://lowisa.dev)) as its host, as a startup building on its own product
@@ -150,7 +158,7 @@ on screen, and ends on a real Grade 5 student and the rest of the loop. Section 
 > 1. **No account, no key:** `node demo/desk-server.js --replay`, then open http://localhost:4747: the teacher's Exam
 >    Desk on an exam recorded on the production edge (marks, fingerprints, Lo asks first, class patterns).
 > 2. **Check the numbers:** `python3 evidence/real-handwriting/score.py` and `python3 -X utf8 evidence/unseen-physics/score.py` (`python` on Windows)
->    recompute the real student's and the physics results from the committed files; `sh scripts/test.sh` runs the 169 tests, and every push runs them in [GitHub Actions](https://github.com/jsamuelkamau-dot/lowisa-witness/actions/workflows/test.yml).
+>    recompute the real student's and the physics results from the committed files; `sh scripts/test.sh` runs the 173 tests, and every push runs them in [GitHub Actions](https://github.com/jsamuelkamau-dot/lowisa-witness/actions/workflows/test.yml).
 > 3. **Live, on your own phone:** LoWisa on Google Play or the App Store, then section 12 (a sample paper to photograph is
 >    [`evidence/unseen-physics/paper.jpg`](evidence/unseen-physics/paper.jpg)).
 
@@ -206,7 +214,7 @@ Where each Meta model works:
 | Held-out v2: named right of 48 | 44 (`066c9d1`) | 42 | 43 |
 
 - **Built during the event (26 Oct – 4 Nov 2026), all in this repository:** the marking and diagnosis server
-  (`witness/`, Erlang/OTP, 169 tests), the teacher's Exam Desk (`desk/`), the phone screens (`phone/`), and every
+  (`witness/`, Erlang/OTP, 173 tests), the teacher's Exam Desk (`desk/`), the phone screens (`phone/`), and every
   measurement (`harness/`, `evidence/`).
 - **Existed before, named but not shown:** the LoWisa app it runs in, its lesson player, flashcards, Insight mode and
   Lo's voice (section 14, [`docs/existed-before.md`](docs/existed-before.md)). In the film every shot is labelled one or
@@ -1105,8 +1113,8 @@ day's ceiling reached) is replaced by a safe line, never sent.
   homework, the server's instructions, a role-play, adult content, dangerous instructions, contact details: every
   time). The two that did not: a level call (not Lo's live turn) asked for the answer to the student's own,
   already-marked question, and gave it with its working ([`harness/design-layout/`](harness/design-layout/README.md)).
-  The full fix, the server holding the app's instructions so a client cannot write them, is in the
-  [future plans](#17-future-plans-after-the-hackathon).
+  Closed after the fourth audit (below): **48 of 48**. The full fix, the server holding the app's instructions so a
+  client cannot write them, is in the [future plans](#17-future-plans-after-the-hackathon).
 - **The plain-code screen, tested on the curriculum.** Biology, puberty, drugs education, history, depression,
   self-harm support and online-safety lessons pass; the same words said to a student ("send me a photo of yourself and
   don't tell your parents") are still caught.
@@ -1114,6 +1122,35 @@ day's ceiling reached) is replaced by a safe line, never sent.
   picture ever committed looked at; metadata checked in every commit; the learner's name in no commit; four test
   exams whose join codes were visible in old screenshots or tests were closed to joining (live, 4 Nov). CI now scans
   every commit, not only today's files.
+
+**Added after the fourth independent audit and the live checks of 4 Nov (edge vb1104p):**
+- **Desk video only from an app whose face look ran (finding A).** The phone apps in the stores (1.10.4) predate the
+  fail-closed face rule. So the server now takes a desk video, or a filmed fresh question, only from an app that says its
+  face look ran to the end (`faces: "checked"`). The store apps never say it, so their students are told to photograph
+  the finished paper instead. The next phone release says it, and only after its look ran. The server cannot see faces:
+  this switches the old apps off, it is not proof about a video. Tested (`video_needs_the_face_look_test`).
+- **Each hold settled by its own id (finding B).** Every money hold has its own id, and the call that took it settles
+  exactly that hold, so calls finishing out of order never settle each other's. A call that failed after the model was
+  asked is counted at its whole hold (what it cost is not known, so the most it could cost), never at nothing. A hold
+  given back before any model was asked is released at nothing. A call that ends after its hold expired, and a marking
+  stuck when a node stopped, are still counted, and logged. Tested with 20 calls at once finishing in random order, two
+  failing: every hold settled exactly once.
+- **A level's own calls never write the exam answer (finding C).** A level's JSON calls now carry their own narrow line:
+  never the exam question's own final answer or a worked solution of it; examples use other numbers. On the phone's
+  own outline request, 20 runs each: valid levels 19 without the line and 18 with it (the two misses whose text was kept, one
+  each side, were complete levels the strict parser could not read, not refusals). A tampered app asking for the answer got it 15 of 20 times without the line, **0 of 20** with it. All
+  eight attacks again, three runs each: **48 of 48** held ([`harness/design-layout/`](harness/design-layout/README.md)).
+- **Risk, not only confidence, decides one click (finding D).** A mark 0.95 sure or more still goes to the teacher when
+  the readings of the work disagreed, the student struck something out, the answer could not be read, or **the exam has
+  no mark scheme**. The desk is told which. On the real learner's papers (no scheme) the teacher now checks all 109. With
+  a scheme, the other checks alone would have changed nothing there: every wrong answer accepted at 0.95 came from
+  judging against the model's own key (`python3 evidence/real-handwriting/score.py`).
+- **The online-safety lesson the live check stopped.** Asked what a risky person might say, Lo quoted the lines, and
+  2 of 9 such turns were stopped by the plain-code screen. A sentence that quotes what someone might say now counts as
+  a lesson about the words; the same words said to the student are still caught.
+- **A whole class on one wallet.** Four of Lo's turns at once on one teacher's wallet: 3 of 10 failed with credits
+  there, because a charge that met another write on the same balance was not tried again. It now is, exactly once in
+  the ledger (LoWisa's platform code, 4 new tests).
 
 **The student is never sent a guess:** not the model's possible idea, not its rivals, not its confidence. While Lo is
 asking, they are not sent the reasoning either.
@@ -1146,8 +1183,9 @@ against every trick ([first run](harness/heldout/results/planted-3-runs.json),
   it. **It now fails closed** (4 Nov, in this repository; reaches students with the next phone release, see
   [Future plans](#17-future-plans-after-the-hackathon)): a video whose
   look for faces failed is never sent, and a phone that cannot cover faces (iPhone today) does not offer desk filming;
-  that student's paper is photographed instead. Until that release, the app in the stores still sends an Android video
-  whose covering failed and still offers filming on iPhone.
+  that student's paper is photographed instead. Until that release, the app in the stores still offers filming, but
+  **since edge vb1104p the server takes no desk video from it** (it cannot say its face look ran), so its students
+  photograph the paper instead.
 
 Full statement: [`docs/privacy.md`](docs/privacy.md). It includes what the school must decide before a pilot with minors.
 
@@ -1265,6 +1303,11 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
   essay" was refused every time: [`harness/design-layout/`](harness/design-layout/README.md)); plain-code rules before the model guard; $25 a day across all accounts, reserved before each call and never passed since vb1104n; and
   every row and file scheduled for deletion at 180 days (rows written before the release were given their date too). The marking
   code did not change. The phone's face-covering fix waits for the next phone release (17.1).
+- **After the fourth independent audit, live since edge vb1104p (4 Nov):** the store phone apps can no longer send a
+  desk video (they photograph instead) until the next phone release; each money hold is settled by its own id, failures
+  counted at their whole hold; a level's own calls never write the exam answer (48 of 48 attacks held); one click
+  needs a mark scheme and no risk flag as well as 0.95. Still not done: the server holding the app's level-building
+  instructions (17.2a), and an unfamiliar exam marked live against a real teacher's own marks (17.2).
 - **Muse Spark Open has run on partner inference, with few runs:** 9 of 12 completed. Of the 3 that did not, 2 passed
   the old 5-minute limit per call on the long four-photo maths paper, and 1 reply was not a marking; the 3 runs since
   the limit went to 10 minutes all completed (`harness/open/`). It has not been switched on for the live edge.
@@ -1301,7 +1344,11 @@ because a store app cannot change until then.
   were made, even for an account no one opens again (live from edge vb1104m).
 - **The teacher can delete** a paper or a whole exam at any time, and everything kept with it goes too.
 
-What the release adds is the last step: a video whose faces could not be covered is never sent at all, on any phone.
+- **The server takes no desk video from the store apps** (since edge vb1104p): they cannot say their face look ran, so
+  their students photograph the finished paper instead.
+
+What the release adds is desk filming back, with the last step: a video whose faces could not be covered is never
+sent at all, on any phone.
 
 Everything on the server is already live; it changes without an app release. On 4 Nov that was the independent
 audit's server fixes (section 13), live from edge vb1104m.
@@ -1314,21 +1361,23 @@ audit's server fixes (section 13), live from edge vb1104m.
   tricks, and real handwriting.
 - **An adversarial test of the live service with a real account**, beyond the code's own tests: the design route, the
   daily ceilings and the safety rules, as an attacker would try them.
+- **An exam it has never seen, marked live, against a real teacher's own marks**, with every disagreement written up:
+  a paper not in this repository, marked by the teacher before we see it.
+- **The controlled study** of whether it strengthens learning lastingly: delayed tests without AI, on new items,
+  against the usual feedback. The design is fixed before any data ([`docs/STUDY-PLAN.md`](docs/STUDY-PLAN.md)).
 - **The phone build run on a device** before its release, by the release checklist: a desk video with a face in view,
   covered all the way; a failed look, nothing sent ([what was already checked](evidence/app-validation/phone-and-desk-2026-11-04.md)).
 
 ### 17.2a Built next, from the third audit
 
 - **The server holds the app's instructions.** Today the app sends the level builder's instructions, and the server
-  marks them as the app's; a tampered app can still write them (46 of 48 attacks held, section 13). Next, the app sends
-  only which instruction it wants, and the server supplies the words, so no client can write them. It needs a phone and
-  a desktop release.
-- **Each hold settled by its own name.** Today a finished call releases the oldest hold of its kind, and an unsettled
-  hold expires after 30 minutes. Next, every hold carries an id and a state (held, settled, failed, expired), settled
-  once, so the day's account is exact even when calls finish out of order.
-- **Which marks a teacher checks, by risk, not only by how sure.** One click now needs 0.95; next, the marks most likely
-  to be wrong (an overwritten letter, a short answer read two ways) go to the teacher whatever the confidence, measured
-  on more real papers before it ships.
+  marks them as the app's; a tampered app can still write them. Since edge vb1104p, the server's own line keeps the
+  exam's answer out of a level whatever the app writes (48 of 48 attacks held, section 13). Next, the app sends only
+  which instruction it wants, and the server supplies the words, so no client can write them. It needs a phone and a
+  desktop release.
+- **Done after the fourth audit (edge vb1104p):** each hold settled by its own id, failures and late calls counted
+  (section 13); one click by risk as well as confidence (section 13). Next for both: the desk shows the teacher why a
+  mark was held back (the server already says), from the next desktop release.
 
 ### 17.3 Already joined to LoWisa's existing features
 
