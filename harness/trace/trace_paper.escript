@@ -69,7 +69,8 @@ main([Out | Files]) ->
     Qs = [#{n => maps:get(n, Q), final_answer => maps:get(final_answer, Q, <<>>), result => maps:get(result, Q),
             confidence => maps:get(confidence, Q, null), read_twice => maps:get(read_twice, Q, false),
             read_thrice => maps:get(read_thrice, Q, false), read_again_as => maps:get(read_again_as, Q, null),
-            accept_all => maps:get(result, Q) =:= <<"mastered">> andalso is_number(maps:get(confidence, Q, 0)) andalso maps:get(confidence, Q, 0) >= 0.9,
+            %% 4 Nov: the server's own one-click rule (0.95, no risk flag), not a copy of it
+            accept_all => witness_api:one_click(Q, #{}), risks => witness_api:risks(Q, #{}),
             idea_named => fp(Q, misconception),
             idea_proposed_and_held => fp(Q, possible),
             diagnosis => maps:get(diagnosis, Q, <<>>)} || Q <- maps:get(questions, M)],

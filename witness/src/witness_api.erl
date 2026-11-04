@@ -67,6 +67,8 @@
 %% 31 Oct: the push a teacher's new challenge sends, for the push tests
 -export([told/5]).
 -export([expires_s/2]).
+%% 4 Nov (judges' tools): the one-click rule itself, so harness/mark_my_paper and harness/trace count exactly what the desk does
+-export([one_click/2, risks/2, key_of/1, accept_at/0]).
 %% the day's money holds, for the tests (the routes reach them through daily/3 and the spends)
 -export([reserve_for_test/2, spend_for_test/4, release_for_test/2, failed_for_test/2]).
 

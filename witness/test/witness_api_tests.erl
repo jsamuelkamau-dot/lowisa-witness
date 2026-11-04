@@ -1564,3 +1564,24 @@ any_face_box_counts_as_a_face_test() ->
     ?assertEqual({clear, 0.5}, witness_face:verdict([], 0.5)),
     ?assertEqual({face, 0.5, 1}, witness_face:verdict([{0, 1, #{x1 => 1, y1 => 1, x2 => 2, y2 => 2, w => 9, h => 9, c => 0.3}}], 0.5)).
 
+%% 4 Nov (audit of the judges' tool: mark_my_paper counted "Accept all" at 0.9 while the server accepts at 0.95 with no
+%% risk): every tool in harness/ that counts "Accept all" calls the server's own rule, and no copy of a threshold is left
+the_judges_tools_count_accept_all_by_the_servers_rule_test() ->
+    Root = filename:dirname(filename:dirname(filename:dirname(filename:dirname(filename:dirname(filename:dirname(code:which(witness_api))))))),
+    Tools = [filename:join(Root, F) || F <- ["harness/mark_my_paper.escript", "harness/trace/trace_paper.escript"]],
+    case lists:all(fun filelib:is_regular/1, Tools) of
+        false -> ok;                                             %% the library synced into a host has no harness
+        true ->
+            [begin
+                 {ok, B} = file:read_file(T),
+                 ?assertNotEqual(nomatch, binary:match(B, <<"witness_api:one_click(">>)),
+                 ?assertEqual(nomatch, binary:match(B, <<"confidence, Q, 0) >= 0.9">>))
+             end || T <- Tools]
+    end,
+    %% and the rule itself: mastered, at the line, no risk
+    Q = #{result => <<"mastered">>, confidence => 0.96, final_answer => <<"1/4">>, steps => []},
+    ?assert(witness_api:one_click(Q, #{})),
+    ?assertNot(witness_api:one_click(Q#{confidence => 0.93}, #{})),
+    ?assertNot(witness_api:one_click(Q#{read_thrice => true}, #{})),
+    ?assertEqual(0.95, witness_api:accept_at()).
+

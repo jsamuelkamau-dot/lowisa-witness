@@ -6,8 +6,8 @@
 %% genuinely new examination with current Meta models"). Any exam, any finished paper, marked live by Muse Spark through
 %% the code the edge runs, with no LoWisa account: witness_read reads the questions and their marks from the exam, then
 %% witness_photo:mark/4 marks the photographed pages and reads each wrong answer's Misconception Fingerprint. It prints
-%% what the teacher's desk would show: each question's result, how sure it is, whether it goes to "Accept all" or is
-%% checked one by one, and for each question not mastered either the idea named (with the student's own lines as
+%% what the teacher's desk would show: each question's result, how sure it is, whether it goes to "Accept all" (by the
+%% server's own rule, witness_api:one_click/2) or is checked one by one, and for each question not mastered either the idea named (with the student's own lines as
 %% evidence) or the question Lo asks first because the ink cannot tell. The whole result is written beside the first page.
 %%
 %%   sh scripts/test.sh                       # builds the library into _build (no key needed)
@@ -38,10 +38,12 @@ main([Exam | Pages]) when Pages =/= [] ->
     Secs = (erlang:monotonic_time(millisecond) - T0) / 1000,
     Marked = maps:get(questions, M),
     io:format("~nName on the paper: ~ts~n~n", [maps:get(name, maps:get(student, M, #{}), <<"(none read)">>)]),
-    [line(Q) || Q <- Marked],
-    Sure = [Q || Q <- Marked, maps:get(confidence, Q, 0) >= 0.9],
-    io:format("~n\"Accept all\" (0.9 or more): ~p; checked one by one: ~p. Nothing reaches a student until the teacher releases it.~n",
-              [length(Sure), length(Marked) - length(Sure)]),
+    [line(Q, Sitting) || Q <- Marked],
+    %% 4 Nov (audit: the tool counted 0.9 while the server accepts at 0.95 with no risk): the server's own rule
+    Sure = [Q || Q <- Marked, witness_api:one_click(Q, Sitting)],
+    io:format("~n\"Accept all\" (the server's rule: mastered, ~.2f sure or more, no risk flag; judged against ~s): ~p; "
+              "checked one by one: ~p. Nothing reaches a student until the teacher releases it.~n",
+              [witness_api:accept_at(), witness_api:key_of(Sitting), length(Sure), length(Marked) - length(Sure)]),
     Cost = ReadCost + maps:get(cost_usd, M, 0),
     io:format("Marked in ~.1f s, about $~.3f.~n", [Secs, Cost]),
     Out = filename:rootname(hd(Pages)) ++ "-marked.json",
@@ -50,9 +52,14 @@ main([Exam | Pages]) when Pages =/= [] ->
 main(_) ->
     io:format("usage: escript harness/mark_my_paper.escript <exam photo or PDF> <finished page.jpg> [more pages]~n"), halt(1).
 
-line(Q) ->
+line(Q, Sitting) ->
     Res = maps:get(result, Q, <<"?">>),
-    io:format("Q~p  ~ts  ~p/~p  sure ~.2f~n", [maps:get(n, Q, 0), Res, maps:get(marks, Q, 0), maps:get(out_of, Q, 0), float(maps:get(confidence, Q, 0))]),
+    Click = case {witness_api:one_click(Q, Sitting), witness_api:risks(Q, Sitting)} of
+        {true, _} -> "accept all";
+        {false, []} -> "one by one";
+        {false, Rs} -> "one by one: " ++ lists:join(", ", [binary_to_list(R) || R <- Rs])
+    end,
+    io:format("Q~p  ~ts  ~p/~p  sure ~.2f  (~s)~n", [maps:get(n, Q, 0), Res, maps:get(marks, Q, 0), maps:get(out_of, Q, 0), float(maps:get(confidence, Q, 0)), Click]),
     case maps:get(fingerprint, Q, null) of
         #{misconception := Mc, evidence := Ev} when Mc =/= <<>>, Ev =/= [] ->
             io:format("    idea named: ~ts~n    from the student's own lines: ~ts~n", [Mc, lists:join(<<" | ">>, Ev)]);

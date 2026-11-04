@@ -402,11 +402,14 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
                 <Btn label="Photograph the papers" onPress={() => { setError(''); setStage({kind: 'photos', code: stage.code, title: stage.title, photo: false}); }} testID="witness-photos" />
               </View>
             ) : null}
-            <View style={s.card}>
-              <Text style={s.rowTitle}>Film my desk (optional)</Text>
-              <Text style={s.sub}>For one student working alone, at home or homeschooled: the phone films the desk while you write, so your thinking is seen as it happens{stage.practical ? '. A practical task is always filmed.' : ', not only the finished page.'}</Text>
-              <Btn label="Film my desk" onPress={() => { setError(''); setStage({kind: 'witness', code: stage.code, title: stage.title, level: stage.level}); }} testID="witness-film" />
-            </View>
+            {/* 4 Nov (release 1.10.5): a phone that cannot cover faces (iPhone today) is not offered desk filming at all */}
+            {canCoverFaces() ? (
+              <View style={s.card}>
+                <Text style={s.rowTitle}>Film my desk (optional)</Text>
+                <Text style={s.sub}>For one student working alone, at home or homeschooled: the phone films the desk while you write, so your thinking is seen as it happens{stage.practical ? '. A practical task is always filmed.' : ', not only the finished page.'}</Text>
+                <Btn label="Film my desk" onPress={() => { setError(''); setStage({kind: 'witness', code: stage.code, title: stage.title, level: stage.level}); }} testID="witness-film" />
+              </View>
+            ) : stage.practical ? <Text style={s.notice} testID="witness-no-filming">{NO_FILMING_WORDS}</Text> : null}
           </>
         ) : null}
 

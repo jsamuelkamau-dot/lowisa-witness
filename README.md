@@ -159,7 +159,7 @@ on screen, and ends on a real Grade 5 student and the rest of the loop. Section 
 > 1. **No account, no key:** `node demo/desk-server.js --replay`, then open http://localhost:4747: the teacher's Exam
 >    Desk on an exam recorded on the production edge (marks, fingerprints, Lo asks first, class patterns).
 > 2. **Check the numbers:** `python3 evidence/real-handwriting/score.py` and `python3 -X utf8 evidence/unseen-physics/score.py` (`python` on Windows)
->    recompute the real student's and the physics results from the committed files; `sh scripts/test.sh` runs the 177 tests, and every push runs them in [GitHub Actions](https://github.com/jsamuelkamau-dot/lowisa-witness/actions/workflows/test.yml).
+>    recompute the real student's and the physics results from the committed files; `sh scripts/test.sh` runs the 178 tests, and every push runs them in [GitHub Actions](https://github.com/jsamuelkamau-dot/lowisa-witness/actions/workflows/test.yml).
 > 3. **Live, on your own phone:** LoWisa on Google Play or the App Store, then section 12 (a sample paper to photograph is
 >    [`evidence/unseen-physics/paper.jpg`](evidence/unseen-physics/paper.jpg)).
 
@@ -215,7 +215,7 @@ Where each Meta model works:
 | Held-out v2: named right of 48 | 44 (`066c9d1`) | 42 | 43 |
 
 - **Built during the event (26 Oct – 4 Nov 2026), all in this repository:** the marking and diagnosis server
-  (`witness/`, Erlang/OTP, 177 tests), the teacher's Exam Desk (`desk/`), the phone screens (`phone/`), and every
+  (`witness/`, Erlang/OTP, 178 tests), the teacher's Exam Desk (`desk/`), the phone screens (`phone/`), and every
   measurement (`harness/`, `evidence/`).
 - **Existed before, named but not shown:** the LoWisa app it runs in, its lesson player, flashcards, Insight mode and
   Lo's voice (section 14, [`docs/existed-before.md`](docs/existed-before.md)). In the film every shot is labelled one or
@@ -1137,6 +1137,13 @@ day's ceiling reached) is replaced by a safe line, never sent.
   second can fall between sampled frames; SAM is a model, measured on 16 and 41 clips with one generated face. Tested
   (`the_server_looks_for_faces_itself_test`, `a_face_look_that_cannot_run_marks_nothing_test`,
   `a_cached_marking_from_before_the_face_look_is_not_reused_test`).
+- **The judges' marking tool counts "Accept all" by the server's own rule** (found in the repository by the owner's
+  audit). `harness/mark_my_paper.escript` counted every answer 0.9 sure or more, without even asking whether it was
+  called right; the server accepts only mastered, 0.95 sure, no risk flag. On the unseen physics paper the old line
+  would have printed 29 for "Accept all", 23 of them not mastered; it now calls `witness_api:one_click/2` itself and
+  prints 6, with each question's own verdict and risk flags. `harness/trace/` the same (its recorded 3 Nov run: 26 of
+  30 under the line of that day, 14 under today's). Tested (`the_judges_tools_count_accept_all_by_the_servers_rule_test`).
+- **No desk-filming card on a phone without a face look** (iPhone): it used to lead to a "not available" notice.
 - **Push failures say why** (platform, security review): a failed phone notification is logged with Google's own error
   code (never the token or the message), so a credential Google refuses is visible.
 

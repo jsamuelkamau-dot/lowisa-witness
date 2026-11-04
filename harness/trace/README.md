@@ -16,8 +16,10 @@ python3 -c "import json; [print(c['step'], c['effort'], round(c['ms']/1000,1), '
 | One part with an unsure question: read in full again, then a third time | Muse Spark, high | the third reading decided the split |
 
 **The whole paper:** 8 calls, $0.23 at Meta's published prices, nearly all of every reading's input
-served from Meta's prompt cache (11,363 of 11,483 tokens). 26 of 30 answers joined "Accept all" (mastered, 90% sure, two readings
-alike); two were held for Lo to ask, with no idea named.
+served from Meta's prompt cache (11,363 of 11,483 tokens). 26 of 30 answers joined "Accept all" under the line of that day
+(mastered, 90% sure, two readings alike); two were held for Lo to ask, with no idea named. Under the server's rule since
+edge vb1104p (mastered, 0.95 sure, no risk flag), recomputed from this recorded result, **14 of 30** would: the script now
+calls that rule itself (`witness_api:one_click/2`). Crossed-out lines were not recorded in this trace, so 14 is the most.
 
 **Time:** 235 s, most of it one first reading that took 189 s on its own. The same parts took 63–65 s on 3 Nov
 (`harness/parts/`); the time is Meta's on the day, and a trace shows it rather than hides it.
