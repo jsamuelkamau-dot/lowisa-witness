@@ -34,9 +34,11 @@
 >   Exam Desk, and live marking of any exam. The full phone-and-desktop flow also uses LoWisa's existing apps (from
 >   the stores and [lowisa.dev](https://lowisa.dev)) as its host, as a startup building on its own product
 >   ([what existed before](#14-what-was-built-during-the-event-and-what-existed-before)).
+> - **Watch the 2:59 demo:** [youtu.be/s4DtrRzyQsI](https://youtu.be/s4DtrRzyQsI) (the same film is in this repository:
+>   [`evidence/film/exam-to-mastery.mp4`](evidence/film/exam-to-mastery.mp4)).
 > - **Try it in a minute, no account and no key:** `node demo/desk-server.js --replay`, then http://localhost:4747
->   ([more ways to try it](#12-try-it-and-verify-it-yourself), including your own exam marked live). The 2:59 film and
->   the measured results follow the introduction below.
+>   ([more ways to try it](#12-try-it-and-verify-it-yourself), including your own exam marked live). The measured
+>   results follow the introduction below.
 > - **Licence:** [PolyForm Strict 1.0.0](LICENSE), source-available, not open source; judges have an
 >   [additional permission](JUDGING-PERMISSION.md) to do everything verification needs ([licence](#licence)).
 
@@ -139,7 +141,7 @@ of discovery. Confusion into understanding. Understanding into practice. And pra
 to solve real-world problems. Because a wrong answer should never define someone's ability.** This is what the four
 areas above look like when they run, on a real exam, today.
 
-**The 3-minute film:** [`evidence/film/exam-to-mastery.mp4`](evidence/film/exam-to-mastery.mp4) (2:59; every word with
+**The 3-minute film:** [watch on YouTube](https://youtu.be/s4DtrRzyQsI), or [`evidence/film/exam-to-mastery.mp4`](evidence/film/exam-to-mastery.mp4) (2:59; every word with
 its time and on-screen label: [`transcript.md`](evidence/film/transcript.md)). Its first 30 seconds are a short version
 of the problem above; then it follows one student's failed question to mastery (0:28–2:09), with four of Meta's models
 on screen, and ends on a real Grade 5 student and the rest of the loop. Section 2 walks through it frame by frame.
@@ -353,7 +355,7 @@ These are the four areas of the opening table, applied to one exam:
 
 ## 2. The demo, frame by frame: one failed question to mastery
 
-These frames are from the film ([`evidence/film/exam-to-mastery.mp4`](evidence/film/exam-to-mastery.mp4), 2:59; every
+These frames are from the film ([on YouTube](https://youtu.be/s4DtrRzyQsI), or [`evidence/film/exam-to-mastery.mp4`](evidence/film/exam-to-mastery.mp4), 2:59; every
 word, with its time and the label on screen: [`evidence/film/transcript.md`](evidence/film/transcript.md), subtitles
 [`exam-to-mastery.srt`](evidence/film/exam-to-mastery.srt)). Daniel Kwan is a sample student: his physics paper (30
 questions) was written for the demo, and nothing in the code or the prompts names it. His story runs first and
