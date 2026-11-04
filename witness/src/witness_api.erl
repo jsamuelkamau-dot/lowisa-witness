@@ -1481,7 +1481,10 @@ mine_view(Id, #{owner := O}, Host) ->
             Title = case Host:load(O, {pile, maps:get(pile, R, <<>>)}) of {ok, P} -> maps:get(title, P); none -> <<>> end,
             V = #{id => Id, title => Title, sat_ms => maps:get(created_ms, R, 0), status => case maps:get(status, R) of <<"failed">> when map_get(kept, R) =:= true -> <<"with_teacher">>; <<"failed">> -> <<"failed">>; <<"uploading">> -> <<"uploading">>; _ -> <<"with_teacher">> end},
             %% a refused video says why (the paper was not in view), never what the model said about it
-            V2 = case R of #{status := <<"failed">>, unreadable := _} -> V#{unseen => true}; _ -> V end,
+            V2 = case R of #{status := <<"failed">>, unreadable := _} -> V#{unseen => true};
+                           %% 4 Nov: the server's face look saw a face, so the video was deleted unmarked
+                           #{status := <<"failed">>, face_seen := true} -> V#{face_seen => true};
+                           _ -> V end,
             case maps:get(examiner, R, undefined) of undefined -> V2; Ex -> V2#{examiner => examiner_view(Ex, student)} end;
         none -> none
     end;
@@ -1566,7 +1569,8 @@ mark_video(Uid, Id, Key, Fps, Sitting, Row, Host) ->
     end,
     Cached = case Cache of none -> none; _ -> Host:load(Uid, Cache) end,
     {Outcome, UrlR} = case Cached of
-        {ok, #{result := Res0}} -> {{ok, Res0#{cost_usd => 0.0, cached => true}}, Host:get_url(Uid, Id)};
+        %% a marking made before the server's face look existed is not reused: the video is looked at first
+        {ok, #{result := #{face_look := clear} = Res0}} -> {{ok, Res0#{cost_usd => 0.0, cached => true}}, Host:get_url(Uid, Id)};
         _ -> attempt(Uid, Id, Key, Fps, Sitting, Host, retry_waits(Host))
     end,
     case {Cache, Cached, Outcome} of
@@ -1822,12 +1826,26 @@ attempt(Uid, Id, Key, Fps, Sitting, Host, Waits) ->
     Outcome = try
         case UrlR of
             {ok, Url} ->
-                case {maps:get(engine, Sitting, <<"meta">>), open_engine(Host)} of
-                    {<<"open">>, #{} = Cfg} -> (open_marker(Host))(Cfg, #{url => Url}, Sitting);
-                    _ -> case (marker(Host))(Key, #{url => Url, fps => Fps}, Sitting) of
-                             {ok, R0} -> {ok, maps:merge(#{engine => <<"muse-spark-1.3">>}, R0)};
-                             E0 -> E0
-                         end
+                %% 4 Nov (final audit: the server relied on the app's faces: "checked"): the server looks for faces
+                %% itself before anything reads the video. A face, and the video is deleted unmarked, nothing kept from
+                %% it; a look that could not run marks nothing either (tried again only while Meta is busy).
+                case (face_looker(Host))(Key, Url) of
+                    {clear, LookCost} ->
+                        Marked = case {maps:get(engine, Sitting, <<"meta">>), open_engine(Host)} of
+                            {<<"open">>, #{} = Cfg} -> (open_marker(Host))(Cfg, #{url => Url}, Sitting);
+                            _ -> case (marker(Host))(Key, #{url => Url, fps => Fps}, Sitting) of
+                                     {ok, R0} -> {ok, maps:merge(#{engine => <<"muse-spark-1.3">>}, R0)};
+                                     E0 -> E0
+                                 end
+                        end,
+                        case Marked of
+                            {ok, R1} -> {ok, R1#{cost_usd => maps:get(cost_usd, R1, 0.0) + LookCost, face_look => clear}};
+                            E1 -> E1
+                        end;
+                    {face, _LookCost, Boxes} ->
+                        report(Host, <<"witness.face_seen">>, {Id, Boxes}),
+                        {error, face_seen};
+                    {error, _} = LookErr -> LookErr
                 end;
             E -> E
         end
@@ -1892,13 +1910,15 @@ done(Uid, Id, Key, Sitting, Row, Outcome, Stills, Host) ->
         {error, Why} ->
             failed(maps:get(hold, Row, none), Host),
             %% a video that does not show the work is not marked (witness_mark ?UNSEEN_PAPER): it says what it saw
-            Seen = case Why of {unreadable, W} when is_binary(W) -> #{unreadable => W}; _ -> #{} end,
+            Seen = case Why of {unreadable, W} when is_binary(W) -> #{unreadable => W}; face_seen -> #{face_seen => true}; _ -> #{} end,
             case upd(Uid, {sitting, Id}, fun({ok, Now}) -> maps:merge((maps:remove(hold, Now))#{status => <<"failed">>, reason => iolist_to_binary(io_lib:format("~0p", [Why])), marked_ms => now_ms()}, Seen);
                                             (none) -> stop end, Host) of
                 stop -> ok;
                 {ok, _} -> link_fresh(Uid, Row, <<"failed">>, #{}, Host)
             end
     end.
+
+face_looker(Host) -> seam(Host, face_looker, fun witness_face:look/2).
 
 marker(Host) ->
     _ = code:ensure_loaded(Host),
@@ -1915,6 +1935,10 @@ view(Id, #{status := S, result := R} = Row) when S =:= <<"marked">>; S =:= <<"re
           result => #{questions => maps:get(questions, R, []), pauses => maps:get(pauses, R, []), returns => maps:get(returns, R, []), lines => maps:get(lines, R, []),
                       stills => maps:get(stills, R, []), engine => maps:get(engine, R, <<"muse-spark-1.3">>)}},
     case maps:get(examiner, Row, undefined) of undefined -> V; Ex -> V#{examiner => examiner_view(Ex, teacher)} end;
+%% 4 Nov: the server's face look saw a face, so the video was deleted unmarked
+view(Id, #{status := <<"failed">>, face_seen := true}) ->
+    #{ok => true, id => Id, status => <<"failed">>, face_seen => true,
+      error => <<"A face could be seen in this video, so it was deleted without being marked and nothing from it was kept. Photograph the finished paper instead.">>};
 %% a photographed paper is photographed again, not filmed (4 Nov: a photo sitting was told "in this video")
 view(Id, #{status := <<"failed">>, unreadable := W, kind := <<"photo">>}) ->
     #{ok => true, id => Id, status => <<"failed">>, unreadable => W,
@@ -1939,7 +1963,7 @@ summary(Id, Row) ->
     Qs = case Row of #{result := #{questions := L}} -> L; _ -> [] end,
     Marks = lists:sum([num(maps:get(teacher_marks, Q, maps:get(marks, Q, 0))) || Q <- Qs]),
     OutOf = lists:sum([num(maps:get(out_of, Q, 0)) || Q <- Qs]),
-    Seen = case Row of #{unreadable := W} -> #{unreadable => W}; #{kept := true} -> #{kept => true}; _ -> #{} end,
+    Seen = case Row of #{unreadable := W} -> #{unreadable => W}; #{kept := true} -> #{kept => true}; #{face_seen := true} -> #{face_seen => true}; _ -> #{} end,
     Read = case Row of #{result := #{student := St}} -> St; _ -> #{} end,
     Seen#{id => Id, student => maps:get(student, Row, <<>>), status => maps:get(status, Row), kind => maps:get(kind, Row, <<"video">>),
       read => Read, name_match => maps:get(name_match, Row, null), linked => maps:is_key(student_uid, Row),

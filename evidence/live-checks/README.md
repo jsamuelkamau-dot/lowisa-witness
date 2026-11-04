@@ -81,6 +81,20 @@ One round run first, by mistake, on a wallet that today's checks had nearly empt
 as it should be: the credit wall, not a fault. The probe was topped up from the back end, as for every check here,
 before the run above.
 
+## 7. After edge vb1104r went live (11:40 UTC): the server's own face look
+
+The final audit's last point: the server took a desk video on the app's word (`faces: "checked"`). Since vb1104r the
+server looks for faces itself ([`harness/face/`](../../harness/face/README.md)). Checked on production with the next
+phone release (1.10.5, the store build, on an Android emulator):
+
+| Check | Result |
+|---|---|
+| The release app, a desk video with a student's face in view (a generated face), chosen as the student's desk video | the phone covered the face and sent it; **the server's look found no face**; marked 8 of 8, and the examiner asked about two steps |
+| The same video sent raw by a script posing as a modified app, saying `faces: "checked"` | **refused**: "A face could be seen in this video, so it was deleted without being marked and nothing from it was kept"; the server logged 40 face boxes; the video and any still from it are gone from the store |
+
+Not forced on a device: a face look that fails on the phone (it then sends nothing); that is covered by the phone's tests.
+The test exam was closed to joining afterwards.
+
 ## Not checked live
 
 - A level built end to end on a phone (the probe has no phone): the level's design calls were checked against the

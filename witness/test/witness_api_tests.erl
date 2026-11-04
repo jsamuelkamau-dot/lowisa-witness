@@ -4,7 +4,7 @@
 -export([meta_key/0, put_url/4, get_url/2, drop_clip/2, save/3, load/2, list/2, spend/3, run/1, marker/0, checker/0, design/2, judger/0,
          put_asset/4, asset_url/2, stiller/0, examiner/0, answer_judge/0, drawer/0, hearer/0, open_engine/0, open_marker/0, retry_waits/0, cropper/0, painter/0, parts_start/3, part_url/4, parts_done/3, parts_finish/4,
          reader/0, patterner/0, recommender/0, clipper/0, clip_tag/2, suggester/0, challenge_judger/0, fingerprinter/0,
-         delete/2, drop_asset/2, update/3, guard/0, rechecker/0, recheck_judger/0]).
+         delete/2, drop_asset/2, update/3, guard/0, rechecker/0, recheck_judger/0, face_looker/0]).
 -export([events/0, setup/0]).
 
 
@@ -54,6 +54,19 @@ marker() ->
             {nomark, N} when N > 0 -> persistent_term:put(witness_api_fail, {nomark, N - 1}), {error, no_marking};
             {nomark, 0} -> {ok, #{questions => [#{n => 1, result => <<"mastered">>}], pauses => [], lines => [], cost_usd => 0.08}};
             false -> {ok, persistent_term:get(witness_api_result, #{questions => [#{n => 1, result => <<"mastered">>}], pauses => [], lines => [], cost_usd => 0.08})}
+        end
+    end.
+
+%% the server's own face look (4 Nov): clear unless a test says otherwise; each look is counted, not logged as an event
+face_looker() ->
+    fun(<<"test-key">>, Url) ->
+        persistent_term:put(witness_api_looked, [Url | persistent_term:get(witness_api_looked, [])]),
+        case persistent_term:get(witness_api_face, clear) of
+            clear -> {clear, 0.0};
+            face -> {face, 0.01, 2};
+            {busy, N} when N > 0 -> persistent_term:put(witness_api_face, {busy, N - 1}), {error, {503, <<"busy">>}};
+            {busy, 0} -> {clear, 0.0};
+            broken -> {error, {ffmpeg, 1, <<"bad">>}}
         end
     end.
 
@@ -135,7 +148,7 @@ events() -> [E || {K, E} <- lists:sort(ets:tab2list(witness_api_t)), is_integer(
 setup() -> case ets:whereis(witness_api_t) of undefined -> ok; _ -> ets:delete(witness_api_t) end, ets:new(witness_api_t, [named_table, public]), persistent_term:put(witness_api_fail, false), persistent_term:erase(witness_api_result),
            [persistent_term:erase({witness_api_on, K}) || K <- [stills, examiner, open, world, clips, cache]], persistent_term:erase(witness_api_exbusy),
            persistent_term:erase(witness_api_check_passes), persistent_term:erase(witness_api_design_text),
-           persistent_term:erase(witness_api_during).
+           persistent_term:erase(witness_api_during), persistent_term:erase(witness_api_face), persistent_term:erase(witness_api_looked).
 
 r(M, P, B, Uid) -> witness_api:route(M, P, B, Uid, ?MODULE).
 
@@ -1484,3 +1497,70 @@ a_confident_mark_with_a_risk_is_never_one_click_test() ->
     {201, #{id := P1}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Scheme">>, <<"scheme">> => <<"Q1: 4">>}, <<"teacher">>),
     ?assertMatch({200, #{pile := #{judged_against := <<"model_key">>}}}, r(<<"GET">>, [<<"pile">>, P0], #{}, <<"teacher">>)),
     ?assertMatch({200, #{pile := #{judged_against := <<"mark_scheme">>}}}, r(<<"GET">>, [<<"pile">>, P1], #{}, <<"teacher">>)).
+
+%% 4 Nov (final audit: "the server still relies on the client's declaration"): the server looks for faces in every desk
+%% video itself, before anything reads it. faces: "checked" still keeps the old store apps out; it no longer decides.
+the_server_looks_for_faces_itself_test() ->
+    setup(), persistent_term:put({witness_api_on, stills}, true), persistent_term:put({witness_api_on, clips}, true),
+    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10}, <<"u1">>),
+    %% a clear video is looked at once, then marked
+    {202, _} = r(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], #{}, <<"u1">>),
+    ?assertEqual([<<"https://store.example.com/", Id/binary, "?signed">>], persistent_term:get(witness_api_looked)),
+    ?assertMatch({200, #{status := <<"marked">>}}, r(<<"GET">>, [<<"sitting">>, Id], #{}, <<"u1">>)),
+    %% an app that says "checked" but sends a face: deleted unmarked, nothing kept, the teacher told why
+    setup(), persistent_term:put({witness_api_on, stills}, true), persistent_term:put({witness_api_on, clips}, true),
+    persistent_term:put(witness_api_face, face),
+    {201, #{id := F}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10}, <<"u1">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, F, <<"mark">>], #{}, <<"u1">>),
+    ?assertEqual([], [E || E = {marked, _, _, _} <- events()]),
+    ?assertEqual([], [E || E = {still, _, _} <- events()] ++ [E || E = {clip, _, _, _} <- events()]),
+    ?assertEqual([{drop, <<"u1">>, F}], [E || E = {drop, _, _} <- events()]),
+    {200, V} = r(<<"GET">>, [<<"sitting">>, F], #{}, <<"u1">>),
+    ?assertMatch(#{status := <<"failed">>, face_seen := true}, V),
+    ?assertEqual(<<"A face could be seen in this video, so it was deleted without being marked and nothing from it was kept. Photograph the finished paper instead.">>, maps:get(error, V)),
+    ?assertNot(is_map_key(result, V)),
+    %% the reason a model call failed is never shown, a face or not
+    ?assertNot(is_map_key(reason, V)),
+    %% the desk's line for the paper says so too
+    {ok, Row} = load(<<"u1">>, {sitting, F}),
+    ?assertMatch(#{face_seen := true, status := <<"failed">>}, witness_api:summary(F, Row)),
+    %% a student who joined with the code: the teacher's desk line and the student's own list both say so
+    {201, #{id := P, code := Code}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Fractions check">>}, <<"teacher">>),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10, <<"code">> => Code, <<"student">> => <<"Amina">>}, <<"stud">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"stud">>),
+    ?assertMatch({200, #{sittings := [#{face_seen := true, to_master := 0}], queue := []}}, r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>)),
+    ?assertMatch({200, #{papers := [#{status := <<"failed">>, face_seen := true}]}}, r(<<"GET">>, [<<"mine">>], #{}, <<"stud">>)).
+
+%% a look that could not run marks nothing (fails closed); Meta busy is tried again, as a marking is
+a_face_look_that_cannot_run_marks_nothing_test() ->
+    setup(), persistent_term:put(witness_api_face, broken),
+    {201, #{id := Id}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10}, <<"u1">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, Id, <<"mark">>], #{}, <<"u1">>),
+    ?assertEqual([], [E || E = {marked, _, _, _} <- events()]),
+    ?assertMatch({200, #{status := <<"failed">>}}, r(<<"GET">>, [<<"sitting">>, Id], #{}, <<"u1">>)),
+    setup(), persistent_term:put(witness_api_face, {busy, 1}),
+    {201, #{id := B}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10}, <<"u1">>),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, B, <<"mark">>], #{}, <<"u1">>),
+    ?assertEqual(2, length(persistent_term:get(witness_api_looked))),
+    ?assertMatch({200, #{status := <<"marked">>}}, r(<<"GET">>, [<<"sitting">>, B], #{}, <<"u1">>)).
+
+%% a marking kept from before the server's face look is not reused for the same video: the video is looked at first
+a_cached_marking_from_before_the_face_look_is_not_reused_test() ->
+    setup(), persistent_term:put({witness_api_on, cache}, true), persistent_term:put(witness_api_face, face),
+    {201, #{id := S}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10}, <<"u1">>),
+    Sitting = witness_api:sitting_of(#{}),
+    Old = {mark_cache, <<(integer_to_binary(erlang:phash2({Sitting, 30})))/binary, ":etag-same-video">>},
+    ok = save(<<"u1">>, Old, #{result => #{questions => [#{n => 1, result => <<"mastered">>}], pauses => [], lines => [], cost_usd => 0.08}, at => 1, sitting => <<"x">>}),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S, <<"mark">>], #{}, <<"u1">>),
+    ?assertMatch({200, #{status := <<"failed">>, face_seen := true}}, r(<<"GET">>, [<<"sitting">>, S], #{}, <<"u1">>)),
+    %% one made after a look is reused as before (the same key: so the row above was found and passed over)
+    {201, #{id := S2}} = r(<<"POST">>, [<<"sitting">>, <<"start">>], #{<<"faces">> => <<"checked">>, <<"size">> => 10}, <<"u1">>),
+    ok = save(<<"u1">>, Old, #{result => #{questions => [#{n => 1, result => <<"mastered">>}], pauses => [], lines => [], cost_usd => 0.08, face_look => clear}, at => 1, sitting => <<"x">>}),
+    {202, _} = r(<<"POST">>, [<<"sitting">>, S2, <<"mark">>], #{}, <<"u1">>),
+    ?assertMatch({200, #{status := <<"marked">>}}, r(<<"GET">>, [<<"sitting">>, S2], #{}, <<"u1">>)).
+
+%% any box SAM gives is a face, at any confidence (the look fails safe)
+any_face_box_counts_as_a_face_test() ->
+    ?assertEqual({clear, 0.5}, witness_face:verdict([], 0.5)),
+    ?assertEqual({face, 0.5, 1}, witness_face:verdict([{0, 1, #{x1 => 1, y1 => 1, x2 => 2, y2 => 2, w => 9, h => 9, c => 0.3}}], 0.5)).
+

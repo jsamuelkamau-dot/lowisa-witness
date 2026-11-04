@@ -78,7 +78,7 @@ export interface PartUrl { n: number; url: string }
 export interface Parts { size: number; count: number; urls: PartUrl[] }
 /** A "Turned around" badge: the question, what was turned around, and the days from going wrong to mastered. */
 export interface Badge { question: string; fixed: string; exam: string; wrong_at: number | null; turned_at: number; note: string }
-export interface Paper { id: string; status: string; unseen?: boolean; title?: string; student?: string; kind?: 'photo' | 'video'; result?: {questions: Question[]; stills?: Still[]}; examiner?: Examiner }
+export interface Paper { id: string; status: string; unseen?: boolean; face_seen?: boolean; title?: string; student?: string; kind?: 'photo' | 'video'; result?: {questions: Question[]; stills?: Still[]}; examiner?: Examiner }
 /** A paper this phone photographed for the class: the name read from it, and whether it found its student. */
 export interface Taken { id: string; status: string; pages: number; got: number[]; title: string; code?: string; photo_code?: string; created_ms: number; student: string;
   read: {name?: string; class?: string; number?: string; note?: string}; name_match: 'read' | 'teacher' | 'unsure' | 'none' | 'unread' | null }

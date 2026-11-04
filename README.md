@@ -159,7 +159,7 @@ on screen, and ends on a real Grade 5 student and the rest of the loop. Section 
 > 1. **No account, no key:** `node demo/desk-server.js --replay`, then open http://localhost:4747: the teacher's Exam
 >    Desk on an exam recorded on the production edge (marks, fingerprints, Lo asks first, class patterns).
 > 2. **Check the numbers:** `python3 evidence/real-handwriting/score.py` and `python3 -X utf8 evidence/unseen-physics/score.py` (`python` on Windows)
->    recompute the real student's and the physics results from the committed files; `sh scripts/test.sh` runs the 173 tests, and every push runs them in [GitHub Actions](https://github.com/jsamuelkamau-dot/lowisa-witness/actions/workflows/test.yml).
+>    recompute the real student's and the physics results from the committed files; `sh scripts/test.sh` runs the 177 tests, and every push runs them in [GitHub Actions](https://github.com/jsamuelkamau-dot/lowisa-witness/actions/workflows/test.yml).
 > 3. **Live, on your own phone:** LoWisa on Google Play or the App Store, then section 12 (a sample paper to photograph is
 >    [`evidence/unseen-physics/paper.jpg`](evidence/unseen-physics/paper.jpg)).
 
@@ -215,7 +215,7 @@ Where each Meta model works:
 | Held-out v2: named right of 48 | 44 (`066c9d1`) | 42 | 43 |
 
 - **Built during the event (26 Oct – 4 Nov 2026), all in this repository:** the marking and diagnosis server
-  (`witness/`, Erlang/OTP, 173 tests), the teacher's Exam Desk (`desk/`), the phone screens (`phone/`), and every
+  (`witness/`, Erlang/OTP, 177 tests), the teacher's Exam Desk (`desk/`), the phone screens (`phone/`), and every
   measurement (`harness/`, `evidence/`).
 - **Existed before, named but not shown:** the LoWisa app it runs in, its lesson player, flashcards, Insight mode and
   Lo's voice (section 14, [`docs/existed-before.md`](docs/existed-before.md)). In the film every shot is labelled one or
@@ -1124,6 +1124,22 @@ day's ceiling reached) is replaced by a safe line, never sent.
   exams whose join codes were visible in old screenshots or tests were closed to joining (live, 4 Nov). CI now scans
   every commit, not only today's files.
 
+**Added after the final follow-up audit of 4 Nov (edge vb1104r):**
+- **The server looks for faces itself (the one trust-boundary point left).** Every desk video, before anything reads
+  it, is cut to two frames a second and SAM 3.1 is asked for "face". Any face, at any confidence: the video is deleted
+  unmarked, no still or clip is cut from it, and the teacher's desk and the student's list say why. A look that cannot
+  run marks nothing; a marking cached from before the look is not reused. Live on Meta's API, the server's own code
+  refused **8 of 8** clips with a face (a face crossing for one second, a small face in a corner, half a face, the
+  phone's own uncovered output from 28 Oct) and cleared **8 of 8** without (desk clips, a writing hand, the phone's
+  covered output), about $0.01 a video; the sampled copy is deleted from Meta's store after
+  ([`harness/face/`](harness/face/README.md)). Limits: it decides what is marked and kept, not what is uploaded (a
+  modified app's video still reaches the private store and SAM before it is deleted); a face shown for under half a
+  second can fall between sampled frames; SAM is a model, measured on 16 and 41 clips with one generated face. Tested
+  (`the_server_looks_for_faces_itself_test`, `a_face_look_that_cannot_run_marks_nothing_test`,
+  `a_cached_marking_from_before_the_face_look_is_not_reused_test`).
+- **Push failures say why** (platform, security review): a failed phone notification is logged with Google's own error
+  code (never the token or the message), so a credential Google refuses is visible.
+
 **Added after the fourth independent audit and the live checks of 4 Nov (edge vb1104p):**
 - **Desk video only from an app whose face look ran (finding A).** The phone apps in the stores (1.10.4) predate the
   fail-closed face rule. So the server now takes a desk video, or a filmed fresh question, only from an app that says its
@@ -1133,8 +1149,8 @@ day's ceiling reached) is replaced by a safe line, never sent.
   look. It switches the store apps off; it does not make an unsafe upload impossible. What does not depend on the app:
   the main way in (photographing the finished paper) films no one, and a desk video is deleted once marked
   ([privacy](docs/privacy.md); whether a school offers desk filming at all is listed there as its decision before a
-  pilot). A face check on the server itself,
-  before anything from a video is kept, is in the future plans (17.2a). Tested (`video_needs_the_face_look_test`).
+  pilot). Tested (`video_needs_the_face_look_test`). **Since edge vb1104r the server also looks for faces itself**
+  (next block), so the statement no longer decides what is marked or kept.
 - **Each hold settled by its own id (finding B).** Every money hold has its own id, and the call that took it settles
   exactly that hold, so calls finishing out of order never settle each other's. A call that failed after the model was
   asked is counted at its whole hold (what it cost is not known, so the most it could cost), never at nothing. A hold
@@ -1343,7 +1359,7 @@ because a store app cannot change until then.
 
 | Fix | Where it is now | Reaches users |
 |---|---|---|
-| **The app sends a desk video only after its face look ran.** A video is sent only when the phone's face look answers, explicitly, that it ran to the end (`faces: "checked"`); a failed look, an empty or unclear answer, or a phone with no look at all (iPhone today) sends nothing, and the student is asked to have the paper photographed instead. A phone that cannot cover faces no longer offers desk filming. On a long video (over 25 minutes), a face that stays in view is now covered all the way through (the cover grows with the gap between looks). Found by three independent audits on 4 Nov ([what was checked in the app's build](evidence/app-validation/phone-and-desk-2026-11-04.md)) | `phone/witness/safeVideo.ts` (the rule, tested on its own in this repository's CI), `WitnessScreen.tsx` (`smaller`, `canCoverFaces`); the Android face look in LoWisa's app; tested (`phone/__tests__/`). A safeguard with a photograph fallback, not a guarantee: the look runs on the phone, so a modified app could skip it (section 13) | the next LoWisa phone release, Android and iPhone |
+| **The app sends a desk video only after its face look ran.** A video is sent only when the phone's face look answers, explicitly, that it ran to the end (`faces: "checked"`); a failed look, an empty or unclear answer, or a phone with no look at all (iPhone today) sends nothing, and the student is asked to have the paper photographed instead. A phone that cannot cover faces no longer offers desk filming. On a long video (over 25 minutes), a face that stays in view is now covered all the way through (the cover grows with the gap between looks). Found by three independent audits on 4 Nov ([what was checked in the app's build](evidence/app-validation/phone-and-desk-2026-11-04.md)) | `phone/witness/safeVideo.ts` (the rule, tested on its own in this repository's CI), `WitnessScreen.tsx` (`smaller`, `canCoverFaces`); the Android face look in LoWisa's app; tested (`phone/__tests__/`). A safeguard with a photograph fallback, not a guarantee: the look runs on the phone, so a modified app could skip it; **since edge vb1104r the server looks for faces itself** and deletes a video with one unmarked (section 13) | LoWisa 1.10.5: sent to Google Play on 4 Nov (in review; its store build was checked on a device against the live server, [live checks 7](evidence/live-checks/README.md)); the App Store next |
 | **The Exam Desk's one-click button says what the server now enforces.** It takes only the marks called right and 0.95 sure or more (the server's line), says "sure is not proof", and counts what was left to check; an unreadable photographed paper is to be photographed again, not filmed again | `desk/witness-desk.js` (`acceptAt`, `countNot`), synced into the desktop app | the next LoWisa desktop release |
 
 **What already protects students until then (live today):**
@@ -1357,6 +1373,8 @@ because a store app cannot change until then.
 
 - **The server takes no desk video from the store apps** (since edge vb1104p): they cannot say their face look ran, so
   their students photograph the finished paper instead.
+- **The server looks for faces in every desk video itself** (since edge vb1104r): a video with a face is deleted
+  unmarked and nothing from it is kept, whatever the app said ([`harness/face/`](harness/face/README.md)).
 
 What the release adds is desk filming back, with the last step: a video whose faces could not be covered is never
 sent at all, on any phone.
@@ -1386,10 +1404,10 @@ audit's server fixes (section 13), live from edge vb1104m.
   exam's answer out of a level whatever the app writes (48 of 48 attacks held, section 13). Next, the app sends only
   which instruction it wants, and the server supplies the words, so no client can write them. It needs a phone and a
   desktop release.
-- **A face check on the server, not only on the phone.** Today the phone covers faces and says so, and the server
-  trusts the statement (section 13). Next, the server looks for faces in a desk video itself (SAM 3.1 already reads
-  every desk video there) and keeps no clip or still with a face in it, so a modified app cannot get an uncovered
-  face kept.
+- **Done after the final audit (edge vb1104r): a face check on the server, not only on the phone.** The server looks
+  for faces in every desk video itself (SAM 3.1) before anything reads it, and a video with a face is deleted unmarked
+  with nothing kept (section 13). Still next: the look runs after the upload, so the phone's own cover stays the first
+  step.
 - **Done after the fourth audit (edge vb1104p):** each hold settled by its own id, failures and late calls counted
   (section 13); one click by risk as well as confidence (section 13). Next for both: the desk shows the teacher why a
   mark was held back (the server already says), from the next desktop release.

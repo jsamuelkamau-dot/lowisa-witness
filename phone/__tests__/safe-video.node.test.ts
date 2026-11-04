@@ -59,3 +59,13 @@ test('every video upload in the phone screen goes through the face rule first', 
   assert.match(all, /witness\.start\(.*, 'checked'\);/, 'the desk video asks for its link saying faces checked');
   assert.match(all, /'fresh', \{[^}]*faces: 'checked'/, 'the fresh question asks for its link saying faces checked');
 });
+
+// 4 Nov (final audit: "the server still relies on the client's declaration"): the server now looks for faces itself and
+// deletes a video with one unmarked; the student's list says so instead of a bare "Record it again"
+test('a paper whose video the server refused for a face says so on the phone', async () => {
+  const fs = await import('node:fs');
+  const all = fs.readFileSync(new URL('../witness/WitnessScreen.tsx', import.meta.url), 'utf8');
+  assert.match(all, /p\.face_seen \? 'A face was in the video, so it was deleted: photograph your paper'/);
+  assert.match(fs.readFileSync(new URL('../witness/net.ts', import.meta.url), 'utf8'), /face_seen\?: boolean/);
+});
+

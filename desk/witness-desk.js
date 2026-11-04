@@ -283,7 +283,7 @@
     var papers = ss.map(function (s) {
       var st = s.status === 'marked' ? '<span class="wd-sub">' + num(s.marks) + ' / ' + num(s.out_of) + '</span>' :
         s.status === 'released' ? '<span class="wd-chip ok">Released</span>' :
-        s.status === 'failed' ? '<span class="wd-chip err">' + (s.unreadable ? (s.kind === 'photo' ? 'Paper not readable: photograph again' : 'Paper not in view: film again') : s.kept ? 'Not marked yet: mark again' : s.kind === 'photo' ? 'Photograph again' : 'Record again') + '</span>' : '<span class="wd-chip">' + (s.status === 'uploading' ? 'Uploading' : 'Marking') + '</span>';
+        s.status === 'failed' ? '<span class="wd-chip err">' + (s.face_seen ? 'A face was seen: deleted unmarked, photograph the paper' : s.unreadable ? (s.kind === 'photo' ? 'Paper not readable: photograph again' : 'Paper not in view: film again') : s.kept ? 'Not marked yet: mark again' : s.kind === 'photo' ? 'Photograph again' : 'Record again') + '</span>' : '<span class="wd-chip">' + (s.status === 'uploading' ? 'Uploading' : 'Marking') + '</span>';
       return '<div class="wd-row" data-paper="' + esc(s.id) + '"><span class="wd-grow">' + esc(s.student || 'Paper') + '</span>' + whoseChip(s) + st +
         (s.to_master ? '<span class="wd-chip warn">' + s.to_master + ' in Mastery Plan</span>' : '') +
         (s.turned_around ? '<span class="wd-chip ok">' + s.turned_around + ' turned around</span>' : '') + '</div>';
@@ -299,7 +299,8 @@
     var at = acceptAt();
     var sure = q.filter(function (it) { return it.result === 'mastered' && (it.confidence || 0) >= at; });
     if (sure.length) queue = '<div class="wd-row" style="cursor:default"><span class="wd-grow wd-sub">' + sure.length + ' marked mastered, ' + Math.round(at * 100) +
-      '% sure or more. Sure is not proof: look over a few before you accept them.</span>' +
+      '% sure or more, judged against ' + (judgedAgainst() === 'mark_scheme' ? 'your mark scheme' : 'the AI\'s own answer key (no mark scheme was given)') +
+      '. Sure is not proof: look over a few before you accept them.</span>' +
       '<button class="wd-btn" data-act="acceptsure">Accept these ' + sure.length + '</button></div>' + queue;
     var ready = (j.ready || []);
     var readyCard = ready.length ? '<div class="wd-card"><h3>Ready for Turned around: ' + ready.length + '</h3>' +
@@ -401,6 +402,8 @@
     return (check ? ' ' + check + ' left for you to check one by one.' : '') + (not ? ' ' + not + ' could not yet (the level not finished, or already done).' : '');
   }
   // the server's line for one-click accepting (0.95 since 4 Nov); an older server sends none
+  // 4 Nov (fourth audit): what the marks were judged against, the teacher's mark scheme or the model's own key
+  function judgedAgainst() { return (S.pile && S.pile.pile && S.pile.pile.judged_against) || 'model_key'; }
   function acceptAt() { var a = S.pile && S.pile.pile && S.pile.pile.accept_at; return typeof a === 'number' ? a : 0.95; }
   function groupOf(gi) { return ((((S.pile || {}).pile || {}).patterns || {}).patterns || [])[gi] || null; }
   async function groupDraft(gi) {

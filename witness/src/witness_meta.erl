@@ -15,7 +15,7 @@
 %%%-------------------------------------------------------------------
 -module(witness_meta).
 -export([chat_request/3, ssl_opts/0, upload/4, sam_video/3, sam_video/4, read_video/5, read_content/4, fetch/1, video/1, responses/2, text_of/1, cost/2, multipart/4, range/3,
-         image/2, transcribe/2, transcribe_body/2, structured/4, object/1]).
+         image/2, transcribe/2, transcribe_body/2, structured/4, object/1, forget/2]).
 
 -define(API, "https://api.meta.ai/v1").
 -define(TIMEOUT_MS, 300000).
@@ -44,6 +44,16 @@ upload(Key, Name, Mime, Bytes) ->
     case http(Key, "/files", "multipart/form-data; boundary=" ++ Boundary, Body) of
         {ok, #{<<"id">> := Id}} -> {ok, Id};
         {ok, Other} -> {error, {no_file_id, Other}};
+        E -> E
+    end.
+
+%% forget(Key, FileId) -> ok | {error, Why}: a file this server uploaded, deleted from Meta's store once read (4 Nov:
+%% the face look's sampled copy is not left behind, a face or not).
+forget(Key, FileId) ->
+    Opts = [{timeout, 30000}, {connect_timeout, 10000}, {ssl, ssl_opts()}],
+    case httpc:request(delete, {?API ++ "/files/" ++ str(FileId), [{"authorization", "Bearer " ++ str(Key)}]}, Opts, [{body_format, binary}]) of
+        {ok, {{_, Code, _}, _, _}} when Code >= 200, Code < 300 -> ok;
+        {ok, {{_, Code, _}, _, _}} -> {error, Code};
         E -> E
     end.
 

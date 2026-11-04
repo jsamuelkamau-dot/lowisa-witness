@@ -1,0 +1,292 @@
+{
+ "what": "SAM 3.1 asked for \"face\" on each clip (harness/face/face_look.escript), 4 Nov 2026",
+ "clips": [
+  {
+   "clip": "face-test.mp4",
+   "objects": 1,
+   "best": 0.941605806350708,
+   "frames": 598,
+   "seen_frames": 598
+  },
+  {
+   "clip": "p2_full.mp4",
+   "objects": 1,
+   "best": 0.941605806350708,
+   "frames": 80,
+   "seen_frames": 80
+  },
+  {
+   "clip": "p3_walkby.mp4",
+   "objects": 1,
+   "best": 0.9336099624633789,
+   "frames": 291,
+   "seen_frames": 31
+  },
+  {
+   "clip": "p4_edge.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 291,
+   "seen_frames": 0
+  },
+  {
+   "clip": "p5_small.mp4",
+   "objects": 1,
+   "best": 0.9101123809814453,
+   "frames": 291,
+   "seen_frames": 291
+  },
+  {
+   "clip": "sent.mp4",
+   "objects": 1,
+   "best": 0.9532163739204407,
+   "frames": 199,
+   "seen_frames": 119
+  },
+  {
+   "clip": "sent74.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 199,
+   "seen_frames": 0
+  },
+  {
+   "clip": "maths_strong_en.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 291,
+   "seen_frames": 0
+  },
+  {
+   "clip": "ar_maths.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 235,
+   "seen_frames": 0
+  },
+  {
+   "clip": "phone1080.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 783,
+   "seen_frames": 0
+  },
+  {
+   "clip": "p4_half.mp4",
+   "objects": 1,
+   "best": 0.9532163739204407,
+   "frames": 291,
+   "seen_frames": 291
+  },
+  {
+   "clip": "p6_lower.mp4",
+   "objects": 1,
+   "best": 0.9452055096626282,
+   "frames": 291,
+   "seen_frames": 291
+  },
+  {
+   "clip": "p7_onesec.mp4",
+   "objects": 1,
+   "best": 0.9298245906829834,
+   "frames": 291,
+   "seen_frames": 11
+  },
+  {
+   "clip": "face-test_2fps.mp4",
+   "objects": 1,
+   "best": 0.9375000596046448,
+   "frames": 50,
+   "seen_frames": 40
+  },
+  {
+   "clip": "p3_walkby_2fps.mp4",
+   "objects": 1,
+   "best": 0.9298245906829834,
+   "frames": 58,
+   "seen_frames": 6
+  },
+  {
+   "clip": "p5_small_2fps.mp4",
+   "objects": 1,
+   "best": 0.8865247964859009,
+   "frames": 58,
+   "seen_frames": 58
+  },
+  {
+   "clip": "p7_onesec_2fps.mp4",
+   "objects": 1,
+   "best": 0.9336099624633789,
+   "frames": 58,
+   "seen_frames": 2
+  },
+  {
+   "clip": "answers_only_en.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 196,
+   "seen_frames": 0
+  },
+  {
+   "clip": "bio_short_en.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 334,
+   "seen_frames": 0
+  },
+  {
+   "clip": "blank_page_en.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 200,
+   "seen_frames": 0
+  },
+  {
+   "clip": "blur_en.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 240,
+   "seen_frames": 0
+  },
+  {
+   "clip": "chem_en.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 289,
+   "seen_frames": 0
+  },
+  {
+   "clip": "erased_en.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 310,
+   "seen_frames": 0
+  },
+  {
+   "clip": "fr_maths.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 288,
+   "seen_frames": 0
+  },
+  {
+   "clip": "fr_maths_messy.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 144,
+   "seen_frames": 0
+  },
+  {
+   "clip": "hi_maths.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 234,
+   "seen_frames": 0
+  },
+  {
+   "clip": "long_maths_en.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 752,
+   "seen_frames": 0
+  },
+  {
+   "clip": "maths_cancel_en.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 261,
+   "seen_frames": 0
+  },
+  {
+   "clip": "maths_cancel_en_messy.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 131,
+   "seen_frames": 0
+  },
+  {
+   "clip": "maths_selfcorrect_en.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 321,
+   "seen_frames": 0
+  },
+  {
+   "clip": "returns_en.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 330,
+   "seen_frames": 0
+  },
+  {
+   "clip": "sw_maths.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 242,
+   "seen_frames": 0
+  },
+  {
+   "clip": "unseen_dark.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 291,
+   "seen_frames": 0
+  },
+  {
+   "clip": "unseen_nopaper.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 200,
+   "seen_frames": 0
+  },
+  {
+   "clip": "unsure_en.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 240,
+   "seen_frames": 0
+  },
+  {
+   "clip": "n_hand.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 80,
+   "seen_frames": 0
+  },
+  {
+   "clip": "n_hand_2fps.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 50,
+   "seen_frames": 0
+  },
+  {
+   "clip": "n_long_maths_en_2fps.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 150,
+   "seen_frames": 0
+  },
+  {
+   "clip": "n_maths_strong_en_2fps.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 58,
+   "seen_frames": 0
+  },
+  {
+   "clip": "n_sw_maths_2fps.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 50,
+   "seen_frames": 0
+  },
+  {
+   "clip": "n_unseen_dark_2fps.mp4",
+   "objects": 0,
+   "best": 0.0,
+   "frames": 58,
+   "seen_frames": 0
+  }
+ ]
+}
