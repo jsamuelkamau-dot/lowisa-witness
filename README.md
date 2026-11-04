@@ -924,7 +924,7 @@ Look at it without an account: `node demo/desk-server.js --replay`. It is this e
 
 | Criterion | In one line | The evidence |
 |---|---|---|
-| **Impact** | The problem is human cognitive ability: a fear millions already feel about AI, joined to a problem education has not solved for generations (a failed exam that teaches nothing). This uses AI to strengthen it in four areas (from failure to capability, from knowledge to real-world application, from AI answers to independent thinking, from memorising to lasting mastery): a failed question becomes a level built on the student's own mistake that ends in a real task, and a teacher of forty checks instead of marking. Measured against one real student's own teacher; not yet proven in a classroom pilot | the opening, sections 1, 2, 5, 7; limits in 16; plans in 17 |
+| **Impact** | The problem is human cognitive ability: a fear millions already feel about AI, joined to a problem education has not solved for generations (a failed exam that teaches nothing). It is designed to use AI to strengthen it in four areas (from failure to capability, from knowledge to real-world application, from AI answers to independent thinking, from memorising to lasting mastery): a failed question becomes a level built on the student's own mistake that ends in a real task, and a teacher of forty checks instead of marking. Measured against one real student's own teacher; not yet proven in a classroom pilot | the opening, sections 1, 2, 5, 7; limits in 16; plans in 17 |
 | **Use of Meta's models** | Muse Spark reads the *reasoning* in handwriting and code checks its diagnosis against the lines it read; Muse Wonder plays every level as the student first; five models measured, in a gated pipeline of agents with code-checked hand-offs | sections 3, 4; `harness/FINDINGS.md` |
 | **Technical depth** | The evidence rule in code, measured blind and on the shipped code; handwriting placed on the page by dynamic programming (64 of 64 lines, against SAM 3.1's 52); Erlang/OTP with conditional writes, per-route daily ceilings, roles; 158 library tests; sixteen problems found by testing and how each was solved, from sideways pages to a safety check that failed open | sections 6, 7, 10, 11, 15 |
 | **Demo** | One failed question from photo to mastery: Muse Spark's marks landing on the page, the idea quoted from his own words, Lo asks first with a spoken answer, Muse Wonder's two plays, Muse Image's drawn step, the teacher's desk, the re-check; a real Grade 5 student's result against its baseline. Four Meta models on screen, about 1:44 of this week's work, every shot labelled, a word-for-word transcript; judges can try it in a minute with no account | sections 2, 12; `evidence/film/transcript.md` |
@@ -1128,8 +1128,13 @@ day's ceiling reached) is replaced by a safe line, never sent.
 - **Desk video only from an app whose face look ran (finding A).** The phone apps in the stores (1.10.4) predate the
   fail-closed face rule. So the server now takes a desk video, or a filmed fresh question, only from an app that says its
   face look ran to the end (`faces: "checked"`). The store apps never say it, so their students are told to photograph
-  the finished paper instead. The next phone release says it, and only after its look ran. The server cannot see faces:
-  this switches the old apps off, it is not proof about a video. Tested (`video_needs_the_face_look_test`).
+  the finished paper instead. The next phone release says it, and only after its look ran. **This is the app's own
+  statement, not proof**: the server cannot see faces, and a modified app could send the statement without running the
+  look. It switches the store apps off; it does not make an unsafe upload impossible. What does not depend on the app:
+  the main way in (photographing the finished paper) films no one, and a desk video is deleted once marked
+  ([privacy](docs/privacy.md); whether a school offers desk filming at all is listed there as its decision before a
+  pilot). A face check on the server itself,
+  before anything from a video is kept, is in the future plans (17.2a). Tested (`video_needs_the_face_look_test`).
 - **Each hold settled by its own id (finding B).** Every money hold has its own id, and the call that took it settles
   exactly that hold, so calls finishing out of order never settle each other's. A call that failed after the model was
   asked is counted at its whole hold (what it cost is not known, so the most it could cost), never at nothing. A hold
@@ -1338,7 +1343,7 @@ because a store app cannot change until then.
 
 | Fix | Where it is now | Reaches users |
 |---|---|---|
-| **A desk video never leaves the phone with a face uncovered.** A video is sent only when the phone's face look answers, explicitly, that it ran to the end (`faces: "checked"`); a failed look, an empty or unclear answer, or a phone with no look at all (iPhone today) sends nothing, and the student is asked to have the paper photographed instead. A phone that cannot cover faces no longer offers desk filming. On a long video (over 25 minutes), a face that stays in view is now covered all the way through (the cover grows with the gap between looks). Found by three independent audits on 4 Nov ([what was checked in the app's build](evidence/app-validation/phone-and-desk-2026-11-04.md)) | `phone/witness/safeVideo.ts` (the rule, tested on its own in this repository's CI), `WitnessScreen.tsx` (`smaller`, `canCoverFaces`); the Android face look in LoWisa's app; tested (`phone/__tests__/`) | the next LoWisa phone release, Android and iPhone |
+| **The app sends a desk video only after its face look ran.** A video is sent only when the phone's face look answers, explicitly, that it ran to the end (`faces: "checked"`); a failed look, an empty or unclear answer, or a phone with no look at all (iPhone today) sends nothing, and the student is asked to have the paper photographed instead. A phone that cannot cover faces no longer offers desk filming. On a long video (over 25 minutes), a face that stays in view is now covered all the way through (the cover grows with the gap between looks). Found by three independent audits on 4 Nov ([what was checked in the app's build](evidence/app-validation/phone-and-desk-2026-11-04.md)) | `phone/witness/safeVideo.ts` (the rule, tested on its own in this repository's CI), `WitnessScreen.tsx` (`smaller`, `canCoverFaces`); the Android face look in LoWisa's app; tested (`phone/__tests__/`). A safeguard with a photograph fallback, not a guarantee: the look runs on the phone, so a modified app could skip it (section 13) | the next LoWisa phone release, Android and iPhone |
 | **The Exam Desk's one-click button says what the server now enforces.** It takes only the marks called right and 0.95 sure or more (the server's line), says "sure is not proof", and counts what was left to check; an unreadable photographed paper is to be photographed again, not filmed again | `desk/witness-desk.js` (`acceptAt`, `countNot`), synced into the desktop app | the next LoWisa desktop release |
 
 **What already protects students until then (live today):**
@@ -1381,6 +1386,10 @@ audit's server fixes (section 13), live from edge vb1104m.
   exam's answer out of a level whatever the app writes (48 of 48 attacks held, section 13). Next, the app sends only
   which instruction it wants, and the server supplies the words, so no client can write them. It needs a phone and a
   desktop release.
+- **A face check on the server, not only on the phone.** Today the phone covers faces and says so, and the server
+  trusts the statement (section 13). Next, the server looks for faces in a desk video itself (SAM 3.1 already reads
+  every desk video there) and keeps no clip or still with a face in it, so a modified app cannot get an uncovered
+  face kept.
 - **Done after the fourth audit (edge vb1104p):** each hold settled by its own id, failures and late calls counted
   (section 13); one click by risk as well as confidence (section 13). Next for both: the desk shows the teacher why a
   mark was held back (the server already says), from the next desktop release.

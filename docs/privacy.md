@@ -80,4 +80,7 @@ A paper deleted while it is being marked stays deleted (`witness_api:done/8` wri
 - Who the controller is (the school), the consent the school collects (a parent's or guardian's, where the law asks for one), and the age at which a student may join on their own.
 - A deletion request from a student or a parent, made to the school and carried out by its teacher (today: the teacher deletes the paper).
 - Who may create an exam (today: any LoWisa account with the feature; a school role could be required).
+- Whether desk filming is offered at all (today: optional, one student at a time, Android only). The phone covers faces and
+  says so, but the server cannot check that statement (README section 13), so a school may prefer photographed papers
+  only.
 - The Meta Model API's own terms for data sent to it apply. This repository makes no claim beyond them.

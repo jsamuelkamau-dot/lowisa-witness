@@ -25,6 +25,7 @@ chatbot: the learner is never handed an answer.
 - **An unreadable photo is never marked**: both came back "photograph it again", with nothing marked.
 - **One click accepts only marks at least 0.95 sure**, the server's money holds settle, and expired rows read as gone.
   What one click takes, with and without a mark scheme: [`docs/marking-policy.md`](docs/marking-policy.md).
+- **20 of 20 of Lo's turns fired together on one teacher's wallet were paid** (after two fixes the live checks found).
 
 Details are in [`evidence/live-checks/`](evidence/live-checks/README.md).
 
@@ -41,14 +42,19 @@ Details are in [`evidence/live-checks/`](evidence/live-checks/README.md).
 
 - **Proven here**: the marking, the diagnosis, asking before naming an idea, resistance to misleading work, levels
   built and checked, and the safety rules above.
+- **Marking is not perfect, so the teacher decides.** On the real learner's multiple-choice papers, 0 to 2 of the
+  marks one click accepted at 0.95 still called a wrong answer right (no mark scheme was given). Nothing reaches a
+  student until the teacher releases it, and the desk says whether the teacher's scheme or the model's own key was used.
 - **Measured, with limits**: on real handwriting, one learner so far. On his written answers, agreement is no better
   than marking everything right (36–38 of 42 against 38). The held-out set is simulated handwriting that we wrote and
   have re-run.
 - **Not yet shown**: that the product strengthens learning lastingly, across many learners. That needs a controlled
   study, whose design is written down before it runs: [`docs/STUDY-PLAN.md`](docs/STUDY-PLAN.md). One completed level
   or one re-check is evidence of a step, not of lasting mastery.
-- **A risk that stays until the next phone release**: the store apps cannot apply the fail-closed face rule. Instead,
-  the server refuses their desk videos, so those students' papers are photographed.
+- **Desk video is safeguarded, not made impossible.** The store apps cannot apply the fail-closed face rule, so the
+  server refuses their desk videos and those papers are photographed. From the next phone release, the app covers
+  faces and says so. The server trusts that statement, so a modified app could send a video without the look. A face
+  check on the server itself is next (README 17.2a). The main way in, photographing the finished paper, films no one.
 
 Every limit is in README section 16. **Licence:** [PolyForm Strict 1.0.0](LICENSE), with
 [an added permission for judges](JUDGING-PERMISSION.md) to do whatever verification needs.
