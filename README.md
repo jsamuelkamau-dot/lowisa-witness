@@ -980,6 +980,10 @@ the commit it ran on. Notes for Meta's API team, and what each run found: [`harn
 Everything in this section is covered for the event's judges and evaluators by the
 [additional permission for judging](JUDGING-PERMISSION.md), including changing a port, a key or a path to make it run.
 
+**Followed from a fresh clone of this repository on 4 Nov (`2adbbfd`), on Windows:** `sh scripts/test.sh` 164 tests
+passed; the phone's face rule 6 of 6; the recorded Exam Desk opened with its exam, codes, class patterns and measures;
+and `mark_my_paper` marked the 30-question physics paper live in 92 s for about $0.07.
+
 **In one minute, with no account and no key:** the teacher's Exam Desk on an exam recorded on the production edge.
 
 ```bash
@@ -1096,8 +1100,10 @@ prompt, and held-out v2 tries ten injections in the ink: none was marked mastere
 [`harness/heldout/items_planted.py`](harness/heldout/items_planted.py)): ten papers, three runs. A wrong answer dressed
 in right-looking working or a claim of the right method was never marked mastered (**15 of 15**); right work beside a
 false story of a wrong idea ("I flipped the first fraction") never had that idea named (**12 of 12**); wrong work
-beside a story of something else had its real idea named (**3 of 3**). $0.74. A small synthetic set, not proof
-against every trick ([results](harness/heldout/results/planted-3-runs.json), `harness/planted_eval.escript`).
+beside a story of something else had its real idea named (**3 of 3**). $0.74. Run again from a clean clone of the
+committed code (`2adbbfd`, recorded with no local changes): the same, 30 of 30, $0.73. A small synthetic set, not proof
+against every trick ([first run](harness/heldout/results/planted-3-runs.json),
+[clean run](harness/heldout/results/planted-3-runs-on-2adbbfd.json), `harness/planted_eval.escript`).
 
 **Deleting:**
 - **Nothing is kept for good:** a paper, its pages and its recordings are deleted by the store itself 180 days after
