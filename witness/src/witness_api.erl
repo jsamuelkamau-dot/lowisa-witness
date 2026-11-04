@@ -190,7 +190,7 @@ route(<<"POST">>, [<<"pile">>, Id, <<"patterns">>], _B, Uid, Host) ->
                     _ = upd(Uid, {pile, Id}, fun({ok, X}) -> X#{patterns => #{status => <<"making">>, at => now_ms()}}; (none) -> stop end, Host),
                     ok = Host:run(fun() ->
                         Pat = case again(Host, fun() -> (patterner(Host))(Key, maps:with([title, level], P), Items) end) of
-                            {ok, Rep, Cost} -> spend(Host, Uid, <<"witness_patterns">>, Cost),
+                            {ok, Rep, Cost} -> spend(Host, Uid, <<"witness_patterns">>, Cost, <<"patterns">>),
                                                Rep#{status => <<"ready">>, papers => length(maps:get(sittings, P, [])), at => now_ms()};
                             Why -> report(Host, <<"witness.patterns_failed">>, Why), #{status => <<"failed">>, at => now_ms()}
                         end,
@@ -519,7 +519,7 @@ route(<<"POST">>, [<<"sitting">>, Id, <<"answer">>], B, Uid, Host) ->
                         {Text, Spoken} ->
                             Q = case [X || X = #{n := N} <- Qs, N =:= maps:get(n, Ask)] of [X | _] -> X; [] -> #{} end,
                             Verdict = case daily(Owner, <<"judge">>, Host) =:= ok andalso (answer_judge(Host))(Host:meta_key(), Ask, Q, Text) of
-                                {ok, V, Cost} -> spend(Host, Owner, <<"witness_examiner">>, Cost), V;
+                                {ok, V, Cost} -> spend(Host, Owner, <<"witness_examiner">>, Cost, <<"judge">>), V;
                                 _ -> undefined
                             end,
                             %% 28 Oct (owner): the spoken answer is kept with the paper for the teacher to hear
@@ -555,7 +555,7 @@ route(<<"POST">>, [<<"sitting">>, Id, <<"draw">>], B, Uid, Host) ->
                         Name = <<Id/binary, "/drawn-", (integer_to_binary(N))/binary, ".webp">>,
                         Drawn = case again(Host, fun() -> (drawer(Host))(Key, Q, Sitting) end) of
                             {ok, #{bytes := Bytes, lines := Lines, changed := Ch}, Cost} ->
-                                spend(Host, Uid, <<"witness_draw">>, Cost),
+                                spend(Host, Uid, <<"witness_draw">>, Cost, <<"draw">>),
                                 case Host:put_asset(Uid, Name, Bytes, <<"image/webp">>) of
                                     ok -> #{status => <<"done">>, asset => <<"drawn-", (integer_to_binary(N))/binary, ".webp">>, lines => Lines, changed => Ch, at => now_ms()};
                                     _ -> #{status => <<"failed">>}
@@ -756,7 +756,7 @@ route(<<"POST">>, [<<"check">>], B, Uid, Host) ->
                     ok = Host:run(fun() ->
                         Out = try (checker(Host))(Key, In) catch C:R -> {error, {C, R}} end,
                         case Out of
-                            {ok, V, Cost} -> ok = Host:save(Uid, {check, Id}, Base#{status => <<"done">>, verdict => V}), spend(Host, Uid, <<"witness_check">>, Cost);
+                            {ok, V, Cost} -> ok = Host:save(Uid, {check, Id}, Base#{status => <<"done">>, verdict => V}), spend(Host, Uid, <<"witness_check">>, Cost, <<"check">>);
                             {error, Why} -> ok = Host:save(Uid, {check, Id}, Base#{status => <<"failed">>, reason => iolist_to_binary(io_lib:format("~0p", [Why]))})
                         end
                     end),
@@ -777,7 +777,7 @@ read_file(Uid, Key, Mime, Bytes, Host) ->
         over -> refuse(429, <<"daily_limit">>, over_words());
         ok ->
             case again(Host, fun() -> (reader(Host))(Key, Mime, Bytes) end) of
-                {ok, Read, Cost} -> spend(Host, Uid, <<"witness_read">>, Cost), {200, maps:merge(#{ok => true}, Read)};
+                {ok, Read, Cost} -> spend(Host, Uid, <<"witness_read">>, Cost, <<"read">>), {200, maps:merge(#{ok => true}, Read)};
                 {error, unreadable} -> refuse(422, <<"unreadable">>, <<"That doesn't look like an exam paper or a mark scheme.">>);
                 Why -> report(Host, <<"witness.read_failed">>, Why), refuse(502, <<"read_failed">>, <<"Couldn't read it this time. Try again in a moment.">>)
             end
@@ -870,8 +870,8 @@ model_guarded(Payer, Text, Host) ->
         {_, over} -> report(Host, <<"witness.guard_unread">>, over), unsafe;
         {Key, ok} ->
             case safely(fun() -> (guard(Host))(Key, Text) end) of
-                {unsafe, _Why, Cost} -> spend(Host, Payer, <<"witness_guard">>, Cost), report(Host, <<"witness.guarded">>, Text), unsafe;
-                {ok, Cost} -> spend(Host, Payer, <<"witness_guard">>, Cost), ok;
+                {unsafe, _Why, Cost} -> spend(Host, Payer, <<"witness_guard">>, Cost, <<"guard">>), report(Host, <<"witness.guarded">>, Text), unsafe;
+                {ok, Cost} -> spend(Host, Payer, <<"witness_guard">>, Cost, <<"guard">>), ok;
                 Other -> report(Host, <<"witness.guard_unread">>, Other), unsafe
             end
     end.
@@ -904,7 +904,7 @@ explain_step(Q, B, #{owner := Owner, sid := Sid, n := N}, Host) ->
             Verdict = case {To, Text, Asked andalso Host:meta_key(), daily(Owner, <<"judge">>, Host)} of
                 {<<"lo">>, T, K, ok} when T =/= <<>>, is_binary(K) orelse is_list(K) ->
                     case (judger(Host))(K, Q, T) of
-                        {ok, V, Cost} -> spend(Host, Owner, <<"witness_explain">>, Cost), V;
+                        {ok, V, Cost} -> spend(Host, Owner, <<"witness_explain">>, Cost, <<"judge">>), V;
                         {ok, V} -> V;
                         _ -> undefined
                     end;
@@ -925,7 +925,7 @@ recommend_step(Q, Row, Owner, Host) ->
                 none -> <<>>
             end,
             case again(Host, fun() -> (recommender(Host))(Key, Q#{question => Text}) end) of
-                {ok, Rec, Cost} -> spend(Host, Owner, <<"witness_recommend">>, Cost), witness_mastery:recommended(Q, Rec, now_ms());
+                {ok, Rec, Cost} -> spend(Host, Owner, <<"witness_recommend">>, Cost, <<"recommend">>), witness_mastery:recommended(Q, Rec, now_ms());
                 {error, W} -> case busy(W) of true -> {error, busy}; false -> {error, no_recommendation} end;
                 _ -> {error, no_recommendation}
             end
@@ -941,7 +941,7 @@ suggest_step(Q, Row, Owner, B, Host) ->
         {true, Key, ok} ->
             Note = clean(maps:get(<<"note">>, B, <<>>), 300),
             case again(Host, fun() -> (suggester(Host))(Key, Q#{question => question_text(Q, Row, Owner, Host)}, Note) end) of
-                {ok, S, Cost} -> spend(Host, Owner, <<"witness_challenge">>, Cost), {Q, #{suggestion => S}};
+                {ok, S, Cost} -> spend(Host, Owner, <<"witness_challenge">>, Cost, <<"suggest">>), {Q, #{suggestion => S}};
                 {error, W} -> case busy(W) of true -> {error, busy}; false -> {error, no_suggestion} end;
                 _ -> {error, no_suggestion}
             end
@@ -957,7 +957,7 @@ challenge_step(Q, B, Owner, Host) ->
                 {_, over} -> undefined;
                 {Key, ok} ->
                     case safely(fun() -> (challenge_judger(Host))(Key, Q, {maps:get(pick, Reply), maps:get(why, Reply)}) end) of
-                        {ok, V, Cost} -> spend(Host, Owner, <<"witness_challenge">>, Cost), V;
+                        {ok, V, Cost} -> spend(Host, Owner, <<"witness_challenge">>, Cost, <<"judge">>), V;
                         _ -> undefined
                     end
             end,
@@ -983,7 +983,7 @@ diagnose_step(Q, B, #{owner := Owner, sid := Sid, n := N, row := Row}, Host) ->
                         {_, over} -> undefined;
                         {Key, ok} ->
                             case safely(fun() -> (fingerprinter(Host))(Key, Q#{question => question_text(Q, Row, Owner, Host)}, Text) end) of
-                                {ok, F, Cost} -> spend(Host, Owner, <<"witness_fingerprint">>, Cost), F;
+                                {ok, F, Cost} -> spend(Host, Owner, <<"witness_fingerprint">>, Cost, <<"fingerprint">>), F;
                                 _ -> undefined
                             end
                     end,
@@ -1023,7 +1023,7 @@ recheck_write(Q, Row, Owner, Key, Host) ->
         over -> {error, daily_limit};
         ok ->
             case again(Host, fun() -> (rechecker(Host))(Key, Q#{question => question_text(Q, Row, Owner, Host)}) end) of
-                {ok, Item, Cost} -> spend(Host, Owner, <<"witness_recheck">>, Cost), witness_recheck:opened(Q, Item, now_ms());
+                {ok, Item, Cost} -> spend(Host, Owner, <<"witness_recheck">>, Cost, <<"recheck">>), witness_recheck:opened(Q, Item, now_ms());
                 {error, W} -> case busy(W) of true -> {error, busy}; false -> {error, no_recheck} end;
                 _ -> {error, no_recheck}
             end
@@ -1040,7 +1040,7 @@ recheck_answer_step(Q, B, Owner, Host) ->
                 {undefined, _} -> undefined;
                 {_, over} -> undefined;
                 {Key, ok} -> case safely(fun() -> (recheck_judger(Host))(Key, Q0, {V, W}) end) of
-                           {ok, Vd, Cost} -> spend(Host, Owner, <<"witness_recheck">>, Cost), Vd;
+                           {ok, Vd, Cost} -> spend(Host, Owner, <<"witness_recheck">>, Cost, <<"judge">>), Vd;
                            _ -> undefined
                        end
             end,
@@ -1199,7 +1199,7 @@ world(Owner, Sid, N, #{mastery := #{level := L} = M}, Host) when not is_map_key(
                             {ok, Bytes, Fmt} ->
                                 File = <<"world-", (integer_to_binary(N))/binary, ".", (str(Fmt))/binary>>,
                                 case Host:put_asset(Owner, <<Sid/binary, "/", File/binary>>, Bytes, <<"image/", (str(Fmt))/binary>>) of
-                                    ok -> spend(Host, Owner, <<"witness_world">>, witness_meta:cost(image, 1)), File;
+                                    ok -> spend(Host, Owner, <<"witness_world">>, witness_meta:cost(image, 1), <<"draw">>), File;
                                     _ -> failed
                                 end;
                             Why -> report(Host, <<"witness.world_failed">>, Why), failed
@@ -1261,7 +1261,7 @@ moment(Q) -> case [T || #{t := T} <- maps:get(steps, Q, []), is_number(T)] of []
 %% Muse Wonder writes the examiner's questions as soon as the paper is marked, while the student is still there.
 examine(Uid, Id, Key, Sitting, Qs, Host) ->
     Ex = case again(Host, fun() -> (examiner(Host))(Key, Sitting, Qs) end) of
-        {ok, Asks, Cost} -> spend(Host, Uid, <<"witness_examiner">>, Cost), #{status => <<"ready">>, asks => Asks, at => now_ms()};
+        {ok, Asks, Cost} -> spend(Host, Uid, <<"witness_examiner">>, Cost, <<"paper_examiner">>), #{status => <<"ready">>, asks => Asks, at => now_ms()};
         Why -> report(Host, <<"witness.examiner_failed">>, Why), #{status => <<"failed">>, asks => []}
     end,
     _ = upd(Uid, {sitting, Id}, fun({ok, Row}) -> Row#{examiner => Ex}; (none) -> stop end, Host),
@@ -1283,7 +1283,7 @@ heard(Owner, B, Host) ->
                 {Key, Bytes, ok} ->
                     case safely(fun() -> (hearer(Host))(Key, Bytes) end) of
                         {ok, T, Secs} ->
-                            spend(Host, Owner, <<"witness_transcribe">>, witness_meta:cost(transcribe, Secs)),
+                            spend(Host, Owner, <<"witness_transcribe">>, witness_meta:cost(transcribe, Secs), <<"hear">>),
                             case clean(T, 2000) of <<>> -> {error, not_heard}; Text -> {Text, true} end;
                         %% Meta busy is not the student's microphone: they are told to try again, not to speak closer
                         {error, W} -> case busy(W) of true -> {error, busy}; false -> {error, not_heard} end;
@@ -1831,7 +1831,7 @@ retry_waits(Host) ->
 done(Uid, Id, Key, Sitting, Row, Outcome, Stills, Host) ->
     case Outcome of
         {ok, Result} ->
-            spend(Host, Uid, <<"witness_sitting">>, maps:get(cost_usd, Result, 0.0)),
+            spend(Host, Uid, <<"witness_sitting">>, maps:get(cost_usd, Result, 0.0), <<"paper_marking">>),
             case upd(Uid, {sitting, Id}, fun({ok, Now}) -> Now#{status => <<"marked">>, result => Result#{stills => Stills}, marked_ms => now_ms()};
                                             (none) -> stop end, Host) of
                 stop -> ok;
@@ -2053,35 +2053,51 @@ daily(Uid, Kind, Host) ->
             Max = maps:get(Kind, ?ALL_DAILY),
             case count(?ALL, Kind, 86400000, Host) of
                 N when N > Max -> N =:= Max + 1 andalso logger:warning(#{event => <<"witness.all_daily_over">>, kind => Kind, ceiling => Max}), over;
-                _ -> money_left(Host)
+                _ -> reserve(Kind, Host)
             end
     end.
 
 %% 4 Nov (independent audit, finding E): the ceilings above count calls, not money, and one call can cost a hundred
-%% times another. So what every model call really cost (the same figure the host charges) is added up for the day
-%% across all accounts, and once it reaches ?DAY_USD no new call starts until the next day; the first refusal is logged
-%% for the owner. A call already running when the line is crossed still finishes, so the day can end a little over it.
+%% times another. So the day's spending across all accounts has a ceiling in dollars, ?DAY_USD.
+%% 4 Nov (second audit: "calls already running can carry the day past it"): before a call starts, the most a call of its
+%% kind costs (?RESERVE, set well above the largest seen) is reserved, in the same conditional write that checks the
+%% ceiling, so no call starts unless its reservation fits. When it finishes, the reservation becomes its real cost. A
+%% call that fails keeps its reservation until the day ends, so the ceiling can be reached a little early, never passed
+%% (while no call costs more than its kind's reservation). The first refusal is logged for the owner.
 -define(DAY_USD, 25.0).
 -define(USD, {mark_cache, <<"usd:all-accounts">>}).
-spend(Host, Uid, Feature, Cost) ->
-    Res = Host:spend(Uid, Feature, Cost),
-    Micro = round(Cost * 1000000),
-    Slot = integer_to_binary(now_ms() div 86400000),
-    _ = upd(?ALL, ?USD, fun({ok, #{minute := M, n := N} = R}) when M =:= Slot -> R#{n => N + Micro};
-                           (_) -> #{minute => Slot, n => Micro, sitting => <<>>} end, Host),
-    Res.
+%% a paper's marking (every reading of it) and the examiner's questions written after it share the paper's reservation
+-define(RESERVE, #{<<"paper">> => 1.50, <<"paper_marking">> => 1.25, <<"paper_examiner">> => 0.25, <<"read">> => 0.25,
+                   <<"patterns">> => 0.25, <<"draw">> => 0.10, <<"suggest">> => 0.10, <<"recommend">> => 0.10,
+                   <<"check">> => 0.30, <<"hear">> => 0.10, <<"fingerprint">> => 0.10, <<"judge">> => 0.10,
+                   <<"recheck">> => 0.10, <<"guard">> => 0.03}).
+micro(Usd) -> round(Usd * 1000000).
+reserved(Kind) -> micro(maps:get(Kind, ?RESERVE, 0.0)).
 
-money_left(Host) ->
+reserve(Kind, Host) ->
     Slot = integer_to_binary(now_ms() div 86400000),
-    case Host:load(?ALL, ?USD) of
-        {ok, #{minute := Slot, n := N}} when N >= ?DAY_USD * 1000000 ->
+    Max = micro(?DAY_USD), Est = reserved(Kind),
+    Fits = fun({ok, #{minute := M, n := N} = R}) when M =:= Slot -> case N + Est > Max of true -> stop; false -> R#{n => N + Est} end;
+              (_) -> #{minute => Slot, n => Est, sitting => <<>>} end,
+    case upd(?ALL, ?USD, Fits, Host) of
+        {ok, _} -> ok;
+        stop ->
             case count(?ALL, <<"usd_over">>, 86400000, Host) of
-                1 -> logger:warning(#{event => <<"witness.day_usd_over">>, spent_usd => N / 1000000, ceiling_usd => ?DAY_USD});
+                1 -> logger:warning(#{event => <<"witness.day_usd_over">>, ceiling_usd => ?DAY_USD, kind => Kind});
                 _ -> ok
             end,
-            over;
-        _ -> ok
+            over
     end.
+
+%% spend(Host, Uid, Feature, Cost, Kind): the host charges the real cost, and the day's total trades the kind's
+%% reservation for it (a reservation made yesterday is not taken off today's)
+spend(Host, Uid, Feature, Cost, Kind) ->
+    Res = Host:spend(Uid, Feature, Cost),
+    Slot = integer_to_binary(now_ms() div 86400000),
+    Delta = micro(Cost) - reserved(Kind),
+    _ = upd(?ALL, ?USD, fun({ok, #{minute := M, n := N} = R}) when M =:= Slot -> R#{n => max(0, N + Delta)};
+                           (_) -> #{minute => Slot, n => micro(Cost), sitting => <<>>} end, Host),
+    Res.
 
 %% 4 Nov (owner): a student's steps are charged to the teacher, so one student could spend the class's day; each student
 %% has ?STUDENT_DAY steps a day that call a model (a whole Mastery Plan fits well under it)

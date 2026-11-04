@@ -9,6 +9,12 @@ jobs:
         with:
           otp-version: '27'
       - run: sh scripts/test.sh
+      # 4 Nov (second audit): the phone's rule for whether a desk video may leave the phone, on its own (the rest of the
+      # phone screens' tests need LoWisa's app around them and run in its project)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --test phone/__tests__/safe-video.node.test.ts
       - run: python3 scripts/secret_scan.py
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
       - run: python3 scripts/check_media.py

@@ -38,6 +38,12 @@ last changed. The pages, recordings, stills and drawn steps under `witness/` in 
 made, by the bucket's own rule. Both hold for an account no one opens again. The database deletes within a few days of
 the time, not to the minute.
 
+**Checked on production, 4 Nov 2026 04:30 UTC** (second audit: "production verification needed"):
+- the learner table's time-to-live: `ENABLED`, on the attribute `ttl`;
+- the storage rule `witness-180-days` on `witness/`: `Enabled`, 180 days (and `witness-abandoned-uploads`: unfinished
+  uploads cleared after 2 days);
+- Witness rows: all 433 carry their deletion time, 172 to 180 days away.
+
 The teacher deletes a paper or a whole exam. With it go:
 - its rows and every photographed page, recording, still, clip and drawing;
 - every pointer to it: its student, students it was linked to before, the phone that photographed it;
@@ -50,9 +56,11 @@ A paper deleted while it is being marked stays deleted (`witness_api:done/8` wri
 - **Every route that calls a model has a ceiling a day for one account.** A whole class fits under it; a script does not.
 - **Each mastery level's design calls have a ceiling.** Those calls are only for the caller's own released level, and they carry the server's own first instruction to stay on that level's idea.
 - **Lo's live turns are read for safety before they reach a student** (`witness_guard`).
-- **A day's model spending has a hard dollar ceiling across all accounts** (4 Nov, live from edge vb1104m): what every call
-  cost is added up, and once the day reaches it no new call starts until the next day. The call ceilings above count
-  calls; this one counts money.
+- **A day's model spending has a dollar ceiling across all accounts, $25** (4 Nov, live from edge vb1104m): what every
+  call cost is added up, and once the day reaches it no new call starts until the next day; calls already running can
+  end the day a little over. The call ceilings above count calls; this one counts money. **Next edge deploy (in this
+  repository):** each call reserves the most a call of its kind costs before it starts, in the same write that checks
+  the ceiling, so the day never passes it.
 - **Plain-code rules before any model** (4 Nov, live from edge vb1104m): a link, an email address, a phone number, a
   contact app or a meeting, and a short list of adult and self-harm words stop a reply before it reaches a student,
   in Lo's live turns and in a level's own text, with no model involved (`witness_guard:screen/1`).

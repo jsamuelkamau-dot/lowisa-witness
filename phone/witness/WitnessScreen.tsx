@@ -34,6 +34,7 @@ import {AsksView} from './Examiner';
 import {SayIt} from './SayIt';
 import {tutorSay} from '../tutor/voice';
 import {turnedAround} from './net';
+import {safeVideo} from './safeVideo';
 import {clock, Picture, ProofView, Replay} from './Proof';
 
 /** The camera app is told to stop here: SAM 3.1 follows up to about ten minutes of video in one go. */
@@ -53,7 +54,7 @@ type Stage =
   | {kind: 'proof'; paper: Paper}
   | {kind: 'paper'; paper: Paper};
 
-interface Native { uploadPart?(uri: string, url: string, offset: number, length: number): Promise<number>; uploadFile?(uri: string, url: string, contentType: string): Promise<number>; takeVideo?(maxSeconds: number): Promise<VideoFile | null>; witnessCamera?(maxSeconds: number): Promise<VideoFile | null>; smallVideo?(uri: string): Promise<VideoFile | null>; lastClip?(sinceMs: number): Promise<VideoFile | null>; removeFile?(uri: string): void }
+interface Native { uploadPart?(uri: string, url: string, offset: number, length: number): Promise<number>; uploadFile?(uri: string, url: string, contentType: string): Promise<number>; takeVideo?(maxSeconds: number): Promise<VideoFile | null>; witnessCamera?(maxSeconds: number): Promise<VideoFile | null>; smallVideo?(uri: string): Promise<unknown>; lastClip?(sinceMs: number): Promise<VideoFile | null>; removeFile?(uri: string): void }
 const docs = () => (NativeModules as Record<string, unknown>).LoWisaDocuments as Native | undefined;
 
 /** A paper recorded with the Witness camera (a guide frame on the page, the screen dimmed; 28 Oct re-audit), or the
@@ -104,6 +105,8 @@ export function spokenFeedback(q: Question, fp?: Fingerprint | null): string {
  *
  * 4 Nov (independent audit, finding A): it fails closed. A phone that cannot look for faces (iPhone today) or a look
  * that failed gives null, and null is never sent: the student is asked to photograph the finished paper instead.
+ * 4 Nov (second audit): an empty answer from the look no longer means "send the original". Only an explicit
+ * `faces: "checked"` lets a video go (safeVideo.ts, the rule tested on its own in CI).
  */
 export async function smaller(file: VideoFile, onPercent?: (percent: number, stage: 'faces' | 'small') => void): Promise<VideoFile | null> {
   const n = docs();
@@ -111,7 +114,7 @@ export async function smaller(file: VideoFile, onPercent?: (percent: number, sta
   const sub = onPercent ? DeviceEventEmitter.addListener('lowisaSmallVideo', (e: {percent?: number; stage?: string}) => {
     if (typeof e?.percent === 'number') onPercent(Math.max(0, Math.min(100, Math.round(e.percent))), e.stage === 'faces' ? 'faces' : 'small');
   }) : null;
-  try { return (await n.smallVideo(file.uri)) || file; } catch (e) { return null; } finally { sub?.remove(); }
+  try { const r = await safeVideo(file, n.smallVideo.bind(n)); return r.status === 'verified' ? r.file : null; } finally { sub?.remove(); }
 }
 
 /** Whether this phone can look for faces and cover them before a video leaves it (Android today, not iPhone). */
@@ -284,9 +287,10 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
     const again = (why: string, file: VideoFile) => { setStage({kind: 'witness', code: stage.code, title, level: stage.level}); setUnsent(file); setError(why); };
     // 28 Oct, live: a resumed send made the kept copy again (a person off the page is always covered), so it was a new
     // file and the upload started over; the copy already made is sent as it is
-    const resuming = !!resumeOf && resumeOf.uri === picked.uri;
-    if (!resuming) setStage({kind: 'sending', title, line: 'Covering any face the camera caught…'});
-    const file = resuming ? picked : await smaller(picked, (p, st) => setStage({kind: 'sending', title, line: readyLine(p, st)}));
+    // 4 Nov (second audit): a resumed send is looked at too; a copy the phone made already answers at once as checked
+    // and the same file, so the upload still resumes where it stopped, and a file kept from before is never sent unlooked
+    setStage({kind: 'sending', title, line: 'Covering any face the camera caught…'});
+    const file = await smaller(picked, (p, st) => setStage({kind: 'sending', title, line: readyLine(p, st)}));
     if (!file) { setStage({kind: 'witness', code: stage.code, title, level: stage.level}); setError(UNCOVERED_WORDS); return; }
     const mime = doorMime(file.mime, file.name)!;
     const kept = 'The video did not go up. It is kept on this phone: send it again when the connection is better, on Wi-Fi if you can.';

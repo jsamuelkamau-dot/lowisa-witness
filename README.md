@@ -1,6 +1,6 @@
 # From Exam to Mastery
 
-> **For judges: protecting and strengthening human cognitive ability, in four lines**
+> **For judges: protecting and strengthening human cognitive ability, in brief**
 > - **What it is.** A teacher photographs a finished exam. Meta's models mark every answer and read *how* the learner
 >   reached it, from their own handwriting, and every question not mastered becomes a level in their **Mastery Plan**:
 >   the learner does the thinking, and the level ends in a real task. **Not a chatbot, and not a photo grader:** the
@@ -16,9 +16,22 @@
 >   it is sure of still call one of his wrong answers right, so nothing reaches him until the teacher releases it. On his
 >   written answers it agrees with the teacher about as often as marking everything right would (36–38 of 42, against
 >   38); there it never names a wrong idea, and asks him first instead. His papers show answers, not working, so every
->   answer it did not accept went to Lo to ask; naming the idea from the ink is measured on the held-out set
+>   answer it did not accept went to Lo to ask; naming the idea from the ink is measured on the held-out set, whose
+>   papers are **simulated handwriting** (a handwriting font on a photographed page), not real students
 >   ([Measured](#7-measured-a-real-students-handwriting-an-exam-it-had-never-seen-a-held-out-set-a-class-of-40),
 >   [limits](#16-limits-stated-plainly)).
+> - **The three strongest proofs, one click each.** (1) [One real learner against his own teacher](#real-handwriting-one-students-papers-against-his-own-teachers-marks)
+>   (real handwriting). (2) [It asks instead of guessing](#held-out-53-papers-first-run-blind-then-run-again-on-the-shipped-code):
+>   where the ink cannot tell the idea, nothing is named in 40 of 42 (simulated handwriting), and a learner who tries to
+>   mislead it with planted working [never gets the planted idea named](harness/heldout/items_planted.py), 30 of 30.
+>   (3) [Mark your own exam live](#12-try-it-and-verify-it-yourself) with your own Meta key, no LoWisa account.
+> - **What is proven, and what is not yet.** Proven here: the marking, the diagnosis, the asking first, resistance to
+>   misleading work, and levels built and checked from them. Built to develop independent capability; that it does so
+>   lastingly is not proven yet and is what the classroom pilot will measure ([future plans](#17-future-plans-after-the-hackathon)).
+> - **What this repository holds.** The complete new work, which runs from here on its own: the tests, the recorded
+>   Exam Desk, and live marking of any exam. The full phone-and-desktop flow also uses LoWisa's existing apps (from
+>   the stores and [lowisa.dev](https://lowisa.dev)) as its host, as a startup building on its own product
+>   ([what existed before](#14-what-was-built-during-the-event-and-what-existed-before)).
 > - **Try it in a minute, no account and no key:** `node demo/desk-server.js --replay`, then http://localhost:4747
 >   ([more ways to try it](#12-try-it-and-verify-it-yourself), including your own exam marked live). The 2:59 film and
 >   the measured results follow the introduction below.
@@ -133,7 +146,7 @@ on screen, and ends on a real Grade 5 student and the rest of the loop. Section 
 > 1. **No account, no key:** `node demo/desk-server.js --replay`, then open http://localhost:4747: the teacher's Exam
 >    Desk on an exam recorded on the production edge (marks, fingerprints, Lo asks first, class patterns).
 > 2. **Check the numbers:** `python3 evidence/real-handwriting/score.py` and `python3 -X utf8 evidence/unseen-physics/score.py` (`python` on Windows)
->    recompute the real student's and the physics results from the committed files; `sh scripts/test.sh` runs the 162 tests, and every push runs them in [GitHub Actions](https://github.com/jsamuelkamau-dot/lowisa-witness/actions/workflows/test.yml).
+>    recompute the real student's and the physics results from the committed files; `sh scripts/test.sh` runs the 164 tests, and every push runs them in [GitHub Actions](https://github.com/jsamuelkamau-dot/lowisa-witness/actions/workflows/test.yml).
 > 3. **Live, on your own phone:** LoWisa on Google Play or the App Store, then section 12 (a sample paper to photograph is
 >    [`evidence/unseen-physics/paper.jpg`](evidence/unseen-physics/paper.jpg)).
 
@@ -189,7 +202,7 @@ Where each Meta model works:
 | Held-out v2: named right of 48 | 44 (`066c9d1`) | 42 | 43 |
 
 - **Built during the event (26 Oct – 4 Nov 2026), all in this repository:** the marking and diagnosis server
-  (`witness/`, Erlang/OTP, 162 tests), the teacher's Exam Desk (`desk/`), the phone screens (`phone/`), and every
+  (`witness/`, Erlang/OTP, 164 tests), the teacher's Exam Desk (`desk/`), the phone screens (`phone/`), and every
   measurement (`harness/`, `evidence/`).
 - **Existed before, named but not shown:** the LoWisa app it runs in, its lesson player, flashcards, Insight mode and
   Lo's voice (section 14, [`docs/existed-before.md`](docs/existed-before.md)). In the film every shot is labelled one or
@@ -784,6 +797,10 @@ subjects, marked by an outside teacher, are the next step (section 17.6).
 
 ### Held out: 53 papers, first run blind, then run again on the shipped code
 
+> **Simulated handwriting, not real students.** These papers are written in a handwriting font with a small wobble per
+> letter, on a simulated photograph of a page ([`make_items.py`](harness/heldout/make_items.py)). Real handwriting is
+> harder; the real student's papers above are the real-handwriting evidence.
+
 The first 36 papers (30 Oct) were used to design the rule in code, so they are the **development set**. The held-out
 set **v2** has 53 papers in 13 new topics:
 - 3 topics not maths, 2 not in English;
@@ -821,7 +838,7 @@ and the effort ablation (on the development set, low effort was as accurate as m
 
 ### A class of 40
 
-A maths test (six questions, two pages) answered by 40 sample students ([`make_class.py`](harness/class/make_class.py)).
+**Simulated students and handwriting**, like the held-out set. A maths test (six questions, two pages) answered by 40 sample students ([`make_class.py`](harness/class/make_class.py)).
 Each wrong answer is one of six ideas a teacher sees in this topic, drawn before the run, and "a percentage taken as
 that many dollars" is written on three different questions. All 40 papers went through the product's marking at once,
 then every question not mastered went to Muse Wonder's class patterns ([`class_run.escript`](harness/class/class_run.escript)).
@@ -969,7 +986,8 @@ Everything in this section is covered for the event's judges and evaluators by t
 node demo/desk-server.js --replay        # then open http://localhost:4747
 ```
 
-**Live, with your own phone (works today: LoWisa 1.10.4 on Google Play and the App Store).** During judging, From
+**Live, with your own phone (works today: LoWisa 1.10.4 on Google Play and the App Store; checked against both stores
+and the desktop download feed on 4 Nov: phone 1.10.4 on both, desktop 0.9.33 on Windows, macOS and Linux).** During judging, From
 Exam to Mastery is open to every LoWisa account; nothing needs a sign-up form.
 1. Install **LoWisa** on a phone and the **LoWisa desktop app** from [lowisa.dev](https://lowisa.dev). Link them once:
    on the desktop, click **Link your phone** in the status bar; on the phone, Profile → **Link a computer** → **Scan**.
@@ -1056,8 +1074,11 @@ day's ceiling reached) is replaced by a safe line, never sent.
 - **Plain-code rules run before any model.** A link, an email address, a phone number, a contact app or a meeting, and
   a short list of adult and self-harm words stop a reply with no model involved, in Lo's live turns and in a level's
   own text. The model guard still reads everything else; one model checking another is not the only line.
-- **A hard dollar ceiling a day across all accounts.** The call ceilings count calls; this one adds up what every call
-  cost, and stops new calls when the day reaches it. One server switch turns the whole feature off at once.
+- **A dollar ceiling a day across all accounts ($25).** The call ceilings count calls; this one counts money. Live now:
+  it stops new calls once the day reaches it, so calls already running can end the day a little over. **In this
+  repository, for the next edge deploy (second audit, 4 Nov):** before a call starts, the most a call of its kind costs
+  is reserved in the same write that checks the ceiling, and traded for the real cost when it finishes, so the day
+  never passes the ceiling. One server switch turns the whole feature off at once.
 - **Kept 180 days at most** (see Deleting, below).
 
 **The student is never sent a guess:** not the model's possible idea, not its rivals, not its confidence. While Lo is
@@ -1231,7 +1252,7 @@ because a store app cannot change until then.
 
 | Fix | Where it is now | Reaches users |
 |---|---|---|
-| **A desk video never leaves the phone with a face uncovered.** If the phone's look for faces fails, the video is not sent, and the student is asked to have the paper photographed instead. A phone that cannot cover faces yet (iPhone) no longer offers desk filming. Found by an independent audit on 4 Nov | `phone/witness/WitnessScreen.tsx` (`smaller`, `canCoverFaces`); the Android face look in LoWisa's app; tested (`phone/__tests__/`) | the next LoWisa phone release, Android and iPhone |
+| **A desk video never leaves the phone with a face uncovered.** A video is sent only when the phone's face look answers, explicitly, that it ran to the end (`faces: "checked"`); a failed look, an empty or unclear answer, or a phone with no look at all (iPhone today) sends nothing, and the student is asked to have the paper photographed instead. A phone that cannot cover faces no longer offers desk filming. Found by two independent audits on 4 Nov | `phone/witness/safeVideo.ts` (the rule, tested on its own in this repository's CI), `WitnessScreen.tsx` (`smaller`, `canCoverFaces`); the Android face look in LoWisa's app; tested (`phone/__tests__/`) | the next LoWisa phone release, Android and iPhone |
 
 **What already protects students until then (live today):**
 - **The main way in films no one.** The teacher photographs the finished paper; desk filming is the optional way.

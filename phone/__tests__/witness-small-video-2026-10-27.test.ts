@@ -18,15 +18,23 @@ describe('Witness sends a small desk video', () => {
   afterEach(() => { delete mods.LoWisaDocuments; });
 
   it('sends the small copy the phone made', async () => {
-    const smallVideo = jest.fn().mockResolvedValue(small);
+    const smallVideo = jest.fn().mockResolvedValue({...small, faces: 'checked'});
     mods.LoWisaDocuments = {smallVideo};
-    await expect(smaller(big)).resolves.toBe(small);
+    await expect(smaller(big)).resolves.toEqual(small);
     expect(smallVideo).toHaveBeenCalledWith(big.uri);
   });
 
-  it('sends the original only when the phone looked for faces and it was small already', async () => {
-    mods.LoWisaDocuments = {smallVideo: jest.fn().mockResolvedValue(null)};
+  it('sends the original only when the phone says it looked for faces and it may go as it is', async () => {
+    mods.LoWisaDocuments = {smallVideo: jest.fn().mockResolvedValue({faces: 'checked', same: true})};
     await expect(smaller(big)).resolves.toBe(big);
+  });
+
+  // 4 Nov (second independent audit): an empty or unclear answer from the look is never taken as "send the original"
+  it('sends nothing when the look answers nothing, or anything but checked', async () => {
+    for (const answer of [null, undefined, {}, {same: true}, {faces: 'skipped', same: true}, {faces: 'checked'}, small]) {
+      mods.LoWisaDocuments = {smallVideo: jest.fn().mockResolvedValue(answer)};
+      await expect(smaller(big)).resolves.toBeNull();
+    }
   });
 
   // 4 Nov (independent audit, finding A): fails closed; a video whose faces could not be looked for is never sent
@@ -61,8 +69,8 @@ describe('Witness sends a small desk video', () => {
     const going = smaller(big, p => seen.push(p));
     DeviceEventEmitter.emit('lowisaSmallVideo', {percent: 41.6});
     DeviceEventEmitter.emit('lowisaSmallVideo', {percent: 130});
-    finish(small);
-    await expect(going).resolves.toBe(small);
+    finish({...small, faces: 'checked'});
+    await expect(going).resolves.toEqual(small);
     DeviceEventEmitter.emit('lowisaSmallVideo', {percent: 99});
     expect(seen).toEqual([42, 100]);
   });
@@ -74,7 +82,7 @@ describe('Witness sends a small desk video', () => {
     const going = smaller(big, (p, st) => lines.push(readyLine(p, st)));
     DeviceEventEmitter.emit('lowisaSmallVideo', {stage: 'faces', percent: 50});
     DeviceEventEmitter.emit('lowisaSmallVideo', {stage: 'small', percent: 10});
-    finish(small);
+    finish({...small, faces: 'checked'});
     await going;
     expect(lines).toEqual(['Covering any face the camera caught… 50%', 'Making the video smaller to send… 10%']);
   });

@@ -1285,3 +1285,29 @@ everything_is_deleted_by_the_store_after_180_days_test() ->
     ?assert(abs(Pile - (Now + 180 * Day)) < 5),
     ?assert(abs(witness_api:expires_s({code, <<"ABC123">>}, #{pile => <<"p">>}) - (Now + 180 * Day)) < 5),
     ?assert(abs(witness_api:expires_s({sitting, <<"s">>}, #{status => <<"uploading">>}) - (Now + 180 * Day)) < 5).
+
+%% 4 Nov (second audit: "not a strict maximum"): a call starts only if the most a call of its kind costs still fits under
+%% the day's ceiling, reserved in the same write that checks it; when it finishes, the reservation becomes its real cost
+a_call_starts_only_if_its_reservation_fits_test() ->
+    setup(),
+    Read = fun(U) -> r(<<"POST">>, [<<"pile">>, <<"read">>], #{<<"mime">> => <<"image/jpeg">>, <<"file">> => base64:encode(<<"jpegbytes">>)}, U) end,
+    Slot = integer_to_binary(erlang:system_time(millisecond) div 86400000),
+    Usd = fun() -> {ok, #{n := N}} = load(<<"witness:all-accounts">>, {mark_cache, <<"usd:all-accounts">>}), N end,
+    %% $0.20 left: a read reserves $0.25, so it does not start, and nothing is reserved
+    ok = save(<<"witness:all-accounts">>, {mark_cache, <<"usd:all-accounts">>}, #{minute => Slot, n => 24800000, sitting => <<>>}),
+    ?assertMatch({429, #{code := <<"daily_limit">>}}, Read(<<"teacher">>)),
+    ?assertEqual(24800000, Usd()),
+    ?assertNot(lists:keymember(read, 1, events())),
+    %% $0.50 left: it starts, and afterwards the day holds its real cost ($0.003), not the reservation
+    ok = save(<<"witness:all-accounts">>, {mark_cache, <<"usd:all-accounts">>}, #{minute => Slot, n => 24500000, sitting => <<>>}),
+    {200, _} = Read(<<"teacher">>),
+    ?assertEqual(24500000 + 3000, Usd()),
+    %% two reservations that together do not fit: the second does not start
+    ok = save(<<"witness:all-accounts">>, {mark_cache, <<"usd:all-accounts">>}, #{minute => Slot, n => 24600000, sitting => <<>>}),
+    ok = witness_api_reserve_probe(<<"read">>),
+    ?assertMatch({429, _}, Read(<<"other">>)).
+
+%% a reservation taken as a call that is still running would hold it (the read's own, made through the route above)
+witness_api_reserve_probe(Kind) ->
+    {ok, #{n := N} = R} = load(<<"witness:all-accounts">>, {mark_cache, <<"usd:all-accounts">>}),
+    ok = save(<<"witness:all-accounts">>, {mark_cache, <<"usd:all-accounts">>}, R#{n => N + (case Kind of <<"read">> -> 250000 end)}).
