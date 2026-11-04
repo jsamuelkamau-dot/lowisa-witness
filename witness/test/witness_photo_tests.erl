@@ -258,6 +258,9 @@ an_unclear_name_waits_for_the_teacher_test() ->
     persistent_term:put(witness_photo_name, <<"Liam Chen">>),
     Id2 = photographed(Code, <<"teacher">>),
     {ok, #{name_match := <<"none">>}} = load(<<"teacher">>, {sitting, Id2}),
+    %% 4 Nov (CI, a fast runner): the join must come after the photo by the clock too; in the same millisecond it counts
+    %% as before (=<), which no real phone and teacher can do
+    timer:sleep(2),
     {200, _} = r(<<"POST">>, [<<"join">>], #{<<"code">> => Code, <<"name">> => <<"Liam Chen">>}, <<"liam">>),
     %% 31 Oct (judges' panel): someone who joins AFTER the paper was photographed is not linked on their own: the
     %% teacher confirms (an impostor joining under a classmate's name gets nothing)
