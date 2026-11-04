@@ -124,7 +124,7 @@ route(<<"GET">>, [<<"pile">>, Id], _B, Uid, Host) ->
             Gone = [S || {S, {ok, R}} <- All, lapsed(R)],
             Gone =:= [] orelse upd(Uid, {pile, Id}, fun({ok, X}) -> X#{sittings => maps:get(sittings, X, []) -- Gone}; (none) -> stop end, Host),
             Ss = [{S, settle(Uid, S, R, Host)} || {S, {ok, R}} <- All, not lists:member(S, Gone)],
-            {200, #{ok => true, pile => maps:without([sittings], P#{id => Id, accept_at => accept_at()}),
+            {200, #{ok => true, pile => maps:without([sittings], P#{id => Id, accept_at => accept_at(), judged_against => key_of(P)}),
                     sittings => [summary(S, R) || {S, R} <- Ss], queue => queue(Ss), ready => ready(Ss), held => held(Ss)}}
     end;
 %% 30 Oct (judges' panel: nothing could be deleted). The teacher deletes a paper, or a whole exam: its rows, the
@@ -259,7 +259,7 @@ route(<<"POST">>, [<<"pile">>, Id, <<"bulk">>], B, Uid, Host) ->
                                            {ok, #{result := #{questions := Qs}}} -> hd([risks(Q, P) || Q = #{n := Qn} <- Qs, Qn =:= N] ++ [[]]);
                                            _ -> []
                                        end end,
-                    {200, #{ok => true, done => length([x || {_, _, ok} <- Done]),
+                    {200, #{ok => true, done => length([x || {_, _, ok} <- Done]), judged_against => key_of(P),
                             results => [case R of
                                             ok -> #{sitting => S, n => N, result => <<"ok">>};
                                             {error, check_one_by_one} -> #{sitting => S, n => N, result => <<"check_one_by_one">>, risks => Why(S, N)};
@@ -2065,12 +2065,19 @@ accept_at() -> ?ACCEPT_AT.
 %% 4 Nov (fourth audit, finding D: "model confidence is not a calibrated probability; flag conflicting readings,
 %% overwritten answers, ambiguous handwriting and questionable answer-key matches for review even above 0.95"): a mark
 %% with any of these risks is never accepted in one click, however sure the model was.
+%% 4 Nov (owner: "both options; if a marking scheme is not available it falls to the next"): with the teacher's mark
+%% scheme the marks are judged against it; without one, the same rule applies and the desk is told the marks were
+%% judged against the model's own key (key_of/1). The policy: docs/marking-policy.md.
 one_click(Q, Pile) ->
     maps:get(result, Q, <<>>) =:= <<"mastered">> andalso is_number(maps:get(confidence, Q, 0))
         andalso maps:get(confidence, Q, 0) >= ?ACCEPT_AT andalso risks(Q, Pile) =:= [].
 
+%% what the exam's marks were judged against: the teacher's mark scheme, or (none given) the model's own key
+key_of(Pile) ->
+    case string:trim(str(maps:get(scheme, Pile, <<>>))) of <<>> -> <<"model_key">>; _ -> <<"mark_scheme">> end.
+
 %% risks(Question, Exam) -> [Why]: what makes a confident mark still worth the teacher's own look
-risks(Q, Pile) ->
+risks(Q, _Pile) ->
     Steps = [S || S <- maps:get(steps, Q, []), is_map(S)],
     Final = string:trim(str(maps:get(final_answer, Q, <<>>))),
     [Why || {Why, true} <- [
@@ -2080,9 +2087,7 @@ risks(Q, Pile) ->
         %% the student struck something out and wrote it again
         {<<"crossed_out">>, lists:any(fun(S) -> maps:get(crossed_out, S, false) =:= true end, Steps)},
         %% no final answer could be read, or the reading marks itself unsure
-        {<<"unclear_writing">>, Final =:= <<>> orelse re:run(Final, "\\?|\\[(illegible|unclear)|unclear|illegible", [caseless]) =/= nomatch},
-        %% the exam has no mark scheme: the answer was judged against the model's own key, not the teacher's
-        {<<"no_mark_scheme">>, string:trim(str(maps:get(scheme, Pile, <<>>))) =:= <<>>}]].
+        {<<"unclear_writing">>, Final =:= <<>> orelse re:run(Final, "\\?|\\[(illegible|unclear)|unclear|illegible", [caseless]) =/= nomatch}]].
 
 %% the last answer a bulk step sent (a conditional write may have run it more than once)
 last(Ref, Acc) -> receive {Ref, R} -> last(Ref, R) after 0 -> Acc end.

@@ -1454,7 +1454,8 @@ video_needs_the_face_look_test() ->
     ok.
 
 %% 4 Nov (fourth audit, finding D): a mark 0.99 sure is still held back for the teacher when the readings disagreed, the
-%% student struck something out, the answer could not be read, or the exam has no mark scheme; the desk is told why
+%% student struck something out, or the answer could not be read; the desk is told why. Without a mark scheme the
+%% same rule applies, and the desk is told the marks were judged against the model's own key
 a_confident_mark_with_a_risk_is_never_one_click_test() ->
     setup(),
     Ask = fun(Scheme, Qs) ->
@@ -1476,5 +1477,10 @@ a_confident_mark_with_a_risk_is_never_one_click_test() ->
                   {<<"check_one_by_one">>, [<<"unclear_writing">>]}],
                  Ask(<<"Q1-6: 1/4">>, [Sure(1), Struck, (Sure(3))#{read_thrice => true}, (Sure(4))#{read_again_as => <<"1/2">>},
                                        (Sure(5))#{final_answer => <<"">>}, (Sure(6))#{final_answer => <<"1/[illegible]">>}])),
-    %% no mark scheme: nothing is accepted in one click, however sure
-    ?assertEqual([{<<"check_one_by_one">>, [<<"no_mark_scheme">>]}], Ask(<<"">>, [Sure(1)])).
+    %% no mark scheme: the same rule (owner, 4 Nov: it falls to the next), and the desk is told what the marks were
+    %% judged against; a risk still holds a mark back
+    ?assertEqual([{<<"ok">>, []}, {<<"check_one_by_one">>, [<<"crossed_out">>]}], Ask(<<"">>, [Sure(1), Struck])),
+    {201, #{id := P0}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"No scheme">>}, <<"teacher">>),
+    {201, #{id := P1}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Scheme">>, <<"scheme">> => <<"Q1: 4">>}, <<"teacher">>),
+    ?assertMatch({200, #{pile := #{judged_against := <<"model_key">>}}}, r(<<"GET">>, [<<"pile">>, P0], #{}, <<"teacher">>)),
+    ?assertMatch({200, #{pile := #{judged_against := <<"mark_scheme">>}}}, r(<<"GET">>, [<<"pile">>, P1], #{}, <<"teacher">>)).

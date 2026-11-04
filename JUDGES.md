@@ -24,6 +24,7 @@ chatbot: the learner is never handed an answer.
   parents'") was fixed the same day.
 - **An unreadable photo is never marked**: both came back "photograph it again", with nothing marked.
 - **One click accepts only marks at least 0.95 sure**, the server's money holds settle, and expired rows read as gone.
+  What one click takes, with and without a mark scheme: [`docs/marking-policy.md`](docs/marking-policy.md).
 
 Details are in [`evidence/live-checks/`](evidence/live-checks/README.md).
 

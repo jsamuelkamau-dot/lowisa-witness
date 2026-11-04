@@ -17,9 +17,10 @@
 >   are caught**, and **no wrong idea is named** on any answer it did not accept, in any run. The limit: 2 to 4 of the
 >   marks accepted in one click still call one of his wrong answers right; sure is not proof. So the one-click line rose
 >   from 0.90 to 0.95 (edge vb1104o): the teacher checks 27 to 51, and 0 to 2 one-click marks are wrong. Every one of
->   those was judged with **no mark scheme**, against the model's own key; so since edge vb1104p a paper with no mark
->   scheme gets no one-click at all, and a mark whose readings disagreed, with a struck-out answer or unreadable writing
->   is checked by the teacher however sure (on his papers, which had no scheme, the teacher checks all 109).
+>   those was judged with **no mark scheme**, against the model's own key. Since edge vb1104p, a mark whose readings
+>   disagreed, with a struck-out answer or unreadable writing is checked by the teacher however sure, and the desk is
+>   told whether the marks were judged against the teacher's mark scheme or, with none given, the model's own key
+>   ([marking policy](docs/marking-policy.md)).
 >   Nothing reaches him until the teacher releases it. On his
 >   written answers it agrees with the teacher about as often as marking everything right would (36–38 of 42, against
 >   38); there it never names a wrong idea, and asks him first instead. His papers show answers, not working, so every
@@ -1141,10 +1142,12 @@ day's ceiling reached) is replaced by a safe line, never sent.
   each side, were complete levels the strict parser could not read, not refusals). A tampered app asking for the answer got it 15 of 20 times without the line, **0 of 20** with it. All
   eight attacks again, three runs each: **48 of 48** held ([`harness/design-layout/`](harness/design-layout/README.md)).
 - **Risk, not only confidence, decides one click (finding D).** A mark 0.95 sure or more still goes to the teacher when
-  the readings of the work disagreed, the student struck something out, the answer could not be read, or **the exam has
-  no mark scheme**. The desk is told which. On the real learner's papers (no scheme) the teacher now checks all 109. With
-  a scheme, the other checks alone would have changed nothing there: every wrong answer accepted at 0.95 came from
-  judging against the model's own key (`python3 evidence/real-handwriting/score.py`).
+  the readings of the work disagreed, the student struck something out, or the answer could not be read; the desk is
+  told which. **Two options, by the mark scheme** (owner, 4 Nov): with the teacher's scheme the marks are judged against
+  it; without one, it falls to the next option, the same rule judged against the model's own key, and the desk is told
+  so. On the real learner's papers (no scheme) the risk checks changed nothing, and every wrong answer accepted at 0.95
+  had been judged against the model's own key, so a scheme is recommended
+  ([`docs/marking-policy.md`](docs/marking-policy.md), `python3 evidence/real-handwriting/score.py`).
 - **The online-safety lesson the live check stopped.** Asked what a risky person might say, Lo quoted the lines, and
   2 of 9 such turns were stopped by the plain-code screen. A sentence that quotes what someone might say now counts as
   a lesson about the words; the same words said to the student are still caught.
@@ -1306,7 +1309,7 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
 - **After the fourth independent audit, live since edge vb1104p (4 Nov):** the store phone apps can no longer send a
   desk video (they photograph instead) until the next phone release; each money hold is settled by its own id, failures
   counted at their whole hold; a level's own calls never write the exam answer (48 of 48 attacks held); one click
-  needs a mark scheme and no risk flag as well as 0.95. Still not done: the server holding the app's level-building
+  needs no risk flag as well as 0.95, and says whether the teacher's mark scheme or the model's own key was used. Still not done: the server holding the app's level-building
   instructions (17.2a), and an unfamiliar exam marked live against a real teacher's own marks (17.2).
 - **Muse Spark Open has run on partner inference, with few runs:** 9 of 12 completed. Of the 3 that did not, 2 passed
   the old 5-minute limit per call on the long four-photo maths paper, and 1 reply was not a marking; the 3 runs since
