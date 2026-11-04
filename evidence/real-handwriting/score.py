@@ -92,7 +92,7 @@ def teacher_work(rows_by_subject):
               f'right; the teacher checks {len(rows) - len(sure)} one by one')
     # 4 Nov (fourth audit, finding D): since then a mark is also held back for its risks (witness_api:risks/2): the
     # answers-only check read it differently, or no final answer could be read (a struck-out step and a third reading
-    # are not in these files). These papers had no mark scheme: the same rule applies, and the desk is told the marks
+    # are not in these files). These papers had no mark scheme: until 5 Nov the same rule applied (see the next line for since), and the desk is told the marks
     # were judged against the model's own key (docs/marking-policy.md).
     risky = [r for r in rows if r.get('read_again_as') or not str(r.get('final_answer') or '').strip()
              or any(w in str(r.get('final_answer') or '').lower() for w in ('?', 'illegible', 'unclear'))]

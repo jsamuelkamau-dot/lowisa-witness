@@ -41,7 +41,7 @@ main([Exam | Pages]) when Pages =/= [] ->
     [line(Q, Sitting) || Q <- Marked],
     %% 4 Nov (audit: the tool counted 0.9 while the server accepts at 0.95 with no risk): the server's own rule
     Sure = [Q || Q <- Marked, witness_api:one_click(Q, Sitting)],
-    io:format("~n\"Accept all\" (the server's rule: mastered, ~.2f sure or more, no risk flag; judged against ~s): ~p; "
+    io:format("~n\"Accept all\" (the server's rule: a mark scheme (none: every mark one by one, since 5 Nov), mastered, ~.2f sure or more, no risk flag; judged against ~s): ~p; "
               "checked one by one: ~p. Nothing reaches a student until the teacher releases it.~n",
               [witness_api:accept_at(), witness_api:key_of(Sitting), length(Sure), length(Marked) - length(Sure)]),
     Cost = ReadCost + maps:get(cost_usd, M, 0),

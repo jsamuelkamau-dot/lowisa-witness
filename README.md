@@ -1155,7 +1155,7 @@ day's ceiling reached) is replaced by a safe line, never sent.
 
 **Added after the final follow-up audit of 4 Nov (edge vb1104r):**
 - **The server looks for faces itself (the one trust-boundary point left).** Every desk video, before anything reads
-  it, is cut to two frames a second and SAM 3.1 is asked for "face". Any face, at any confidence: the video is deleted
+  it, is cut to two frames a second (five since edge vb1105a, block above) and SAM 3.1 is asked for "face". Any face, at any confidence: the video is deleted
   unmarked, no still or clip is cut from it, and the teacher's desk and the student's list say why. A look that cannot
   run marks nothing; a marking cached from before the look is not reused. Live on Meta's API, the server's own code
   refused **8 of 8** clips with a face (a face crossing for one second, a small face in a corner, half a face, the
@@ -1163,7 +1163,8 @@ day's ceiling reached) is replaced by a safe line, never sent.
   covered output), about $0.01 a video; the sampled copy is deleted from Meta's store after
   ([`harness/face/`](harness/face/README.md)). Limits: it decides what is marked and kept, not what is uploaded (a
   modified app's video still reaches the private store and SAM before it is deleted); a face shown for under half a
-  second can fall between sampled frames; SAM is a model, measured on 16 and 41 clips with one generated face. Tested
+  second can fall between sampled frames (since vb1105a, under a fifth of a second; a quarter and a tenth were caught);
+  SAM is a model, measured on 16 (now 19) and 41 clips with one generated face. Tested
   (`the_server_looks_for_faces_itself_test`, `a_face_look_that_cannot_run_marks_nothing_test`,
   `a_cached_marking_from_before_the_face_look_is_not_reused_test`).
 - **The judges' marking tool counts "Accept all" by the server's own rule** (found in the repository by the owner's
@@ -1204,7 +1205,9 @@ day's ceiling reached) is replaced by a safe line, never sent.
   told which. **Two options, by the mark scheme** (owner, 4 Nov): with the teacher's scheme the marks are judged against
   it; without one, it falls to the next option, the same rule judged against the model's own key, and the desk is told
   so. On the real learner's papers (no scheme) the risk checks changed nothing, and every wrong answer accepted at 0.95
-  had been judged against the model's own key, so a scheme is recommended
+  had been judged against the model's own key, so a scheme is recommended. **Superseded on 5 Nov (edge vb1105a):
+  there is no one click without a scheme; where the paper has none, Muse Spark drafts one and the teacher approves it
+  (block above).**
   ([`docs/marking-policy.md`](docs/marking-policy.md), `python3 evidence/real-handwriting/score.py`).
 - **The online-safety lesson the live check stopped.** Asked what a risky person might say, Lo quoted the lines, and
   2 of 9 such turns were stopped by the plain-code screen. A sentence that quotes what someone might say now counts as
@@ -1407,7 +1410,7 @@ approves it), and **desktop 0.9.34 is released** on Windows, macOS and Linux (4 
 | Fix | Where it is now | Reaches users |
 |---|---|---|
 | **The app sends a desk video only after its face look ran.** A video is sent only when the phone's face look answers, explicitly, that it ran to the end (`faces: "checked"`); a failed look, an empty or unclear answer, or a phone with no look at all (iPhone today) sends nothing, and the student is asked to have the paper photographed instead. A phone that cannot cover faces no longer offers desk filming. On a long video (over 25 minutes), a face that stays in view is now covered all the way through (the cover grows with the gap between looks). Found by three independent audits on 4 Nov ([what was checked in the app's build](evidence/app-validation/phone-and-desk-2026-11-04.md)) | `phone/witness/safeVideo.ts` (the rule, tested on its own in this repository's CI), `WitnessScreen.tsx` (`smaller`, `canCoverFaces`); the Android face look in LoWisa's app; tested (`phone/__tests__/`). A safeguard with a photograph fallback, not a guarantee: the look runs on the phone, so a modified app could skip it; **since edge vb1104r the server looks for faces itself** and deletes a video with one unmarked (section 13) | **LoWisa 1.10.5: on Google Play since 4 Nov** (its store build was checked on a device against the live server first, [live checks 7](evidence/live-checks/README.md)); **App Store: in Apple's review** (submitted 4 Nov; the iPhone build was checked on Xcode 27.1's simulator: no desk-filming card, photograph the paper) |
-| **The Exam Desk's one-click button says what the server now enforces.** It takes only the marks called right and 0.95 sure or more (the server's line), says "sure is not proof", and counts what was left to check; an unreadable photographed paper is to be photographed again, not filmed again; a video deleted for a face says so; the desk says whether the marks were judged against the teacher's mark scheme or the model's own key. The desk's six-second clips also play now (the desktop app's content rules had blocked them) | `desk/witness-desk.js` (`acceptAt`, `countNot`, `judgedAgainst`), synced into the desktop app | **LoWisa desktop 0.9.34, released 4 Nov** |
+| **The Exam Desk's one-click button says what the server now enforces.** It takes only the marks called right and 0.95 sure or more (the server's line), says "sure is not proof", and counts what was left to check; an unreadable photographed paper is to be photographed again, not filmed again; a video deleted for a face says so; the desk says whether the marks were judged against the teacher's mark scheme or the model's own key. The desk's six-second clips also play now (the desktop app's content rules had blocked them) | `desk/witness-desk.js` (`acceptAt`, `countNot`, `judgedAgainst`), synced into the desktop app. Since edge vb1105a the server sends a no-scheme exam a line no mark reaches, so this desk shows no one-click row there | **LoWisa desktop 0.9.34, released 4 Nov** |
 
 **What protects students on any app version (live today):**
 - **The main way in films no one.** The teacher photographs the finished paper; desk filming is the optional way.
