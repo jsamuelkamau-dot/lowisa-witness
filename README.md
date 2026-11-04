@@ -1153,7 +1153,10 @@ day's ceiling reached) is replaced by a safe line, never sent.
   a lesson about the words; the same words said to the student are still caught.
 - **A whole class on one wallet.** Four of Lo's turns at once on one teacher's wallet: 3 of 10 failed with credits
   there, because a charge that met another write on the same balance was not tried again. It now is, exactly once in
-  the ledger (LoWisa's platform code, 4 new tests).
+  the ledger (LoWisa's platform code, live since vb1104p). The live check after that release still had 1 of 4 fail: the
+  balance a charge depends on was read with an ordinary read, which can lag a charge made a moment before. It is now
+  read strongly consistent, with a test that plants the lag; that arrives with the next edge release
+  ([live checks](evidence/live-checks/README.md)).
 
 **The student is never sent a guess:** not the model's possible idea, not its rivals, not its confidence. While Lo is
 asking, they are not sent the reasoning either.

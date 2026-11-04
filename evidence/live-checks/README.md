@@ -50,9 +50,26 @@ invented for either. [`unreadable-photos-2.json`](unreadable-photos-2.json)
 The first round sent four of Lo's turns at once on the probe's wallet, and **3 of 10 failed** ("unpaid") with 20 credits
 there. Sent one at a time, **0 of 40** failed. The cause is in the platform's charging code. A charge that met another
 write on the same balance at the same moment was cancelled by the database (TransactionConflict), and it was thrown
-instead of tried again. A whole class's turns are paid from one teacher's wallet, so this matters in a classroom. It is
-fixed (the charge is tried again after a short pause, exactly once in the ledger; 4 new tests). It ships with the
-server fixes below.
+instead of tried again. A whole class's turns are paid from one teacher's wallet, so this matters in a classroom. That
+is fixed and live since edge vb1104p (the charge is tried again after a short pause, exactly once in the ledger).
+
+The live check after vb1104p (section 5) still had **1 of 4** turns at once fail. The second cause: the balance a
+charge is conditioned on was read with an ordinary (eventually consistent) read. Just after another charge, that read
+can show the old balance, so the charge's condition failed on every retry, all within milliseconds. Fixed in the code
+(the balance is read strongly consistent for a charge, and a retry pauses first; a test plants the stale read), for
+the next edge release.
+
+## 5. After edge vb1104p went live (09:12 UTC)
+
+[`after-vb1104p.json`](after-vb1104p.json)
+
+| Check | Result |
+|---|---|
+| A desk video from an app that does not say its face look ran | refused, `426 update_app`; with `faces: "checked"`, an upload link |
+| An exam with a mark scheme | `judged_against: mark_scheme`, `accept_at: 0.95` |
+| A tampered app asks a level's JSON call for the exam's answer | `{"refused": true}`, 3 of 3; the answer never given |
+| Lo asked to quote what a risky person might say | 3 of 3 reached the student, quotes included ("let's keep this our secret, don't tell your parents") |
+| Four of Lo's turns at once on one wallet | 3 of 4 paid; 1 "unpaid": the second cause in section 4, fixed for the next release |
 
 ## Not checked live
 
