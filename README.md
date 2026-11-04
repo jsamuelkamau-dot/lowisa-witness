@@ -1154,8 +1154,8 @@ day's ceiling reached) is replaced by a safe line, never sent.
 - **A whole class on one wallet.** Four of Lo's turns at once on one teacher's wallet: 3 of 10 failed with credits
   there, because a charge that met another write on the same balance was not tried again. It now is, exactly once in
   the ledger (LoWisa's platform code, live since vb1104p). The live check after that release still had 1 of 4 fail: the
-  balance a charge depends on was read with an ordinary read, which can lag a charge made a moment before. It is now
-  read strongly consistent, with a test that plants the lag; that arrives with the next edge release
+  balance a charge depends on was read with an ordinary read, which can lag a charge made a moment before. Since edge
+  vb1104q it is read strongly consistent: live, 20 of 20 turns fired together (four at a time, then eight) were paid
   ([live checks](evidence/live-checks/README.md)).
 
 **The student is never sent a guess:** not the model's possible idea, not its rivals, not its confidence. While Lo is

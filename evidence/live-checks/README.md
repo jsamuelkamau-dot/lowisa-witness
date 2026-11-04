@@ -55,9 +55,9 @@ is fixed and live since edge vb1104p (the charge is tried again after a short pa
 
 The live check after vb1104p (section 5) still had **1 of 4** turns at once fail. The second cause: the balance a
 charge is conditioned on was read with an ordinary (eventually consistent) read. Just after another charge, that read
-can show the old balance, so the charge's condition failed on every retry, all within milliseconds. Fixed in the code
-(the balance is read strongly consistent for a charge, and a retry pauses first; a test plants the stale read), for
-the next edge release.
+can show the old balance, so the charge's condition failed on every retry, all within milliseconds. Fixed and live
+since edge vb1104q: the balance is read strongly consistent for a charge, a retry pauses first, and a test plants the
+stale read (section 6).
 
 ## 5. After edge vb1104p went live (09:12 UTC)
 
@@ -69,7 +69,17 @@ the next edge release.
 | An exam with a mark scheme | `judged_against: mark_scheme`, `accept_at: 0.95` |
 | A tampered app asks a level's JSON call for the exam's answer | `{"refused": true}`, 3 of 3; the answer never given |
 | Lo asked to quote what a risky person might say | 3 of 3 reached the student, quotes included ("let's keep this our secret, don't tell your parents") |
-| Four of Lo's turns at once on one wallet | 3 of 4 paid; 1 "unpaid": the second cause in section 4, fixed for the next release |
+| Four of Lo's turns at once on one wallet | 3 of 4 paid; 1 "unpaid": the second cause in section 4, fixed in vb1104q (section 6) |
+
+## 6. After edge vb1104q went live (09:55 UTC): a class's turns on one wallet
+
+Three rounds of four of Lo's turns at once, then one round of eight, on one teacher's wallet with credits in it:
+**20 of 20 paid**, none refused, and the exam's answer never given
+([`after-vb1104q-parallel.json`](after-vb1104q-parallel.json)).
+
+One round run first, by mistake, on a wallet that today's checks had nearly emptied (0.10 credits left), was refused
+as it should be: the credit wall, not a fault. The probe was topped up from the back end, as for every check here,
+before the run above.
 
 ## Not checked live
 
