@@ -512,7 +512,8 @@ route(<<"POST">>, [<<"sitting">>, Id, <<"answer">>], B, Uid, Host) ->
                 {_, []} -> refuse(404, <<"no_ask">>, <<"That question isn't on this paper.">>);
                 {_, [#{answer := _} | _]} -> refuse(409, <<"answered">>, <<"You answered that one already.">>);
                 {_, [Ask | _]} ->
-                    case heard(Owner, B, Host) of
+                    case student_day(Uid, Owner, Host) =:= ok andalso heard(Owner, B, Host) of
+                        false -> refuse(429, <<"daily_limit">>, student_words());
                         {error, Code} -> refuse(case Code of not_configured -> 503; busy -> 503; _ -> 400 end, atom_to_binary(Code), answer_words(Code));
                         {Text, Spoken} ->
                             Q = case [X || X = #{n := N} <- Qs, N =:= maps:get(n, Ask)] of [X | _] -> X; [] -> #{} end,
@@ -631,10 +632,16 @@ route(<<"POST">>, [<<"mastery">>, Sid, NBin, Action], B, Uid, Host) ->
                    end,
             Released = maps:get(status, Row) =:= <<"released">>,
             Qs = case Row of #{result := #{questions := L}} -> L; _ -> [] end,
+            %% 4 Nov (owner): each step a student takes that may call a model counts against the student's own day
+            StudentDay = case Role =:= student andalso Released andalso not lists:member(Action, [<<"event">>, <<"ask">>]) of
+                             true -> student_day(Uid, Owner, Host);
+                             false -> ok
+                         end,
             case {Role, Released, [Q || Q = #{n := Qn} <- Qs, Qn =:= N]} of
                 {none, _, _} -> refuse(404, <<"no_sitting">>, <<"That paper isn't here.">>);
                 {student, false, _} -> refuse(409, <<"not_released">>, <<"Your teacher hasn't released this paper yet.">>);
                 {_, _, []} -> refuse(404, <<"no_question">>, <<"That question isn't on this paper.">>);
+                {student, _, _} when StudentDay =:= over -> refuse(429, <<"daily_limit">>, student_words());
                 {_, _, [Q | _]} ->
                     Step = case {Role, Action} of
                         {student, <<"fresh">>} -> fresh_start(Q, B, #{owner => Owner, sid => Sid, n => N, uid => Uid, row => Row}, Host);
@@ -2014,18 +2021,46 @@ rate(Uid, Kind, Host) -> limit(Uid, Kind, 60000, ?RATE, Host).
 -define(DAILY, #{<<"paper">> => 200, <<"read">> => 40, <<"patterns">> => 30, <<"draw">> => 80, <<"suggest">> => 120,
                  <<"recommend">> => 120, <<"check">> => 120, <<"hear">> => 300, <<"fingerprint">> => 300, <<"judge">> => 300,
                  <<"recheck">> => 120, <<"guard">> => 2000}).
-daily(Uid, Kind, Host) -> limit(Uid, Kind, 86400000, maps:get(Kind, ?DAILY), Host).
+%% 4 Nov (owner): many accounts together could still run the models without end, so every kind also has one ceiling a
+%% day across all accounts (five accounts' worth), and the first call over it is logged for the owner
+-define(ALL_DAILY, #{<<"paper">> => 1000, <<"read">> => 200, <<"patterns">> => 150, <<"draw">> => 400, <<"suggest">> => 600,
+                     <<"recommend">> => 600, <<"check">> => 600, <<"hear">> => 1500, <<"fingerprint">> => 1500, <<"judge">> => 1500,
+                     <<"recheck">> => 600, <<"guard">> => 10000}).
+-define(ALL, <<"witness:all-accounts">>).
+daily(Uid, Kind, Host) ->
+    case limit(Uid, Kind, 86400000, maps:get(Kind, ?DAILY), Host) of
+        over -> over;
+        ok ->
+            Max = maps:get(Kind, ?ALL_DAILY),
+            case count(?ALL, Kind, 86400000, Host) of
+                N when N > Max -> N =:= Max + 1 andalso logger:warning(#{event => <<"witness.all_daily_over">>, kind => Kind, ceiling => Max}), over;
+                _ -> ok
+            end
+    end.
+
+%% 4 Nov (owner): a student's steps are charged to the teacher, so one student could spend the class's day; each student
+%% has ?STUDENT_DAY steps a day that call a model (a whole Mastery Plan fits well under it)
+-define(STUDENT_DAY, 80).
+student_day(Uid, Uid, _Host) -> ok;
+student_day(Uid, _Owner, Host) -> limit(Uid, <<"student">>, 86400000, ?STUDENT_DAY, Host).
 
 limit(Uid, Kind, Window, Max, Host) ->
+    case count(Uid, Kind, Window, Host) of
+        N when N > Max -> over;
+        _ -> ok
+    end.
+
+count(Uid, Kind, Window, Host) ->
     Slot = integer_to_binary(now_ms() div Window),
     Key = {mark_cache, <<"rate:", Kind/binary, ":", Uid/binary>>},
     case upd(Uid, Key, fun({ok, #{minute := M, n := N} = R}) when M =:= Slot -> R#{n => N + 1};
                           (_) -> #{minute => Slot, n => 1, sitting => <<>>} end, Host) of
-        {ok, #{n := N}} when N > Max -> over;
-        _ -> ok
+        {ok, #{n := N}} -> N;
+        _ -> 0
     end.
 
-over_words() -> <<"That's the most this account can do in one day. It opens again tomorrow.">>.
+over_words() -> <<"That's the most that can be done today. It opens again tomorrow.">>.
+student_words() -> <<"You've done a lot today. Your next step opens again tomorrow.">>.
 
 part_urls(Uid, Id, U, Ns, Host) ->
     [#{n => N, url => Url} || N <- Ns, {ok, Url} <- [Host:part_url(Uid, Id, U, N)]].

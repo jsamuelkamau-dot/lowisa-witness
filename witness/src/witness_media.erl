@@ -13,6 +13,7 @@
 -export([step/3, wav/1, still/2, clip/3, last/1, frames/3, gray/4, gray_image/2, tint_image/2, region/2, available/0]).
 %% 3 Nov: a photographed page turned upright before it is marked
 -export([small/2, turn/3]).
+-export([fenced/1]).
 
 -define(TIMEOUT_MS, 60000).
 -define(MAX_AUDIO, 25 * 1024 * 1024).
@@ -208,9 +209,19 @@ run(Args) ->
     case os:find_executable("ffmpeg") of
         false -> {error, no_ffmpeg};
         Exe ->
-            Port = open_port({spawn_executable, Exe}, [{args, Args}, exit_status, stderr_to_stdout, binary, hide]),
+            Port = open_port({spawn_executable, Exe}, [{args, fenced(Args)}, exit_status, stderr_to_stdout, binary, hide]),
             wait(Port, <<>>)
     end.
+
+%% 4 Nov (security review): an uploaded file can be a playlist that points ffmpeg somewhere else. Each input may use only
+%% the protocols its own kind needs: a signed link https and nothing on this machine; a file here, the file and nothing
+%% on the network (so no metadata address, no local file read through a link)
+fenced(["-i", In | Rest]) -> ["-protocol_whitelist", whitelist(In), "-i", In | Rest];
+fenced([A | Rest]) -> [A | fenced(Rest)];
+fenced([]) -> [].
+
+whitelist("https://" ++ _) -> "https,tls,tcp,crypto";
+whitelist(_) -> "file,crypto".
 
 wait(Port, Said) ->
     receive

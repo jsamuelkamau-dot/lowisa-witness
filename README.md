@@ -131,7 +131,7 @@ on screen, and ends on a real Grade 5 student and the rest of the loop. Section 
 > 1. **No account, no key:** `node demo/desk-server.js --replay`, then open http://localhost:4747: the teacher's Exam
 >    Desk on an exam recorded on the production edge (marks, fingerprints, Lo asks first, class patterns).
 > 2. **Check the numbers:** `python3 evidence/real-handwriting/score.py` and `python3 -X utf8 evidence/unseen-physics/score.py` (`python` on Windows)
->    recompute the real student's and the physics results from the committed files; `sh scripts/test.sh` runs the 155 tests, and every push runs them in [GitHub Actions](https://github.com/jsamuelkamau-dot/lowisa-witness/actions/workflows/test.yml).
+>    recompute the real student's and the physics results from the committed files; `sh scripts/test.sh` runs the 158 tests, and every push runs them in [GitHub Actions](https://github.com/jsamuelkamau-dot/lowisa-witness/actions/workflows/test.yml).
 > 3. **Live, on your own phone:** LoWisa on Google Play or the App Store, then section 12 (a sample paper to photograph is
 >    [`evidence/unseen-physics/paper.jpg`](evidence/unseen-physics/paper.jpg)).
 
@@ -187,7 +187,7 @@ Where each Meta model works:
 | Held-out v2: named right of 48 | 44 (`066c9d1`) | 42 | 43 |
 
 - **Built during the event (26 Oct – 4 Nov 2026), all in this repository:** the marking and diagnosis server
-  (`witness/`, Erlang/OTP, 155 tests), the teacher's Exam Desk (`desk/`), the phone screens (`phone/`), and every
+  (`witness/`, Erlang/OTP, 158 tests), the teacher's Exam Desk (`desk/`), the phone screens (`phone/`), and every
   measurement (`harness/`, `evidence/`).
 - **Existed before, named but not shown:** the LoWisa app it runs in, its lesson player, flashcards, Insight mode and
   Lo's voice (section 14, [`docs/existed-before.md`](docs/existed-before.md)). In the film every shot is labelled one or
@@ -549,7 +549,7 @@ a spoken answer written down by Muse Voice Transcribe ([`voice-transcribe.png`](
   the student's voice (Muse Voice Transcribe), and pictures (Muse Image).
 - **Built for a class, priced per call:** forty papers marked at once in 32 s for $1.01; every call metered at Meta's
   published prices, every JSON reply parsed and checked before it is used, the prompt cache shared across the readings of one paper, and
-  a daily ceiling on every route.
+  a daily ceiling on every route for each login, one for each student, and one across all logins together.
 
 **Every job a Meta model does here, one by one**
 
@@ -616,7 +616,8 @@ becomes a plan.**
   from the school's LoWisa wallet (1 credit = 1 US cent). Students never pay for their Mastery Plan.
 - **Marking is not charged.** The school's credits pay for the mastery levels built from the marked papers.
 - **No new price was set for this.**
-- **Every login has a daily ceiling on every model route.** A whole class fits under it.
+- **Every login has a daily ceiling on every model route, each student has one of their own, and all logins together
+  have one.** A whole class fits well under them.
 
 **Time saved, and where it goes**
 
@@ -891,7 +892,7 @@ Look at it without an account: `node demo/desk-server.js --replay`. It is this e
 |---|---|---|
 | **Impact** | The problem is human cognitive ability: a fear millions already feel about AI, joined to a problem education has not solved for generations (a failed exam that teaches nothing). This uses AI to strengthen it in four areas (from failure to capability, from knowledge to real-world application, from AI answers to independent thinking, from memorising to lasting mastery): a failed question becomes a level built on the student's own mistake that ends in a real task, and a teacher of forty checks instead of marking. Measured against one real student's own teacher; not yet proven in a classroom pilot | the opening, sections 1, 2, 5, 7; limits in 16; plans in 17 |
 | **Use of Meta's models** | Muse Spark reads the *reasoning* in handwriting and code checks its diagnosis against the lines it read; Muse Wonder plays every level as the student first; five models measured, in a gated pipeline of agents with code-checked hand-offs | sections 3, 4; `harness/FINDINGS.md` |
-| **Technical depth** | The evidence rule in code, measured blind and on the shipped code; handwriting placed on the page by dynamic programming (64 of 64 lines, against SAM 3.1's 52); Erlang/OTP with conditional writes, per-route daily ceilings, roles; 155 library tests; sixteen problems found by testing and how each was solved, from sideways pages to a safety check that failed open | sections 6, 7, 10, 11, 15 |
+| **Technical depth** | The evidence rule in code, measured blind and on the shipped code; handwriting placed on the page by dynamic programming (64 of 64 lines, against SAM 3.1's 52); Erlang/OTP with conditional writes, per-route daily ceilings, roles; 158 library tests; sixteen problems found by testing and how each was solved, from sideways pages to a safety check that failed open | sections 6, 7, 10, 11, 15 |
 | **Demo** | One failed question from photo to mastery: Muse Spark's marks landing on the page, the idea quoted from his own words, Lo asks first with a spoken answer, Muse Wonder's two plays, Muse Image's drawn step, the teacher's desk, the re-check; a real Grade 5 student's result against its baseline. Four Meta models on screen, about 1:44 of this week's work, every shot labelled, a word-for-word transcript; judges can try it in a minute with no account | sections 2, 12; `evidence/film/transcript.md` |
 
 ## 10. Architecture
@@ -1142,11 +1143,12 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
   were run on `v1.0.1-code`, not yet on `v1.0.2-code`. The teacher's desk says "photograph again" too from the next
   desktop release. Since edge vb1104j (4 Nov) a photographed paper that could not be marked for another reason, or is
   no longer kept, is never told about a video either.
-- **Security fixes from a review before going public, in this repository but not yet live:** a join code tried through
+- **Security fixes from a review before going public, live since edge vb1104k (4 Nov):** a join code tried through
   the video upload now counts against the same per-minute limit as joining, and a closed exam takes no new paper there;
   the server's scope for a mastery level's calls comes after any system words the phone sends; a kept recording is
   stored only as a known audio type; the re-check's judge has the same daily ceiling as every other judge call; the
-  fresh question is sent once; and the offline demo answers this computer only (`127.0.0.1`).
+  fresh question is sent once; ffmpeg reads a signed link over https only and a file on the server as a file only; and
+  the offline demo answers this computer only (`127.0.0.1`).
 - **Muse Spark Open has run on partner inference, with few runs:** 9 of 12 completed. Of the 3 that did not, 2 passed
   the old 5-minute limit per call on the long four-photo maths paper, and 1 reply was not a marking; the 3 runs since
   the limit went to 10 minutes all completed (`harness/open/`). It has not been switched on for the live edge.

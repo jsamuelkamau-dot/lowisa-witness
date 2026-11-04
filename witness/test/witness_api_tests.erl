@@ -1192,3 +1192,24 @@ a_fresh_question_is_sent_once_test() ->
     Q1 = witness_mastery:fresh_started(Q, <<"s1">>, 1),
     ?assertMatch(#{mastery := #{fresh := #{status := <<"uploading">>}}}, Q1),
     ?assertEqual({error, already_sent}, witness_mastery:fresh_started(Q1, <<"s2">>, 2)).
+
+%% 4 Nov (owner): one ceiling a day across all accounts, and one for each student, whose steps are charged to the teacher
+all_accounts_together_have_a_daily_ceiling_test() ->
+    setup(),
+    Slot = integer_to_binary(erlang:system_time(millisecond) div 86400000),
+    ok = save(<<"witness:all-accounts">>, {mark_cache, <<"rate:read:witness:all-accounts">>}, #{minute => Slot, n => 200, sitting => <<>>}),
+    ?assertMatch({429, #{code := <<"daily_limit">>}},
+                 r(<<"POST">>, [<<"pile">>, <<"read">>], #{<<"mime">> => <<"image/jpeg">>, <<"file">> => base64:encode(<<"jpegbytes">>)}, <<"fresh-account">>)),
+    ?assertNot(lists:keymember(read, 1, events())).
+
+a_student_has_a_daily_ceiling_of_their_own_test() ->
+    setup(),
+    {_P, S} = released_paper(#{questions => [q(1, <<"mastered">>, 0.9), q(3, <<"right_answer_wrong_thinking">>, 0.9)], pauses => [], lines => [], cost_usd => 0.0}),
+    Slot = integer_to_binary(erlang:system_time(millisecond) div 86400000),
+    ok = save(<<"stud">>, {mark_cache, <<"rate:student:stud">>}, #{minute => Slot, n => 80, sitting => <<>>}),
+    ?assertMatch({429, #{code := <<"daily_limit">>}},
+                 r(<<"POST">>, [<<"mastery">>, S, <<"3">>, <<"explain">>], #{<<"to">> => <<"lo">>, <<"text">> => <<"common factor">>}, <<"stud">>)),
+    %% a click on the level is not a model call and still counts as activity
+    ?assertNotMatch({429, _}, r(<<"POST">>, [<<"mastery">>, S, <<"3">>, <<"event">>], #{<<"event">> => <<"opened">>}, <<"stud">>)),
+    %% the teacher's own steps are not held by the student's day
+    ?assertNotMatch({429, _}, r(<<"POST">>, [<<"mastery">>, S, <<"3">>, <<"recommend">>], #{}, <<"teacher">>)).

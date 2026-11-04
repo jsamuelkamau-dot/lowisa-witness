@@ -64,3 +64,11 @@ patterns_know_lo_is_the_tutor_test() ->
                                                                  diagnosis => <<"Only the answer is on the page. Lo asks first.">>}]),
     ?assertNotEqual(nomatch, binary:match(P, <<"Lo is the app's tutor, never a student">>)),
     ?assertNotEqual(nomatch, binary:match(P, <<"never he or she">>)).
+
+%% 4 Nov (security review): ffmpeg reads a signed link over https only and a file here as a file only, so an uploaded
+%% playlist cannot point it at the metadata address or at a file on the machine
+ffmpeg_reads_each_input_by_its_own_protocol_only_test() ->
+    ?assertEqual(["-v", "error", "-protocol_whitelist", "https,tls,tcp,crypto", "-i", "https://bucket/clip.mp4", "out.jpg"],
+                 witness_media:fenced(["-v", "error", "-i", "https://bucket/clip.mp4", "out.jpg"])),
+    ?assertEqual(["-y", "-protocol_whitelist", "file,crypto", "-i", "/tmp/witness-1.m4a", "out.wav"],
+                 witness_media:fenced(["-y", "-i", "/tmp/witness-1.m4a", "out.wav"])).
