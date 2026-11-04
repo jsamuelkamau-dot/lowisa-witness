@@ -20,8 +20,10 @@
 >   ([Measured](#7-measured-a-real-students-handwriting-an-exam-it-had-never-seen-a-held-out-set-a-class-of-40),
 >   [limits](#16-limits-stated-plainly)).
 > - **Try it in a minute, no account and no key:** `node demo/desk-server.js --replay`, then http://localhost:4747
->   ([more ways to try it](#12-try-it-and-verify-it-yourself)). The 2:59 film and the measured results follow the
->   introduction below.
+>   ([more ways to try it](#12-try-it-and-verify-it-yourself), including your own exam marked live). The 2:59 film and
+>   the measured results follow the introduction below.
+> - **Licence:** [PolyForm Strict 1.0.0](LICENSE), source-available, not open source; judges have an
+>   [additional permission](JUDGING-PERMISSION.md) to do everything verification needs ([licence](#licence)).
 
 ## The Problem We Solve: Protecting and Strengthening Human Cognitive Ability
 
@@ -131,7 +133,7 @@ on screen, and ends on a real Grade 5 student and the rest of the loop. Section 
 > 1. **No account, no key:** `node demo/desk-server.js --replay`, then open http://localhost:4747: the teacher's Exam
 >    Desk on an exam recorded on the production edge (marks, fingerprints, Lo asks first, class patterns).
 > 2. **Check the numbers:** `python3 evidence/real-handwriting/score.py` and `python3 -X utf8 evidence/unseen-physics/score.py` (`python` on Windows)
->    recompute the real student's and the physics results from the committed files; `sh scripts/test.sh` runs the 158 tests, and every push runs them in [GitHub Actions](https://github.com/jsamuelkamau-dot/lowisa-witness/actions/workflows/test.yml).
+>    recompute the real student's and the physics results from the committed files; `sh scripts/test.sh` runs the 162 tests, and every push runs them in [GitHub Actions](https://github.com/jsamuelkamau-dot/lowisa-witness/actions/workflows/test.yml).
 > 3. **Live, on your own phone:** LoWisa on Google Play or the App Store, then section 12 (a sample paper to photograph is
 >    [`evidence/unseen-physics/paper.jpg`](evidence/unseen-physics/paper.jpg)).
 
@@ -187,7 +189,7 @@ Where each Meta model works:
 | Held-out v2: named right of 48 | 44 (`066c9d1`) | 42 | 43 |
 
 - **Built during the event (26 Oct – 4 Nov 2026), all in this repository:** the marking and diagnosis server
-  (`witness/`, Erlang/OTP, 158 tests), the teacher's Exam Desk (`desk/`), the phone screens (`phone/`), and every
+  (`witness/`, Erlang/OTP, 162 tests), the teacher's Exam Desk (`desk/`), the phone screens (`phone/`), and every
   measurement (`harness/`, `evidence/`).
 - **Existed before, named but not shown:** the LoWisa app it runs in, its lesson player, flashcards, Insight mode and
   Lo's voice (section 14, [`docs/existed-before.md`](docs/existed-before.md)). In the film every shot is labelled one or
@@ -956,6 +958,9 @@ the commit it ran on. Notes for Meta's API team, and what each run found: [`harn
 
 ## 12. Try it, and verify it yourself
 
+Everything in this section is covered for the event's judges and evaluators by the
+[additional permission for judging](JUDGING-PERMISSION.md), including changing a port, a key or a path to make it run.
+
 **In one minute, with no account and no key:** the teacher's Exam Desk on an exam recorded on the production edge.
 
 ```bash
@@ -1002,6 +1007,15 @@ What the demo school is, and is not:
   random and never shown. "Leave the demo" on the bar goes back to your own LoWisa.
 - **Not part of this repository.** The demo school, like the rest of the app it runs in, is LoWisa's (section 14).
 
+**Your own exam, marked live, with no LoWisa account** (your own Meta Model API key; about a minute and under $0.50 a
+page). The questions are read from the exam, the pages marked through the code the edge runs, and each wrong answer's
+fingerprint printed as the desk shows it: the idea named with the student's own lines, or the question Lo asks first.
+
+```bash
+sh scripts/test.sh                                        # builds the library (no key)
+MODEL_API_KEY=... escript harness/mark_my_paper.escript <the exam: photo or PDF> <finished page.jpg> [more pages]
+```
+
 **The code and the numbers:**
 
 ```bash
@@ -1034,6 +1048,16 @@ start. Those questions are written by Muse Spark under the server's scope, and e
 before it reaches the student. **That check fails closed**: a turn it could not read (no verdict, the check down, the
 day's ceiling reached) is replaced by a safe line, never sent.
 
+**Added on 4 Nov after an independent audit (live on the production edge since vb1104m, 4 Nov 03:42 UTC):**
+- **The server's scope is the only system message.** The level builder's instructions from the app arrive as a user
+  message marked as the app's, so no client can send words with a system message's weight.
+- **Plain-code rules run before any model.** A link, an email address, a phone number, a contact app or a meeting, and
+  a short list of adult and self-harm words stop a reply with no model involved, in Lo's live turns and in a level's
+  own text. The model guard still reads everything else; one model checking another is not the only line.
+- **A hard dollar ceiling a day across all accounts.** The call ceilings count calls; this one adds up what every call
+  cost, and stops new calls when the day reaches it. One server switch turns the whole feature off at once.
+- **Kept 180 days at most** (see Deleting, below).
+
 **The student is never sent a guess:** not the model's possible idea, not its rivals, not its confidence. While Lo is
 asking, they are not sent the reasoning either.
 
@@ -1045,15 +1069,40 @@ asking, they are not sent the reasoning either.
 **Nothing a student writes is ever followed as an instruction.** Every student-written text is marked as data in every
 prompt, and held-out v2 tries ten injections in the ink: none was marked mastered.
 
+**A learner who tries to mislead the marker** (4 Nov, after the independent audit; written before any run,
+[`harness/heldout/items_planted.py`](harness/heldout/items_planted.py)): ten papers, three runs. A wrong answer dressed
+in right-looking working or a claim of the right method was never marked mastered (**15 of 15**); right work beside a
+false story of a wrong idea ("I flipped the first fraction") never had that idea named (**12 of 12**); wrong work
+beside a story of something else had its real idea named (**3 of 3**). $0.74. A small synthetic set, not proof
+against every trick ([results](harness/heldout/results/planted-3-runs.json), `harness/planted_eval.escript`).
+
 **Deleting:**
+- **Nothing is kept for good:** a paper, its pages and its recordings are deleted by the store itself 180 days after
+  they were made, even for an account no one opens again.
 - The teacher deletes a paper or a whole exam. With it go its pages, recordings, pictures, clips, cached marking and self-checks, and every pointer to it.
 - A desk video is deleted as soon as it is marked.
 - **Faces in a desk video (desk filming is the optional way in; photographing the paper, the main way, films no one).**
   On Android, a face or a person the camera caught beside the page is covered on the phone before the video leaves
-  it. On iPhone this covering is not built yet, and on Android a video whose covering fails is still sent. We will
-  keep improving it so that both phones cover every face, and a video is never sent uncovered.
+  it. **It now fails closed** (4 Nov, in this repository; reaches students with the next phone release): a video whose
+  look for faces failed is never sent, and a phone that cannot cover faces (iPhone today) does not offer desk filming;
+  that student's paper is photographed instead. Until that release, the app in the stores still sends an Android video
+  whose covering failed and still offers filming on iPhone.
 
 Full statement: [`docs/privacy.md`](docs/privacy.md). It includes what the school must decide before a pilot with minors.
+
+### Licence
+
+This repository is public so it can be read, run and checked. It is **not open source**:
+- **[PolyForm Strict License 1.0.0](LICENSE)** for everyone. You may use the software for noncommercial purposes
+  (personal study, research and testing, or use by a school, charity or public body). You may **not** distribute it,
+  change it or build new works on it, or use it commercially.
+- **[An additional permission for judging](JUDGING-PERMISSION.md)** for the Meta Global AI Developer Hackathon's
+  organisers, judges and technical evaluators, whatever organisation they work for: clone, build, run, test, change
+  what testing needs (a port, a key, their own sample paper), reproduce the demo and the results, run security tests on
+  this code, and share it among the evaluators. Every command in [section 12](#12-try-it-and-verify-it-yourself) is
+  covered.
+
+Anything else, including commercial use: ask through [lowisa.dev](https://lowisa.dev).
 
 ## 14. What was built during the event, and what existed before
 
@@ -1149,6 +1198,12 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
   stored only as a known audio type; the re-check's judge has the same daily ceiling as every other judge call; the
   fresh question is sent once; ffmpeg reads a signed link over https only and a file on the server as a file only; and
   the offline demo answers this computer only (`127.0.0.1`).
+- **After the independent audit, live since edge vb1104m (4 Nov):** the server's scope is now the only system message
+  (the phone's level instructions go as the app's user message; the same level-builder request, four runs each way,
+  gave the same kind of outline, one level of three lessons on the student's idea, and a tampered "write my history
+  essay" was refused every time: [`harness/design-layout/`](harness/design-layout/README.md)); plain-code rules before the model guard; a hard $25 a day across all accounts; and
+  every row and file kept 180 days at most (rows written before the release were given their date too). The marking
+  code did not change. The phone's face-covering fix waits for the next phone release.
 - **Muse Spark Open has run on partner inference, with few runs:** 9 of 12 completed. Of the 3 that did not, 2 passed
   the old 5-minute limit per call on the long four-photo maths paper, and 1 reply was not a marking; the 3 runs since
   the limit went to 10 minutes all completed (`harness/open/`). It has not been switched on for the live edge.

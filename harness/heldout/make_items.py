@@ -2,6 +2,7 @@
 
   python harness/heldout/make_items.py OUT_DIR            the development set (items.py)
   python harness/heldout/make_items.py OUT_DIR v2         the held-out set written after the rule froze (items_v2.py)
+  python harness/heldout/make_items.py OUT_DIR planted    the planted-working set (items_planted.py, 4 Nov audit)
   python harness/heldout/make_items.py OUT_DIR v2 hinted  the same, each scheme also naming the wrong method (the ablation)
   python harness/heldout/make_items.py OUT_DIR v1 truth   also OUT_DIR/<id>.truth.json: where each handwritten line really is
                                                           on the photo (the line-placement benchmark, line_bench.escript)
@@ -21,6 +22,8 @@ HINTED = len(sys.argv) > 3 and sys.argv[3] == "hinted"
 TRUTH = len(sys.argv) > 3 and sys.argv[3] == "truth"
 if SET == "v2":
     from items_v2 import ITEMS, TOPICS, SCHEMES_HINTED
+elif SET == "planted":
+    from items_planted import ITEMS, TOPICS, SCHEMES_HINTED
 else:
     from items import ITEMS, TOPICS
     SCHEMES_HINTED = {}

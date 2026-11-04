@@ -56,7 +56,23 @@ if (q.has('pile') || q.has('paper') || q.has('open')) {
 }
 </script><script src="/witness-desk.js"></script></body></html>`;
 
+// 4 Nov (independent audit, finding D): bound to this computer is not enough on its own. A web page open in the same
+// browser can point its own name at 127.0.0.1 (DNS rebinding) and call this server, which adds the bearer token. So a
+// request is answered only when it is addressed to localhost or 127.0.0.1 on this port, and one that would change
+// something must come from this page itself.
+const LOCAL = new Set(['localhost:' + PORT, '127.0.0.1:' + PORT]);
+function local(req) {
+  if (!LOCAL.has(String(req.headers.host || '').toLowerCase())) return false;
+  const origin = req.headers.origin;
+  return req.method === 'GET' || !origin || LOCAL.has(origin.replace(/^http:\/\//, '').toLowerCase());
+}
+if (!REPLAY && !/^https:\/\//.test(HOST) && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(HOST)) {
+  console.error('WITNESS_URL must be https:// (or a host on this computer), so the token never travels in the clear.');
+  process.exit(1);
+}
+
 http.createServer((req, res) => {
+  if (!local(req)) { res.writeHead(403); return res.end(); }
   const route = (req.url || '').split('?')[0];
   if (route === '/' || route === '/index.html') { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); return res.end(PAGE); }
   if (req.url === '/witness-desk.js') { res.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8' }); return res.end(fs.readFileSync(DESK)); }

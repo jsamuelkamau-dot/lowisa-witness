@@ -24,13 +24,19 @@ describe('Witness sends a small desk video', () => {
     expect(smallVideo).toHaveBeenCalledWith(big.uri);
   });
 
-  it('sends the original when it is small already, when making it smaller fails, or on a phone without it', async () => {
+  it('sends the original only when the phone looked for faces and it was small already', async () => {
     mods.LoWisaDocuments = {smallVideo: jest.fn().mockResolvedValue(null)};
     await expect(smaller(big)).resolves.toBe(big);
+  });
+
+  // 4 Nov (independent audit, finding A): fails closed; a video whose faces could not be looked for is never sent
+  it('sends nothing when the look for faces failed, or on a phone that cannot look (iPhone today)', async () => {
     mods.LoWisaDocuments = {smallVideo: jest.fn().mockRejectedValue(new Error('small_failed'))};
-    await expect(smaller(big)).resolves.toBe(big);
+    await expect(smaller(big)).resolves.toBeNull();
+    mods.LoWisaDocuments = {smallVideo: jest.fn().mockRejectedValue(new Error('faces_failed'))};
+    await expect(smaller(big)).resolves.toBeNull();
     mods.LoWisaDocuments = {};
-    await expect(smaller(big)).resolves.toBe(big);
+    await expect(smaller(big)).resolves.toBeNull();
   });
 
   it('tries the upload three times on a weak connection, and a refused link once', async () => {
@@ -88,5 +94,18 @@ describe('Witness sends a small desk video', () => {
     await expect(keptRecording(storage, now)).resolves.toBeNull();
     storage.setItem(PENDING_KEY, '{broken');
     expect(readPending(storage, now)).toBeNull();
+  });
+});
+});
+
+// 4 Nov (independent audit, finding A): a phone that cannot cover faces is never asked to film the desk
+describe('a phone that cannot cover faces', () => {
+  it('knows it cannot, so the filming buttons are not shown', () => {
+    const {canCoverFaces} = require('../src/witness/WitnessScreen');
+    const mods = require('react-native').NativeModules;
+    mods.LoWisaDocuments = {};
+    expect(canCoverFaces()).toBe(false);
+    mods.LoWisaDocuments = {smallVideo: jest.fn()};
+    expect(canCoverFaces()).toBe(true);
   });
 });

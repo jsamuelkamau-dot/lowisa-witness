@@ -1,0 +1,66 @@
+[
+ {
+  "layout": "new",
+  "run": 1,
+  "refused": true,
+  "wrote_essay": false,
+  "words": 2,
+  "start": "{\"refused\": true}"
+ },
+ {
+  "layout": "new",
+  "run": 2,
+  "refused": true,
+  "wrote_essay": false,
+  "words": 2,
+  "start": "{\"refused\": true}"
+ },
+ {
+  "layout": "new",
+  "run": 3,
+  "refused": true,
+  "wrote_essay": false,
+  "words": 2,
+  "start": "{\"refused\": true}"
+ },
+ {
+  "layout": "new",
+  "run": 4,
+  "refused": true,
+  "wrote_essay": false,
+  "words": 2,
+  "start": "{\"refused\": true}"
+ },
+ {
+  "layout": "old",
+  "run": 1,
+  "refused": true,
+  "wrote_essay": false,
+  "words": 2,
+  "start": "{\"refused\": true}"
+ },
+ {
+  "layout": "old",
+  "run": 2,
+  "refused": true,
+  "wrote_essay": false,
+  "words": 2,
+  "start": "{\"refused\": true}"
+ },
+ {
+  "layout": "old",
+  "run": 3,
+  "refused": true,
+  "wrote_essay": false,
+  "words": 2,
+  "start": "{\"refused\": true}"
+ },
+ {
+  "layout": "old",
+  "run": 4,
+  "refused": true,
+  "wrote_essay": false,
+  "words": 2,
+  "start": "{\"refused\": true}"
+ }
+]

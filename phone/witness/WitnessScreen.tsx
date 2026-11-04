@@ -99,16 +99,27 @@ export function spokenFeedback(q: Question, fp?: Fingerprint | null): string {
 
 /**
  * A desk video made small enough to send on a phone's data: 720p, ten frames a second, about 8 MB a minute where the
- * camera made some 120 (27 Oct). The original goes when it is small already, or when this phone cannot make it smaller.
+ * camera made some 120 (27 Oct). The original goes only when the phone looked for faces and found none in a video
+ * small already.
+ *
+ * 4 Nov (independent audit, finding A): it fails closed. A phone that cannot look for faces (iPhone today) or a look
+ * that failed gives null, and null is never sent: the student is asked to photograph the finished paper instead.
  */
-export async function smaller(file: VideoFile, onPercent?: (percent: number, stage: 'faces' | 'small') => void): Promise<VideoFile> {
+export async function smaller(file: VideoFile, onPercent?: (percent: number, stage: 'faces' | 'small') => void): Promise<VideoFile | null> {
   const n = docs();
-  if (!n || !n.smallVideo) return file;
+  if (!n || !n.smallVideo) return null;
   const sub = onPercent ? DeviceEventEmitter.addListener('lowisaSmallVideo', (e: {percent?: number; stage?: string}) => {
     if (typeof e?.percent === 'number') onPercent(Math.max(0, Math.min(100, Math.round(e.percent))), e.stage === 'faces' ? 'faces' : 'small');
   }) : null;
-  try { return (await n.smallVideo(file.uri)) || file; } catch (e) { return file; } finally { sub?.remove(); }
+  try { return (await n.smallVideo(file.uri)) || file; } catch (e) { return null; } finally { sub?.remove(); }
 }
+
+/** Whether this phone can look for faces and cover them before a video leaves it (Android today, not iPhone). */
+export const canCoverFaces = (): boolean => !!docs()?.smallVideo;
+export const NO_FILMING_WORDS = 'Filming the desk is not available on this phone yet. When you finish, your teacher photographs your paper instead.';
+
+/** What the student is told when a video could not be checked for faces, so it stayed on the phone (4 Nov). */
+export const UNCOVERED_WORDS = 'This phone could not check the video for faces, so it was not sent. Photograph your finished paper instead.';
 
 /** What the phone says while the video is got ready: first the look for faces to cover, then making it smaller (28 Oct). */
 export function readyLine(percent: number, stage: 'faces' | 'small'): string {
@@ -276,6 +287,7 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
     const resuming = !!resumeOf && resumeOf.uri === picked.uri;
     if (!resuming) setStage({kind: 'sending', title, line: 'Covering any face the camera caught…'});
     const file = resuming ? picked : await smaller(picked, (p, st) => setStage({kind: 'sending', title, line: readyLine(p, st)}));
+    if (!file) { setStage({kind: 'witness', code: stage.code, title, level: stage.level}); setError(UNCOVERED_WORDS); return; }
     const mime = doorMime(file.mime, file.name)!;
     const kept = 'The video did not go up. It is kept on this phone: send it again when the connection is better, on Wi-Fi if you can.';
     const total = Math.round(file.size);
@@ -411,7 +423,7 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
             <Text style={s.sub}>Your phone films your desk while you write, so your teacher sees how you thought, step by step.</Text>
             <SoftInput value={name} onChangeText={setName} placeholder="Your name, as your teacher knows it" maxLength={80}
               style={s.input} accessibilityLabel="Your name" testID="witness-name" />
-            <Text style={s.how}>Prop your phone above the desk so it sees the whole page and your hand. Keep faces out of view: any face the camera catches is covered before the video leaves your phone. Then work through the paper and stop the recording when you finish.</Text>
+            <Text style={s.how}>Prop your phone above the desk so it sees the whole page and your hand. Keep faces out of view: the video leaves your phone only once any face the camera caught is covered. Then work through the paper and stop the recording when you finish.</Text>
             {notice ? <Text style={s.notice} accessibilityRole="alert" testID="witness-kept">{notice}</Text> : null}
             {unsent ? (
               <>
@@ -419,10 +431,15 @@ export function WitnessScreen({env, storage, onBack, onOpenPath}: {env: WitnessE
                 <View style={{height: 8}} />
               </>
             ) : null}
-            <Btn label="Record my paper" onPress={() => sit('camera')} primary={!unsent} testID="witness-record" />
-            <View style={{height: 8}} />
-            <Btn label="Choose a video I recorded" onPress={() => sit('gallery')} testID="witness-pick" />
-            <Text style={s.small}>The video is deleted once your paper is marked.</Text>
+            {/* 4 Nov (independent audit, finding A): a phone that cannot cover faces is never asked to film */}
+            {canCoverFaces() ? (
+              <>
+                <Btn label="Record my paper" onPress={() => sit('camera')} primary={!unsent} testID="witness-record" />
+                <View style={{height: 8}} />
+                <Btn label="Choose a video I recorded" onPress={() => sit('gallery')} testID="witness-pick" />
+                <Text style={s.small}>The video is deleted once your paper is marked.</Text>
+              </>
+            ) : <Text style={s.notice} testID="witness-no-filming">{NO_FILMING_WORDS}</Text>}
           </View>
         ) : null}
 
@@ -572,6 +589,7 @@ function QuestionCard({q, paper, env, storage, onOpenPath}: {q: Question; paper:
     if (!doorMime(file.mime, file.name)) { setSaid('Only MP4 and MOV videos can be read. Record it again with the camera here.'); return; }
     setFilming('Covering any face the camera caught…');
     file = await smaller(file, (p, st) => setFilming(readyLine(p, st)));
+    if (!file) { setFilming(''); setSaid(UNCOVERED_WORDS); return; }
     const mime = doorMime(file.mime, file.name)!;
     setFilming('Getting the upload ready…');
     const r = await witness.mastery(env, paper.id, q.n, 'fresh', {mime, size: Math.round(file.size)});
