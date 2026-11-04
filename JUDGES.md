@@ -37,6 +37,7 @@ Details are in [`evidence/live-checks/`](evidence/live-checks/README.md).
 | Production server (Witness library) | `v1.0.2-code` plus the audit fixes in README section 13, edge vb1104q (live 4 Nov 09:55 UTC; each edge release is listed there) |
 | Phone apps in the stores | LoWisa 1.10.4 (Google Play and the App Store); the phone fixes in README 17.1 arrive with the next release |
 | Desktop app | LoWisa desktop 0.9.33; the desk's wording fixes arrive with the next desktop release |
+| This repository's history | Republished fresh on 4 Nov 2026 with every commit kept (same files and dates); the hashes in these files are the original repository's, mapped in [`DEVELOPMENT-PROVENANCE.md`](DEVELOPMENT-PROVENANCE.md) |
 
 ## What is proven, and what is not yet
 

@@ -12,7 +12,7 @@ commit got a new hash. A few result files still name the hash their run had at t
 | `85784ed` | `b529f24` | the same | `harness/heldout/results/v2-held-out-steps-rule-3-runs.json`, `harness/class/results/class-of-40.json`, `harness/bench/results/photo_on_head.json`, `harness/bench/results/line_placement.json` |
 | `ce7fcce` | `b69d182` | the same | `harness/heldout/results/v2-held-out-explain-rule-3-runs.json`, `evidence/unseen-physics/hard-ask-papers-5-runs-new-rule.json` |
 
-On 4 Nov it was rewritten a second time, before going public: a child's first name (in one results file, 3 Nov), two old exam codes (in tests and recordings, 31 Oct to 3 Nov) and the lines of LoWisa's earlier code in the level builder's excerpt were taken out of every commit. Nothing else changed; the commit dates were kept, and every hash named in these files is the commit's new one.
+On 4 Nov it was rewritten a second time, before going public: a child's first name (in one results file, 3 Nov), two old exam codes (in tests and recordings, 31 Oct to 3 Nov) and the lines of LoWisa's earlier code in the level builder's excerpt were taken out of every commit. Nothing else changed; the commit dates were kept, and every hash named in these files is the commit's new one. On 4 Nov the repository was then republished fresh at the same address. Each commit's message lost a trailing co-author line, so every hash changed once more; the files did not. [`DEVELOPMENT-PROVENANCE.md`](../DEVELOPMENT-PROVENANCE.md) maps each hash named here to its hash in this repository.
 
 To check one: `git diff --stat 5712d5b b529f24` shows what changed between two runs, and `git show 5712d5b:witness/src/witness_mark.erl`
 shows the rule a run used.

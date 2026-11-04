@@ -7,7 +7,7 @@ history: it was rewritten on 2 Nov, before the repository was made public, to ta
 code, and again on 4 Nov to take out a child's first name, two old exam codes and LoWisa's earlier level-builder lines;
 the commit dates were kept, and `harness/PROVENANCE.md` maps the old hashes to the new. The table grows as the work lands. Code built this week inside LoWisa's own files is named in `host/README.md`; it is not copied here, so LoWisa's older code stays private.
 
-**How to verify the dates.** Commit dates are written by our own machine, so they are not proof on their own. Two dates we do not control: GitHub created this repository on 27 Oct 2026 at 00:06 UTC (26 Oct, 8:06 PM ET, eight hours after kickoff; `gh api repos/jsamuelkamau-dot/lowisa-witness --jq .created_at`), and the GitHub Actions run history starts on 3 Nov, the first push.
+**How to verify the dates.** Commit dates are written by our own machine, so they are not proof on their own. This repository was republished fresh on 4 Nov 2026, with the same commits, files and author dates, so GitHub's own dates here start on 4 Nov. The original repository is kept private as an archive, and two dates there are not ours: GitHub created it on 27 Oct 2026 at 00:06 UTC (26 Oct, 8:06 PM ET, eight hours after kickoff), and its GitHub Actions run history starts on 3 Nov. A judge can be given read access to check both. Commit hashes named in these files are the original repository's; [`DEVELOPMENT-PROVENANCE.md`](../DEVELOPMENT-PROVENANCE.md) gives each one's hash here, with tree hashes to prove the files are the same.
 
 | Part | Where | Status |
 |---|---|---|
