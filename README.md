@@ -14,7 +14,7 @@
 >   **11 to 14 of 109 marks** one by one and accepts the rest in one click; **6 or 7 of the teacher's 10 wrong answers
 >   are caught**, and **no wrong idea is named** on any answer it did not accept, in any run. The limit: 2 to 4 of the
 >   marks accepted in one click still call one of his wrong answers right; sure is not proof. So the one-click line rises
->   from 0.90 to 0.95 (in this repository, for the next edge deploy): the teacher checks 27 to 51, and 0 to 2 one-click
+>   from 0.90 to 0.95 (live since 4 Nov, edge vb1104o): the teacher checks 27 to 51, and 0 to 2 one-click
 >   marks are wrong. Nothing reaches him until the teacher releases it. On his
 >   written answers it agrees with the teacher about as often as marking everything right would (36–38 of 42, against
 >   38); there it never names a wrong idea, and asks him first instead. His papers show answers, not working, so every
@@ -182,7 +182,7 @@ Where each Meta model works:
 |---|---|---|
 | A real Grade 5 student's three multiple-choice papers, against his own teacher's marks (photos as taken, three of them sideways) | **6 or 7 of his teacher's 10 wrong answers caught** (7, 6, 6; 6 of the 10 in every run); **no wrong idea named** on any of the 23 answers it did not accept; 104, 104 and 104 of 109 agree, where marking everything right would agree on 99 (kappa 0.68–0.71) | [`condition-c-on-v1.0.1-code-3-runs.json`](evidence/real-handwriting/results/condition-c-on-v1.0.1-code-3-runs.json), `python3 evidence/real-handwriting/score.py` |
 | The same student's **written answers** (42 questions, three more papers, no marking scheme) | **every one of the 17 answers it did not accept was held for Lo to ask, with no wrong idea named**; 2, 2 and 3 of his teacher's 4 wrong answers caught; 36, 37 and 38 of 42 agree, where marking everything right would agree on 38 (kappa 0.32–0.55). One paper came back "could not be read" once; the same photos sent again were marked (recorded in the file) | [`written-answers-on-v1.0.1-code-3-runs.json`](evidence/real-handwriting/results/written-answers-on-v1.0.1-code-3-runs.json), the same script |
-| **The teacher's work** on those papers: one click accepts the marks called right and at least as sure as the line; the rest are checked one by one. Corrected 4 Nov: the earlier figures here (8 to 10 checked) counted sure marks of every result, but one click only ever takes marks called right | at the 0.90 line (live until the next edge deploy): multiple choice, **the teacher checks 11, 11 and 14 of 109**, and of the 98, 98 and 95 accepted in one click, 2, 4 and 2 call one of his wrong answers right; written, 17, 17 and 18 of 42 checked, 1 wrong in one click. At **0.95** (third audit; in this repository, for the next edge deploy): multiple choice, 38, 27 and 51 checked, and 0, 2 and 1 wrong in one click; written, 31, 27 and 32 checked, none wrong. Nothing reaches the student until the teacher releases the paper | `python3 evidence/real-handwriting/score.py` |
+| **The teacher's work** on those papers: one click accepts the marks called right and at least as sure as the line; the rest are checked one by one. Corrected 4 Nov: the earlier figures here (8 to 10 checked) counted sure marks of every result, but one click only ever takes marks called right | at the 0.90 line (until 4 Nov, edge vb1104o): multiple choice, **the teacher checks 11, 11 and 14 of 109**, and of the 98, 98 and 95 accepted in one click, 2, 4 and 2 call one of his wrong answers right; written, 17, 17 and 18 of 42 checked, 1 wrong in one click. At **0.95** (third audit; live since edge vb1104o, 4 Nov): multiple choice, 38, 27 and 51 checked, and 0, 2 and 1 wrong in one click; written, 31, 27 and 32 checked, none wrong. Nothing reaches the student until the teacher releases the paper | `python3 evidence/real-handwriting/score.py` |
 | Wrong answers accepted as right (the error a teacher must still catch) | multiple choice: 3, 4 and 4 of the teacher's 10 marked right, always among the same four questions (English 23, science 33 and 42, maths 24). Written: 2, 2 and 1 of 4: question 41 in every run (sure enough for "Accept all"), and question 35 in two runs, where Muse Spark read his final option as "A. Wheat" instead of "Cow peas" and was not sure (0.65, 0.75), so it went to the teacher | the same files |
 | 53 held-out papers × 3 runs: ink that cannot show the idea | Lo asks first **39 of 42**; a wrong idea named 3 of 42 (the harmful error) | [`v2-on-v1.0.1-code-3-runs.json`](harness/heldout/results/v2-on-v1.0.1-code-3-runs.json) |
 | … ink that shows the idea; right work; instructions written in the ink | named right **43 of 48** (none named a different idea; 5 asked first); mastered **39 of 39**; never obeyed **30 of 30** | the same file |
@@ -1087,7 +1087,7 @@ day's ceiling reached) is replaced by a safe line, never sent.
   whole feature off at once.
 - **Scheduled for deletion at 180 days** (see Deleting, below).
 
-**Added after the third independent audit (4 Nov; in this repository, for the next edge deploy unless marked):**
+**Added after the third independent audit (live on the edge since vb1104o, 4 Nov 07:19 UTC, unless marked; the one-click line, the holds and the expiry each checked on the live server):**
 - **What the budget guarantees, exactly.** Every call to a model caps its output and every input is capped in size, so
   each call's cost is bounded; each kind's hold is set above the largest real cost of its kind in production over the
   last 10 days (a paper's marking at most $0.57 against $1.25; every other kind 2 to 10 times under). Holds are admitted
@@ -1136,7 +1136,7 @@ against every trick ([first run](harness/heldout/results/planted-3-runs.json),
 **Deleting:**
 - **Nothing is kept for good:** a paper, its pages and its recordings are scheduled for deletion by the store itself 180
   days after they were made, even for an account no one opens again. The store removes them within a few days of that
-  time; from the next edge deploy, nothing past its time is ever read or shown, before the store removes it.
+  time; since edge vb1104o (4 Nov), nothing past its time is ever read or shown, before the store removes it.
 - The teacher deletes a paper or a whole exam. With it go its pages, recordings, pictures, clips, cached marking and self-checks, and every pointer to it.
 - A desk video is deleted as soon as it is marked.
 - **Faces in a desk video (desk filming is the optional way in; photographing the paper, the main way, films no one).**
