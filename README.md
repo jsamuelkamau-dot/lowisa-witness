@@ -1444,8 +1444,10 @@ audit's server fixes (section 13), live from edge vb1104m.
   a paper not in this repository, marked by the teacher before we see it.
 - **The controlled study** of whether it strengthens learning lastingly: delayed tests without AI, on new items,
   against the usual feedback. The design is fixed before any data ([`docs/STUDY-PLAN.md`](docs/STUDY-PLAN.md)).
-- **The phone build run on a device** before its release, by the release checklist: a desk video with a face in view,
-  covered all the way; a failed look, nothing sent ([what was already checked](evidence/app-validation/phone-and-desk-2026-11-04.md)).
+- **The phone build run on a device: done for 1.10.5** before it was sent to the stores (an Android emulator, against
+  the live server): a desk video with a face in view was covered and marked, and the same video sent raw was refused
+  by the server ([live checks 7](evidence/live-checks/README.md)). Still to force on a device: a face look that fails on
+  the phone (nothing is sent; covered by the phone's tests), and the same run on a physical phone.
 
 ### 17.2a Built next, from the third audit
 
