@@ -203,7 +203,9 @@ Where each Meta model works:
   (section 12).
 - **What comes next (section 17):** a Mastery Plan on every question a learner fails anywhere in LoWisa (Study Kit
   practice, every test question in the phone and desktop apps, the desktop app's electronic exams), interactive
-  experiments the learner can change and investigate, and a pilot in schools.
+  experiments the learner can change and investigate, and a pilot in schools. It also lists what is fixed in the code
+  but arrives with the next app release, the measurements still to run, and where to send us feedback: ten days were
+  not enough for everything, and we will keep improving.
 - **Names used here:** *Lo* is LoWisa's tutor. *Witness* is the code name of the marker (the `witness_*` modules) and of
   the optional desk-filming mode. Part of [LoWisa](https://lowisa.dev), for the Meta Global AI Developer Hackathon.
 
@@ -640,7 +642,7 @@ The time that comes back is spent on the learners, on the work only a teacher sh
   explanation to read, and the "Turned around" decision (sections 3.6 and 13).
 
 **Not yet measured:** a teacher's own minutes per paper with real teachers. The desk already records them
-(`witness_measure`: the seconds each paper is open while reviewed); the pilot will report them (section 17.4).
+(`witness_measure`: the seconds each paper is open while reviewed); the pilot will report them (section 17.6).
 
 **What it costs**, measured on the production edge and priced at Meta's published rates:
 
@@ -778,7 +780,7 @@ fixed and re-run the same day: a written explanation had been treated as a bare 
 given full marks. **So the marking result above is unseen, but for naming ideas this paper is now a development paper**:
 the rule was changed on it, and after the change question 24's idea was named in 6 of 6 runs (4 of 6 before). The levels
 for questions 23 and 24 were then built live, and their self-checks passed. One paper is one paper: more unseen
-subjects, marked by an outside teacher, are the next step (section 17.4).
+subjects, marked by an outside teacher, are the next step (section 17.6).
 
 ### Held out: 53 papers, first run blind, then run again on the shipped code
 
@@ -811,7 +813,7 @@ from 13 s to 22 s, with the answers-only second reading. The three runs mark the
 the runs. Earlier v2 runs between these two are kept too (`v2-held-out-steps-rule-3-runs.json`,
 `v2-held-out-explain-rule-3-runs.json`), and which commit each ran on is in [`harness/PROVENANCE.md`](harness/PROVENANCE.md).
 **What would settle it:** a v3 set nobody on the team has seen, in real handwriting from outside writers, labelled by
-an outside teacher and run once (section 17.4).
+an outside teacher and run once (section 17.6).
 
 The misses are read by hand in [`harness/heldout/README.md`](harness/heldout/README.md), with the hinted-scheme ablation
 and the effort ablation (on the development set, low effort was as accurate as medium, 28% cheaper and 40% faster).
@@ -1083,7 +1085,8 @@ against every trick ([results](harness/heldout/results/planted-3-runs.json), `ha
 - A desk video is deleted as soon as it is marked.
 - **Faces in a desk video (desk filming is the optional way in; photographing the paper, the main way, films no one).**
   On Android, a face or a person the camera caught beside the page is covered on the phone before the video leaves
-  it. **It now fails closed** (4 Nov, in this repository; reaches students with the next phone release): a video whose
+  it. **It now fails closed** (4 Nov, in this repository; reaches students with the next phone release, see
+  [Future plans](#17-future-plans-after-the-hackathon)): a video whose
   look for faces failed is never sent, and a phone that cannot cover faces (iPhone today) does not offer desk filming;
   that student's paper is photographed instead. Until that release, the app in the stores still sends an Android video
   whose covering failed and still offers filming on iPhone.
@@ -1179,7 +1182,7 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
   - Apart from one Grade 5 student's papers (section 7), every paper here is a sample: a handwriting font, or a paper written for the demo, on a simulated phone photo. Real written working and real classrooms are harder.
   - **The evaluation sets are ours.** The items, labels and code come from the same team, and v2 has been seen since its blind first run (section 7). That student's papers are the first exception: his teacher's marks, not ours, are the key. The next measurement is a v3 set of written answers in real handwriting from many outside writers, labelled by an outside teacher, run once on frozen code.
   - The class of 40 measures speed and cost at class size; its 40 papers are built from 14 written answers (two to four per question), so it is not an accuracy test.
-  - **A real pilot follows the hackathon** (section 17.4): ten days were not enough to run one properly.
+  - **A real pilot follows the hackathon** (section 17.6): ten days were not enough to run one properly.
 - **The research in section 1 is evidence, not proof.** The MIT study is a preprint with 54 participants; the Gerlich and CHI studies are surveys; Butler's is one classroom experiment. Together they show a risk worth designing against and a direction that works, not a settled law. The 65% PISA figure is the OECD average as reported by ACER (source 6).
 - **The fingerprint's limits are measured, not solved** (section 7).
   - A wrong idea can still be named on an ambiguous page.
@@ -1189,8 +1192,8 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
 - **The code live now is `v1.0.2-code`** (edge vb1104i, 4 Nov): `v1.0.1-code` plus two fixes. Two readings no longer
   agree when only one says "not", or when their units differ ("5 cm", "5 m"); and an unreadable photographed paper is
   asked to be photographed again, not "filmed again". Both are tested; the real sets and the held-out set
-  were run on `v1.0.1-code`, not yet on `v1.0.2-code`. The teacher's desk says "photograph again" too from the next
-  desktop release. Since edge vb1104j (4 Nov) a photographed paper that could not be marked for another reason, or is
+  were run on `v1.0.1-code`, not yet on `v1.0.2-code` (17.2). The teacher's desk says "photograph again" too, since
+  desktop 0.9.33 (4 Nov). Since edge vb1104j (4 Nov) a photographed paper that could not be marked for another reason, or is
   no longer kept, is never told about a video either.
 - **Security fixes from a review before going public, live since edge vb1104k (4 Nov):** a join code tried through
   the video upload now counts against the same per-minute limit as joining, and a closed exam takes no new paper there;
@@ -1203,7 +1206,7 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
   gave the same kind of outline, one level of three lessons on the student's idea, and a tampered "write my history
   essay" was refused every time: [`harness/design-layout/`](harness/design-layout/README.md)); plain-code rules before the model guard; a hard $25 a day across all accounts; and
   every row and file kept 180 days at most (rows written before the release were given their date too). The marking
-  code did not change. The phone's face-covering fix waits for the next phone release.
+  code did not change. The phone's face-covering fix waits for the next phone release (17.1).
 - **Muse Spark Open has run on partner inference, with few runs:** 9 of 12 completed. Of the 3 that did not, 2 passed
   the old 5-minute limit per call on the long four-photo maths paper, and 1 reply was not a marking; the 3 runs since
   the limit went to 10 minutes all completed (`harness/open/`). It has not been switched on for the live edge.
@@ -1216,13 +1219,42 @@ The goal is bigger: **wherever a learner gets something wrong in LoWisa, that mo
 mastering it.** The plans below take it there, onto features LoWisa already has, so most of the work is joining what
 exists rather than starting again.
 
-### 17.1 Already joined to LoWisa's existing features
+**Ten days were not enough to do everything we want, and we say so plainly.** Some fixes are finished in the code but
+reach users only with the next app release (17.1); some measurements are still to run (17.2). We are committed to
+continuous improvement, and we would value the judges' feedback on anything we have missed (17.7): whatever it is, we
+will fix it as part of that work.
+
+### 17.1 Fixed in the code, arriving with the next release
+
+These are done and tested in this repository. They reach users only when the app they live in is next released,
+because a store app cannot change until then.
+
+| Fix | Where it is now | Reaches users |
+|---|---|---|
+| **A desk video never leaves the phone with a face uncovered.** If the phone's look for faces fails, the video is not sent, and the student is asked to have the paper photographed instead. A phone that cannot cover faces yet (iPhone) no longer offers desk filming. Found by an independent audit on 4 Nov | `phone/witness/WitnessScreen.tsx` (`smaller`, `canCoverFaces`); the Android face look in LoWisa's app; tested (`phone/__tests__/`) | the next LoWisa phone release, Android and iPhone |
+
+Until then, the main way in films no one: the teacher photographs the finished paper. Desk filming is the optional way,
+and the app in the stores still offers it as before.
+
+Everything on the server is already live; it changes without an app release. On 4 Nov that was the independent
+audit's server fixes (section 13), live from edge vb1104m.
+
+### 17.2 Measurements still to run
+
+- **The real student's papers and the held-out set on the code live now.** They were run on `v1.0.1-code`; the two
+  fixes since (`v1.0.2-code`) change only when two readings count as the same answer and one message's wording.
+- **A learner trying to mislead the marker, at scale.** Ten synthetic papers passed 30 of 30 (section 13). Next: more
+  tricks, and real handwriting.
+- **An adversarial test of the live service with a real account**, beyond the code's own tests: the design route, the
+  daily ceilings and the safety rules, as an attacker would try them.
+
+### 17.3 Already joined to LoWisa's existing features
 
 A mastery level is played by LoWisa's own lesson player, so it already comes with two features that strengthen
 cognitive ability (area 4, from temporary memorisation to lasting mastery): the **flashcards** made from the level's lessons, and **Insight mode**, which
 replays the student's lessons as an episode. Both existed before the event; the level they replay is new.
 
-### 17.2 Next: a Mastery Plan wherever a learner fails a question
+### 17.4 Next: a Mastery Plan wherever a learner fails a question
 
 Today the Mastery Plan starts from a teacher's photographed exam. After the hackathon it goes wherever a learner is
 tested in LoWisa:
@@ -1237,7 +1269,7 @@ tested in LoWisa:
    needed: every question failed will go into the student's Mastery Plan automatically, for the teacher to review as
    they do now.
 
-### 17.3 Interactive experiments: change it, watch it, find out why
+### 17.5 Interactive experiments: change it, watch it, find out why
 
 **What exists now, in 2D.** The scenes inside a mastery level already let the learner act, not only watch: shapes that
 move through what happens, and controls (one to three sliders) that change a real quantity, worked out live with its
@@ -1265,7 +1297,7 @@ would, every time. That needs engineering, validation of every reading against t
 ten days. It is a planned extension of what is built, not a replacement for it: we want learners to move from mastering
 known problems to investigating unfamiliar ones, testing possibilities, and finding solutions on their own.
 
-### 17.4 A pilot in schools
+### 17.6 A pilot in schools
 
 A real pilot follows the hackathon. It needs consenting schools, parents' consent for minors, real exams, and a
 re-test a week or more later. We plan to run it in this order:
@@ -1280,6 +1312,12 @@ re-test a week or more later. We plan to run it in this order:
 
 `witness_measure` already records agreement, the teacher's seconds per paper, turned-around questions and re-checks,
 so the pilot needs no new code to report them.
+
+### 17.7 Your feedback
+
+We would be grateful for the judges' feedback on anything we have missed: a weakness in the code, a claim the
+evidence does not support, a risk to learners, or something that is hard to run. Each one becomes part of our
+continuous improvement, and we will fix it. Write to us through [lowisa.dev](https://lowisa.dev).
 
 ## 18. Sources
 
