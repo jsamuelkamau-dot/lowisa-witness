@@ -12,8 +12,11 @@ How it runs, with no phone or desktop release (desktop 0.9.34 already has every 
    out from the questions, never from handwriting on the page.
 2. The draft fills the desk's "Your mark scheme" box under a first line: *DRAFTED BY MUSE SPARK (your paper had no mark
    scheme): check and correct every line.* The teacher corrects it there.
-3. Creating the exam is the approval: the server takes the line off (`witness_read:undraft/1`), records
-   `scheme_drafted`, and every paper is marked against that one scheme. It cannot be changed afterwards.
+3. Creating the exam takes the line off (`witness_read:undraft/1`), records `scheme_drafted`, and every paper is
+   marked against that one scheme; it cannot be changed afterwards. **Since edge vb1105b creating the exam is not the
+   approval:** no mark on a draft is accepted in one click until the teacher approves it explicitly, with the time,
+   the teacher and the scheme's SHA-256 recorded ([marking policy](../../docs/marking-policy.md)). A draft whose line
+   was deleted is still known as a draft.
 4. One click needs a scheme (`witness_api:one_click/2`). An exam with none is still marked, and the teacher checks every
    mark; the desk is sent a line no mark reaches, so it shows no one-click row.
 

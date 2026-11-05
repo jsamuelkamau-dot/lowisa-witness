@@ -21,7 +21,8 @@
 >   disagreed, with a struck-out answer or unreadable writing is checked by the teacher however sure, and the desk is
 >   told whether the marks were judged against the teacher's mark scheme or, with none given, the model's own key.
 >   **Since edge vb1105a (5 Nov), one click needs a mark scheme the teacher approved**: their own, or one Muse Spark
->   drafts from the paper for them to check before the exam is made. With no scheme, every mark is checked one by one,
+>   drafts from the paper, which since edge vb1105b counts only once the teacher approves it explicitly (recorded with
+>   the time, the teacher and the scheme's SHA-256). With no approved scheme, every mark is checked one by one,
 >   so on his papers none of his wrong answers is accepted in one click
 >   ([marking policy](docs/marking-policy.md)).
 >   Nothing reaches him until the teacher releases it. On his
@@ -1111,7 +1112,8 @@ day's ceiling reached) is replaced by a safe line, never sent.
   expires, so failures cannot use up a teacher's day, and at most 500 calls hold money at once. Tested with 40 calls at
   once against room for 4: exactly 4 started (`witness/test/witness_api_tests.erl`).
 - **One click takes only marks 0.95 sure or more, and only marks called right**, and since edge vb1105a only on an
-  exam with a mark scheme the teacher approved (next block), whatever list the desk sends; every
+  exam with a mark scheme the teacher approved (explicitly, for a drafted one, since vb1105b; next blocks), whatever
+  list the desk sends; every
   other mark stays to be checked one by one (section 7 has the cost: more checks, fewer wrong marks). The desk says
   "sure is not proof" beside the button (desktop 0.9.34, 4 Nov).
 - **A tampered app, eight kinds of attack.** Lo's live turns now also refuse to hand over the exam question's own
@@ -1129,12 +1131,32 @@ day's ceiling reached) is replaced by a safe line, never sent.
   exams whose join codes were visible in old screenshots or tests were closed to joining (live, 4 Nov). CI now scans
   every commit, not only today's files.
 
+**Added after the review of vb1105a, 5 Nov (edge vb1105b; the desk's approval box comes with the next desktop
+release, 17.2a):**
+- **A drafted scheme needs the teacher's explicit approval; creating the exam no longer counts as approval.** The
+  review: "creating the exam with a scheme is treated as teacher approval; a teacher could create the exam without
+  carefully checking the generated answers." The exam is still marked against the draft, but no mark on it is accepted
+  in one click until the exam's own teacher approves it, confirming word for word: *I have reviewed and approved this marking scheme for use in assessing students.*
+  The server records the time (`scheme_approved_ms`), the approving teacher (`scheme_approved_by`) and the SHA-256 of
+  the exact scheme approved (`scheme_sha256`), and tells the desk the scheme's state (`scheme_status`: `none`,
+  `teacher`, `draft_awaiting_approval`, `approved`). An approval holds only for the scheme approved. Deleting the
+  draft's "check every line" line does not make it the teacher's own: the server keeps a hash of each line of the
+  drafts it gave that teacher for 7 days, and a scheme mostly made of one is still a draft. Tested
+  (`a_drafted_scheme_needs_the_teachers_explicit_approval_test`, `a_drafted_scheme_can_be_approved_when_the_exam_is_created_test`,
+  `a_draft_with_its_line_deleted_is_still_a_draft_test`, `the_old_draft_line_is_still_taken_off_test`); checked on
+  production ([live checks 9](evidence/live-checks/README.md)).
+- **Needs the next desktop release: the approval box.** Desktop 0.9.34 cannot send the approval, so on it an exam
+  with a drafted scheme shows no one-click row and the teacher checks every mark (the server tells it a line no mark
+  reaches). The next desk shows the statement with a box to tick, sends the approval with the exam or afterwards, and
+  shows who approved the scheme and when (17.2a).
+
 **Added after the last review, 5 Nov (edge vb1105a; no phone or desktop release needed):**
 - **Where the paper has no mark scheme, Muse Spark drafts one and the teacher approves it** (owner's design). The model
   no longer marks a class against a key nobody checked. Creating an exam from a photo or PDF of the paper, the desk's
   existing "Your mark scheme" box is filled with Muse Spark's draft (the right answer, the steps that earn each mark,
-  other answers to accept) under a line asking the teacher to check every line; creating the exam is the approval, the
-  line comes off, and every paper is marked against that one scheme (it cannot change afterwards). **One click needs a
+  other answers to accept) under a line asking the teacher to check every line; creating the exam took the line off
+  and counted as the approval (since vb1105b, block above, an explicit approval is needed for one click), and every
+  paper is marked against that one scheme (it cannot change afterwards). **One click needs a
   scheme**: on an exam with none, every mark is checked one by one, and the desk shows no one-click row. Live, from
   the unseen physics paper alone (a student's written paper): three drafts, **each with the right answer to all 30
   questions**, none copying any of the student's 24 wrong answers; the paper marked against each draft:
@@ -1376,6 +1398,9 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
   counted at their whole hold; a level's own calls never write the exam answer (48 of 48 attacks held); one click
   needs no risk flag as well as 0.95, and says whether the teacher's mark scheme or the model's own key was used. Still not done: the server holding the app's level-building
   instructions (17.2a), and an unfamiliar exam marked live against a real teacher's own marks (17.2).
+- **After the review of vb1105a, live since edge vb1105b (5 Nov):** a drafted scheme counts for one click only after
+  the teacher's explicit approval (time, teacher and the scheme's SHA-256 recorded); the desk's approval box comes with
+  the next desktop release (17.2a).
 - **After the last review, live since edge vb1105a (5 Nov):** one click only with a mark scheme the teacher approved
   (where the paper has none, Muse Spark drafts one for the teacher to check); the face look at five frames a second,
   and a look that cannot cover the whole video refuses it. A separate holding area for uploads is not built (17.2a).
@@ -1461,6 +1486,12 @@ audit's server fixes (section 13), live from edge vb1104m.
   video refuses it. Still next: the look runs after the upload, so the phone's own cover stays the first step; and a
   separate holding area for uploads, deleted within a day unless the look clears them (not built: changing where
   uploads land could not be tested safely in the time left).
+- **Next desktop release: the Exam Desk's approval box for a drafted scheme.** The server side is live since edge
+  vb1105b: a drafted scheme counts for one click only after the teacher's explicit approval, recorded with the time,
+  the teacher and the scheme's SHA-256 (section 13). Desktop 0.9.34 cannot send it, so there a drafted-scheme exam has
+  no one-click row and every mark is checked. The next desk shows the statement (*I have reviewed and approved this marking scheme for use in assessing students.*)
+  with a box to tick before the exam can be created with a draft, sends the approval, and shows who approved the
+  scheme and when. It needs a desktop release.
 - **Done after the last review (edge vb1105a): a scheme for every exam that has one click.** Where the paper has no
   mark scheme, Muse Spark drafts one and the teacher approves it; one click needs a scheme (section 13). Next: a desk
   view that shows the drafted scheme beside the paper question by question, and a scheme the teacher can correct after

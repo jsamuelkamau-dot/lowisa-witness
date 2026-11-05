@@ -9,8 +9,10 @@
 %%% 5 Nov (owner: "where no scheme is available, AI generates the scheme, reviewed and approved by the teacher"): when
 %%% the material holds no mark scheme, Muse Spark drafts one from the questions (the right answer, the steps that earn
 %%% each mark, other right answers to accept). It comes back in the scheme box under DRAFT_LINE, for the teacher to
-%%% check and correct; creating the exam with it is the teacher's approval (witness_api strips the line and records
-%%% scheme_drafted). A draft never reaches marking unseen: the exam does not exist until the teacher creates it.
+%%% check and correct; witness_api strips the line when the exam is created and records scheme_drafted. Since the
+%%% review after vb1105a, creating the exam is not the approval: the teacher approves the scheme explicitly
+%%% (POST pile/<id>/scheme/approve, or with the exam), and until then no mark on it is accepted in one click. A draft
+%%% never reaches marking unseen: the exam does not exist until the teacher creates it.
 %%%
 %%%   prompt() -> binary
 %%%   parse(ModelText) -> {ok, #{title, level, questions => [#{n, text, marks}], scheme, drafted}} | {error, unreadable | no_reading}
@@ -20,7 +22,9 @@
 -module(witness_read).
 -export([prompt/0, parse/1, run/3, mimes/0, draft_line/0, undraft/1]).
 
--define(DRAFT_LINE, <<"DRAFTED BY MUSE SPARK (your paper had no mark scheme): check and correct every line. The exam is marked against this scheme once you create it.">>).
+-define(DRAFT_LINE, <<"DRAFTED BY MUSE SPARK (your paper had no mark scheme): check and correct every line. The exam is marked against this scheme once you create it; until you approve it, you check each mark yourself.">>).
+%% the line as it read from edge vb1105a until the explicit approval: still taken off a scheme that carries it
+-define(OLD_DRAFT_LINES, [<<"DRAFTED BY MUSE SPARK (your paper had no mark scheme): check and correct every line. The exam is marked against this scheme once you create it.">>]).
 
 draft_line() -> ?DRAFT_LINE.
 
@@ -106,8 +110,9 @@ str(_) -> <<>>.
 %% undraft(Scheme) -> {SchemeWithoutTheDraftLine, WasDrafted}: the line the teacher was asked to check under is not part
 %% of the scheme the exam is marked against
 undraft(Scheme) when is_binary(Scheme) ->
-    case string:prefix(string:trim(Scheme, leading), ?DRAFT_LINE) of
-        nomatch -> {Scheme, false};
-        Rest -> {string:trim(Rest), true}
+    Lead = string:trim(Scheme, leading),
+    case [Rest || Line <- [?DRAFT_LINE | ?OLD_DRAFT_LINES], Rest <- [string:prefix(Lead, Line)], Rest =/= nomatch] of
+        [] -> {Scheme, false};
+        [Rest | _] -> {string:trim(Rest), true}
     end;
 undraft(S) -> {S, false}.

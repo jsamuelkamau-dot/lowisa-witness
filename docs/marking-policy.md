@@ -2,7 +2,8 @@
 
 This is the rule the server enforces (`witness_api:one_click/2`, `risks/2`, `key_of/1`). The Exam Desk only shows it:
 whatever list a desk sends, the server applies this rule to every mark. It took effect with edge vb1104p
-(4 November 2026); since edge vb1105a (5 November) one click needs a mark scheme the teacher approved (below).
+(4 November 2026); since edge vb1105a (5 November) one click needs a mark scheme, and since edge vb1105b (the same
+day) a scheme Muse Spark drafted counts only once the teacher has approved it explicitly (below).
 
 ## What never changes
 
@@ -23,19 +24,31 @@ the model never marks a class against a key nobody checked.**
    questions, never from handwriting on the page (`witness_read`).
 2. The draft fills the desk's **"Your mark scheme"** box under a first line saying it was drafted by Muse Spark and must
    be checked. The teacher corrects it there.
-3. **Creating the exam is the teacher's approval.** The server takes the line off, records `scheme_drafted`, and the
-   exam is marked against that scheme. A scheme cannot be changed after the exam is made, so every paper is marked
-   against the one approved version (the marking cache is keyed by it too).
+3. **The teacher approves the draft explicitly** (since edge vb1105b; the review of vb1105a: "creating the exam is
+   treated as approval"). When the exam is created the server takes the line off, records `scheme_drafted`, and marks
+   every paper against that scheme, but **no mark on it is accepted in one click until the exam's own teacher approves
+   it**, confirming word for word: *I have reviewed and approved this marking scheme for use in assessing students.* The approval records the time
+   (`scheme_approved_ms`), the approving teacher (`scheme_approved_by`) and the SHA-256 of the exact scheme approved
+   (`scheme_sha256`); it holds only for that scheme (`POST pile/<id>/scheme/approve`, or sent with the exam;
+   `witness_api:scheme_status/1`). A scheme cannot be changed after the exam is made, so every paper is marked against
+   the one approved version (the marking cache is keyed by it too).
+4. **Deleting the draft's line does not make it the teacher's own.** The server keeps, for 7 days, a hash of each line
+   of every draft it gave that teacher (compared without case or spacing, as the desk lays the lines out); a scheme
+   with at least half its lines from one of those drafts is still a draft and needs the approval.
+5. **The desk's approval box comes with the next desktop release** (README 17.2a). Desktop 0.9.34 has no such box, so
+   on it an exam with a drafted scheme shows no one-click row: the teacher checks every mark one by one, which is itself
+   the teacher's decision on each mark.
 
-| | With a mark scheme (the teacher's own, or the draft they approved) | Without any scheme |
-|---|---|---|
-| **Marks judged against** | that scheme | the model's own answer key |
-| **One click accepts** | marks called right, at least 0.95 sure, with no risk below | **nothing**: every mark is checked one by one |
-| **The desk is told** | `judged_against: mark_scheme`, `accept_at: 0.95` | `judged_against: model_key`, and a line no mark reaches (`accept_at: 1.01`), so the desk shows no one-click row |
+| | With a mark scheme (the teacher's own, or a draft they approved explicitly) | A drafted scheme not yet approved | Without any scheme |
+|---|---|---|---|
+| **Marks judged against** | that scheme | the draft | the model's own answer key |
+| **One click accepts** | marks called right, at least 0.95 sure, with no risk below | **nothing**: every mark is checked one by one | **nothing**: every mark is checked one by one |
+| **The desk is told** | `judged_against: mark_scheme`, `accept_at: 0.95`, `scheme_status: teacher` or `approved` | `judged_against: mark_scheme`, `accept_at: 1.01` (no one-click row), `scheme_status: draft_awaiting_approval` | `judged_against: model_key`, `accept_at: 1.01` (no one-click row), `scheme_status: none` |
 
 An exam without a scheme still works (a teacher who typed the questions in, or an exam made before 5 Nov): it is
-marked, and the teacher checks each mark. Desktop 0.9.34 needs no update for any of this: the box, the reader and the
-one-click row are already there; the server decides what fills them.
+marked, and the teacher checks each mark. Desktop 0.9.34 needs no update to draft and use the scheme: the box, the
+reader and the one-click row are already there, and the server decides what fills them. The explicit approval box
+needs the next desktop release (above, point 5).
 
 **Measured live (5 Nov, `harness/read/`):** Muse Spark drafted a scheme from the unseen physics paper alone (a student's
 written paper, 30 questions) three times: **every draft gave the right answer to all 30**, matching the paper's real
@@ -80,7 +93,10 @@ everyone, and it will be measured again on more real papers (README 17.2).
 
 Any change to these lines is the owner's decision, recorded here with its date and the measurement behind it.
 
+- **5 Nov 2026 (edge vb1105b):** a drafted scheme counts for one click only after the teacher's explicit approval,
+  recorded with its time, the teacher and the scheme's SHA-256; a draft whose line was deleted is still a draft (the
+  review of vb1105a: creating the exam was treated as approval). The desk's approval box: next desktop release.
 - **5 Nov 2026:** one click only with a mark scheme; where the paper has none, Muse Spark drafts one and the teacher
-  approves it by creating the exam (owner, after the last review). Edge vb1105a.
+  approves it by creating the exam (owner, after the last review). Edge vb1105a. Superseded the same day by vb1105b.
 - **4 Nov 2026:** line 0.95 (owner, from 0.90). Risk checks added (fourth independent audit). Without a mark scheme,
   one click falls back to the same rule and the desk is told the key was the model's (owner: "both options").

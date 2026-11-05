@@ -6,6 +6,7 @@
 %%%   POST pile                     {title, level?, questions?, scheme?}  -> 201 {id}
 %%%   GET  piles                                                            -> 200 {piles: [summary]}
 %%%   GET  pile/<id>                -> 200 {pile, sittings: [summary], queue: [{sitting, n, ...}]}
+%%%   POST pile/<id>/scheme/approve {approval, sha256?} -> 200 {scheme_status, accept_at, approval}  a drafted scheme, approved explicitly
 %%%        the queue is every question still to look at: least certain first, wrong thinking and "not yet" first
 %%%   POST pile/<id>/release        -> 200 {released}  marks go to the students; failed questions become mastery work
 %%%   POST join                     {code}  -> 200 {pile: {title, level}}   a student checks the teacher's join code
@@ -69,6 +70,8 @@
 -export([expires_s/2]).
 %% 4 Nov (judges' tools): the one-click rule itself, so harness/mark_my_paper and harness/trace count exactly what the desk does
 -export([one_click/2, risks/2, key_of/1, accept_at/0]).
+%% 5 Nov: a drafted scheme's explicit approval (the statement the teacher confirms, and the scheme's state)
+-export([approval_statement/0, scheme_status/1, scheme_sha256/1]).
 %% the day's money holds, for the tests (the routes reach them through daily/3 and the spends)
 -export([reserve_for_test/2, spend_for_test/4, release_for_test/2, failed_for_test/2]).
 
@@ -81,6 +84,8 @@
 %% 5 Nov: the server face look's frames a second (witness_face:fps/0, checked equal in the tests); a cached marking
 %% whose look sampled fewer is not reused
 -define(FACE_FPS, 5).
+%% 5 Nov (review after vb1105a): what a teacher confirms, word for word, to approve a drafted mark scheme
+-define(APPROVAL, <<"I have reviewed and approved this marking scheme for use in assessing students.">>).
 %% Longer than every try and wait together (three marking calls of up to 5 minutes each, SAM's wait after them).
 -define(STUCK_MS, 2700000).
 %% A video over one part goes up in parts of this size (S3's least is 5 MB), when the phone asks for parts.
@@ -105,10 +110,30 @@ route(<<"POST">>, [<<"pile">>], B, Uid, Host) ->
             Photo = photo_code(Uid, Id, Host),
             %% preview: the teacher looks at each mastery level before it reaches the student. 30 Oct (judges' panel:
             %% "held for the teacher" should be true out of the box): on unless the teacher turns it off
-            ok = Host:save(Uid, {pile, Id}, (sitting_of(B))#{title => Title, sittings => [], created_ms => now_ms(), code => Code,
+            ok = Host:save(Uid, {pile, Id}, (scheme_of(B, Uid, Host))#{title => Title, sittings => [], created_ms => now_ms(), code => Code,
                                                               photo_code => Photo, recheck_days => recheck_days(B),
                                                               preview => maps:get(<<"preview">>, B, true) =/= false}),
             {201, #{ok => true, id => Id, code => Code, photo_code => Photo}}
+    end;
+%% 5 Nov (review after vb1105a: "creating the exam is treated as approval; require an explicit approval decision, with
+%% an approval time and the approving teacher"): a scheme Muse Spark drafted is marked against, but no mark on it is
+%% accepted in one click until the exam's teacher approves it here, confirming the statement word for word. The
+%% approval records when, who, and the SHA-256 of the exact scheme approved (a scheme cannot change after creation).
+route(<<"POST">>, [<<"pile">>, Id, <<"scheme">>, <<"approve">>], B, Uid, Host) ->
+    case {statement_ok(maps:get(<<"approval">>, B, <<>>)), Host:load(Uid, {pile, Id})} of
+        {false, _} -> refuse(400, <<"approval_statement">>, <<"To approve the scheme, confirm: ", ?APPROVAL/binary>>);
+        {true, none} -> refuse(404, <<"no_pile">>, <<"That exam isn't here.">>);
+        {true, {ok, P}} ->
+            Sha = scheme_sha256(P),
+            case {key_of(P), maps:get(<<"sha256">>, B, Sha)} of
+                {<<"model_key">>, _} -> refuse(409, <<"no_scheme">>, <<"This exam has no mark scheme to approve.">>);
+                {_, Seen} when Seen =/= Sha -> refuse(409, <<"scheme_changed">>, <<"That isn't the scheme this exam has. Open the exam again.">>);
+                _ ->
+                    {ok, P1} = upd(Uid, {pile, Id}, fun({ok, X}) -> case approved(X) of true -> X; false -> approve(X, Uid) end;
+                                                        (none) -> stop end, Host),
+                    {200, #{ok => true, scheme_status => scheme_status(P1), accept_at => accept_at_for(P1),
+                            approval => maps:with([scheme_approved_ms, scheme_approved_by, scheme_sha256, scheme_approval], P1)}}
+            end
     end;
 route(<<"GET">>, [<<"piles">>], _B, Uid, Host) ->
     Ps = lists:sort(fun({_, A}, {_, B}) -> maps:get(created_ms, A, 0) >= maps:get(created_ms, B, 0) end, Host:list(Uid, pile)),
@@ -129,7 +154,8 @@ route(<<"GET">>, [<<"pile">>, Id], _B, Uid, Host) ->
             Gone = [S || {S, {ok, R}} <- All, lapsed(R)],
             Gone =:= [] orelse upd(Uid, {pile, Id}, fun({ok, X}) -> X#{sittings => maps:get(sittings, X, []) -- Gone}; (none) -> stop end, Host),
             Ss = [{S, settle(Uid, S, R, Host)} || {S, {ok, R}} <- All, not lists:member(S, Gone)],
-            {200, #{ok => true, pile => maps:without([sittings], P#{id => Id, accept_at => accept_at_for(P), judged_against => key_of(P)}),
+            {200, #{ok => true, pile => maps:without([sittings], P#{id => Id, accept_at => accept_at_for(P), judged_against => key_of(P),
+                                                           scheme_status => scheme_status(P), scheme_sha256 => scheme_sha256(P)}),
                     sittings => [summary(S, R) || {S, R} <- Ss], queue => queue(Ss), ready => ready(Ss), held => held(Ss)}}
     end;
 %% 30 Oct (judges' panel: nothing could be deleted). The teacher deletes a paper, or a whole exam: its rows, the
@@ -807,7 +833,8 @@ read_file(Uid, Key, Mime, Bytes, Host) ->
         over -> refuse(429, <<"daily_limit">>, over_words());
         {ok, H} ->
             case again(Host, fun() -> (reader(Host))(Key, Mime, Bytes) end) of
-                {ok, Read, Cost} -> spend(Host, Uid, <<"witness_read">>, Cost, H), {200, maps:merge(#{ok => true}, Read)};
+                {ok, Read, Cost} -> spend(Host, Uid, <<"witness_read">>, Cost, H), remember_draft(Uid, Read, Host),
+                                    {200, maps:merge(#{ok => true, approval_statement => ?APPROVAL}, Read)};
                 {error, unreadable} -> failed(H, Host), refuse(422, <<"unreadable">>, <<"That doesn't look like an exam paper or a mark scheme.">>);
                 Why -> failed(H, Host), report(Host, <<"witness.read_failed">>, Why), refuse(502, <<"read_failed">>, <<"Couldn't read it this time. Try again in a moment.">>)
             end
@@ -2106,7 +2133,8 @@ bulk_one(Uid, S, N, Step, Host) ->
 accept_at() -> ?ACCEPT_AT.
 %% what the desk is told the line is: above any confidence on an exam without a scheme, so the desk (0.9.34 and before)
 %% shows no one-click row there; the bulk route refuses those marks anyway (one_click/2)
-accept_at_for(Pile) -> case key_of(Pile) of <<"mark_scheme">> -> ?ACCEPT_AT; _ -> 1.01 end.
+%% 5 Nov: and on a drafted scheme not yet approved
+accept_at_for(Pile) -> case scheme_ready(Pile) of true -> ?ACCEPT_AT; false -> 1.01 end.
 %% 4 Nov (fourth audit, finding D: "model confidence is not a calibrated probability; flag conflicting readings,
 %% overwritten answers, ambiguous handwriting and questionable answer-key matches for review even above 0.95"): a mark
 %% with any of these risks is never accepted in one click, however sure the model was.
@@ -2116,9 +2144,86 @@ accept_at_for(Pile) -> case key_of(Pile) of <<"mark_scheme">> -> ?ACCEPT_AT; _ -
 %% 5 Nov (owner, after the last review: "a model can be 99% sure and still wrong"; where no scheme is available the AI
 %% drafts one and the teacher approves it): one click only on an exam with a mark scheme, the teacher's own or a draft
 %% the teacher checked when creating the exam. Without one, every mark is checked one by one.
+%% 5 Nov (review after vb1105a): a drafted scheme counts only once the teacher approved it explicitly (scheme_ready/1).
 one_click(Q, Pile) ->
-    key_of(Pile) =:= <<"mark_scheme">> andalso maps:get(result, Q, <<>>) =:= <<"mastered">> andalso is_number(maps:get(confidence, Q, 0))
+    scheme_ready(Pile) andalso maps:get(result, Q, <<>>) =:= <<"mastered">> andalso is_number(maps:get(confidence, Q, 0))
         andalso maps:get(confidence, Q, 0) >= ?ACCEPT_AT andalso risks(Q, Pile) =:= [].
+
+%% ---------------------------------------------------------------- a drafted scheme's approval (5 Nov)
+approval_statement() -> ?APPROVAL.
+
+statement_ok(S) when is_binary(S) -> string:trim(S) =:= ?APPROVAL;
+statement_ok(_) -> false.
+
+%% scheme_status(Exam) -> none (the model's own key) | teacher (the teacher's own scheme) | draft_awaiting_approval |
+%% approved (explicitly, for the exact scheme the exam has)
+scheme_status(Pile) ->
+    case {key_of(Pile), approved(Pile), maps:get(scheme_drafted, Pile, false)} of
+        {<<"model_key">>, _, _} -> <<"none">>;
+        {_, true, _} -> <<"approved">>;
+        {_, false, true} -> <<"draft_awaiting_approval">>;
+        _ -> <<"teacher">>
+    end.
+
+%% one click may count on the scheme: the teacher's own, or a draft the teacher explicitly approved
+scheme_ready(Pile) ->
+    case scheme_status(Pile) of <<"teacher">> -> true; <<"approved">> -> true; _ -> false end.
+
+%% an approval holds only for the exact scheme approved
+approved(Pile) ->
+    is_integer(maps:get(scheme_approved_ms, Pile, undefined)) andalso key_of(Pile) =:= <<"mark_scheme">>
+        andalso maps:get(scheme_sha256, Pile, undefined) =:= scheme_sha256(Pile).
+
+approve(Pile, Uid) ->
+    Pile#{scheme_approved_ms => now_ms(), scheme_approved_by => Uid, scheme_sha256 => scheme_sha256(Pile), scheme_approval => ?APPROVAL}.
+
+scheme_sha256(Pile) -> binary:encode_hex(crypto:hash(sha256, str(maps:get(scheme, Pile, <<>>))), lowercase).
+
+%% The exam's scheme as created. A draft is known by its line (witness_read:undraft/1) or, if the teacher deleted the
+%% line, by its own lines: when at least half of the scheme's lines are lines of a draft this teacher was given in the
+%% last 7 days, it is still a draft. An explicit approval may come with the creation itself (a desk with the box).
+scheme_of(B, Uid, Host) ->
+    P0 = sitting_of(B),
+    P1 = case maps:get(scheme_drafted, P0) of
+        true -> P0;
+        false -> P0#{scheme_drafted => key_of(P0) =:= <<"mark_scheme">> andalso from_draft(Uid, maps:get(scheme, P0), Host)}
+    end,
+    case maps:get(<<"approve_scheme">>, B, false) =:= true andalso statement_ok(maps:get(<<"approval">>, B, <<>>))
+         andalso key_of(P1) =:= <<"mark_scheme">> of
+        true -> approve(P1, Uid);
+        false -> P1
+    end.
+
+-define(DRAFT_DAYS, 7).
+remember_draft(Uid, #{drafted := true, scheme := S}, Host) ->
+    {Body, _} = witness_read:undraft(S),
+    Lines = draft_lines(Body),
+    Lines =:= [] orelse begin
+        Since = now_ms() - ?DRAFT_DAYS * 86400000,
+        _ = upd(Uid, {mark_cache, <<"drafts">>},
+                fun(R) -> Old = case R of {ok, #{drafts := D}} -> [X || #{ms := M} = X <- D, M >= Since]; _ -> [] end,
+                          #{drafts => lists:sublist([#{ms => now_ms(), lines => Lines} | Old], 10), at => now_ms()} end, Host)
+    end,
+    ok;
+remember_draft(_, _, _) -> ok.
+
+from_draft(Uid, Scheme, Host) ->
+    case draft_lines(Scheme) of
+        [] -> false;
+        Lines ->
+            Since = now_ms() - ?DRAFT_DAYS * 86400000,
+            Drafts = case Host:load(Uid, {mark_cache, <<"drafts">>}) of {ok, #{drafts := D}} -> [L || #{ms := M, lines := L} <- D, M >= Since]; _ -> [] end,
+            lists:any(fun(D) -> 2 * length([x || L <- Lines, lists:member(L, D)]) >= length(Lines) end, Drafts)
+    end.
+
+%% a scheme's lines, as the desk shows them (each question's rule on its own line), compared without case or spacing
+draft_lines(S) when is_binary(S) ->
+    S1 = re:replace(S, "\\s+(Q\\d+\\s*[:.)])", "\n\\1", [global, unicode, {return, binary}]),
+    lists:usort([binary:part(crypto:hash(sha256, L), 0, 8)
+                 || L0 <- binary:split(S1, [<<"\r\n">>, <<"\n">>], [global]),
+                    L <- [string:lowercase(re:replace(string:trim(L0), "\\s+", " ", [global, unicode, {return, binary}]))],
+                    byte_size(L) >= 8]);
+draft_lines(_) -> [].
 
 %% what the exam's marks were judged against: the teacher's mark scheme, or (none given) the model's own key
 key_of(Pile) ->

@@ -113,6 +113,23 @@ or pass a video it had not read to the end. Checked on production as the probe a
 | The first 60% of a valid desk video (cut off) | **refused as unsure**: "This video could not be fully checked for faces, so it was deleted without being marked..." |
 | A face-free video (a writing hand, no exam paper in it) | **passed the face look and went to marking**, which said the paper could not be seen (it is not this exam's paper): the clear path runs end to end at five frames a second |
 
+## 9. After edge vb1105b went live (00:42 UTC on 5 Nov): a drafted scheme's explicit approval
+
+The review of vb1105a: creating the exam was treated as the teacher's approval of a drafted scheme. Since vb1105b the
+teacher approves it explicitly. Checked on production as the probe account
+([`after-vb1105b.json`](after-vb1105b.json)), with the unseen physics paper (no scheme on it); all four test exams
+deleted afterwards.
+
+| Check | Result |
+|---|---|
+| The desk's "start from your own paper" | 30 questions read, a drafted scheme under the line (which now says the teacher checks each mark until they approve it), and the statement to confirm |
+| The exam created with the draft, as desktop 0.9.34 sends it | marked against the draft, `scheme_status: draft_awaiting_approval`, one-click line 1.01: **no one click before approval** |
+| Approving with no statement / for a different scheme | **refused** (400 / 409), nothing recorded |
+| Approving with the statement, for the exam's own scheme | `approved`, one-click line 0.95, **approved by the probe teacher, with the time and the scheme's SHA-256** (which matches the scheme) |
+| The same draft with its line deleted | **still `draft_awaiting_approval`**, line 1.01 |
+| The draft approved with the exam itself (what the next desk sends) | `approved` at creation, by the probe teacher, line 0.95 |
+| A teacher's own scheme | `teacher`, line 0.95: unchanged |
+
 ## Not checked live
 
 - A level built end to end on a phone (the probe has no phone): the level's design calls were checked against the

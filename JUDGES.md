@@ -24,8 +24,9 @@ chatbot: the learner is never handed an answer.
   parents'") was fixed the same day.
 - **An unreadable photo is never marked**: both came back "photograph it again", with nothing marked.
 - **One click accepts only marks at least 0.95 sure, and only on an exam with a mark scheme the teacher approved**
-  (since edge vb1105a: where the paper has none, Muse Spark drafts one for the teacher to check before the exam is
-  made), the server's money holds settle, and expired rows read as gone. What one click takes: [`docs/marking-policy.md`](docs/marking-policy.md).
+  (since edge vb1105a: where the paper has none, Muse Spark drafts one for the teacher to check; since vb1105b a
+  draft counts only once the teacher approves it explicitly, with the time, the teacher and the scheme's SHA-256
+  recorded; the desk's approval box comes with the next desktop release), the server's money holds settle, and expired rows read as gone. What one click takes: [`docs/marking-policy.md`](docs/marking-policy.md).
 - **20 of 20 of Lo's turns fired together on one teacher's wallet were paid** (after two fixes the live checks found).
 
 Details are in [`evidence/live-checks/`](evidence/live-checks/README.md).
@@ -35,7 +36,7 @@ Details are in [`evidence/live-checks/`](evidence/live-checks/README.md).
 | What | Version |
 |---|---|
 | Code the measurements ran on | tag `v1.0.1-code` (three runs of every real set); earlier runs in [`harness/PROVENANCE.md`](harness/PROVENANCE.md) |
-| Production server (Witness library) | `v1.0.2-code` plus the audit fixes in README section 13, edge vb1105a (live 5 Nov, 21:30 UTC on 4 Nov: the approved mark scheme and the stricter face look; each edge release is listed there) |
+| Production server (Witness library) | `v1.0.2-code` plus the audit fixes in README section 13, edge vb1105b (live 5 Nov, 00:42 UTC: a drafted scheme's explicit approval; vb1105a, 21:30 UTC on 4 Nov: the drafted mark scheme and the stricter face look; each edge release is listed there) |
 | Phone apps in the stores | **Google Play: LoWisa 1.10.5** (published 4 Nov), with the phone fixes in README 17.1; Android phones on 1.10.4 are offered the update. **App Store: LoWisa 1.10.5** (released 4 Nov, 21:37 UTC) |
 | Desktop app | **LoWisa desktop 0.9.34** (released 4 Nov, Windows, macOS and Linux), with the desk's fixes in README 17.1 |
 | This repository's history | Republished fresh on 4 Nov 2026 with every commit kept (same files and dates); the hashes in these files are the original repository's, mapped in [`DEVELOPMENT-PROVENANCE.md`](DEVELOPMENT-PROVENANCE.md) |

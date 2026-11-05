@@ -126,7 +126,11 @@ hearer() -> fun(<<"test-key">>, <<"audio-bytes">>) -> {ok, <<"Because I divided 
 
 %% 28 Oct re-audit seams: each off unless its test turns it on
 reader() -> fun(<<"test-key">>, Mime, Bytes) -> ev({read, Mime, Bytes}),
-    {ok, #{title => <<"Algebra quiz">>, level => <<"Year 8">>, questions => [#{n => 1, text => <<"Expand 3(x + 4)">>, marks => 2}], scheme => <<"Q1: 1 mark each term">>}, 0.003} end.
+    case persistent_term:get(witness_api_read_draft, false) of
+        false -> {ok, #{title => <<"Algebra quiz">>, level => <<"Year 8">>, questions => [#{n => 1, text => <<"Expand 3(x + 4)">>, marks => 2}], scheme => <<"Q1: 1 mark each term">>}, 0.003};
+        Draft -> {ok, #{title => <<"Physics">>, level => <<"Year 10">>, questions => [#{n => 1, text => <<"Q">>, marks => 1}],
+                        scheme => <<(witness_read:draft_line())/binary, "\n", Draft/binary>>, drafted => true}, 0.003}
+    end end.
 patterner() -> fun(<<"test-key">>, Exam, Items) -> ev({patterns, Exam, Items}),
     {ok, #{patterns => [#{idea => <<"Cancels digits">>, students => [<<"Amara">>], questions => [3], turned_around => 0, reteach => <<"r">>}],
            tomorrow => <<"t">>, next_exam => [#{text => <<"Simplify 18/48">>, marks => 2}]}, 0.05} end.
@@ -149,7 +153,8 @@ events() -> [E || {K, E} <- lists:sort(ets:tab2list(witness_api_t)), is_integer(
 setup() -> case ets:whereis(witness_api_t) of undefined -> ok; _ -> ets:delete(witness_api_t) end, ets:new(witness_api_t, [named_table, public]), persistent_term:put(witness_api_fail, false), persistent_term:erase(witness_api_result),
            [persistent_term:erase({witness_api_on, K}) || K <- [stills, examiner, open, world, clips, cache]], persistent_term:erase(witness_api_exbusy),
            persistent_term:erase(witness_api_check_passes), persistent_term:erase(witness_api_design_text),
-           persistent_term:erase(witness_api_during), persistent_term:erase(witness_api_face), persistent_term:erase(witness_api_looked).
+           persistent_term:erase(witness_api_during), persistent_term:erase(witness_api_face), persistent_term:erase(witness_api_looked),
+           persistent_term:erase(witness_api_read_draft).
 
 r(M, P, B, Uid) -> witness_api:route(M, P, B, Uid, ?MODULE).
 
@@ -1603,10 +1608,98 @@ an_exam_from_a_checked_draft_scheme_is_marked_against_it_test() ->
     Draft = <<(witness_read:draft_line())/binary, "\nQ1: 1/4, 1 mark">>,
     {201, #{id := P}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Drafted">>, <<"scheme">> => Draft}, <<"teacher">>),
     {200, #{pile := Pile}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>),
-    ?assertMatch(#{scheme := <<"Q1: 1/4, 1 mark">>, scheme_drafted := true, judged_against := <<"mark_scheme">>, accept_at := 0.95}, Pile),
+    %% marked against the draft, but (since the review after vb1105a) not accepted in one click until approved explicitly
+    ?assertMatch(#{scheme := <<"Q1: 1/4, 1 mark">>, scheme_drafted := true, judged_against := <<"mark_scheme">>, accept_at := 1.01,
+                   scheme_status := <<"draft_awaiting_approval">>}, Pile),
+    Q = #{result => <<"mastered">>, confidence => 0.99, final_answer => <<"1/4">>, steps => []},
+    ?assertNot(witness_api:one_click(Q, Pile)),
+    ?assertNot(witness_api:one_click(Q, #{scheme => <<>>})).
+
+%% 5 Nov (review after vb1105a: "creating the exam is treated as approval"): the teacher approves a drafted scheme
+%% explicitly, confirming the statement word for word; the approval records when, who, and the exact scheme
+a_drafted_scheme_needs_the_teachers_explicit_approval_test() ->
+    setup(),
+    Draft = <<(witness_read:draft_line())/binary, "\nQ1: 1/4, 1 mark">>,
+    {201, #{id := P}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Drafted">>, <<"scheme">> => Draft}, <<"teacher">>),
+    {200, #{pile := #{scheme_sha256 := Sha}}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>),
+    Statement = witness_api:approval_statement(),
+    ?assertEqual(<<"I have reviewed and approved this marking scheme for use in assessing students.">>, Statement),
+    %% no statement, or a different one: refused, nothing recorded
+    ?assertMatch({400, #{code := <<"approval_statement">>}}, r(<<"POST">>, [<<"pile">>, P, <<"scheme">>, <<"approve">>], #{}, <<"teacher">>)),
+    ?assertMatch({400, #{code := <<"approval_statement">>}},
+                 r(<<"POST">>, [<<"pile">>, P, <<"scheme">>, <<"approve">>], #{<<"approval">> => <<"ok">>}, <<"teacher">>)),
+    %% another account cannot approve this teacher's exam
+    ?assertMatch({404, _}, r(<<"POST">>, [<<"pile">>, P, <<"scheme">>, <<"approve">>], #{<<"approval">> => Statement}, <<"other">>)),
+    %% approving a scheme other than the one the exam has is refused
+    ?assertMatch({409, #{code := <<"scheme_changed">>}},
+                 r(<<"POST">>, [<<"pile">>, P, <<"scheme">>, <<"approve">>], #{<<"approval">> => Statement, <<"sha256">> => <<"00">>}, <<"teacher">>)),
+    {200, #{pile := Still}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>),
+    ?assertMatch(#{scheme_status := <<"draft_awaiting_approval">>, accept_at := 1.01}, Still),
+    ?assertNot(maps:is_key(scheme_approved_ms, Still)),
+    %% the exam's teacher approves it
+    {200, A} = r(<<"POST">>, [<<"pile">>, P, <<"scheme">>, <<"approve">>], #{<<"approval">> => Statement, <<"sha256">> => Sha}, <<"teacher">>),
+    ?assertMatch(#{scheme_status := <<"approved">>, accept_at := 0.95,
+                   approval := #{scheme_approved_by := <<"teacher">>, scheme_sha256 := Sha, scheme_approval := Statement}}, A),
+    #{approval := #{scheme_approved_ms := When}} = A,
+    ?assert(is_integer(When)),
+    {200, #{pile := Pile}} = r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>),
+    ?assertMatch(#{scheme_status := <<"approved">>, accept_at := 0.95, scheme_approved_by := <<"teacher">>, scheme_approved_ms := When}, Pile),
     Q = #{result => <<"mastered">>, confidence => 0.99, final_answer => <<"1/4">>, steps => []},
     ?assert(witness_api:one_click(Q, Pile)),
-    ?assertNot(witness_api:one_click(Q, #{scheme => <<>>})).
+    %% approving again changes nothing (the first approval's time and teacher stay)
+    ?assertMatch({200, #{approval := #{scheme_approved_ms := When}}},
+                 r(<<"POST">>, [<<"pile">>, P, <<"scheme">>, <<"approve">>], #{<<"approval">> => Statement}, <<"teacher">>)),
+    %% an approval holds only for the scheme approved: the same record with another scheme is not approved
+    ?assertEqual(<<"draft_awaiting_approval">>, witness_api:scheme_status(Pile#{scheme => <<"Q1: 1/2, 1 mark">>})),
+    ?assertNot(witness_api:one_click(Q, Pile#{scheme => <<"Q1: 1/2, 1 mark">>})),
+    %% an exam with no scheme has nothing to approve
+    {201, #{id := P0}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"No scheme">>}, <<"teacher">>),
+    ?assertMatch({409, #{code := <<"no_scheme">>}}, r(<<"POST">>, [<<"pile">>, P0, <<"scheme">>, <<"approve">>], #{<<"approval">> => Statement}, <<"teacher">>)),
+    ?assertMatch({200, #{pile := #{scheme_status := <<"none">>, accept_at := 1.01}}}, r(<<"GET">>, [<<"pile">>, P0], #{}, <<"teacher">>)),
+    %% the teacher's own scheme (not drafted) is the teacher's: one click as before
+    {201, #{id := P1}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Own">>, <<"scheme">> => <<"Q1: 1/4, 1 mark">>}, <<"teacher">>),
+    ?assertMatch({200, #{pile := #{scheme_status := <<"teacher">>, accept_at := 0.95}}}, r(<<"GET">>, [<<"pile">>, P1], #{}, <<"teacher">>)).
+
+%% a scheme drafted before this change (the old line) still loses its line and is still a draft
+the_old_draft_line_is_still_taken_off_test() ->
+    Old = <<"DRAFTED BY MUSE SPARK (your paper had no mark scheme): check and correct every line. The exam is marked against this scheme once you create it.\nQ1: 1/4">>,
+    ?assertEqual({<<"Q1: 1/4">>, true}, witness_read:undraft(Old)),
+    ?assertEqual({<<"Q1: 1/4">>, true}, witness_read:undraft(<<(witness_read:draft_line())/binary, "\nQ1: 1/4">>)),
+    ?assertEqual({<<"Q1: 1/4">>, false}, witness_read:undraft(<<"Q1: 1/4">>)).
+
+%% a desk with the approval box sends the approval with the exam itself: approved at creation, by the creating teacher
+a_drafted_scheme_can_be_approved_when_the_exam_is_created_test() ->
+    setup(),
+    Draft = <<(witness_read:draft_line())/binary, "\nQ1: 1/4, 1 mark">>,
+    {201, #{id := P}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Drafted">>, <<"scheme">> => Draft, <<"approve_scheme">> => true,
+                                                       <<"approval">> => witness_api:approval_statement()}, <<"teacher">>),
+    ?assertMatch({200, #{pile := #{scheme_status := <<"approved">>, scheme_approved_by := <<"teacher">>, accept_at := 0.95}}},
+                 r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>)),
+    %% the box ticked without the statement is no approval
+    {201, #{id := P2}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Drafted">>, <<"scheme">> => Draft, <<"approve_scheme">> => true}, <<"teacher">>),
+    ?assertMatch({200, #{pile := #{scheme_status := <<"draft_awaiting_approval">>, accept_at := 1.01}}}, r(<<"GET">>, [<<"pile">>, P2], #{}, <<"teacher">>)).
+
+%% deleting the "check every line" line does not turn a draft into the teacher's own scheme: the server knows the
+%% drafts it gave this teacher (lines compared without case or spacing, as the desk lays them out)
+a_draft_with_its_line_deleted_is_still_a_draft_test() ->
+    setup(),
+    persistent_term:put(witness_api_read_draft, <<"Q1: 3.75 m/s, 1 mark Q2: 12 N upward, 2 marks Q3: the nail sinks, density above water">>),
+    {200, #{scheme := S, approval_statement := Statement}} =
+        r(<<"POST">>, [<<"pile">>, <<"read">>], #{<<"mime">> => <<"image/jpeg">>, <<"file">> => base64:encode(<<"jpegbytes">>)}, <<"teacher">>),
+    ?assertEqual(witness_api:approval_statement(), Statement),
+    {Body, true} = witness_read:undraft(S),
+    %% the teacher deletes the line, the desk puts each question on its own line, one line is corrected
+    Edited = <<"Q1: 3.75 m/s, 1 mark\nq2:   12 N upward, 2 marks\nQ3: the nail sinks because steel is denser than water">>,
+    {201, #{id := P}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Physics">>, <<"scheme">> => Edited}, <<"teacher">>),
+    ?assertMatch({200, #{pile := #{scheme_drafted := true, scheme_status := <<"draft_awaiting_approval">>, accept_at := 1.01}}},
+                 r(<<"GET">>, [<<"pile">>, P], #{}, <<"teacher">>)),
+    %% the same text from another teacher, who was given no draft, is that teacher's own scheme
+    {201, #{id := P2}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Physics">>, <<"scheme">> => Body}, <<"other">>),
+    ?assertMatch({200, #{pile := #{scheme_status := <<"teacher">>}}}, r(<<"GET">>, [<<"pile">>, P2], #{}, <<"other">>)),
+    %% a scheme mostly rewritten by the teacher is the teacher's own
+    {201, #{id := P3}} = r(<<"POST">>, [<<"pile">>], #{<<"title">> => <<"Physics">>, <<"scheme">> =>
+        <<"Q1: speed 3.75 m/s with units\nQ2: buoyant force 12 N, direction up\nQ3: the nail sinks, density above water">>}, <<"teacher">>),
+    ?assertMatch({200, #{pile := #{scheme_status := <<"teacher">>}}}, r(<<"GET">>, [<<"pile">>, P3], #{}, <<"teacher">>)).
 
 %% 5 Nov (owner, after the last review: "refuse uncertain results"): a face look that could not cover the whole video
 %% deletes it unmarked, nothing kept, and the teacher is told to have the paper photographed

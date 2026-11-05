@@ -1,0 +1,68 @@
+{
+ "read": {
+  "status": 200,
+  "questions": 30,
+  "drafted": true,
+  "statement_sent": true,
+  "line_says_approve": true
+ },
+ "created": {
+  "scheme_drafted": true,
+  "scheme_status": "draft_awaiting_approval",
+  "judged_against": "mark_scheme",
+  "accept_at": 1.01,
+  "scheme_approved_by": null,
+  "approved_ms_set": false,
+  "sha_matches": true
+ },
+ "approve_no_statement": 400,
+ "approve_wrong_scheme": 409,
+ "approve": {
+  "status": 200,
+  "scheme_status": "approved",
+  "accept_at": 0.95,
+  "by_probe": true
+ },
+ "after_approval": {
+  "scheme_drafted": true,
+  "scheme_status": "approved",
+  "judged_against": "mark_scheme",
+  "accept_at": 0.95,
+  "scheme_approved_by": "wprobe_witness_live",
+  "approved_ms_set": true,
+  "sha_matches": true
+ },
+ "line_deleted": {
+  "scheme_drafted": true,
+  "scheme_status": "draft_awaiting_approval",
+  "judged_against": "mark_scheme",
+  "accept_at": 1.01,
+  "scheme_approved_by": null,
+  "approved_ms_set": false,
+  "sha_matches": true
+ },
+ "approved_at_creation": {
+  "scheme_drafted": true,
+  "scheme_status": "approved",
+  "judged_against": "mark_scheme",
+  "accept_at": 0.95,
+  "scheme_approved_by": "wprobe_witness_live",
+  "approved_ms_set": true,
+  "sha_matches": true
+ },
+ "own_scheme": {
+  "scheme_drafted": false,
+  "scheme_status": "teacher",
+  "judged_against": "mark_scheme",
+  "accept_at": 0.95,
+  "scheme_approved_by": null,
+  "approved_ms_set": false,
+  "sha_matches": true
+ },
+ "deleted": [
+  200,
+  200,
+  200,
+  200
+ ]
+}
