@@ -12,7 +12,7 @@ correctly, **without AI and weeks later**, more often than students who get the 
 
 ## Design
 
-- **Where:** classes in schools that join the pilot (README 17.6). The school and the parents consent first, and every
+- **Where:** classes in schools that join the pilot (README 17.1). The school and the parents consent first, and every
   student may leave at any time. No student is denied normal teaching.
 - **Randomised within each class, by question.** Each student's failed questions are split at random into two halves.
   - **Mastery Plan**: the question becomes a level (Lo, the challenge, the teacher's "Turned around").

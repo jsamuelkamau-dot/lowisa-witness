@@ -37,8 +37,8 @@ Details are in [`evidence/live-checks/`](evidence/live-checks/README.md).
 |---|---|
 | Code the measurements ran on | tag `v1.0.1-code` (three runs of every real set); earlier runs in [`harness/PROVENANCE.md`](harness/PROVENANCE.md) |
 | Production server (Witness library) | `v1.0.2-code` plus the audit fixes in README section 13, edge vb1105b (live 5 Nov, 00:42 UTC: a drafted scheme's explicit approval; vb1105a, 21:30 UTC on 4 Nov: the drafted mark scheme and the stricter face look; each edge release is listed there) |
-| Phone apps in the stores | **Google Play: LoWisa 1.10.5** (published 4 Nov), with the phone fixes in README 17.1; Android phones on 1.10.4 are offered the update. **App Store: LoWisa 1.10.5** (released 4 Nov, 21:37 UTC); iPhones on 1.10.4 are offered the update (since 5 Nov) |
-| Desktop app | **LoWisa desktop 0.9.34** (released 4 Nov, Windows, macOS and Linux), with the desk's fixes in README 17.1 |
+| Phone apps in the stores | **Google Play: LoWisa 1.10.5** (published 4 Nov), with the phone fixes in README 17.8; Android phones on 1.10.4 are offered the update. **App Store: LoWisa 1.10.5** (released 4 Nov, 21:37 UTC); iPhones on 1.10.4 are offered the update (since 5 Nov) |
+| Desktop app | **LoWisa desktop 0.9.34** (released 4 Nov, Windows, macOS and Linux), with the desk's fixes in README 17.8 |
 | This repository's history | Republished fresh on 4 Nov 2026 with every commit kept (same files and dates); the hashes in these files are the original repository's, mapped in [`DEVELOPMENT-PROVENANCE.md`](DEVELOPMENT-PROVENANCE.md) |
 
 ## What is proven, and what is not yet

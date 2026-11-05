@@ -35,7 +35,7 @@ the model never marks a class against a key nobody checked.**
 4. **Deleting the draft's line does not make it the teacher's own.** The server keeps, for 7 days, a hash of each line
    of every draft it gave that teacher (compared without case or spacing, as the desk lays the lines out); a scheme
    with at least half its lines from one of those drafts is still a draft and needs the approval.
-5. **The desk's approval box comes with the next desktop release** (README 17.2a). Desktop 0.9.34 has no such box, so
+5. **The desk's approval box comes with the next desktop release** (README 17.7). Desktop 0.9.34 has no such box, so
    on it an exam with a drafted scheme shows no one-click row: the teacher checks every mark one by one, which is itself
    the teacher's decision on each mark.
 
@@ -87,7 +87,7 @@ read once, nothing struck out. The wrong answers still accepted were all judged 
 model's own key. **That is why, since 5 Nov, one click needs a scheme the teacher approved.** With one, the remaining
 risk is the model misreading the handwriting or misapplying the scheme, which the risk checks and the teacher's
 release are for; marking is still not perfect. One learner's papers are not enough to set the line for
-everyone, and it will be measured again on more real papers (README 17.2).
+everyone, and it will be measured again on more real papers (README 17.5).
 
 ## Changing this policy
 

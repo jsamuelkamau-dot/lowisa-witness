@@ -231,11 +231,12 @@ Where each Meta model works:
   the code check between each, and what each check changed, measured.
 - **Try it in one minute:** `node demo/desk-server.js --replay`, with no account and no key; or live with your own phone
   (section 12).
-- **What comes next (section 17):** a Mastery Plan on every question a learner fails anywhere in LoWisa (Study Kit
-  practice, every test question in the phone and desktop apps, the desktop app's electronic exams), interactive
-  experiments the learner can change and investigate, and a pilot in schools. It also lists the fixes that needed an
-  app release (shipped on Google Play and the App Store), the measurements still to run, and where to send us feedback: ten days were
-  not enough for everything, and we will keep improving.
+- **What comes next (section 17), in order of impact:** a pilot in schools first; then a Mastery Plan on every
+  question a learner fails anywhere in LoWisa (Study Kit practice, every test question in the phone and desktop apps,
+  the desktop app's electronic exams); interactive experiments the learner can change and investigate; then the
+  measurements still to run, where to send us feedback, and last the fixes (still to build, and those that needed an
+  app release, shipped on Google Play and the App Store): ten days were not enough for everything, and we will keep
+  improving.
 - **Names used here:** *Lo* is LoWisa's tutor. *Witness* is the code name of the marker (the `witness_*` modules) and of
   the optional desk-filming mode. Part of [LoWisa](https://lowisa.dev), for the Meta Global AI Developer Hackathon.
 
@@ -672,7 +673,7 @@ The time that comes back is spent on the learners, on the work only a teacher sh
   explanation to read, and the "Turned around" decision (sections 3.6 and 13).
 
 **Not yet measured:** a teacher's own minutes per paper with real teachers. The desk already records them
-(`witness_measure`: the seconds each paper is open while reviewed); the pilot will report them (section 17.6).
+(`witness_measure`: the seconds each paper is open while reviewed); the pilot will report them (section 17.1).
 
 **What it costs**, measured on the production edge and priced at Meta's published rates:
 
@@ -810,7 +811,7 @@ fixed and re-run the same day: a written explanation had been treated as a bare 
 given full marks. **So the marking result above is unseen, but for naming ideas this paper is now a development paper**:
 the rule was changed on it, and after the change question 24's idea was named in 6 of 6 runs (4 of 6 before). The levels
 for questions 23 and 24 were then built live, and their self-checks passed. One paper is one paper: more unseen
-subjects, marked by an outside teacher, are the next step (section 17.6).
+subjects, marked by an outside teacher, are the next step (section 17.1).
 
 ### Held out: 53 papers, first run blind, then run again on the shipped code
 
@@ -847,7 +848,7 @@ from 13 s to 22 s, with the answers-only second reading. The three runs mark the
 the runs. Earlier v2 runs between these two are kept too (`v2-held-out-steps-rule-3-runs.json`,
 `v2-held-out-explain-rule-3-runs.json`), and which commit each ran on is in [`harness/PROVENANCE.md`](harness/PROVENANCE.md).
 **What would settle it:** a v3 set nobody on the team has seen, in real handwriting from outside writers, labelled by
-an outside teacher and run once (section 17.6).
+an outside teacher and run once (section 17.1).
 
 The misses are read by hand in [`harness/heldout/README.md`](harness/heldout/README.md), with the hinted-scheme ablation
 and the effort ablation (on the development set, low effort was as accurate as medium, 28% cheaper and 40% faster).
@@ -1132,7 +1133,7 @@ day's ceiling reached) is replaced by a safe line, never sent.
   every commit, not only today's files.
 
 **Added after the review of vb1105a, 5 Nov (edge vb1105b; the desk's approval box comes with the next desktop
-release, 17.2a):**
+release, 17.7):**
 - **A drafted scheme needs the teacher's explicit approval; creating the exam no longer counts as approval.** The
   review: "creating the exam with a scheme is treated as teacher approval; a teacher could create the exam without
   carefully checking the generated answers." The exam is still marked against the draft, but no mark on it is accepted
@@ -1148,7 +1149,7 @@ release, 17.2a):**
 - **Needs the next desktop release: the approval box.** Desktop 0.9.34 cannot send the approval, so on it an exam
   with a drafted scheme shows no one-click row and the teacher checks every mark (the server tells it a line no mark
   reaches). The next desk shows the statement with a box to tick, sends the approval with the exam or afterwards, and
-  shows who approved the scheme and when (17.2a).
+  shows who approved the scheme and when (17.7).
 
 **Added after the last review, 5 Nov (edge vb1105a; no phone or desktop release needed):**
 - **Where the paper has no mark scheme, Muse Spark drafts one and the teacher approves it** (owner's design). The model
@@ -1173,7 +1174,7 @@ release, 17.2a):**
   `a_face_look_that_cannot_cover_the_video_deletes_it_unmarked_test`, `the_face_look_covers_every_sampled_frame_test`).
 - **Not done: a separate holding area for uploads.** A video still lands in the private store before the look; an
   upload that is never marked is not deleted sooner than the 180 days every file has, unless the teacher deletes the paper. Changing where uploads land
-  was not safe to test in the time left; it is in the future plans (17.2a).
+  was not safe to test in the time left; it is in the future plans (17.7).
 
 **Added after the final follow-up audit of 4 Nov (edge vb1104r):**
 - **The server looks for faces itself (the one trust-boundary point left).** Every desk video, before anything reads
@@ -1368,7 +1369,7 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
   - Apart from one Grade 5 student's papers (section 7), every paper here is a sample: a handwriting font, or a paper written for the demo, on a simulated phone photo. Real written working and real classrooms are harder.
   - **The evaluation sets are ours.** The items, labels and code come from the same team, and v2 has been seen since its blind first run (section 7). That student's papers are the first exception: his teacher's marks, not ours, are the key. The next measurement is a v3 set of written answers in real handwriting from many outside writers, labelled by an outside teacher, run once on frozen code.
   - The class of 40 measures speed and cost at class size; its 40 papers are built from 14 written answers (two to four per question), so it is not an accuracy test.
-  - **A real pilot follows the hackathon** (section 17.6): ten days were not enough to run one properly.
+  - **A real pilot follows the hackathon** (section 17.1): ten days were not enough to run one properly.
 - **The research in section 1 is evidence, not proof.** The MIT study is a preprint with 54 participants; the Gerlich and CHI studies are surveys; Butler's is one classroom experiment. Together they show a risk worth designing against and a direction that works, not a settled law. The 65% PISA figure is the OECD average as reported by ACER (source 6).
 - **The fingerprint's limits are measured, not solved** (section 7).
   - A wrong idea can still be named on an ambiguous page.
@@ -1378,7 +1379,7 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
 - **The code live now is `v1.0.2-code`** (edge vb1104i, 4 Nov): `v1.0.1-code` plus two fixes. Two readings no longer
   agree when only one says "not", or when their units differ ("5 cm", "5 m"); and an unreadable photographed paper is
   asked to be photographed again, not "filmed again". Both are tested; the real sets and the held-out set
-  were run on `v1.0.1-code`, not yet on `v1.0.2-code` (17.2). The teacher's desk says "photograph again" too since
+  were run on `v1.0.1-code`, not yet on `v1.0.2-code` (17.5). The teacher's desk says "photograph again" too since
   desktop 0.9.34 (4 Nov; it was not in desktop 0.9.33). Since edge vb1104j (4 Nov) a photographed paper that could not be marked for another reason, or is
   no longer kept, is never told about a video either.
 - **Security fixes from a review before going public, live since edge vb1104k (4 Nov):** a join code tried through
@@ -1392,21 +1393,21 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
   gave the same kind of outline, one level of three lessons on the student's idea, and a tampered "write my history
   essay" was refused every time: [`harness/design-layout/`](harness/design-layout/README.md)); plain-code rules before the model guard; $25 a day across all accounts, reserved before each call and never passed since vb1104n; and
   every row and file scheduled for deletion at 180 days (rows written before the release were given their date too). The marking
-  code did not change. The phone's face-covering fix shipped in 1.10.5 (Google Play and the App Store, 4 Nov; 17.1).
+  code did not change. The phone's face-covering fix shipped in 1.10.5 (Google Play and the App Store, 4 Nov; 17.8).
 - **After the fourth independent audit, live since edge vb1104p (4 Nov):** phone apps before 1.10.5 can no longer send a
   desk video (they photograph instead); each money hold is settled by its own id, failures
   counted at their whole hold; a level's own calls never write the exam answer (48 of 48 attacks held); one click
   needs no risk flag as well as 0.95, and says whether the teacher's mark scheme or the model's own key was used. Still not done: the server holding the app's level-building
-  instructions (17.2a), and an unfamiliar exam marked live against a real teacher's own marks (17.2).
+  instructions (17.7), and an unfamiliar exam marked live against a real teacher's own marks (17.5).
 - **After the review of vb1105a, live since edge vb1105b (5 Nov):** a drafted scheme counts for one click only after
   the teacher's explicit approval (time, teacher and the scheme's SHA-256 recorded); the desk's approval box comes with
-  the next desktop release (17.2a).
+  the next desktop release (17.7).
 - **After the last review, live since edge vb1105a (5 Nov):** one click only with a mark scheme the teacher approved
   (where the paper has none, Muse Spark drafts one for the teacher to check); the face look at five frames a second,
-  and a look that cannot cover the whole video refuses it. A separate holding area for uploads is not built (17.2a).
+  and a look that cannot cover the whole video refuses it. A separate holding area for uploads is not built (17.7).
 - **After the final follow-up audit, live since edge vb1104r (4 Nov):** the server looks for faces in every desk video
   itself (SAM 3.1) and deletes a video with one unmarked, keeping nothing from it; the app's statement no longer decides
-  (section 13). Phone 1.10.5 is on Google Play and the App Store; desktop 0.9.34 is released (17.1).
+  (section 13). Phone 1.10.5 is on Google Play and the App Store; desktop 0.9.34 is released (17.8).
 - **Muse Spark Open has run on partner inference, with few runs:** 9 of 12 completed. Of the 3 that did not, 2 passed
   the old 5-minute limit per call on the long four-photo maths paper, and 1 reply was not a marking; the 3 runs since
   the limit went to 10 minutes all completed (`harness/open/`). It has not been switched on for the live edge.
@@ -1417,15 +1418,132 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
 In ten days we built one path end to end: a teacher photographs an exam, and every failed question becomes a level.
 The goal is bigger: **wherever a learner gets something wrong in LoWisa, that moment should become the start of
 mastering it.** The plans below take it there, onto features LoWisa already has, so most of the work is joining what
-exists rather than starting again.
+exists rather than starting again. **They are in order of impact:** a pilot in schools first (17.1), then a Mastery
+Plan wherever a learner fails a question (17.2) and interactive experiments (17.3); the measurements still to run
+(17.5) and the fixes (17.7, 17.8) come last.
 
 **Ten days were not enough to do everything we want, and we say so plainly.** The fixes that needed an app release
-have shipped (17.1); some measurements are still to
-run (17.2). We are committed to
-continuous improvement, and we would value the judges' feedback on anything we have missed (17.7): whatever it is, we
-will fix it as part of that work.
+have shipped (17.8); some measurements are still to run (17.5). We are committed to continuous improvement, and we
+would value the judges' feedback on anything we have missed (17.6): whatever it is, we will fix it as part of that
+work.
 
-### 17.1 Fixes that needed an app release: shipped
+### 17.1 A pilot in schools
+
+A real pilot follows the hackathon. It needs consenting schools, parents' consent for minors, real exams, and a
+re-test a week or more later. We plan to run it in this order:
+
+1. **Real written working first:** papers from many outside writers, labelled by an outside teacher, run once on
+   frozen code (the v3 set). One real student's multiple-choice papers and short written answers, against his own
+   teacher, are done (section 7).
+2. **Teachers' time:** the minutes a teacher spends per paper, against their own hand marking of the same class.
+3. **Agreement:** the desk's marks and fingerprints against the teacher's own, question by question.
+4. **Learning:** a fresh question on the same idea a week after "Turned around", for students who did and did not
+   play their level.
+
+`witness_measure` already records agreement, the teacher's seconds per paper, turned-around questions and re-checks,
+so the pilot needs no new code to report them.
+
+### 17.2 A Mastery Plan wherever a learner fails a question
+
+Today the Mastery Plan starts from a teacher's photographed exam. After the hackathon it goes wherever a learner is
+tested in LoWisa:
+
+1. **Study Kit practice.** Every question a learner fails while practising in Study Kit brings up a Mastery Plan, so
+   they can go into depth on whatever they are learning, even with no teacher. Muse Wonder's check still plays every
+   level as the student before they see it.
+2. **Every test question in the phone and desktop apps.** Wherever the apps ask a question, a failed one offers a
+   Mastery Plan as the way to go deeper.
+3. **The desktop app's electronic exams.** LoWisa's desktop app already lets a teacher set an exam that students sit in
+   the app (Study Kit, *Sit an exam with a code*, or from the Classroom). The answers are already typed, so no photo is
+   needed: every question failed will go into the student's Mastery Plan automatically, for the teacher to review as
+   they do now.
+
+### 17.3 Interactive experiments: change it, watch it, find out why
+
+**What exists now, in 2D.** The scenes inside a mastery level already let the learner act, not only watch: shapes that
+move through what happens, and controls (one to three sliders) that change a real quantity, worked out live with its
+graph, until the learner hits a target. In Daniel's level the learner pushes the log down until the water holds 200 kg
+(the film shows the first look before it, section 2). The scene player is LoWisa's and existed before; what each scene shows in a mastery
+level is written from the student's own mistake. **This is part of what we want: the learner changes one or two values
+along a path we wrote. It is not yet an open experiment.**
+
+**What comes next: a working laboratory for the question the learner failed.** Imagine a student fails a physics
+question about electrical resistance. Instead of only receiving an explanation, they get a working 3D laboratory, made
+for that question, where they can:
+
+- move the sliding contact along a resistance wire;
+- change resistance values, the voltage, or the way the circuit is connected;
+- watch how the current, the meters and the bulb respond, at once;
+- keep experimenting until they understand the physics underneath.
+
+The learner is free to test a hypothesis, make a mistake, investigate an outcome they did not expect, and discover the
+principle by exploring, not by following set steps. The aim is to extend what a mastery level already does (deep
+understanding, then real-world practice) with **open-ended experimentation**: not only how something works, but what
+happens when the conditions change, and why.
+
+**Why it was not built during the hackathon.** A laboratory a learner can trust must behave as the real apparatus
+would, every time. That needs engineering, validation of every reading against the physics, and testing well beyond
+ten days. It is a planned extension of what is built, not a replacement for it: we want learners to move from mastering
+known problems to investigating unfamiliar ones, testing possibilities, and finding solutions on their own.
+
+### 17.4 Already joined to LoWisa's existing features
+
+A mastery level is played by LoWisa's own lesson player, so it already comes with two features that strengthen
+cognitive ability (area 4, from temporary memorisation to lasting mastery): the **flashcards** made from the level's lessons, and **Insight mode**, which
+replays the student's lessons as an episode. Both existed before the event; the level they replay is new.
+
+### 17.5 Measurements still to run
+
+- **The real student's papers and the held-out set on the code live now.** They were run on `v1.0.1-code`; the two
+  fixes since (`v1.0.2-code`) change only when two readings count as the same answer and one message's wording.
+- **A learner trying to mislead the marker, at scale.** Ten synthetic papers passed 30 of 30 (section 13). Next: more
+  tricks, and real handwriting.
+- **An adversarial test of the live service with a real account**, beyond the code's own tests: the design route, the
+  daily ceilings and the safety rules, as an attacker would try them.
+- **An exam it has never seen, marked live, against a real teacher's own marks**, with every disagreement written up:
+  a paper not in this repository, marked by the teacher before we see it.
+- **The controlled study** of whether it strengthens learning lastingly: delayed tests without AI, on new items,
+  against the usual feedback. The design is fixed before any data ([`docs/STUDY-PLAN.md`](docs/STUDY-PLAN.md)).
+- **The phone build run on a device: done for 1.10.5** before it was sent to the stores (an Android emulator, against
+  the live server): a desk video with a face in view was covered and marked, and the same video sent raw was refused
+  by the server ([live checks 7](evidence/live-checks/README.md)). Still to force on a device: a face look that fails on
+  the phone (nothing is sent; covered by the phone's tests), and the same run on a physical phone.
+
+### 17.6 Your feedback
+
+We would be grateful for the judges' feedback on anything we have missed: a weakness in the code, a claim the
+evidence does not support, a risk to learners, or something that is hard to run. Each one becomes part of our
+continuous improvement, and we will fix it. Write to us through [lowisa.dev](https://lowisa.dev).
+
+### 17.7 Fixes still to build, from the audits
+
+- **The server holds the app's instructions.** Today the app sends the level builder's instructions, and the server
+  marks them as the app's; a tampered app can still write them. Since edge vb1104p, the server's own line keeps the
+  exam's answer out of a level whatever the app writes (48 of 48 attacks held, section 13). Next, the app sends only
+  which instruction it wants, and the server supplies the words, so no client can write them. It needs a phone and a
+  desktop release.
+- **Done after the final audit (edge vb1104r): a face check on the server, not only on the phone.** The server looks
+  for faces in every desk video itself (SAM 3.1) before anything reads it, and a video with a face is deleted unmarked
+  with nothing kept (section 13); since edge vb1105a at five frames a second, and a look that cannot cover the whole
+  video refuses it. Still next: the look runs after the upload, so the phone's own cover stays the first step; and a
+  separate holding area for uploads, deleted within a day unless the look clears them (not built: changing where
+  uploads land could not be tested safely in the time left).
+- **Next desktop release: the Exam Desk's approval box for a drafted scheme.** The server side is live since edge
+  vb1105b: a drafted scheme counts for one click only after the teacher's explicit approval, recorded with the time,
+  the teacher and the scheme's SHA-256 (section 13). Desktop 0.9.34 cannot send it, so there a drafted-scheme exam has
+  no one-click row and every mark is checked. The next desk shows the statement (*I have reviewed and approved this marking scheme for use in assessing students.*)
+  with a box to tick before the exam can be created with a draft, sends the approval, and shows who approved the
+  scheme and when. It needs a desktop release.
+- **Done after the last review (edge vb1105a): a scheme for every exam that has one click.** Where the paper has no
+  mark scheme, Muse Spark drafts one and the teacher approves it; one click needs a scheme (section 13). Next: a desk
+  view that shows the drafted scheme beside the paper question by question, and a scheme the teacher can correct after
+  the exam is made, with every paper marked again against the new version.
+- **Done after the fourth audit (edge vb1104p):** each hold settled by its own id, failures and late calls counted
+  (section 13); one click by risk as well as confidence (section 13). Next for both: the desk showing the teacher why a
+  mark was held back (the server already says); not built yet (desktop 0.9.34 says what the marks were judged against,
+  not each mark's reason).
+
+### 17.8 Fixes that needed an app release: shipped
 
 These were done and tested in this repository, and needed a new app release to reach users, because a store app
 cannot change until then. As of 5 Nov: **phone 1.10.5 is on Google Play** (published 4 Nov; Android phones on 1.10.4
@@ -1455,122 +1573,6 @@ all, on any phone.
 
 Everything on the server is already live; it changes without an app release. On 4 Nov that was the independent
 audit's server fixes (section 13), live from edge vb1104m.
-
-### 17.2 Measurements still to run
-
-- **The real student's papers and the held-out set on the code live now.** They were run on `v1.0.1-code`; the two
-  fixes since (`v1.0.2-code`) change only when two readings count as the same answer and one message's wording.
-- **A learner trying to mislead the marker, at scale.** Ten synthetic papers passed 30 of 30 (section 13). Next: more
-  tricks, and real handwriting.
-- **An adversarial test of the live service with a real account**, beyond the code's own tests: the design route, the
-  daily ceilings and the safety rules, as an attacker would try them.
-- **An exam it has never seen, marked live, against a real teacher's own marks**, with every disagreement written up:
-  a paper not in this repository, marked by the teacher before we see it.
-- **The controlled study** of whether it strengthens learning lastingly: delayed tests without AI, on new items,
-  against the usual feedback. The design is fixed before any data ([`docs/STUDY-PLAN.md`](docs/STUDY-PLAN.md)).
-- **The phone build run on a device: done for 1.10.5** before it was sent to the stores (an Android emulator, against
-  the live server): a desk video with a face in view was covered and marked, and the same video sent raw was refused
-  by the server ([live checks 7](evidence/live-checks/README.md)). Still to force on a device: a face look that fails on
-  the phone (nothing is sent; covered by the phone's tests), and the same run on a physical phone.
-
-### 17.2a Built next, from the third audit
-
-- **The server holds the app's instructions.** Today the app sends the level builder's instructions, and the server
-  marks them as the app's; a tampered app can still write them. Since edge vb1104p, the server's own line keeps the
-  exam's answer out of a level whatever the app writes (48 of 48 attacks held, section 13). Next, the app sends only
-  which instruction it wants, and the server supplies the words, so no client can write them. It needs a phone and a
-  desktop release.
-- **Done after the final audit (edge vb1104r): a face check on the server, not only on the phone.** The server looks
-  for faces in every desk video itself (SAM 3.1) before anything reads it, and a video with a face is deleted unmarked
-  with nothing kept (section 13); since edge vb1105a at five frames a second, and a look that cannot cover the whole
-  video refuses it. Still next: the look runs after the upload, so the phone's own cover stays the first step; and a
-  separate holding area for uploads, deleted within a day unless the look clears them (not built: changing where
-  uploads land could not be tested safely in the time left).
-- **Next desktop release: the Exam Desk's approval box for a drafted scheme.** The server side is live since edge
-  vb1105b: a drafted scheme counts for one click only after the teacher's explicit approval, recorded with the time,
-  the teacher and the scheme's SHA-256 (section 13). Desktop 0.9.34 cannot send it, so there a drafted-scheme exam has
-  no one-click row and every mark is checked. The next desk shows the statement (*I have reviewed and approved this marking scheme for use in assessing students.*)
-  with a box to tick before the exam can be created with a draft, sends the approval, and shows who approved the
-  scheme and when. It needs a desktop release.
-- **Done after the last review (edge vb1105a): a scheme for every exam that has one click.** Where the paper has no
-  mark scheme, Muse Spark drafts one and the teacher approves it; one click needs a scheme (section 13). Next: a desk
-  view that shows the drafted scheme beside the paper question by question, and a scheme the teacher can correct after
-  the exam is made, with every paper marked again against the new version.
-- **Done after the fourth audit (edge vb1104p):** each hold settled by its own id, failures and late calls counted
-  (section 13); one click by risk as well as confidence (section 13). Next for both: the desk showing the teacher why a
-  mark was held back (the server already says); not built yet (desktop 0.9.34 says what the marks were judged against,
-  not each mark's reason).
-
-### 17.3 Already joined to LoWisa's existing features
-
-A mastery level is played by LoWisa's own lesson player, so it already comes with two features that strengthen
-cognitive ability (area 4, from temporary memorisation to lasting mastery): the **flashcards** made from the level's lessons, and **Insight mode**, which
-replays the student's lessons as an episode. Both existed before the event; the level they replay is new.
-
-### 17.4 Next: a Mastery Plan wherever a learner fails a question
-
-Today the Mastery Plan starts from a teacher's photographed exam. After the hackathon it goes wherever a learner is
-tested in LoWisa:
-
-1. **Study Kit practice.** Every question a learner fails while practising in Study Kit brings up a Mastery Plan, so
-   they can go into depth on whatever they are learning, even with no teacher. Muse Wonder's check still plays every
-   level as the student before they see it.
-2. **Every test question in the phone and desktop apps.** Wherever the apps ask a question, a failed one offers a
-   Mastery Plan as the way to go deeper.
-3. **The desktop app's electronic exams.** LoWisa's desktop app already lets a teacher set an exam that students sit in
-   the app (Study Kit, *Sit an exam with a code*, or from the Classroom). The answers are already typed, so no photo is
-   needed: every question failed will go into the student's Mastery Plan automatically, for the teacher to review as
-   they do now.
-
-### 17.5 Interactive experiments: change it, watch it, find out why
-
-**What exists now, in 2D.** The scenes inside a mastery level already let the learner act, not only watch: shapes that
-move through what happens, and controls (one to three sliders) that change a real quantity, worked out live with its
-graph, until the learner hits a target. In Daniel's level the learner pushes the log down until the water holds 200 kg
-(the film shows the first look before it, section 2). The scene player is LoWisa's and existed before; what each scene shows in a mastery
-level is written from the student's own mistake. **This is part of what we want: the learner changes one or two values
-along a path we wrote. It is not yet an open experiment.**
-
-**What comes next: a working laboratory for the question the learner failed.** Imagine a student fails a physics
-question about electrical resistance. Instead of only receiving an explanation, they get a working 3D laboratory, made
-for that question, where they can:
-
-- move the sliding contact along a resistance wire;
-- change resistance values, the voltage, or the way the circuit is connected;
-- watch how the current, the meters and the bulb respond, at once;
-- keep experimenting until they understand the physics underneath.
-
-The learner is free to test a hypothesis, make a mistake, investigate an outcome they did not expect, and discover the
-principle by exploring, not by following set steps. The aim is to extend what a mastery level already does (deep
-understanding, then real-world practice) with **open-ended experimentation**: not only how something works, but what
-happens when the conditions change, and why.
-
-**Why it was not built during the hackathon.** A laboratory a learner can trust must behave as the real apparatus
-would, every time. That needs engineering, validation of every reading against the physics, and testing well beyond
-ten days. It is a planned extension of what is built, not a replacement for it: we want learners to move from mastering
-known problems to investigating unfamiliar ones, testing possibilities, and finding solutions on their own.
-
-### 17.6 A pilot in schools
-
-A real pilot follows the hackathon. It needs consenting schools, parents' consent for minors, real exams, and a
-re-test a week or more later. We plan to run it in this order:
-
-1. **Real written working first:** papers from many outside writers, labelled by an outside teacher, run once on
-   frozen code (the v3 set). One real student's multiple-choice papers and short written answers, against his own
-   teacher, are done (section 7).
-2. **Teachers' time:** the minutes a teacher spends per paper, against their own hand marking of the same class.
-3. **Agreement:** the desk's marks and fingerprints against the teacher's own, question by question.
-4. **Learning:** a fresh question on the same idea a week after "Turned around", for students who did and did not
-   play their level.
-
-`witness_measure` already records agreement, the teacher's seconds per paper, turned-around questions and re-checks,
-so the pilot needs no new code to report them.
-
-### 17.7 Your feedback
-
-We would be grateful for the judges' feedback on anything we have missed: a weakness in the code, a claim the
-evidence does not support, a risk to learners, or something that is hard to run. Each one becomes part of our
-continuous improvement, and we will fix it. Write to us through [lowisa.dev](https://lowisa.dev).
 
 ## 18. Sources
 
