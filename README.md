@@ -231,12 +231,11 @@ Where each Meta model works:
   the code check between each, and what each check changed, measured.
 - **Try it in one minute:** `node demo/desk-server.js --replay`, with no account and no key; or live with your own phone
   (section 12).
-- **What comes next (section 17), in order of impact:** a pilot in schools first; then a Mastery Plan on every
-  question a learner fails anywhere in LoWisa (Study Kit practice, every test question in the phone and desktop apps,
-  the desktop app's electronic exams); interactive experiments the learner can change and investigate; then the
-  measurements still to run, where to send us feedback, and last the fixes (still to build, and those that needed an
-  app release, shipped on Google Play and the App Store): ten days were not enough for everything, and we will keep
-  improving.
+- **What comes next (section 17):** a pilot in schools; a Mastery Plan on every question a learner fails anywhere in
+  LoWisa (Study Kit practice, every test question in the phone and desktop apps, the desktop app's electronic exams);
+  interactive experiments the learner can change and investigate. It also lists the measurements still to run, where
+  to send us feedback, and the fixes (still to build, and those that needed an app release, shipped on Google Play and
+  the App Store): ten days were not enough for everything, and we will keep improving.
 - **Names used here:** *Lo* is LoWisa's tutor. *Witness* is the code name of the marker (the `witness_*` modules) and of
   the optional desk-filming mode. Part of [LoWisa](https://lowisa.dev), for the Meta Global AI Developer Hackathon.
 
@@ -1418,9 +1417,7 @@ log, day by day, is [`harness/FINDINGS.md`](harness/FINDINGS.md).
 In ten days we built one path end to end: a teacher photographs an exam, and every failed question becomes a level.
 The goal is bigger: **wherever a learner gets something wrong in LoWisa, that moment should become the start of
 mastering it.** The plans below take it there, onto features LoWisa already has, so most of the work is joining what
-exists rather than starting again. **They are in order of impact:** a pilot in schools first (17.1), then a Mastery
-Plan wherever a learner fails a question (17.2) and interactive experiments (17.3); the measurements still to run
-(17.5) and the fixes (17.7, 17.8) come last.
+exists rather than starting again.
 
 **Ten days were not enough to do everything we want, and we say so plainly.** The fixes that needed an app release
 have shipped (17.8); some measurements are still to run (17.5). We are committed to continuous improvement, and we
